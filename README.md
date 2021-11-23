@@ -1,8 +1,6 @@
-# Signal-LTS
+# Beacon
 
-Signal-LTS is an unofficial version of Signal with some extra features, and a longer release cycle.
-
-Expect updates about every 3 months.
+A Signal fork with some extra features and modifications.
 
 [<img src="https://fdroid.gitlab.io/artwork/badge/get-it-on.png" alt="Get it on F-Droid" height="100">](https://benarmstead.github.io/fdroid/repo?fingerprint=9CCBC7C297F0B54520834681D1D29C2184B2CD262E80AA9E453215284ED3D684)
 
@@ -10,7 +8,11 @@ Expect updates about every 3 months.
 
 - **Deleting messages time extension**
 
-  Messages must be deleted within 3 hours of sending on Signal. Signal-LTS has modified this to 24 hours (the limit the recipient will allow deleted messages up to).
+  Messages must be deleted within 3 hours of sending on Signal. I have modified this to 24 hours (the limit the recipient will allow deleted messages up to).
+
+- **Ignores deter messages**
+
+  Signal added a feature that allows remotely deleting messages. In this fork people cannot delete messages off your phone, the requests will be ignored.
 
 - **Does not compress images or video**
 

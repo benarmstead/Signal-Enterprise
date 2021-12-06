@@ -16,11 +16,11 @@ However this can sometimes fail, in which case you will need to clear your signa
 
 - **Fully FOSS**
 
-The official signal client includes some proprietary google dependencies. In this fork, I have removed these and replaced the with FOSS alternatives
+  The official signal client includes some proprietary google dependencies. In this fork, they are replaced the with FOSS alternatives
 
 - **Uses Open Street Maps**
 
-The official signal client uses google maps as its default maps provider (for sharing location). In this fork, I have switched this to be open street maps.
+  The official signal client uses google maps as its default maps provider (for sharing location). In this fork, open street maps is used instead.
 
 - **Deleting messages time extension**
 

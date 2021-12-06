@@ -3,7 +3,7 @@ name: Android CI
 on:
   push:
     branches:
-    - 'foss'
+    - '5.**'
 
 jobs:
   build:

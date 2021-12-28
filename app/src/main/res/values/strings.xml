@@ -470,6 +470,8 @@
     <string name="BackupsPreferenceFragment__learn_more">Learn more</string>
     <string name="BackupsPreferenceFragment__in_progress">In progress…</string>
     <string name="BackupsPreferenceFragment__d_so_far">%1$d so far…</string>
+    <!-- Show percentage of completion of backup -->
+    <string name="BackupsPreferenceFragment__s_so_far">%1$s%% so far…</string>
     <string name="BackupsPreferenceFragment_signal_requires_external_storage_permission_in_order_to_create_backups">Signal requires external storage permission in order to create backups, but it has been permanently denied. Please continue to app settings, select \"Permissions\" and enable \"Storage\".</string>
 
 
@@ -1897,6 +1899,7 @@
     <string name="UnauthorizedReminder_this_is_likely_because_you_registered_your_phone_number_with_Signal_on_a_different_device">This is likely because you registered your phone number with Signal on a different device. Tap to re-register.</string>
 
     <!-- WebRtcCallActivity -->
+    <string name="WebRtcCallActivity_to_answer_the_call_give_signal_access_to_your_microphone">To answer the call, give Signal access to your microphone.</string>
     <string name="WebRtcCallActivity_to_answer_the_call_from_s_give_signal_access_to_your_microphone">To answer the call from %s, give Signal access to your microphone.</string>
     <string name="WebRtcCallActivity_signal_requires_microphone_and_camera_permissions_in_order_to_make_or_receive_calls">Signal requires Microphone and Camera permissions in order to make or receive calls, but they have been permanently denied. Please continue to app settings, select \"Permissions\", and enable \"Microphone\" and \"Camera\".</string>
     <string name="WebRtcCallActivity__answered_on_a_linked_device">Answered on a linked device.</string>
@@ -3086,7 +3089,7 @@
     <string name="BackupDialog_verify">Verify</string>
     <string name="BackupDialog_you_successfully_entered_your_backup_passphrase">You successfully entered your backup passphrase</string>
     <string name="BackupDialog_passphrase_was_not_correct">Passphrase was not correct</string>
-    <string name="LocalBackupJob_creating_backup">Creating backup…</string>
+    <string name="LocalBackupJob_creating_signal_backup">Creating Signal backup…</string>
     <string name="LocalBackupJobApi29_backup_failed">Backup failed</string>
     <string name="LocalBackupJobApi29_your_backup_directory_has_been_deleted_or_moved">Your backup directory has been deleted or moved.</string>
     <string name="LocalBackupJobApi29_your_backup_file_is_too_large">Your backup file is too large to store on this volume.</string>
@@ -3215,6 +3218,8 @@
     <string name="DeviceTransfer__transferring_data">Transferring data</string>
     <string name="DeviceTransfer__keep_both_devices_near_each_other">Keep both devices near each other. Do not turn off the devices and keep Signal open. Transfers are end-to-end encrypted.</string>
     <string name="DeviceTransfer__d_messages_so_far">%1$d messages so far…</string>
+    <!-- Filled in with total percentage of messages transferred -->
+    <string name="DeviceTransfer__s_of_messages_so_far">%1$s%% of messages so far…</string>
     <string name="DeviceTransfer__cancel">Cancel</string>
     <string name="DeviceTransfer__try_again">Try again</string>
     <string name="DeviceTransfer__stop_transfer_question">Stop transfer?</string>
@@ -3656,7 +3661,7 @@
     <!-- Notification preference option header -->
     <string name="NotificationsSettingsFragment__profiles">Profiles</string>
     <!-- Notification preference summary text -->
-    <string name="NotificationsSettingsFragment__set_up_notification_profiles">Set up notification profiles</string>
+    <string name="NotificationsSettingsFragment__create_a_profile_to_receive_notifications_only_from_people_and_groups_you_choose">Create a profile to receive notifications only from people and groups you choose.</string>
 
     <!-- NotificationProfilesFragment -->
     <!-- Title for notification profiles screen that shows all existing profiles -->
@@ -4078,8 +4083,10 @@
     <string name="EditNotificationProfileFragment__profile_name">Profile name</string>
     <!-- Name has a max length, this shows how many characters are used out of the max -->
     <string name="EditNotificationProfileFragment__count">%1$d/%2$d</string>
-    <!-- Call to action button once the profile is named to continue to the next create step -->
+    <!-- Call to action button to continue to the next step -->
     <string name="EditNotificationProfileFragment__next">Next</string>
+    <!-- Call to action button once the profile is named to create the profile and continue to the customization steps -->
+    <string name="EditNotificationProfileFragment__create">Create</string>
     <!-- Call to action button once the profile name is edited -->
     <string name="EditNotificationProfileFragment__save">Save</string>
     <!-- Title of edit notification profile screen -->
@@ -4146,11 +4153,13 @@
     <string name="NotificationProfileDetails__notify_for_all_mentions">Notify for all mentions</string>
     <!-- Section header for showing schedule information -->
     <string name="NotificationProfileDetails__schedule">Schedule</string>
+    <!-- If member list is long, will truncate the list and show an option to then see all when tapped -->
+    <string name="NotificationProfileDetails__see_all">See all</string>
 
     <!-- Title for add schedule to profile in create flow -->
     <string name="EditNotificationProfileSchedule__add_a_schedule">Add a schedule</string>
     <!-- Descriptor text indicating what the user can do with this screen -->
-    <string name="EditNotificationProfileSchedule__turn_on_and_edit_your_schedule_to_automate_this_profile">Turn on and edit your schedule to automate this profile.</string>
+    <string name="EditNotificationProfileSchedule__set_up_a_schedule_to_enable_this_notification_profile_automatically">Set up a schedule to enable this notification profile automatically.</string>
     <!-- Text shown next to toggle switch to enable/disable schedule -->
     <string name="EditNotificationProfileSchedule__schedule">Schedule</string>
     <!-- Label for showing the start time for the schedule -->
@@ -4196,9 +4205,9 @@
     <string name="NotificationProfileCreated__your_profile_will_turn_on_and_off_automatically_according_to_your_schedule">Your profile will turn on and off automatically according to your schedule.</string>
 
     <!-- Button text shown in profile selection bottom sheet to create a new profile -->
-    <string name="NotificationProfileSelection__new_notification_profile">New notification profile</string>
+    <string name="NotificationProfileSelection__new_profile">New profile</string>
     <!-- Manual enable option to manually enable a profile for 1 hour -->
-    <string name="NotificationProfileSelection__for_1_hour">For 1 Hour</string>
+    <string name="NotificationProfileSelection__for_1_hour">For 1 hour</string>
     <!-- Manual enable option to manually enable a profile until a set time (currently 6pm or 8am depending on what is next) -->
     <string name="NotificationProfileSelection__until_s">Until %1$s</string>
     <!-- Option to view profile details -->

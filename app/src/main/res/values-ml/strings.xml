@@ -321,6 +321,7 @@
   <string name="ConversationListFragment_select_all">എല്ലാം തിരഞ്ഞെടുക്കുക</string>
   <!--Show in conversation list overflow menu to open selection bottom sheet-->
   <!--Tooltip shown after you have created your first notification profile-->
+  <string name="ConversationListFragment__turn_your_notification_profile_on_or_off_here">നിങ്ങൾക്കുള്ള അറിയിപ്പുകൾ ഇവിടെ ഓണാക്കുക അല്ലെങ്കിൽ ഓഫ് ചെയ്യുക.</string>
   <!--Message shown in top toast to indicate the named profile is on-->
   <!--ConversationListItem-->
   <string name="ConversationListItem_key_exchange_message">കീ കൈമാറ്റ സന്ദേശം</string>
@@ -367,6 +368,7 @@
   <string name="BackupsPreferenceFragment__learn_more">കൂടുതൽ അറിയുക</string>
   <string name="BackupsPreferenceFragment__in_progress">പുരോഗതിയിൽ…</string>
   <string name="BackupsPreferenceFragment__d_so_far">%1$d ഇതുവരെ….</string>
+  <!--Show percentage of completion of backup-->
   <string name="BackupsPreferenceFragment_signal_requires_external_storage_permission_in_order_to_create_backups">ബാക്കപ്പുകൾ സൃഷ്ടിക്കുന്നതിന് Signal-ന് ബാഹ്യ സ്റ്റോറജ് ​​അനുമതി ആവശ്യമാണ്, പക്ഷേ ഇത് ശാശ്വതമായി നിരസിക്കപ്പെട്ടു. അപ്ലിക്കേഷൻ ക്രമീകരണങ്ങളിലേക്കു പോയി , \"അനുമതികൾ\" തിരഞ്ഞെടുത്ത് \"സ്റ്റോറജ്\" ഉപയോഗാനുമതി നൽകുക .</string>
   <!--CustomDefaultPreference-->
   <string name="CustomDefaultPreference_using_custom">Custom ഉപയോഗിക്കുന്നു: %s</string>
@@ -663,6 +665,7 @@
   <string name="ManageProfileFragment_your_username">നിങ്ങളുടെ ഉപയോക്തൃനാമം</string>
   <string name="ManageProfileFragment_failed_to_set_avatar">അവതാർ സജ്ജമാക്കാന്‍ കഴിഞ്ഞില്ല</string>
   <string name="ManageProfileFragment_badges">ബാഡ്ജുകള്‍</string>
+  <string name="ManageProfileFragment__edit_photo">ഫോട്ടോ എഡിറ്റ് ചെയ്യുക</string>
   <!--ManageRecipientActivity-->
   <string name="ManageRecipientActivity_no_groups_in_common">സാമാന്യമായി ഗ്രൂപ്പുകളൊന്നുമില്ല</string>
   <plurals name="ManageRecipientActivity_d_groups_in_common">
@@ -761,6 +764,7 @@
   <string name="InviteActivity_no_app_to_share_to">നിങ്ങൾക്ക് പങ്കിടാൻ അപ്ലിക്കേഷനുകളൊന്നുമില്ലെന്ന് തോന്നുന്നു.</string>
   <!--LearnMoreTextView-->
   <string name="LearnMoreTextView_learn_more">കൂടുതൽ അറിയുക</string>
+  <string name="SpanUtil__read_more">കൂടുതൽ വായിക്കുക</string>
   <!--LongMessageActivity-->
   <string name="LongMessageActivity_unable_to_find_message">സന്ദേശം കണ്ടെത്താനായില്ല</string>
   <string name="LongMessageActivity_message_from_s">%1$s നിന്നുള്ള സന്ദേശം</string>
@@ -1640,6 +1644,7 @@
   <string name="conversation_fragment__scroll_to_the_bottom_content_description">താഴേക്ക് സ്ക്രോൾ ചെയ്യുക</string>
   <!--BubbleOptOutTooltip-->
   <!--Message to inform the user of what Android chat bubbles are-->
+  <string name="BubbleOptOutTooltip__description">സിഗ്നൽ ചാറ്റുകളിൽ നിങ്ങൾക്ക് ഓഫുചെയ്യാൻ കഴിയുന്ന ഒരു ആൻഡ്രോയിഡ് സവിശേഷതയാണ് ബബിൾസ്.</string>
   <!--Button to dismiss the tooltip for opting out of using Android bubbles-->
   <string name="BubbleOptOutTooltip__not_now">ഇപ്പോൾ വേണ്ട</string>
   <!--Button to move to the system settings to control the use of Android bubbles-->
@@ -2293,6 +2298,7 @@
   <string name="Insights__title">ഉള്‍ക്കാഴ്‌ച</string>
   <string name="InsightsDashboardFragment__title">ഉള്‍ക്കാഴ്‌ച</string>
   <string name="InsightsDashboardFragment__signal_protocol_automatically_protected">കഴിഞ്ഞ %2$d ദിവസങ്ങളിൽ നിങ്ങളുടെ ഔട്ട്ഗോയിംഗ് സന്ദേശങ്ങളിൽ നിന്ന് സിഗ്നൽ പ്രോട്ടോക്കോൾ യാന്ത്രികമായി %1$d%%പരിരക്ഷിച്ചു. സിഗ്നൽ ഉപയോക്താക്കൾ തമ്മിലുള്ള സംഭാഷണങ്ങൾ എല്ലായ്പ്പോഴും എൻഡ് ടു എൻഡ് എൻ‌ക്രിപ്റ്റ് ആണ്.</string>
+  <string name="InsightsDashboardFragment__spread_the_word">എല്ലാവരിലേക്കും എത്തിക്കൂ</string>
   <string name="InsightsDashboardFragment__not_enough_data">മതിയായ ഡാറ്റയില്ല</string>
   <string name="InsightsDashboardFragment__your_insights_percentage_is_calculated_based_on">അപ്രത്യക്ഷമായതോ ഇല്ലാതാക്കാത്തതോ ആയ കഴിഞ്ഞ %1$d ദിവസങ്ങളിൽ ഔറ്റ്ഗോിങ് സന്ദേശങ്ങളെ അടിസ്ഥാനമാക്കിയാണ് നിങ്ങളുടെ ഉള്‍ക്കാഴ്‌ച ശതമാനം കണക്കാക്കുന്നത്.</string>
   <string name="InsightsDashboardFragment__start_a_conversation">ഒരു സംഭാഷണം ആരംഭിക്കുക</string>
@@ -2457,7 +2463,6 @@
   <string name="BackupDialog_verify">പരിശോധിക്കുക</string>
   <string name="BackupDialog_you_successfully_entered_your_backup_passphrase">നിങ്ങൾ ബാക്കപ്പിന്റെ രഹസ്യവാചകം വിജയകരമായി നൽകി</string>
   <string name="BackupDialog_passphrase_was_not_correct">രഹസ്യവാചകം ശരിയായിരുന്നില്ല</string>
-  <string name="LocalBackupJob_creating_backup"> ബാക്കപ്പ് സൃഷ്‌ടിക്കുന്നു…</string>
   <string name="LocalBackupJobApi29_backup_failed">ബാക്കപ്പ്  പരാജയപ്പെട്ടു </string>
   <string name="LocalBackupJobApi29_your_backup_directory_has_been_deleted_or_moved">നിങ്ങളുടെ ബാക്കപ്പ് ഡയറക്ടറി ഇല്ലാതാക്കി അല്ലെങ്കിൽ നീക്കി.</string>
   <string name="LocalBackupJobApi29_your_backup_file_is_too_large">ഈ വോളിയത്തിൽ സംഭരിക്കാനുംമാത്രം നിങ്ങളുടെ ബാക്കപ്പ് ഫയൽ വളരെ വലുതാണ്.</string>
@@ -2579,6 +2584,7 @@
   <string name="DeviceTransfer__transferring_data">ഡാറ്റ കൈമാറുന്നു</string>
   <string name="DeviceTransfer__keep_both_devices_near_each_other">രണ്ട് ഉപകരണങ്ങളും പരസ്പരം അടുത്ത് വയ്ക്കുക. ഉപകരണങ്ങൾ ഓഫ് ചെയ്യരുത്, Signal തുറന്നിടുക. ട്രാൻസ്ഫറുകൾ എൻഡ്-ടു-എൻഡ് എൻക്രിപ്റ്റ് ചെയ്തിരിക്കുന്നു.</string>
   <string name="DeviceTransfer__d_messages_so_far">ഇതുവരെ %1$d സന്ദേശങ്ങൾ</string>
+  <!--Filled in with total percentage of messages transferred-->
   <string name="DeviceTransfer__cancel">റദ്ദാക്കൂ</string>
   <string name="DeviceTransfer__try_again">വീണ്ടും ശ്രമിക്കുക</string>
   <string name="DeviceTransfer__stop_transfer_question">കൈമാറ്റം നിർത്തണോ?</string>
@@ -2732,6 +2738,7 @@
   <!--Message of progress dialog shown when a user deletes their account and the process is leaving groups-->
   <!--Message of progress dialog shown when a user deletes their account and the process has left all groups-->
   <!--Title of error dialog shown when a network error occurs during account deletion-->
+  <string name="DeleteAccountFragment__account_not_deleted">അക്കൗണ്ട് ഡിലീറ്റ് ചെയ്യാൻ സാധിച്ചില്ല.</string>
   <!--Message of error dialog shown when a network error occurs during account deletion-->
   <!--DeleteAccountCountryPickerFragment-->
   <string name="DeleteAccountCountryPickerFragment__search_countries">രാജ്യങ്ങൾ തിരയുക</string>
@@ -2926,6 +2933,7 @@
   <string name="NotificationsSettingsFragment__contact_joins_signal">കോൺടാക്റ്റ് Signal ചേരുന്നു</string>
   <!--Notification preference header-->
   <!--Notification preference option header-->
+  <string name="NotificationsSettingsFragment__profiles">പ്രൊഫൈലുകൾ</string>
   <!--Notification preference summary text-->
   <!--NotificationProfilesFragment-->
   <!--Title for notification profiles screen that shows all existing profiles-->
@@ -3173,8 +3181,10 @@
   <string name="EditNotificationProfileFragment__profile_name">പ്രൊഫൈൽ പേര്</string>
   <!--Name has a max length, this shows how many characters are used out of the max-->
   <string name="EditNotificationProfileFragment__count">%1$d/%2$d</string>
-  <!--Call to action button once the profile is named to continue to the next create step-->
+  <!--Call to action button to continue to the next step-->
   <string name="EditNotificationProfileFragment__next">അടുത്തത്</string>
+  <!--Call to action button once the profile is named to create the profile and continue to the customization steps-->
+  <string name="EditNotificationProfileFragment__create">സൃഷ്ടിക്കുക</string>
   <!--Call to action button once the profile name is edited-->
   <string name="EditNotificationProfileFragment__save">സംരക്ഷിക്കൂ</string>
   <!--Title of edit notification profile screen-->
@@ -3193,6 +3203,7 @@
   <string name="SelectRecipientsFragment__add">ചേർക്കുക</string>
   <!--Notification profiles home fragment, shown when no profiles have been created yet-->
   <!--Header shown above list of all notification profiles-->
+  <string name="NotificationProfilesFragment__profiles">പ്രൊഫൈലുകൾ</string>
   <!--Button that starts the create new notification profile flow-->
   <!--Profile active status, indicating the current profile is on for an unknown amount of time-->
   <string name="NotificationProfilesFragment__on">ഓൺ</string>
@@ -3215,6 +3226,8 @@
   <!--Profile exception to allow all calls through the profile restrictions-->
   <!--Profile exception to allow all @mentions through the profile restrictions-->
   <!--Section header for showing schedule information-->
+  <!--If member list is long, will truncate the list and show an option to then see all when tapped-->
+  <string name="NotificationProfileDetails__see_all">എല്ലാം കാണുക</string>
   <!--Title for add schedule to profile in create flow-->
   <!--Descriptor text indicating what the user can do with this screen-->
   <!--Text shown next to toggle switch to enable/disable schedule-->
@@ -3253,6 +3266,7 @@
   <!--Description for notification profile megaphone-->
   <!--Call to action button to create a profile from megaphone-->
   <!--Button to dismiss notification profile megaphone-->
+  <string name="NotificationProfilesMegaphone__not_now">ഇപ്പോൾ വേണ്ട</string>
   <!--Displayed in a toast when we fail to open the ringtone picker-->
   <!--EOF-->
 </resources>

@@ -367,6 +367,7 @@
   <string name="BackupsPreferenceFragment__learn_more">Jifunze zaidi</string>
   <string name="BackupsPreferenceFragment__in_progress">Inaendelea…</string>
   <string name="BackupsPreferenceFragment__d_so_far">%1$d hadi sasa…</string>
+  <!--Show percentage of completion of backup-->
   <string name="BackupsPreferenceFragment_signal_requires_external_storage_permission_in_order_to_create_backups">Signal inahitaji idhini ya hifadhi ya nje ili kuunda nakalahifadhi, lakini imekataliwa kabisa. Tafadhali enda kwenye mipangilio ya programu, chagua \"Ruhusa\" na uwezeshe \"Hifadhi\".</string>
   <!--CustomDefaultPreference-->
   <string name="CustomDefaultPreference_using_custom">Inatumia kaida: %s</string>
@@ -2456,7 +2457,6 @@ nambari yako ya simu</string>
   <string name="BackupDialog_verify">Hakikisha</string>
   <string name="BackupDialog_you_successfully_entered_your_backup_passphrase">Umefaulu kuweka kifungu maneno chako cha nakilihifadhi</string>
   <string name="BackupDialog_passphrase_was_not_correct">Kifungu maneno hakikuwa sahihi</string>
-  <string name="LocalBackupJob_creating_backup">Inaunda nakalahifadhi</string>
   <string name="LocalBackupJobApi29_backup_failed">Nakala hifadhi haijawekwa</string>
   <string name="LocalBackupJobApi29_your_backup_directory_has_been_deleted_or_moved">Nakala hifadhi yako imefutwa au imehamishwa.</string>
   <string name="LocalBackupJobApi29_your_backup_file_is_too_large">Faili yako ya kakala hifadhi ni kubwa mno kwamba haiwezi kuhifadhi kiasi hiki.</string>
@@ -2578,6 +2578,7 @@ Funga ufikiaji wa Signal na ufungaji wa Android au alama za vidole</string>
   <string name="DeviceTransfer__transferring_data">Inahamisha data</string>
   <string name="DeviceTransfer__keep_both_devices_near_each_other">Weka vifaa vyote viwili karibu. Usizime vifaa hivi na hakikisha Signal imefunguliwa. Mchakato wa kuhamisha umesimbwa kwa njia ya mwisho kwa mwisho.</string>
   <string name="DeviceTransfer__d_messages_so_far">Jumbe %1$d hadi sasa…</string>
+  <!--Filled in with total percentage of messages transferred-->
   <string name="DeviceTransfer__cancel">Ghairi</string>
   <string name="DeviceTransfer__try_again">Jaribu tena</string>
   <string name="DeviceTransfer__stop_transfer_question">Ungependa kusimamisha mchakato wa kuhamisha</string>
@@ -3145,8 +3146,10 @@ Funga ufikiaji wa Signal na ufungaji wa Android au alama za vidole</string>
   <string name="EditNotificationProfileFragment__profile_name">Jina la wasifa</string>
   <!--Name has a max length, this shows how many characters are used out of the max-->
   <string name="EditNotificationProfileFragment__count">%1$d/%2$d</string>
-  <!--Call to action button once the profile is named to continue to the next create step-->
+  <!--Call to action button to continue to the next step-->
   <string name="EditNotificationProfileFragment__next">Ifuatayo</string>
+  <!--Call to action button once the profile is named to create the profile and continue to the customization steps-->
+  <string name="EditNotificationProfileFragment__create">Unda</string>
   <!--Call to action button once the profile name is edited-->
   <string name="EditNotificationProfileFragment__save">Hifadhi</string>
   <!--Title of edit notification profile screen-->
@@ -3187,6 +3190,8 @@ Funga ufikiaji wa Signal na ufungaji wa Android au alama za vidole</string>
   <!--Profile exception to allow all calls through the profile restrictions-->
   <!--Profile exception to allow all @mentions through the profile restrictions-->
   <!--Section header for showing schedule information-->
+  <!--If member list is long, will truncate the list and show an option to then see all when tapped-->
+  <string name="NotificationProfileDetails__see_all">Tazama zote</string>
   <!--Title for add schedule to profile in create flow-->
   <!--Descriptor text indicating what the user can do with this screen-->
   <!--Text shown next to toggle switch to enable/disable schedule-->
@@ -3225,6 +3230,7 @@ Funga ufikiaji wa Signal na ufungaji wa Android au alama za vidole</string>
   <!--Description for notification profile megaphone-->
   <!--Call to action button to create a profile from megaphone-->
   <!--Button to dismiss notification profile megaphone-->
+  <string name="NotificationProfilesMegaphone__not_now">Sio sasa</string>
   <!--Displayed in a toast when we fail to open the ringtone picker-->
   <!--EOF-->
 </resources>

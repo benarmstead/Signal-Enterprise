@@ -367,6 +367,7 @@
   <string name="BackupsPreferenceFragment__learn_more">كۆپرەك ئۆگىنىش</string>
   <string name="BackupsPreferenceFragment__in_progress">داۋام قىلىۋاتىدۇ…</string>
   <string name="BackupsPreferenceFragment__d_so_far">%1$d ھازىرغىچە..</string>
+  <!--Show percentage of completion of backup-->
   <string name="BackupsPreferenceFragment_signal_requires_external_storage_permission_in_order_to_create_backups">زاپاسلاشنى قۇرۇش ئۈچۈن Signal سىرتقى ساقلىغۇچ ھوقۇقىنى تەلەپ قىلىدۇ، ئەمما ئۇ مەڭگۈلۈك رەت قىلىندى. ئەپ تەڭشەكلىرىگە بېرىڭ، «ھوقۇقلار» نى تاللاڭ ۋە «ساقلىغۇچ» نى قوزغىتىڭ.</string>
   <!--CustomDefaultPreference-->
   <string name="CustomDefaultPreference_using_custom">ئىختىيارىچە ئىشلىتىش: %s</string>
@@ -2506,7 +2507,6 @@
   <string name="BackupDialog_verify">دەلىللەش</string>
   <string name="BackupDialog_you_successfully_entered_your_backup_passphrase">زاپاسلاش ئىم ئىبارىسىنى توغرا كىرگۈزدىڭىز</string>
   <string name="BackupDialog_passphrase_was_not_correct">ئىم ئىبارىسى توغرا ئەمەس</string>
-  <string name="LocalBackupJob_creating_backup">زاپاسلىنىۋاتىدۇ…</string>
   <string name="LocalBackupJobApi29_backup_failed">زاپاسلاش مەغلۇپ بولدى</string>
   <string name="LocalBackupJobApi29_your_backup_directory_has_been_deleted_or_moved">زاپاسلاش مۇندەرىجىڭىز ئۆچۈرۈلگەن ياكى يۆتكىۋېتىلگەن.</string>
   <string name="LocalBackupJobApi29_your_backup_file_is_too_large">زاپاس ھۆججىتىڭىز بەك چوڭ بولغاچقا بۇ جىلدقا سىغمىدى.</string>
@@ -2628,6 +2628,7 @@
   <string name="DeviceTransfer__transferring_data">مەلۇمات يۆتكىلىۋاتىدۇ</string>
   <string name="DeviceTransfer__keep_both_devices_near_each_other">ئىككى ئۈسكىنىنى يېقىن تۇتۇڭ. ئۈسكۈنىلەر ئېتىلىپ قالمىسۇن، Signal ئوچۇق ھالەتتە تۇرسۇن. يۆتكەش ئۇچتىن-ئۇچقا شىفرىلىنىدۇ.</string>
   <string name="DeviceTransfer__d_messages_so_far">ھازىرچە %1$d ئۇچۇر…</string>
+  <!--Filled in with total percentage of messages transferred-->
   <string name="DeviceTransfer__cancel">ۋاز كەچ</string>
   <string name="DeviceTransfer__try_again">قايتا سىناڭ</string>
   <string name="DeviceTransfer__stop_transfer_question">يۆتكەشنى توختىتامسىز؟</string>
@@ -3271,8 +3272,10 @@
   <string name="EditNotificationProfileFragment__profile_name">سەپلىمە ئاتى</string>
   <!--Name has a max length, this shows how many characters are used out of the max-->
   <string name="EditNotificationProfileFragment__count">%1$d/%2$d</string>
-  <!--Call to action button once the profile is named to continue to the next create step-->
+  <!--Call to action button to continue to the next step-->
   <string name="EditNotificationProfileFragment__next">كېيىنكى</string>
+  <!--Call to action button once the profile is named to create the profile and continue to the customization steps-->
+  <string name="EditNotificationProfileFragment__create">قۇر</string>
   <!--Call to action button once the profile name is edited-->
   <string name="EditNotificationProfileFragment__save">ساقلا</string>
   <!--Title of edit notification profile screen-->
@@ -3313,6 +3316,8 @@
   <!--Profile exception to allow all calls through the profile restrictions-->
   <!--Profile exception to allow all @mentions through the profile restrictions-->
   <!--Section header for showing schedule information-->
+  <!--If member list is long, will truncate the list and show an option to then see all when tapped-->
+  <string name="NotificationProfileDetails__see_all">ھەممىنى كۆرسەت</string>
   <!--Title for add schedule to profile in create flow-->
   <!--Descriptor text indicating what the user can do with this screen-->
   <!--Text shown next to toggle switch to enable/disable schedule-->
@@ -3351,6 +3356,7 @@
   <!--Description for notification profile megaphone-->
   <!--Call to action button to create a profile from megaphone-->
   <!--Button to dismiss notification profile megaphone-->
+  <string name="NotificationProfilesMegaphone__not_now">ھازىر ئەمەس</string>
   <!--Displayed in a toast when we fail to open the ringtone picker-->
   <!--EOF-->
 </resources>

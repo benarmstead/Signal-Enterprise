@@ -352,6 +352,7 @@
   <string name="BackupsPreferenceFragment__learn_more">ထပ်မံလေ့လာရန်</string>
   <string name="BackupsPreferenceFragment__in_progress">ဆောင်ရွက်ဆဲ</string>
   <string name="BackupsPreferenceFragment__d_so_far">%1$d ထိလုပ်ဆောင်ပြီး…</string>
+  <!--Show percentage of completion of backup-->
   <string name="BackupsPreferenceFragment_signal_requires_external_storage_permission_in_order_to_create_backups">သင်၏ အပလီကေးရှင်းပြင်ပ ဖုန်းထဲတွင် သိမ်းထားခွင့်အား  Signal ကို ပေးရန်လိုအပ်ပါသည်။သို့သော် လုံးဝခွင့်မပြုပါဟု ရွေးထားပြီး ဖြစ်နေသဖြင့် အပ်ပလီကေးရှင်း အပြင်အဆင်သို့ သွား၍ ခွင့်ပြုချက်များကို ရွေးချယ်ကာ သိုလှောင်မှုခွင့်ပြုချက်ကို အသုံးပြုနိုင်အောင် ပြုလုပ်ပါ။</string>
   <!--CustomDefaultPreference-->
   <string name="CustomDefaultPreference_using_custom">အထူးပြုသုံး %s</string>
@@ -2328,7 +2329,6 @@
   <string name="BackupDialog_verify">စစ်ဆေးအတည်ပြုသည်</string>
   <string name="BackupDialog_you_successfully_entered_your_backup_passphrase">သင်၏အရန်ကူးထားသောစကားဝှက်ကို အောင်မြင်စွာထည့်ပြီးပါပြီ</string>
   <string name="BackupDialog_passphrase_was_not_correct">စကားဝှက်သည်မမှန်ပါ</string>
-  <string name="LocalBackupJob_creating_backup">အရန်သိမ်းဆည်းမှုများ ဖန်တီးနေပါသည်…</string>
   <string name="LocalBackupJobApi29_backup_failed">အရန်သိမ်းဆည်းမှုများ မအောင်မြင်ပါ</string>
   <string name="LocalBackupJobApi29_your_backup_directory_has_been_deleted_or_moved">သင်၏ အရန်သိမ်းဆည်းမှုများ၏ လမ်းညွှန်အား ဖျက်ထားသည် သို့မဟုတ် ပြောင်းရွှေ့သွားသည်</string>
   <string name="LocalBackupJobApi29_your_backup_file_is_too_large">သင်၏ အရန်သိမ်းဆည်းထားသောဖိုင်ကို သိမ်းဆည်းရန် အလွန်ကြီးမားသည်</string>
@@ -2448,6 +2448,7 @@
   <string name="DeviceTransfer__transferring_data">ဒေတာများ လွှဲပြောင်းနေပါသည်</string>
   <string name="DeviceTransfer__keep_both_devices_near_each_other">စက် ၂ ခုလုံးအား နီးကပ်စွာ ထားရှိပေးပါ။ စက်များမပိတ်၍ Signal အားဖွင့်ထားပါ။ လွှဲပြောင်းမှုများကို အစအဆုံး ကုဒ်ဖြင့်ပြောင်းလဲထားပါသည်။</string>
   <string name="DeviceTransfer__d_messages_so_far">မက်ဆေ့ %1$d ခု လုပ်ဆောင်ပြီး…</string>
+  <!--Filled in with total percentage of messages transferred-->
   <string name="DeviceTransfer__cancel">ပယ်ဖျက်မယ်</string>
   <string name="DeviceTransfer__try_again">ထပ်မံကြိုးစားမည် </string>
   <string name="DeviceTransfer__stop_transfer_question">လွှဲပြောင်းခြင်း ရပ်မည်လား?</string>
@@ -2889,8 +2890,10 @@
   <string name="EditNotificationProfileFragment__profile_name">ပရိုဖိုင်း အမည်</string>
   <!--Name has a max length, this shows how many characters are used out of the max-->
   <string name="EditNotificationProfileFragment__count">%1$d/%2$d</string>
-  <!--Call to action button once the profile is named to continue to the next create step-->
+  <!--Call to action button to continue to the next step-->
   <string name="EditNotificationProfileFragment__next">နောက်ထက်</string>
+  <!--Call to action button once the profile is named to create the profile and continue to the customization steps-->
+  <string name="EditNotificationProfileFragment__create">ဖန်တီးပါ</string>
   <!--Call to action button once the profile name is edited-->
   <string name="EditNotificationProfileFragment__save">သိမ်းမယ်</string>
   <!--Title of edit notification profile screen-->
@@ -2930,6 +2933,8 @@
   <!--Profile exception to allow all calls through the profile restrictions-->
   <!--Profile exception to allow all @mentions through the profile restrictions-->
   <!--Section header for showing schedule information-->
+  <!--If member list is long, will truncate the list and show an option to then see all when tapped-->
+  <string name="NotificationProfileDetails__see_all">အားလုံးကို ကြည့်မယ်</string>
   <!--Title for add schedule to profile in create flow-->
   <!--Descriptor text indicating what the user can do with this screen-->
   <!--Text shown next to toggle switch to enable/disable schedule-->
@@ -2968,6 +2973,7 @@
   <!--Description for notification profile megaphone-->
   <!--Call to action button to create a profile from megaphone-->
   <!--Button to dismiss notification profile megaphone-->
+  <string name="NotificationProfilesMegaphone__not_now">ယခု မလုပ်ဆောင်သေးပါ။</string>
   <!--Displayed in a toast when we fail to open the ringtone picker-->
   <!--EOF-->
 </resources>

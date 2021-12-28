@@ -353,6 +353,7 @@
   <string name="BackupsPreferenceFragment__learn_more">了解更多</string>
   <string name="BackupsPreferenceFragment__in_progress">正在进行…</string>
   <string name="BackupsPreferenceFragment__d_so_far">%1$d 到目前为止…</string>
+  <!--Show percentage of completion of backup-->
   <string name="BackupsPreferenceFragment_signal_requires_external_storage_permission_in_order_to_create_backups">Signal 需外部存储权限，来创建备份，但该权限已永久禁用。请访问应用设置菜单，选择“权限”并启用“存储”。</string>
   <!--CustomDefaultPreference-->
   <string name="CustomDefaultPreference_using_custom">使用定制：%s</string>
@@ -2374,7 +2375,6 @@
   <string name="BackupDialog_verify">验证</string>
   <string name="BackupDialog_you_successfully_entered_your_backup_passphrase">已成功输入备份密码</string>
   <string name="BackupDialog_passphrase_was_not_correct">密码错误</string>
-  <string name="LocalBackupJob_creating_backup">正在创建备份…</string>
   <string name="LocalBackupJobApi29_backup_failed">备份失败</string>
   <string name="LocalBackupJobApi29_your_backup_directory_has_been_deleted_or_moved">备份目录已删除或移动。</string>
   <string name="LocalBackupJobApi29_your_backup_file_is_too_large">您的备份文件太大，无法保存到此位置。</string>
@@ -2496,6 +2496,7 @@
   <string name="DeviceTransfer__transferring_data">正在转移数据</string>
   <string name="DeviceTransfer__keep_both_devices_near_each_other">请确保两个设备互相贴近。不要关闭设备，并保持 Signal 运行。转移是端对端加密的。</string>
   <string name="DeviceTransfer__d_messages_so_far">目前 %1$d 消息…</string>
+  <!--Filled in with total percentage of messages transferred-->
   <string name="DeviceTransfer__cancel">取消</string>
   <string name="DeviceTransfer__try_again">重试</string>
   <string name="DeviceTransfer__stop_transfer_question">停止转移？</string>
@@ -3043,8 +3044,10 @@
   <string name="EditNotificationProfileFragment__profile_name">个人资料名称</string>
   <!--Name has a max length, this shows how many characters are used out of the max-->
   <string name="EditNotificationProfileFragment__count">%1$d/%2$d</string>
-  <!--Call to action button once the profile is named to continue to the next create step-->
+  <!--Call to action button to continue to the next step-->
   <string name="EditNotificationProfileFragment__next">下一步</string>
+  <!--Call to action button once the profile is named to create the profile and continue to the customization steps-->
+  <string name="EditNotificationProfileFragment__create">创建</string>
   <!--Call to action button once the profile name is edited-->
   <string name="EditNotificationProfileFragment__save">保存</string>
   <!--Title of edit notification profile screen-->
@@ -3085,6 +3088,8 @@
   <!--Profile exception to allow all calls through the profile restrictions-->
   <!--Profile exception to allow all @mentions through the profile restrictions-->
   <!--Section header for showing schedule information-->
+  <!--If member list is long, will truncate the list and show an option to then see all when tapped-->
+  <string name="NotificationProfileDetails__see_all">查看全部</string>
   <!--Title for add schedule to profile in create flow-->
   <!--Descriptor text indicating what the user can do with this screen-->
   <!--Text shown next to toggle switch to enable/disable schedule-->
@@ -3124,6 +3129,7 @@
   <!--Description for notification profile megaphone-->
   <!--Call to action button to create a profile from megaphone-->
   <!--Button to dismiss notification profile megaphone-->
+  <string name="NotificationProfilesMegaphone__not_now">稍后再说</string>
   <!--Displayed in a toast when we fail to open the ringtone picker-->
   <!--EOF-->
 </resources>

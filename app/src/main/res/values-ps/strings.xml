@@ -367,6 +367,7 @@
   <string name="BackupsPreferenceFragment__learn_more">لا زیات زده کړئ </string>
   <string name="BackupsPreferenceFragment__in_progress">د پرمختګ په حال کې ده…</string>
   <string name="BackupsPreferenceFragment__d_so_far">%1$d تر اوسه پورې…</string>
+  <!--Show percentage of completion of backup-->
   <string name="BackupsPreferenceFragment_signal_requires_external_storage_permission_in_order_to_create_backups">د بک اپونو د رامنځته کولو لپاره Signal د بهرنۍ زیرمې اجازې ته اړتیا لري، خو هغه د تل لپاره رد شوې ده.، نو مهرباني وکړئ د اپلیکیشن تنظیماتو ته ورشئ، \"اجازې\" وټاکئ او \"زیرمه\" فعاله کړئ.</string>
   <!--CustomDefaultPreference-->
   <string name="CustomDefaultPreference_using_custom">د سفارشي حالت کارولو لپاره: %s</string>
@@ -2509,7 +2510,6 @@
   <string name="BackupDialog_verify">تایید </string>
   <string name="BackupDialog_you_successfully_entered_your_backup_passphrase">تاسې په بریا سره خپل د بک اپ پټ عبارت دننه کړ</string>
   <string name="BackupDialog_passphrase_was_not_correct">پټ عبارت سم نه و</string>
-  <string name="LocalBackupJob_creating_backup">بک اپ د رامنځته کولو په حال کې ده…</string>
   <string name="LocalBackupJobApi29_backup_failed">بک اپ تر سره نشو</string>
   <string name="LocalBackupJobApi29_your_backup_directory_has_been_deleted_or_moved">ستاسې د بک اپ ډایریکټوري له منځه تللي یا هم انتقال شوې ده.</string>
   <string name="LocalBackupJobApi29_your_backup_file_is_too_large">ستاسې د بک اپ فایل ډېر زیات ستر دی چې په دې حجم کې یې زیرمه کړو.</string>
@@ -2631,6 +2631,7 @@
   <string name="DeviceTransfer__transferring_data">د ډیټا لیږل</string>
   <string name="DeviceTransfer__keep_both_devices_near_each_other">دواړه وسیلې د یوه بل تر څنګ کېږدئ. هېڅ یوه وسیله بنده نه کړئ او په دواړو کې Signal خلاص پریږدئ. دا لیږد په سرتاسري ډول سره انکریپټ دی.</string>
   <string name="DeviceTransfer__d_messages_so_far">%1$d پیغامونه تر اوسه پورې…</string>
+  <!--Filled in with total percentage of messages transferred-->
   <string name="DeviceTransfer__cancel">لغوه کول</string>
   <string name="DeviceTransfer__try_again">بیا هڅه وکړئ</string>
   <string name="DeviceTransfer__stop_transfer_question">غواړئ لیږد ودروئ؟</string>
@@ -3305,8 +3306,10 @@
   <string name="EditNotificationProfileFragment__profile_name">د پروفایل نوم</string>
   <!--Name has a max length, this shows how many characters are used out of the max-->
   <string name="EditNotificationProfileFragment__count">%1$d/%2$d</string>
-  <!--Call to action button once the profile is named to continue to the next create step-->
+  <!--Call to action button to continue to the next step-->
   <string name="EditNotificationProfileFragment__next">بل</string>
+  <!--Call to action button once the profile is named to create the profile and continue to the customization steps-->
+  <string name="EditNotificationProfileFragment__create">رامنځته کول</string>
   <!--Call to action button once the profile name is edited-->
   <string name="EditNotificationProfileFragment__save">ثبت</string>
   <!--Title of edit notification profile screen-->
@@ -3347,6 +3350,8 @@
   <!--Profile exception to allow all calls through the profile restrictions-->
   <!--Profile exception to allow all @mentions through the profile restrictions-->
   <!--Section header for showing schedule information-->
+  <!--If member list is long, will truncate the list and show an option to then see all when tapped-->
+  <string name="NotificationProfileDetails__see_all">د ټولو لیدل</string>
   <!--Title for add schedule to profile in create flow-->
   <!--Descriptor text indicating what the user can do with this screen-->
   <!--Text shown next to toggle switch to enable/disable schedule-->
@@ -3385,6 +3390,7 @@
   <!--Description for notification profile megaphone-->
   <!--Call to action button to create a profile from megaphone-->
   <!--Button to dismiss notification profile megaphone-->
+  <string name="NotificationProfilesMegaphone__not_now">اوس نه</string>
   <!--Displayed in a toast when we fail to open the ringtone picker-->
   <!--EOF-->
 </resources>

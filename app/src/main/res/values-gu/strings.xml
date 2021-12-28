@@ -367,6 +367,7 @@
   <string name="BackupsPreferenceFragment__learn_more">વધુ શીખો</string>
   <string name="BackupsPreferenceFragment__in_progress">થાય છે…</string>
   <string name="BackupsPreferenceFragment__d_so_far">%1$dઅત્યાર સુધી…</string>
+  <!--Show percentage of completion of backup-->
   <string name="BackupsPreferenceFragment_signal_requires_external_storage_permission_in_order_to_create_backups">બૅકઅપ બનાવવા માટે Signal ને બાહ્ય સ્ટોરેજ પરવાનગીની જરૂર હોય છે, પરંતુ તે કાયમી ધોરણે નામંજૂર કરવામાં આવી છે. કૃપા કરીને એપ્લિકેશન સેટિંગ્સ ચાલુ રાખો, \"પરવાનગી\" પસંદ કરો અને \"સ્ટોરેજ\" સક્ષમ કરો.</string>
   <!--CustomDefaultPreference-->
   <string name="CustomDefaultPreference_using_custom">કસ્ટમથી: %s</string>
@@ -2454,7 +2455,6 @@
   <string name="BackupDialog_verify">ચકાસો</string>
   <string name="BackupDialog_you_successfully_entered_your_backup_passphrase">તમે સફળતાપૂર્વક તમારો બૅકઅપ પાસફ્રેઝ દાખલ કર્યો</string>
   <string name="BackupDialog_passphrase_was_not_correct">પાસફ્રેઝ સાચો ન હતો</string>
-  <string name="LocalBackupJob_creating_backup">બૅકઅપ બનાવી રહ્યા છે…</string>
   <string name="LocalBackupJobApi29_backup_failed">બૅકઅપ નિષ્ફળ</string>
   <string name="LocalBackupJobApi29_your_backup_directory_has_been_deleted_or_moved">તમારી બૅકઅપ ડિરેક્ટરી કાઢી નાખવામાં આવી છે અથવા ખસેડવામાં આવી છે.</string>
   <string name="LocalBackupJobApi29_your_backup_file_is_too_large">આ વોલ્યુમ પર સ્ટોર કરવા માટે તમારી બૅકઅપ ફાઇલ ખૂબ મોટી છે.</string>
@@ -2575,6 +2575,7 @@
   <string name="DeviceTransfer__transferring_data">ડેટા ટ્રાન્સફર કરી રહ્યા છીએ</string>
   <string name="DeviceTransfer__keep_both_devices_near_each_other">બંને ડિવાઇસને એકબીજાની નજીક રાખો. ડિવાઇસ બંધ ન કરો અને Signal ચાલુ કરો. ટ્રાન્સફર એન્ડ-ટુ-એન્ડ એન્ક્રિપ્ટેડ છે.</string>
   <string name="DeviceTransfer__d_messages_so_far">%1$d અત્યાર સુધીના મેસેજ…</string>
+  <!--Filled in with total percentage of messages transferred-->
   <string name="DeviceTransfer__cancel">રદ કરો</string>
   <string name="DeviceTransfer__try_again">ફરીથી પ્રયત્ન કરો</string>
   <string name="DeviceTransfer__stop_transfer_question">ટ્રાન્સફર રોકો?</string>
@@ -3137,8 +3138,10 @@
   <string name="EditNotificationProfileFragment__profile_name">પ્રોફાઇલ નામ</string>
   <!--Name has a max length, this shows how many characters are used out of the max-->
   <string name="EditNotificationProfileFragment__count">%1$d/%2$d</string>
-  <!--Call to action button once the profile is named to continue to the next create step-->
+  <!--Call to action button to continue to the next step-->
   <string name="EditNotificationProfileFragment__next">આગળ</string>
+  <!--Call to action button once the profile is named to create the profile and continue to the customization steps-->
+  <string name="EditNotificationProfileFragment__create">બનાવો</string>
   <!--Call to action button once the profile name is edited-->
   <string name="EditNotificationProfileFragment__save">સેવ કરો</string>
   <!--Title of edit notification profile screen-->
@@ -3179,6 +3182,8 @@
   <!--Profile exception to allow all calls through the profile restrictions-->
   <!--Profile exception to allow all @mentions through the profile restrictions-->
   <!--Section header for showing schedule information-->
+  <!--If member list is long, will truncate the list and show an option to then see all when tapped-->
+  <string name="NotificationProfileDetails__see_all">બધા જુઓ</string>
   <!--Title for add schedule to profile in create flow-->
   <!--Descriptor text indicating what the user can do with this screen-->
   <!--Text shown next to toggle switch to enable/disable schedule-->
@@ -3217,6 +3222,7 @@
   <!--Description for notification profile megaphone-->
   <!--Call to action button to create a profile from megaphone-->
   <!--Button to dismiss notification profile megaphone-->
+  <string name="NotificationProfilesMegaphone__not_now">અત્યારે નહીં </string>
   <!--Displayed in a toast when we fail to open the ringtone picker-->
   <!--EOF-->
 </resources>

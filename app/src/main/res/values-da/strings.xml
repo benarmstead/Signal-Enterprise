@@ -411,6 +411,8 @@
   <string name="BackupsPreferenceFragment__learn_more">Læs mere</string>
   <string name="BackupsPreferenceFragment__in_progress">I gang…</string>
   <string name="BackupsPreferenceFragment__d_so_far">%1$d indtil videre…</string>
+  <!--Show percentage of completion of backup-->
+  <string name="BackupsPreferenceFragment__s_so_far">%1$s%% indtil videre…</string>
   <string name="BackupsPreferenceFragment_signal_requires_external_storage_permission_in_order_to_create_backups">Signal kræver tilladelse til at tilgå ekstern lagerplads for at oprette sikkerhedskopier, hvilket er blevet nægtet. Gå venligst til appindstillinger, vælg \"Tilladelser\" og tilvælg \"Lagerplads\".</string>
   <!--CustomDefaultPreference-->
   <string name="CustomDefaultPreference_using_custom">Anvender tilpasset: %s</string>
@@ -1630,6 +1632,7 @@ nummer (%s) er ugyldigt</string>
   <string name="UnauthorizedReminder_device_no_longer_registered">Enhed ikke længere registreret</string>
   <string name="UnauthorizedReminder_this_is_likely_because_you_registered_your_phone_number_with_Signal_on_a_different_device">Det skyldes sandsynligvis, at du har registreret dit telefonnummer hos Signal på en anden enhed. Tryk for at genregistrere.</string>
   <!--WebRtcCallActivity-->
+  <string name="WebRtcCallActivity_to_answer_the_call_give_signal_access_to_your_microphone">Hvis du vil besvare opkaldet, skal du give Signal adgang til din mikrofon.</string>
   <string name="WebRtcCallActivity_to_answer_the_call_from_s_give_signal_access_to_your_microphone">For at besvare opkald fra %s skal Signal gives adgang til din mikrofon.</string>
   <string name="WebRtcCallActivity_signal_requires_microphone_and_camera_permissions_in_order_to_make_or_receive_calls">Signal kræver tilladelse til at tilgå mikrofon og kamera, for at kunne modtage og foretage opkald, hvilket er blevet nægtet. Gå venligst til appindstillinger, vælg \"Tilladelser\" og tilvælg \"Mikrofon\" og \"Kamera\".</string>
   <string name="WebRtcCallActivity__answered_on_a_linked_device">Besvaret på en forbundet enhed.</string>
@@ -2584,7 +2587,7 @@ nummer (%s) er ugyldigt</string>
   <string name="BackupDialog_verify">Verificér</string>
   <string name="BackupDialog_you_successfully_entered_your_backup_passphrase">Du indtastede den korrekte adgangssætning til sikkerhedskopi</string>
   <string name="BackupDialog_passphrase_was_not_correct">Forkert adgangssætning</string>
-  <string name="LocalBackupJob_creating_backup">Opretter sikkerhedskopi…</string>
+  <string name="LocalBackupJob_creating_signal_backup">Opretter Signal-sikkerhedskopi…</string>
   <string name="LocalBackupJobApi29_backup_failed">Sikkerhedskopiering mislykkedes</string>
   <string name="LocalBackupJobApi29_your_backup_directory_has_been_deleted_or_moved">Din mappe med sikkerhedskopier er blevet slettet eller flyttet.</string>
   <string name="LocalBackupJobApi29_your_backup_file_is_too_large">Din sikkerhedskopifil er for stor til at kunne gemmes på denne lagerenhed.</string>
@@ -2706,6 +2709,8 @@ nummer (%s) er ugyldigt</string>
   <string name="DeviceTransfer__transferring_data">Overfører data</string>
   <string name="DeviceTransfer__keep_both_devices_near_each_other">Hold begge enheder tæt ved hinanden. Sluk ikke for enhederne, og hold Signal åbent. Overførsler er end-to-end krypteret</string>
   <string name="DeviceTransfer__d_messages_so_far">%1$d beskeder indtil videre…</string>
+  <!--Filled in with total percentage of messages transferred-->
+  <string name="DeviceTransfer__s_of_messages_so_far">%1$s%% af beskeder indtil videre…</string>
   <string name="DeviceTransfer__cancel">Annullér</string>
   <string name="DeviceTransfer__try_again">Prøv igen</string>
   <string name="DeviceTransfer__stop_transfer_question">Stop overførslen?</string>
@@ -3080,7 +3085,7 @@ nummer (%s) er ugyldigt</string>
   <!--Notification preference option header-->
   <string name="NotificationsSettingsFragment__profiles">Profiler</string>
   <!--Notification preference summary text-->
-  <string name="NotificationsSettingsFragment__set_up_notification_profiles">Indstil notifikationsprofiler</string>
+  <string name="NotificationsSettingsFragment__create_a_profile_to_receive_notifications_only_from_people_and_groups_you_choose">Opret en profil for kun at modtage notifikationer fra personer og grupper, du vælger.</string>
   <!--NotificationProfilesFragment-->
   <!--Title for notification profiles screen that shows all existing profiles-->
   <string name="NotificationProfilesFragment__notification_profiles">Notifikationsprofiler</string>
@@ -3441,8 +3446,10 @@ nummer (%s) er ugyldigt</string>
   <string name="EditNotificationProfileFragment__profile_name">Profilnavn</string>
   <!--Name has a max length, this shows how many characters are used out of the max-->
   <string name="EditNotificationProfileFragment__count">%1$d/%2$d</string>
-  <!--Call to action button once the profile is named to continue to the next create step-->
+  <!--Call to action button to continue to the next step-->
   <string name="EditNotificationProfileFragment__next">Næste</string>
+  <!--Call to action button once the profile is named to create the profile and continue to the customization steps-->
+  <string name="EditNotificationProfileFragment__create">Opret</string>
   <!--Call to action button once the profile name is edited-->
   <string name="EditNotificationProfileFragment__save">Gem</string>
   <!--Title of edit notification profile screen-->
@@ -3505,10 +3512,12 @@ nummer (%s) er ugyldigt</string>
   <string name="NotificationProfileDetails__notify_for_all_mentions">Underret ved alle omtaler</string>
   <!--Section header for showing schedule information-->
   <string name="NotificationProfileDetails__schedule">Tidsplan</string>
+  <!--If member list is long, will truncate the list and show an option to then see all when tapped-->
+  <string name="NotificationProfileDetails__see_all">Se alle</string>
   <!--Title for add schedule to profile in create flow-->
   <string name="EditNotificationProfileSchedule__add_a_schedule">Tilføj en tidsplan</string>
   <!--Descriptor text indicating what the user can do with this screen-->
-  <string name="EditNotificationProfileSchedule__turn_on_and_edit_your_schedule_to_automate_this_profile">Aktiver eller rediger din tidsplan for at automatisere denne profil.</string>
+  <string name="EditNotificationProfileSchedule__set_up_a_schedule_to_enable_this_notification_profile_automatically">Sæt en tidsplan for automatisk aktivering af denne notifikationsprofil.</string>
   <!--Text shown next to toggle switch to enable/disable schedule-->
   <string name="EditNotificationProfileSchedule__schedule">Tidsplan</string>
   <!--Label for showing the start time for the schedule-->
@@ -3546,13 +3555,13 @@ nummer (%s) er ugyldigt</string>
   <!--Call to action button to press to close the created screen and move to the profile details screen-->
   <string name="NotificationProfileCreated__done">Udført</string>
   <!--Descriptor text shown to indicate how to manually turn a profile on/off-->
-  <string name="NotificationProfileCreated__you_can_turn_your_profile_on_or_off_manually_via_the_menu_on_the_chat_list">Du kan slå din profil til eller fra manuelt via menuen på samtalelisten.</string>
+  <string name="NotificationProfileCreated__you_can_turn_your_profile_on_or_off_manually_via_the_menu_on_the_chat_list">Du kan manuelt slå din profil til eller fra via menuen på samtalelisten.</string>
   <!--Descriptor text shown to indicate you can add a schedule later since you did not add one during create flow-->
   <string name="NotificationProfileCreated__add_a_schedule_in_settings_to_automate_your_profile">Tilføj en tidsplan i indstillinger for at automatisere din profil.</string>
   <!--Descriptor text shown to indicate your profile will follow the schedule set during create flow-->
-  <string name="NotificationProfileCreated__your_profile_will_turn_on_and_off_automatically_according_to_your_schedule">Din profil vil blive slået til eller fra automatisk i overensstemmelse med din tidsplan.</string>
+  <string name="NotificationProfileCreated__your_profile_will_turn_on_and_off_automatically_according_to_your_schedule">Din profil vil automatisk blive slået til eller fra i overensstemmelse med din tidsplan.</string>
   <!--Button text shown in profile selection bottom sheet to create a new profile-->
-  <string name="NotificationProfileSelection__new_notification_profile">Ny notifikationsprofil</string>
+  <string name="NotificationProfileSelection__new_profile">Ny profil</string>
   <!--Manual enable option to manually enable a profile for 1 hour-->
   <string name="NotificationProfileSelection__for_1_hour">I 1 time</string>
   <!--Manual enable option to manually enable a profile until a set time (currently 6pm or 8am depending on what is next)-->

@@ -42,6 +42,8 @@ However this can sometimes fail, in which case you will need to clear your signa
 
   Same as above but for typing indicators.
 
+![](https://support.signal.org/hc/article_attachments/360016877511/typing-animation-3x.gif)
+
 # License & Legal
 
 License and legal notices in the original [README](README-ORIG.md).

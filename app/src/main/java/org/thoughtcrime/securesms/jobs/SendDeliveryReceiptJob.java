@@ -95,6 +95,7 @@ public class SendDeliveryReceiptJob extends BaseJob {
 
   @Override
   public void onRun() throws IOException, UntrustedIdentityException, UndeliverableMessageException {
+    return;
     if (!Recipient.self().isRegistered()) {
       throw new NotPushRegisteredException();
     }

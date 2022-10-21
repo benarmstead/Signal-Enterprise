@@ -194,6 +194,7 @@ public final class AttachmentCompressionJob extends BaseJob {
                                                                               @NonNull TranscoderCancelationSignal cancelationSignal)
       throws UndeliverableMessageException
   {
+    return attachment;
     AttachmentDatabase.TransformProperties transformProperties = attachment.getTransformProperties();
 
     boolean allowSkipOnFailure = false;

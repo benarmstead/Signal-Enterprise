@@ -74,10 +74,12 @@ public final class VideoMediaPreviewFragment extends MediaPreviewFragment {
         if (!isVideoGif && activity instanceof VoiceNoteMediaControllerOwner) {
           ((VoiceNoteMediaControllerOwner) activity).getVoiceNoteMediaController().pausePlayback();
         }
+        events.onPlaying();
       }
 
       @Override
       public void onStopped() {
+        events.onStopped();
       }
 
       @Override
@@ -138,11 +140,6 @@ public final class VideoMediaPreviewFragment extends MediaPreviewFragment {
     if (events.getVideoControlsDelegate() != null) {
       events.getVideoControlsDelegate().detachPlayer();
     }
-  }
-
-  @Override
-  public @Nullable ViewGroup getBottomBarControls() {
-    return videoView.getControlView();
   }
 
   @Override

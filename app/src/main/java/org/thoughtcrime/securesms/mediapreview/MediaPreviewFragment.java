@@ -81,7 +81,6 @@ public abstract class MediaPreviewFragment extends Fragment {
 
   public abstract void cleanUp();
   public abstract void pause();
-  public abstract ViewGroup getBottomBarControls();
   public abstract void setBottomButtonControls(MediaPreviewPlayerControlView playerControlView);
 
   private void checkMediaStillAvailable() {
@@ -98,6 +97,8 @@ public abstract class MediaPreviewFragment extends Fragment {
     boolean singleTapOnMedia();
     void onMediaNotAvailable();
     void onMediaReady();
+    void onPlaying();
+    void onStopped();
     default @Nullable VideoControlsDelegate getVideoControlsDelegate() {
       return null;
     }

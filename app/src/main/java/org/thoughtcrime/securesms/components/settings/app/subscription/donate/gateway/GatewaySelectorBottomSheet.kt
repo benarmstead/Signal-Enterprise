@@ -19,6 +19,7 @@ import org.thoughtcrime.securesms.components.settings.app.subscription.DonationP
 import org.thoughtcrime.securesms.components.settings.app.subscription.InAppDonations
 import org.thoughtcrime.securesms.components.settings.app.subscription.donate.DonateToSignalType
 import org.thoughtcrime.securesms.components.settings.app.subscription.models.GooglePayButton
+import org.thoughtcrime.securesms.components.settings.app.subscription.models.PayPalButton
 import org.thoughtcrime.securesms.components.settings.configure
 import org.thoughtcrime.securesms.payments.FiatMoneyUtil
 import org.thoughtcrime.securesms.util.LifecycleDisposable
@@ -40,6 +41,7 @@ class GatewaySelectorBottomSheet : DSLSettingsBottomSheetFragment() {
   override fun bindAdapter(adapter: DSLSettingsAdapter) {
     BadgeDisplay112.register(adapter)
     GooglePayButton.register(adapter)
+    PayPalButton.register(adapter)
 
     lifecycleDisposable.bindTo(viewLifecycleOwner)
 
@@ -62,6 +64,7 @@ class GatewaySelectorBottomSheet : DSLSettingsBottomSheetFragment() {
       when (args.request.donateToSignalType) {
         DonateToSignalType.MONTHLY -> presentMonthlyText()
         DonateToSignalType.ONE_TIME -> presentOneTimeText()
+        DonateToSignalType.GIFT -> presentGiftText()
       }
 
       space(66.dp)
@@ -79,11 +82,23 @@ class GatewaySelectorBottomSheet : DSLSettingsBottomSheetFragment() {
         )
       }
 
-      // PayPal
+      if (InAppDonations.isPayPalAvailable()) {
+        space(8.dp)
 
-      // Credit Card
+        customPref(
+          PayPalButton.Model(
+            onClick = {
+              findNavController().popBackStack()
+              val response = GatewayResponse(GatewayResponse.Gateway.PAYPAL, args.request)
+              setFragmentResult(REQUEST_KEY, bundleOf(REQUEST_KEY to response))
+            },
+            isEnabled = true
+          )
+        )
+      }
+
       if (InAppDonations.isCreditCardAvailable()) {
-        space(12.dp)
+        space(8.dp)
 
         primaryButton(
           text = DSLSettingsText.from(R.string.GatewaySelectorBottomSheet__credit_or_debit_card),
@@ -131,6 +146,25 @@ class GatewaySelectorBottomSheet : DSLSettingsBottomSheetFragment() {
     noPadTextPref(
       title = DSLSettingsText.from(
         resources.getQuantityString(R.plurals.GatewaySelectorBottomSheet__get_a_s_badge_for_d_days, 30, args.request.badge.name, 30),
+        DSLSettingsText.CenterModifier,
+        DSLSettingsText.BodyLargeModifier,
+        DSLSettingsText.ColorModifier(ContextCompat.getColor(requireContext(), R.color.signal_colorOnSurfaceVariant))
+      )
+    )
+  }
+
+  private fun DSLConfiguration.presentGiftText() {
+    noPadTextPref(
+      title = DSLSettingsText.from(
+        getString(R.string.GatewaySelectorBottomSheet__donate_s_to_signal, FiatMoneyUtil.format(resources, args.request.fiat)),
+        DSLSettingsText.CenterModifier,
+        DSLSettingsText.TitleLargeModifier
+      )
+    )
+    space(6.dp)
+    noPadTextPref(
+      title = DSLSettingsText.from(
+        R.string.GatewaySelectorBottomSheet__send_a_gift_badge,
         DSLSettingsText.CenterModifier,
         DSLSettingsText.BodyLargeModifier,
         DSLSettingsText.ColorModifier(ContextCompat.getColor(requireContext(), R.color.signal_colorOnSurfaceVariant))

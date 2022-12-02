@@ -138,11 +138,11 @@
     <!-- Title of fragment detailing the donation amount for one-time donation, displayed above the credit card text fields -->
     <string name="CreditCardFragment__donation_amount_s">Ziedojuma summa: %1$s</string>
     <!-- Title of fragment detailing the donation amount for monthly donation, displayed above the credit card text fields -->
-    <string name="CreditCardFragment__donation_amount_s_per_month">Donation amount: %1$s/month</string>
+    <string name="CreditCardFragment__donation_amount_s_per_month">Ziedojuma summa: %1$s mēnesī</string>
     <!-- Explanation of how to fill in the form, displayed above the credit card text fields -->
     <string name="CreditCardFragment__enter_your_card_information_below">Ievadiet savas kartes datus</string>
     <!-- Explanation of how to fill in the form and a note about pii, displayed above the credit card text fields -->
-    <string name="CreditCardFragment__enter_your_card_details">Enter your card details. Signal does not collect or store your personal information.</string>
+    <string name="CreditCardFragment__enter_your_card_details">Ievadiet kartes datus. Signal neapkopo un neuzglabā jūsu personisko informāciju.</string>
     <!-- Displayed as a hint in the card number text field -->
     <string name="CreditCardFragment__card_number">Kartes numurs</string>
     <!-- Displayed as a hint in the card expiry text field -->
@@ -460,9 +460,9 @@
     <string name="ConversationFragment_delete_for_me">Dzēst man</string>
     <string name="ConversationFragment_delete_for_everyone">Dzēst visiem</string>
     <!-- Dialog button for deleting one or more note-to-self messages only on this device, leaving that same message intact on other devices. -->
-    <string name="ConversationFragment_delete_on_this_device">Delete on this device</string>
+    <string name="ConversationFragment_delete_on_this_device">Dzēst šajā ierīcē</string>
     <!-- Dialog button for deleting one or more note-to-self messages on all linked devices. -->
-    <string name="ConversationFragment_delete_everywhere">Delete everywhere</string>
+    <string name="ConversationFragment_delete_everywhere">Dzēst visur</string>
     <string name="ConversationFragment_this_message_will_be_deleted_for_everyone_in_the_conversation">Šī ziņa tiks izdzēsta visiem sarunas dalībniekiem, ja viņi izmanto nesenu Signal versiju. Viņi varēs redzēt, ka esat izdzēsis ziņojumu.</string>
     <string name="ConversationFragment_quoted_message_not_found">Oriģinālā ziņa nav atrasta</string>
     <string name="ConversationFragment_quoted_message_no_longer_available">Oriģinālā ziņa vairs nav pieejama</string>
@@ -493,7 +493,10 @@
     <string name="ConversationFragment__cancel">Atcelt</string>
     <!-- Message shown after successfully blocking join requests for a user -->
     <string name="ConversationFragment__blocked">Bloķēts</string>
-
+    <!-- Label for a button displayed in conversation list to clear the chat filter -->
+    <string name="ConversationListFragment__clear_filter">Noņemt filtru</string>
+    <!-- Notice on chat list when no unread chats are available, centered on display -->
+    <string name="ConversationListFragment__no_unread_chats">Nav nelasītu sarunu</string>
     <plurals name="ConversationListFragment_delete_selected_conversations">
         <item quantity="zero">Vai izdzēst izvēlētās sarunas?</item>
         <item quantity="one">Vai izdzēst izvēlētās sarunu?</item>
@@ -592,6 +595,12 @@
 
     <!-- CreateGroupActivity -->
     <string name="CreateGroupActivity__select_members">Atlasiet grupas dalībniekus</string>
+
+    <!-- ConversationListFilterPullView -->
+    <!-- Note in revealable view before fully revealed -->
+    <string name="ConversationListFilterPullView__pull_down_to_filter">Pull down to filter</string>
+    <!-- Note in revealable view after fully revealed -->
+    <string name="ConversationListFilterPullView__release_to_filter">Release to filter</string>
 
     <!-- CreateProfileActivity -->
     <string name="CreateProfileActivity__profile">Profils</string>
@@ -920,7 +929,7 @@
     <!-- Info message shown in the middle of the screen, displayed when adding group details to an MMS Group -->
     <string name="AddGroupDetailsFragment__youve_selected_a_contact_that_doesnt_support">Jūs atzīmējāt kontaktu, kurš neatbalsta Signal grupas, tāpēc šī būs MMS grupa. Pielāgotos MMS grupu nosaukumus un attēlus redzēsiet tikai jūs.</string>
     <!-- Info message shown in the middle of the screen, displayed when adding group details to an MMS Group after SMS Phase 0 -->
-    <string name="AddGroupDetailsFragment__youve_selected_a_contact_that_doesnt_support_signal_groups_mms_removal">You\'ve selected a contact that doesn\'t support Signal groups, this group will be MMS. Custom MMS group names and photos will only be visible to you. Support for MMS groups will be removed soon to focus on encrypted messaging.</string>
+    <string name="AddGroupDetailsFragment__youve_selected_a_contact_that_doesnt_support_signal_groups_mms_removal">Jūs atlasījāt kontaktu, kas neatbalsta Signal grupas, tāpēc šī būs MMS grupa. Pielāgotie MMS grupu nosaukumi un fotoattēli būs redzami tikai jums. MMS grupu atbalstīšana drīzumā tiks pārtraukta, lai koncentrētos uz šifrētu ziņojumapmaiņu.</string>
 
     <!-- ManageGroupActivity -->
     <string name="ManageGroupActivity_member_requests_and_invites">Dalības pieprasījumi &amp; uzaicinājumi</string>
@@ -1526,7 +1535,7 @@
     <!-- In-conversation update message to indicate that the current contact is sms only and will need to migrate to signal to continue the conversation in signal. -->
     <string name="MessageRecord__you_can_no_longer_send_sms_messages_in_signal">Lietotnē Signal vairs nav iespējams sūtīt SMS ziņas. Uzaiciniet lietotāju %1$s izmantot Signal, lai turpinātu sarunu šeit.</string>
     <!-- Body for quote when message being quoted is an in-app payment message -->
-    <string name="MessageRecord__payment_s">Payment: %1$s</string>
+    <string name="MessageRecord__payment_s">Maksājums: %1$s</string>
 
     <!-- MessageRequestBottomView -->
     <string name="MessageRequestBottomView_accept">Apstiprināt</string>
@@ -2033,7 +2042,7 @@
     <!-- Displayed in the conversation list when you reacted to someone\'s story -->
     <string name="ThreadRecord__reacted_s_to_their_story">Jūsu reakcija uz lietotāja stāstu: %1$s</string>
     <!-- Displayed in the conversation list when your most recent message is a payment to or from the person the conversation is with -->
-    <string name="ThreadRecord_payment">Payment</string>
+    <string name="ThreadRecord_payment">Maksājums</string>
 
     <!-- UpdateApkReadyListener -->
     <string name="UpdateApkReadyListener_Signal_update">Signal atjauninājums</string>
@@ -2136,9 +2145,12 @@
     <!-- All media preview title when viewing media sent by another recipient to you (allows changing of \'You\' based on context) -->
     <string name="MediaPreviewActivity_s_to_you">%1$s jums</string>
     <string name="MediaPreviewActivity_media_no_longer_available">Mediju fails vairs nav pieejams</string>
+    <string name="MediaPreviewActivity_error_finding_message">Error finding message.</string>
     <string name="MediaPreviewActivity_cant_find_an_app_able_to_share_this_media">Nevar atrast lietotni, kas varētu kopīgot šo multivides saturu.</string>
     <string name="MediaPreviewActivity_dismiss_due_to_error">Aizvērt</string>
     <string name="MediaPreviewFragment_edit_media_error">Multivides faila kļūda</string>
+    <!-- This is displayed as a toast notification when we encounter an error deleting a message, including potentially on other people's devices -->
+    <string name="MediaPreviewFragment_media_delete_error">Error Deleting Message, Message May Still Exist</string>
 
     <!-- MessageNotifier -->
     <string name="MessageNotifier_d_new_messages_in_d_conversations">%1$d jaunas ziņas %2$dsarunās</string>
@@ -3209,7 +3221,7 @@
     <!-- Button to select a message and enter selection mode -->
     <string name="conversation_selection__menu_multi_select">Atlasīt</string>
     <!-- Button to view a in-chat payment message's full payment details -->
-    <string name="conversation_selection__menu_payment_details">Payment details</string>
+    <string name="conversation_selection__menu_payment_details">Maksājuma informācija</string>
 
     <!-- conversation_expiring_on -->
 
@@ -3279,6 +3291,8 @@
     <string name="text_secure_normal__menu_clear_passphrase">Bloķēt</string>
     <string name="text_secure_normal__mark_all_as_read">Atzīmēt visus kā lasītus</string>
     <string name="text_secure_normal__invite_friends">Uzaicināt draugus</string>
+    <!-- Overflow menu entry to filter unread chats -->
+    <string name="text_secure_normal__filter_unread_chats">Filtrēt nelasītās sarunas</string>
 
     <!-- verify_display_fragment -->
     <string name="verify_display_fragment_context_menu__copy_to_clipboard">Kopēt starpliktuvē</string>
@@ -3292,13 +3306,13 @@
     <string name="reminder_header_service_outage_text">Signal ir tehniskas grūtības. Tiek cītīgi strādāts, lai pēc iespējas ātrāk atjaunotu pakalpojumu.</string>
     <string name="reminder_header_progress">%1$d %%</string>
     <!-- Body text of a banner that will show at the top of the chat list when we temporarily cannot process the user's contacts -->
-    <string name="reminder_cds_warning_body">Signal\'s private contact discovery temporarily can\'t process your phone\'s contacts.</string>
+    <string name="reminder_cds_warning_body">Signal privāto kontaktu meklēšana īslaicīgi nevar apstrādāt jūsu tālruņa kontaktus.</string>
     <!-- Label for a button in a banner to learn more about why we temporarily can't process the user's contacts -->
-    <string name="reminder_cds_warning_learn_more">Learn more</string>
+    <string name="reminder_cds_warning_learn_more">Lasīt vairāk</string>
     <!-- Body text of a banner that will show at the top of the chat list when the user has so many contacts that we cannot ever process them -->
-    <string name="reminder_cds_permanent_error_body">Signal\'s private contact discovery can\'t process your phone\'s contacts.</string>
+    <string name="reminder_cds_permanent_error_body">Signal privāto kontaktu meklēšana nevar apstrādāt jūsu tālruņa kontaktus.</string>
     <!-- Label for a button in a banner to learn more about why we cannot process the user's contacts -->
-    <string name="reminder_cds_permanent_error_learn_more">Learn more</string>
+    <string name="reminder_cds_permanent_error_learn_more">Lasīt vairāk</string>
 
     <!-- media_preview -->
     <string name="media_preview__save_title">Saglabāt</string>
@@ -4111,6 +4125,8 @@
     <string name="SmsSettingsFragment__use_as_default_sms_app">Izmantot kā noklusējuma SMS lietotni</string>
     <!-- Preference title to export sms -->
     <string name="SmsSettingsFragment__export_sms_messages">Eksportēt SMS ziņas</string>
+    <!-- Preference title to re-export sms -->
+    <string name="SmsSettingsFragment__export_sms_messages_again">Vēlreiz eksportēt SMS ziņas</string>
     <!-- Preference title to delete sms -->
     <string name="SmsSettingsFragment__remove_sms_messages">Dzēst SMS ziņas</string>
     <!-- Snackbar text to confirm deletion -->
@@ -4119,6 +4135,8 @@
     <string name="SmsSettingsFragment__you_can_remove_sms_messages_from_signal_in_settings">Jebkurā brīdī iestatījumos varat no Signal izdzēst SMS ziņas.</string>
     <!-- Description for export sms preference -->
     <string name="SmsSettingsFragment__you_can_export_your_sms_messages_to_your_phones_sms_database">Varat eksportēt SMS ziņas uz tālruņa SMS datu bāzi</string>
+    <!-- Description for re-export sms preference -->
+    <string name="SmsSettingsFragment__exporting_again_can_result_in_duplicate_messages">Atkārtoti eksportējot, ziņas var tikt dublētas.</string>
     <!-- Description for remove sms preference -->
     <string name="SmsSettingsFragment__remove_sms_messages_from_signal_to_clear_up_storage_space">Izdzēsiet SMS ziņas no Signal, lai atbrīvotu vietu krātuvē.</string>
     <!-- Information message shown at the top of sms settings to indicate it is being removed soon. -->
@@ -4293,11 +4311,16 @@
     <string name="NotificationsSettingsFragment__unknown_ringtone">Nezināms zvana signāls</string>
 
     <!-- ConversationSettingsFragment -->
+    <!-- Dialog title displayed when non-admin tries to add a story to an audience group -->
+    <string name="ConversationSettingsFragment__cant_add_to_group_story">Can\'t add to group story</string>
+    <!-- Dialog message displayed when non-admin tries to add a story to an audience group -->
+    <string name="ConversationSettingsFragment__only_admins_of_this_group_can_add_to_its_story">Only admins of this group can add to its story</string>
     <!-- Error toasted when no activity can handle the add contact intent -->
     <string name="ConversationSettingsFragment__contacts_app_not_found">Kontaktu lietotne nav atrasta</string>
     <string name="ConversationSettingsFragment__send_message">Nosūtīt ziņu</string>
     <string name="ConversationSettingsFragment__start_video_call">Sākt videozvanu</string>
     <string name="ConversationSettingsFragment__start_audio_call">Sākt audiozvanu</string>
+    <string name="ConversationSettingsFragment__story">Story</string>
     <string name="ConversationSettingsFragment__message">Ziņa</string>
     <string name="ConversationSettingsFragment__video">Video</string>
     <string name="ConversationSettingsFragment__audio">Audio</string>
@@ -4466,6 +4489,10 @@
     <string name="MultiselectForwardFragment__limit_reached">Sasniegts ierobežojums</string>
 
     <!-- Media V2 -->
+    <!-- Dialog message when sending a story via an add to group story button -->
+    <string name="MediaReviewFragment__add_to_the_group_story">Add to the group story \"%1$s\"</string>
+    <!-- Positive dialog action when sending a story via an add to group story button -->
+    <string name="MediaReviewFragment__add_to_story">Add to story</string>
     <string name="MediaReviewFragment__add_a_message">Pievienojiet ziņu</string>
     <string name="MediaReviewFragment__add_a_reply">Pievienot atbildi</string>
     <string name="MediaReviewFragment__send_to">Sūtīt</string>
@@ -4512,11 +4539,11 @@
 
     <string name="ViewBadgeBottomSheetDialogFragment__become_a_sustainer">Kļūstiet par uzturētāju</string>
     <!-- Title of a page in the bottom sheet. Placeholder is a user's short-name -->
-    <string name="ViewBadgeBottomSheetDialogFragment__s_supports_signal">%1$s supports Signal</string>
+    <string name="ViewBadgeBottomSheetDialogFragment__s_supports_signal">%1$s atbalsta Signal</string>
     <!-- Description of a page in the bottom sheet of a monthly badge. Placeholder is a user's short-name -->
-    <string name="ViewBadgeBottomSheetDialogFragment__s_supports_signal_with_a_monthly">%1$s supports Signal with a monthly donation. Signal is a nonprofit with no advertisers or investors, supported only by people like you.</string>
+    <string name="ViewBadgeBottomSheetDialogFragment__s_supports_signal_with_a_monthly">%1$s atbalsta Signal ar ikmēneša ziedojumu. Signal ir bezpeļņas organizācija bez reklāmdevējiem vai investoriem. Mūsu vienīgais atbalsts ir tādi cilvēki kā jūs.</string>
     <!-- Description of a page in the bottom sheet of a one-time badge. Placeholder is a user's short-name -->
-    <string name="ViewBadgeBottomSheetDialogFragment__s_supports_signal_with_a_donation">%1$s supports Signal with a donation. Signal is a nonprofit with no advertisers or investors, supported only by people like you.</string>
+    <string name="ViewBadgeBottomSheetDialogFragment__s_supports_signal_with_a_donation">%1$s atbalsta Signal ar ziedojumu. Signal ir bezpeļņas organizācija bez reklāmdevējiem vai investoriem. Mūsu vienīgais atbalsts ir tādi cilvēki kā jūs.</string>
 
     <string name="ImageView__badge">Nozīmīte</string>
 
@@ -4542,17 +4569,17 @@
     <string name="Subscription__expires_s">Beigsies: %1$s</string>
 
     <!-- Title of learn more sheet -->
-    <string name="SubscribeLearnMoreBottomSheetDialogFragment__signal_is_different">Signal is different.</string>
+    <string name="SubscribeLearnMoreBottomSheetDialogFragment__signal_is_different">Signal atšķiras no citiem.</string>
     <!-- First small text blurb on learn more sheet -->
-    <string name="SubscribeLearnMoreBottomSheetDialogFragment__private_messaging">Private messaging. No ads, no trackers, no surveillance.</string>
+    <string name="SubscribeLearnMoreBottomSheetDialogFragment__private_messaging">Privāta ziņapmaiņa. Bez reklāmām, bez izsekotājiem, bez novērošanas.</string>
     <!-- Second small text blurb on learn more sheet -->
-    <string name="SubscribeLearnMoreBottomSheetDialogFragment__signal_is_supported_by">Signal is supported by donations, meaning that your privacy is at the center of everything we do. Signal is built for you; not your data and not for profit.</string>
+    <string name="SubscribeLearnMoreBottomSheetDialogFragment__signal_is_supported_by">Signal finansējums nāk no ziedojumiem. Tas nozīmē, ka jūsu privātums ir visu mūsu darbību pamatā. Lietotne Signal ir radīta jums, nevis jūsu datiem vai peļņas gūšanai.</string>
     <!-- Third small text blurb on learn more sheet -->
-    <string name="SubscribeLearnMoreBottomSheetDialogFragment__if_you_can">If you can, please donate today to keep Signal fun, dependable, and available for everyone.</string>
+    <string name="SubscribeLearnMoreBottomSheetDialogFragment__if_you_can">Ja iespējams, lūdzu, ziedojiet jau šodien, lai Signal arī turpmāk būtu aizraujošs, uzticams un pieejams ikvienam.</string>
 
     <string name="SubscribeThanksForYourSupportBottomSheetDialogFragment__thanks_for_your_support">Pateicamies par jūsu atbalstu!</string>
     <!-- Subtext underneath the dialog title on the thanks sheet -->
-    <string name="SubscribeThanksForYourSupportBottomSheetDialogFragment__youve_earned_a_donor_badge">You\'ve earned a donor badge from Signal! Display it on your profile to show off your support.</string>
+    <string name="SubscribeThanksForYourSupportBottomSheetDialogFragment__youve_earned_a_donor_badge">Jums pienākas Signal ziedotāja nozīmīte! Pievienojiet to profilam, lai parādītu savu atbalstu.</string>
     <string name="SubscribeThanksForYourSupportBottomSheetDialogFragment__you_can_also">Jūs varat arī</string>
     <string name="SubscribeThanksForYourSupportBottomSheetDialogFragment__become_a_montly_sustainer">Kļūstiet par ikmēneša Uzturētāju</string>
     <string name="SubscribeThanksForYourSupportBottomSheetDialogFragment__display_on_profile">Rādīt profilā</string>
@@ -4692,6 +4719,8 @@
     <string name="DeclineCode__your_card_has_expired">Jūsu kartes derīguma termiņš ir beidzies. Atjauniniet savu maksājuma veidu Google Pay un mēģiniet vēlreiz.</string>
     <!-- Stripe decline code go to google pay action label -->
     <string name="DeclineCode__go_to_google_pay">Doties uz Google Pay</string>
+    <!-- Stripe decline code try credit card again action label -->
+    <string name="DeclineCode__try">Try again</string>
     <!-- Stripe decline code incorrect card number -->
     <string name="DeclineCode__your_card_number_is_incorrect">Jūsu kartes numurs ir nepareizs. Atjauniniet to Google Pay un mēģniet vēlreiz.</string>
     <!-- Stripe decline code incorrect cvc -->
@@ -4706,6 +4735,22 @@
     <string name="DeclineCode__try_completing_the_payment_again">Mēģiniet pabeigt maksājumu vēlreiz vai sazinieties ar savu banku, lai iegūtu vairāk informācijas.</string>
     <!-- Stripe decline code processing error -->
     <string name="DeclineCode__try_again">Mēģiniet vēlreiz vai sazinieties ar savu banku, lai iegūtu vairāk informācijas.</string>
+
+    <!-- Credit Card decline code error strings -->
+    <!-- Stripe decline code approve_with_id for credit cards displayed in a notification or dialog -->
+    <string name="DeclineCode__verify_your_card_details_are_correct_and_try_again">Verify your card details are correct and try again.</string>
+    <!-- Stripe decline code call_issuer for credit cards displayed in a notification or dialog -->
+    <string name="DeclineCode__verify_your_card_details_are_correct_and_try_again_if_the_problem_continues">Verify your card details are correct and try again. If the problem continues, contact your bank.</string>
+    <!-- Stripe decline code expired_card for credit cards displayed in a notification or dialog -->
+    <string name="DeclineCode__your_card_has_expired_verify_your_card_details">Your card has expired. Verify your card details are correct and try again.</string>
+    <!-- Stripe decline code incorrect_cvc and invalid_cvc for credit cards displayed in a notification or dialog -->
+    <string name="DeclineCode__your_cards_cvc_number_is_incorrect_verify_your_card_details">Your card\'s CVC number is incorrect. Verify your card details are correct and try again.</string>
+    <!-- Stripe decline code invalid_expiry_month for credit cards displayed in a notification or dialog -->
+    <string name="DeclineCode__the_expiration_month_on_your_card_is_incorrect">The expiration month on your card is incorrect. Verify your card details are correct and try again.</string>
+    <!-- Stripe decline code invalid_expiry_year for credit cards displayed in a notification or dialog -->
+    <string name="DeclineCode__the_expiration_year_on_your_card_is_incorrect">The expiration year on your card is incorrect. Verify your card details are correct and try again.</string>
+    <!-- Stripe decline code incorrect_number and invalid_number for credit cards displayed in a notification or dialog -->
+    <string name="DeclineCode__your_card_number_is_incorrect_verify_your_card_details">Your card number is incorrect. Verify your card details are correct and try again.</string>
 
     <!-- Title of create notification profile screen -->
     <string name="EditNotificationProfileFragment__name_your_profile">Dodiet profilam nosaukumu</string>
@@ -4960,6 +5005,8 @@
         <item quantity="one">%1$d atbilde</item>
         <item quantity="other">%1$d atbildes</item>
     </plurals>
+    <!-- Label on group stories to add a story -->
+    <string name="StoryViewerPageFragment__add">Add</string>
     <!-- Used when view receipts are disabled -->
     <string name="StoryViewerPageFragment__views_off">Skatīšana izslēgta</string>
     <!-- Used to join views and replies when both exist on a story item -->
@@ -4979,7 +5026,7 @@
     <!-- Displayed when a story has no views -->
     <string name="StoryViewsFragment__no_views_yet">Vēl nav skatījumu</string>
     <!-- Displayed when user has disabled receipts -->
-    <string name="StoryViewsFragment__enable_view_receipts_to_see_whos_viewed_your_story">Enable view receipts to see who\'s viewed your stories.</string>
+    <string name="StoryViewsFragment__enable_view_receipts_to_see_whos_viewed_your_story">Iespējojiet skatīšanas apliecinājumus, lai uzzinātu, kuri lietotāji ir redzējuši jūsu stāstus.</string>
     <!-- Button label displayed when user has disabled receipts -->
     <string name="StoryViewsFragment__go_to_settings">Atvērt iestatījumus</string>
     <!-- Dialog action to remove viewer from a story -->
@@ -5314,6 +5361,12 @@
         <item quantity="one">%1$s · %2$d skatītājs</item>
         <item quantity="other">%1$s · %2$d skatītāji</item>
     </plurals>
+    <!-- Label under name for my story -->
+    <plurals name="ContactSearchItems__my_story_s_dot_d_excluded">
+        <item quantity="zero">%1$s · %2$d excluded</item>
+        <item quantity="one">%1$s · %2$d excluded</item>
+        <item quantity="other">%1$s · %2$d excluded</item>
+    </plurals>
     <!-- Label under name for My Story when first sending to my story -->
     <string name="ContactSearchItems__tap_to_choose_your_viewers">Pieskarieties, lai izvēlētos skatītājus</string>
     <!-- Label for context menu item to open story settings -->
@@ -5548,6 +5601,16 @@
     <!-- Message of dialog -->
     <string name="RemoveSmsMessagesDialogFragment__you_can_now_remove_sms_messages_from_signal">Tagad varat izdzēst SMS ziņas no Signal, lai atbrīvotu vietu krātuvē. Tās joprojām būs pieejamas citām SMS ziņu lietotnēm jūsu tālrunī, pat ja tās izdzēsīsiet.</string>
 
+    <!-- ReExportSmsMessagesDialogFragment -->
+    <!-- Action button to re-export messages -->
+    <string name="ReExportSmsMessagesDialogFragment__continue">Turpināt</string>
+    <!-- Action button to cancel re-export process -->
+    <string name="ReExportSmsMessagesDialogFragment__cancel">Atcelt</string>
+    <!-- Title of dialog -->
+    <string name="ReExportSmsMessagesDialogFragment__export_sms_again">Vai eksportēt SMS vēlreiz?</string>
+    <!-- Message of dialog -->
+    <string name="ReExportSmsMessagesDialogFragment__you_already_exported_your_sms_messages">Jūs jau eksportējāt SMS ziņas.\nBRĪDINĀJUMS. Ja turpināsiet, ziņas var tikt dublētas.</string>
+
     <!-- SetSignalAsDefaultSmsAppFragment -->
     <!-- Title of the screen -->
     <string name="SetSignalAsDefaultSmsAppFragment__set_signal_as_the_default_sms_app">Iestatīt Signal kā noklusējuma SMS ziņu lietotni</string>
@@ -5629,11 +5692,11 @@
 
     <!-- DonateToSignalFragment -->
     <!-- Title below avatar -->
-    <string name="DonateToSignalFragment__privacy_over_profit">Privay over profit</string>
+    <string name="DonateToSignalFragment__privacy_over_profit">Privātums ir svarīgāks par peļņu</string>
     <!-- Continue button label -->
     <string name="DonateToSignalFragment__continue">Turpināt</string>
     <!-- Description below title -->
-    <string name="DonateToSignalFragment__private_messaging">Private messaging, funded by you. No ads, no tracking, no compromise. Donate now to support Signal.</string>
+    <string name="DonateToSignalFragment__private_messaging">Privāta ziņapmaiņa, ko finansējat jūs. Bez reklāmām, bez izsekošanas, bez kompromisiem. Ziedojiet tūlīt, lai atbalstītu Signal.</string>
     <!-- Donation pill toggle monthly text -->
     <string name="DonationPillToggle__monthly">Ikmēneša</string>
     <!-- Donation pill toggle one-time text -->
@@ -5654,48 +5717,62 @@
     </plurals>
     <!-- Button label for paying with a credit card -->
     <string name="GatewaySelectorBottomSheet__credit_or_debit_card">Kredītkarte vai debetkarte</string>
+    <!-- Sheet summary when giving a gift -->
+    <string name="GatewaySelectorBottomSheet__send_a_gift_badge">Nosūtīt dāvanas nozīmīti</string>
 
     <!-- StripePaymentInProgressFragment -->
     <string name="StripePaymentInProgressFragment__cancelling">Notiek atcelšana…</string>
 
     <!-- The title of a bottom sheet dialog that tells the user we temporarily can't process their contacts. -->
-    <string name="CdsTemporaryErrorBottomSheet_title">Too many contacts have been processed</string>
+    <string name="CdsTemporaryErrorBottomSheet_title">Ir apstrādāts pārāk daudz kontaktu</string>
     <!-- The first part of the body text in a bottom sheet dialog that tells the user we temporarily can't process their contacts. The placeholder represents the number of days the user will have to wait until they can again. -->
     <plurals name="CdsTemporaryErrorBottomSheet_body1">
-        <item quantity="zero">Another attempt to process your contacts will be made within %1$d days.</item>
-        <item quantity="one">Another attempt to process your contacts will be made within %1$d day.</item>
-        <item quantity="other">Another attempt to process your contacts will be made within %1$d days.</item>
+        <item quantity="zero">Atkārtots mēģinājums apstrādāt jūsu kontaktus tiks veikts %1$d dienu laikā.</item>
+        <item quantity="one">Atkārtots mēģinājums apstrādāt jūsu kontaktus tiks veikts %1$d dienas laikā.</item>
+        <item quantity="other">Atkārtots mēģinājums apstrādāt jūsu kontaktus tiks veikts %1$d dienu laikā.</item>
     </plurals>
     <!-- The second part of the body text in a bottom sheet dialog that advises the user to remove contacts from their phone to fix the issue. -->
-    <string name="CdsTemporaryErrorBottomSheet_body2">To resolve this issue sooner, you can consider removing contacts or accounts on your phone that are syncing a lot of contacts.</string>
+    <string name="CdsTemporaryErrorBottomSheet_body2">Lai atrisinātu šo problēmu ātrāk, varat apsvērt izdzēst no tālruņa kontaktus vai kontus, kas sinhronizē lielu skaitu kontaktu.</string>
     <!-- A button label in a bottom sheet that will navigate the user to their contacts settings. -->
-    <string name="CdsTemporaryErrorBottomSheet_contacts_button">Open contacts</string>
+    <string name="CdsTemporaryErrorBottomSheet_contacts_button">Atvērt kontaktus</string>
     <!-- A toast that will be shown if we are unable to open the user's default contacts app. -->
-    <string name="CdsTemporaryErrorBottomSheet_no_contacts_toast">No contacts app found</string>
+    <string name="CdsTemporaryErrorBottomSheet_no_contacts_toast">Nav atrasta kontaktu lietotne</string>
 
     <!-- The title of a bottom sheet dialog that tells the user we can't process their contacts. -->
-    <string name="CdsPermanentErrorBottomSheet_title">Your contacts can\'t be processed</string>
+    <string name="CdsPermanentErrorBottomSheet_title">Jūsu kontaktus nevar apstrādāt</string>
     <!-- The first part of the body text in a bottom sheet dialog that tells the user we can't process their contacts. -->
-    <string name="CdsPermanentErrorBottomSheet_body">The number of contacts on your phone exceeds the limit Signal can process. To find contacts on Signal, consider removing contacts or accounts on your phone that are syncing a lot of contacts.</string>
+    <string name="CdsPermanentErrorBottomSheet_body">Kontaktu skaits tālrunī pārsniedz Signal apstrādes ierobežojumu. Lai meklētu kontaktus lietotnē Signal, varat apsvērt izdzēst no tālruņa kontaktus vai kontus, kas sinhronizē lielu skaitu kontaktu.</string>
     <!-- The first part of the body text in a bottom sheet dialog that tells the user we can't process their contacts. -->
-    <string name="CdsPermanentErrorBottomSheet_learn_more">Learn more</string>
+    <string name="CdsPermanentErrorBottomSheet_learn_more">Lasīt vairāk</string>
     <!-- A button label in a bottom sheet that will navigate the user to their contacts settings. -->
-    <string name="CdsPermanentErrorBottomSheet_contacts_button">Open contacts</string>
+    <string name="CdsPermanentErrorBottomSheet_contacts_button">Atvērt kontaktus</string>
     <!-- A toast that will be shown if we are unable to open the user's default contacts app. -->
-    <string name="CdsPermanentErrorBottomSheet_no_contacts_toast">No contacts app found</string>
+    <string name="CdsPermanentErrorBottomSheet_no_contacts_toast">Nav atrasta kontaktu lietotne</string>
 
     <!-- PaymentMessageView -->
     <!-- In-chat conversation message shown when you sent a payment to another person, placeholder is the other person name -->
-    <string name="PaymentMessageView_you_sent_s">You sent %1$s</string>
+    <string name="PaymentMessageView_you_sent_s">Jūs nosūtījāt lietotājam %1$s</string>
     <!-- In-chat conversation message shown when another person sent a payment to you, placeholder is the other person name -->
-    <string name="PaymentMessageView_s_sent_you">%1$s sent you</string>
+    <string name="PaymentMessageView_s_sent_you">%1$s nosūtīja jums</string>
 
     <!-- YourInformationIsPrivateBottomSheet -->
-    <string name="YourInformationIsPrivateBottomSheet__your_information_is_private">Your information is private</string>
-    <string name="YourInformationIsPrivateBottomSheet__signal_does_not_collect">Signal does not collect or store any of your personal information when you make a donation.</string>
-    <string name="YourInformationIsPrivateBottomSheet__we_use_stripe">We use Stripe as our payment processor to receive your donations. We don\'t access, store, or save any of the information you provide to them.</string>
-    <string name="YourInformationIsPrivateBottomSheet__signal_does_not_and_cannot">Signal does not and cannot connect your donation to your Signal account.</string>
-    <string name="YourInformationIsPrivateBottomSheet__thank_you">Thank you for your support!</string>
+    <string name="YourInformationIsPrivateBottomSheet__your_information_is_private">Jūsu informācija ir konfidenciāla</string>
+    <string name="YourInformationIsPrivateBottomSheet__signal_does_not_collect">Signal neapkopo un neuzglabā jūsu personisko informāciju, kad veicat ziedojumu.</string>
+    <string name="YourInformationIsPrivateBottomSheet__we_use_stripe">Mēs izmantojam Stripe kā maksājumu apstrādātāju, lai saņemtu jūsu ziedojumus. Mēs neuzglabājam, nesaglabājam un nepiekļūstam informācijai, ko sniedzat Stripe.</string>
+    <string name="YourInformationIsPrivateBottomSheet__signal_does_not_and_cannot">Signal nesaista un nevar saistīt jūsu ziedojumu ar jūsu Signal kontu.</string>
+    <string name="YourInformationIsPrivateBottomSheet__thank_you">Paldies par jūsu atbalstu!</string>
+
+    <!-- GroupStoryEducationSheet -->
+    <!-- Displayed as the title of the education bottom sheet -->
+    <string name="GroupStoryEducationSheet__introducing_group_stories">Jaunums: grupu stāsti</string>
+    <!-- Line item on the sheet explaining group stories -->
+    <string name="GroupStoryEducationSheet__share_story_updates_to">Kopīgojiet stāsta papildinājumus grupas čatā, kurā jau piedalāties.</string>
+    <!-- Line item on the sheet explaining that anyone in the group can share to group stories -->
+    <string name="GroupStoryEducationSheet__anyone_in_the_group">Jebkurš grupas čata dalībnieks var papildināt stāstu.</string>
+    <!-- Line item on the sheet explaining that anyone in the group can view replies -->
+    <string name="GroupStoryEducationSheet__all_group_chat_members">Visi grupas čata dalībnieki var skatīt stāstu atbildes.</string>
+    <!-- Button label to dismiss sheet -->
+    <string name="GroupStoryEducationSheet__next">Tālāk</string>
 
     <!-- EOF -->
 

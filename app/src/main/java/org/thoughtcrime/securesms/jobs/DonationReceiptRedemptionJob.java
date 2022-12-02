@@ -8,7 +8,7 @@ import org.signal.libsignal.zkgroup.InvalidInputException;
 import org.signal.libsignal.zkgroup.receipts.ReceiptCredentialPresentation;
 import org.thoughtcrime.securesms.components.settings.app.subscription.errors.DonationError;
 import org.thoughtcrime.securesms.components.settings.app.subscription.errors.DonationErrorSource;
-import org.thoughtcrime.securesms.database.MessageDatabase;
+import org.thoughtcrime.securesms.database.MessageTable;
 import org.thoughtcrime.securesms.database.NoSuchMessageException;
 import org.thoughtcrime.securesms.database.SignalDatabase;
 import org.thoughtcrime.securesms.database.model.MessageRecord;
@@ -39,6 +39,7 @@ public class DonationReceiptRedemptionJob extends BaseJob {
   public static final String SUBSCRIPTION_QUEUE                    = "ReceiptRedemption";
   public static final String KEY                                   = "DonationReceiptRedemptionJob";
   public static final String INPUT_RECEIPT_CREDENTIAL_PRESENTATION = "data.receipt.credential.presentation";
+  public static final String INPUT_KEEP_ALIVE_409                  = "data.keep.alive.409";
   public static final String DATA_ERROR_SOURCE                     = "data.error.source";
   public static final String DATA_GIFT_MESSAGE_ID                  = "data.gift.message.id";
   public static final String DATA_PRIMARY                          = "data.primary";
@@ -160,6 +161,12 @@ public class DonationReceiptRedemptionJob extends BaseJob {
   }
 
   private void doRun() throws Exception {
+    boolean isKeepAlive409 = getInputData() != null && getInputData().getBooleanOrDefault(INPUT_KEEP_ALIVE_409, false);
+    if (isKeepAlive409) {
+      Log.d(TAG, "Keep-Alive redemption job hit a 409. Exiting.", true);
+      return;
+    }
+
     ReceiptCredentialPresentation presentation = getPresentation();
     if (presentation == null) {
       Log.d(TAG, "No presentation available. Exiting.", true);
@@ -199,7 +206,7 @@ public class DonationReceiptRedemptionJob extends BaseJob {
     } else if (giftMessageId != NO_ID) {
       Log.d(TAG, "Marking gift redemption completed for " + giftMessageId);
       SignalDatabase.mms().markGiftRedemptionCompleted(giftMessageId);
-      MessageDatabase.MarkedMessageInfo markedMessageInfo = SignalDatabase.mms().setIncomingMessageViewed(giftMessageId);
+      MessageTable.MarkedMessageInfo markedMessageInfo = SignalDatabase.mms().setIncomingMessageViewed(giftMessageId);
       if (markedMessageInfo != null) {
         Log.d(TAG, "Marked gift message viewed for " + giftMessageId);
         MultiDeviceViewedUpdateJob.enqueue(Collections.singletonList(markedMessageInfo.getSyncMessageId()));

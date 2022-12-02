@@ -25,12 +25,12 @@ import org.thoughtcrime.securesms.components.settings.app.subscription.DonationP
 import org.thoughtcrime.securesms.components.settings.app.subscription.donate.DonationProcessorAction
 import org.thoughtcrime.securesms.components.settings.app.subscription.donate.DonationProcessorActionResult
 import org.thoughtcrime.securesms.components.settings.app.subscription.donate.DonationProcessorStage
-import org.thoughtcrime.securesms.databinding.StripePaymentInProgressFragmentBinding
+import org.thoughtcrime.securesms.databinding.DonationInProgressFragmentBinding
 import org.thoughtcrime.securesms.util.LifecycleDisposable
 import org.thoughtcrime.securesms.util.fragments.requireListener
 import org.thoughtcrime.securesms.util.navigation.safeNavigate
 
-class StripePaymentInProgressFragment : DialogFragment(R.layout.stripe_payment_in_progress_fragment) {
+class StripePaymentInProgressFragment : DialogFragment(R.layout.donation_in_progress_fragment) {
 
   companion object {
     private val TAG = Log.tag(StripePaymentInProgressFragment::class.java)
@@ -38,7 +38,7 @@ class StripePaymentInProgressFragment : DialogFragment(R.layout.stripe_payment_i
     const val REQUEST_KEY = "REQUEST_KEY"
   }
 
-  private val binding by ViewBinderDelegate(StripePaymentInProgressFragmentBinding::bind)
+  private val binding by ViewBinderDelegate(DonationInProgressFragmentBinding::bind)
   private val args: StripePaymentInProgressFragmentArgs by navArgs()
   private val disposables = LifecycleDisposable()
 

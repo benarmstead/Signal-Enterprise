@@ -357,11 +357,11 @@ class InternalSettingsFragment : DSLSettingsFragment(R.string.preferences__inter
       sectionHeaderPref(DSLSettingsText.from("Group call server"))
 
       radioPref(
-        title = DSLSettingsText.from("Default"),
+        title = DSLSettingsText.from("Production server"),
         summary = DSLSettingsText.from(BuildConfig.SIGNAL_SFU_URL),
         isChecked = state.callingServer == BuildConfig.SIGNAL_SFU_URL,
         onClick = {
-          viewModel.setInternalGroupCallingServer(null)
+          viewModel.setInternalGroupCallingServer(BuildConfig.SIGNAL_SFU_URL)
         }
       )
 
@@ -428,6 +428,16 @@ class InternalSettingsFragment : DSLSettingsFragment(R.string.preferences__inter
           title = DSLSettingsText.from("Set error state."),
           onClick = {
             findNavController().safeNavigate(InternalSettingsFragmentDirections.actionInternalSettingsFragmentToDonorErrorConfigurationFragment())
+          }
+        )
+
+        clickPref(
+          title = DSLSettingsText.from("Clear keep-alive timestamps"),
+          onClick = {
+            SignalStore.donationsValues().subscriptionEndOfPeriodRedemptionStarted = 0L
+            SignalStore.donationsValues().subscriptionEndOfPeriodConversionStarted = 0L
+            SignalStore.donationsValues().setLastEndOfPeriod(0L)
+            Toast.makeText(context, "Cleared", Toast.LENGTH_SHORT)
           }
         )
       }
@@ -509,6 +519,14 @@ class InternalSettingsFragment : DSLSettingsFragment(R.string.preferences__inter
         isEnabled = state.canClearOnboardingState,
         onClick = {
           viewModel.onClearOnboardingState()
+        }
+      )
+
+      clickPref(
+        title = DSLSettingsText.from("Clear choose initial my story privacy state"),
+        isEnabled = true,
+        onClick = {
+          SignalStore.storyValues().userHasBeenNotifiedAboutStories = false
         }
       )
 

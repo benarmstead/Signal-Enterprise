@@ -137,11 +137,11 @@
     <!-- Title of fragment detailing the donation amount for one-time donation, displayed above the credit card text fields -->
     <string name="CreditCardFragment__donation_amount_s">Износ на донација: %1$s</string>
     <!-- Title of fragment detailing the donation amount for monthly donation, displayed above the credit card text fields -->
-    <string name="CreditCardFragment__donation_amount_s_per_month">Donation amount: %1$s/month</string>
+    <string name="CreditCardFragment__donation_amount_s_per_month">Износ на донација: %1$s/месечно</string>
     <!-- Explanation of how to fill in the form, displayed above the credit card text fields -->
     <string name="CreditCardFragment__enter_your_card_information_below">Внесете ги податоците од вашата платежна картичка подолу</string>
     <!-- Explanation of how to fill in the form and a note about pii, displayed above the credit card text fields -->
-    <string name="CreditCardFragment__enter_your_card_details">Enter your card details. Signal does not collect or store your personal information.</string>
+    <string name="CreditCardFragment__enter_your_card_details">Внесете ги податоците од вашата платежна картичка. Signal не ги собира ниту сочувува вашите лични податоци.</string>
     <!-- Displayed as a hint in the card number text field -->
     <string name="CreditCardFragment__card_number">Број на картичка</string>
     <!-- Displayed as a hint in the card expiry text field -->
@@ -453,9 +453,9 @@
     <string name="ConversationFragment_delete_for_me">Избриши за мене</string>
     <string name="ConversationFragment_delete_for_everyone">Избриши за сите</string>
     <!-- Dialog button for deleting one or more note-to-self messages only on this device, leaving that same message intact on other devices. -->
-    <string name="ConversationFragment_delete_on_this_device">Delete on this device</string>
+    <string name="ConversationFragment_delete_on_this_device">Избриши на овој уред</string>
     <!-- Dialog button for deleting one or more note-to-self messages on all linked devices. -->
-    <string name="ConversationFragment_delete_everywhere">Delete everywhere</string>
+    <string name="ConversationFragment_delete_everywhere">Избриши секаде</string>
     <string name="ConversationFragment_this_message_will_be_deleted_for_everyone_in_the_conversation">Оваа порака ќе биде избришана за сите во разговорот ако се на понова верзија на Signal. Тие ќе можат да видат дека сте ја избришале пораката.</string>
     <string name="ConversationFragment_quoted_message_not_found">Оригиналната порака не е пронајдена</string>
     <string name="ConversationFragment_quoted_message_no_longer_available">Оригиналната порака повеќе не е достапна</string>
@@ -486,7 +486,10 @@
     <string name="ConversationFragment__cancel">Откажи</string>
     <!-- Message shown after successfully blocking join requests for a user -->
     <string name="ConversationFragment__blocked">Блокиран/а</string>
-
+    <!-- Label for a button displayed in conversation list to clear the chat filter -->
+    <string name="ConversationListFragment__clear_filter">Отстрани го филтерот</string>
+    <!-- Notice on chat list when no unread chats are available, centered on display -->
+    <string name="ConversationListFragment__no_unread_chats">Немате непрочитани разговори</string>
     <plurals name="ConversationListFragment_delete_selected_conversations">
         <item quantity="one">Да го избришам избраниот разговор?</item>
         <item quantity="other">Да ги избришам избраните разговори?</item>
@@ -571,6 +574,12 @@
 
     <!-- CreateGroupActivity -->
     <string name="CreateGroupActivity__select_members">Изберете членови</string>
+
+    <!-- ConversationListFilterPullView -->
+    <!-- Note in revealable view before fully revealed -->
+    <string name="ConversationListFilterPullView__pull_down_to_filter">Pull down to filter</string>
+    <!-- Note in revealable view after fully revealed -->
+    <string name="ConversationListFilterPullView__release_to_filter">Release to filter</string>
 
     <!-- CreateProfileActivity -->
     <string name="CreateProfileActivity__profile">Профил</string>
@@ -882,7 +891,7 @@
     <!-- Info message shown in the middle of the screen, displayed when adding group details to an MMS Group -->
     <string name="AddGroupDetailsFragment__youve_selected_a_contact_that_doesnt_support">Избравте контакт кој не поддржува Signal групи, па во оваа група ќе се испраќаат MMS пораки. Само вам ќе ви бидат видливи персонализираните имиња и слики на MMS групи.</string>
     <!-- Info message shown in the middle of the screen, displayed when adding group details to an MMS Group after SMS Phase 0 -->
-    <string name="AddGroupDetailsFragment__youve_selected_a_contact_that_doesnt_support_signal_groups_mms_removal">You\'ve selected a contact that doesn\'t support Signal groups, this group will be MMS. Custom MMS group names and photos will only be visible to you. Support for MMS groups will be removed soon to focus on encrypted messaging.</string>
+    <string name="AddGroupDetailsFragment__youve_selected_a_contact_that_doesnt_support_signal_groups_mms_removal">Избравте контакт кој не поддржува Signal групи, па во оваа група ќе се испраќаат MMS пораки. Само вам ќе ви бидат видливи персонализираните имиња и слики на MMS групи. Наскоро ќе ја отстраниме поддршката на MMS групи за да се фокусираме на целосно шифрирани разговори.</string>
 
     <!-- ManageGroupActivity -->
     <string name="ManageGroupActivity_member_requests_and_invites">Барања за членство и покани</string>
@@ -1466,7 +1475,7 @@
     <!-- In-conversation update message to indicate that the current contact is sms only and will need to migrate to signal to continue the conversation in signal. -->
     <string name="MessageRecord__you_can_no_longer_send_sms_messages_in_signal">Повеќе не можете да испраќате SMS пораки на Signal. Испратете покана на %1$s за користење Signal за да продолжите со разговорот тука.</string>
     <!-- Body for quote when message being quoted is an in-app payment message -->
-    <string name="MessageRecord__payment_s">Payment: %1$s</string>
+    <string name="MessageRecord__payment_s">Плаќања: %1$s</string>
 
     <!-- MessageRequestBottomView -->
     <string name="MessageRequestBottomView_accept">Прифати</string>
@@ -1960,7 +1969,7 @@
     <!-- Displayed in the conversation list when you reacted to someone\'s story -->
     <string name="ThreadRecord__reacted_s_to_their_story">Реагиравте со %1$s на нивната приказна</string>
     <!-- Displayed in the conversation list when your most recent message is a payment to or from the person the conversation is with -->
-    <string name="ThreadRecord_payment">Payment</string>
+    <string name="ThreadRecord_payment">Плаќања</string>
 
     <!-- UpdateApkReadyListener -->
     <string name="UpdateApkReadyListener_Signal_update">Signal ажурирање</string>
@@ -2062,9 +2071,12 @@
     <!-- All media preview title when viewing media sent by another recipient to you (allows changing of \'You\' based on context) -->
     <string name="MediaPreviewActivity_s_to_you">%1$s до Вас</string>
     <string name="MediaPreviewActivity_media_no_longer_available">Медијата повеќе не е достапна.</string>
+    <string name="MediaPreviewActivity_error_finding_message">Error finding message.</string>
     <string name="MediaPreviewActivity_cant_find_an_app_able_to_share_this_media">Не е пронајдена апликација која може да го сподели овој тип на медија.</string>
     <string name="MediaPreviewActivity_dismiss_due_to_error">Затвори</string>
     <string name="MediaPreviewFragment_edit_media_error">Грешка во медијата</string>
+    <!-- This is displayed as a toast notification when we encounter an error deleting a message, including potentially on other people's devices -->
+    <string name="MediaPreviewFragment_media_delete_error">Error Deleting Message, Message May Still Exist</string>
 
     <!-- MessageNotifier -->
     <string name="MessageNotifier_d_new_messages_in_d_conversations">%1$d нови пораки во %2$d разговори</string>
@@ -3122,7 +3134,7 @@
     <!-- Button to select a message and enter selection mode -->
     <string name="conversation_selection__menu_multi_select">Избери</string>
     <!-- Button to view a in-chat payment message's full payment details -->
-    <string name="conversation_selection__menu_payment_details">Payment details</string>
+    <string name="conversation_selection__menu_payment_details">Детали за плаќањето</string>
 
     <!-- conversation_expiring_on -->
 
@@ -3192,6 +3204,8 @@
     <string name="text_secure_normal__menu_clear_passphrase">Заклучи</string>
     <string name="text_secure_normal__mark_all_as_read">Обележи сѐ како прочитано</string>
     <string name="text_secure_normal__invite_friends">Покани пријатели</string>
+    <!-- Overflow menu entry to filter unread chats -->
+    <string name="text_secure_normal__filter_unread_chats">Филтрирај ги непрочитаните разговори</string>
 
     <!-- verify_display_fragment -->
     <string name="verify_display_fragment_context_menu__copy_to_clipboard">Копирај на таблата со исечоци</string>
@@ -3205,13 +3219,13 @@
     <string name="reminder_header_service_outage_text">Signal се соочува со технички потешкотии. Работиме напорно да ја вратиме услугата што е можно побрзо.</string>
     <string name="reminder_header_progress">%1$d%%</string>
     <!-- Body text of a banner that will show at the top of the chat list when we temporarily cannot process the user's contacts -->
-    <string name="reminder_cds_warning_body">Signal\'s private contact discovery temporarily can\'t process your phone\'s contacts.</string>
+    <string name="reminder_cds_warning_body">Приватното откривање на контакти на Signal привремено не може да ги обработи контактите на вашиот телефон.</string>
     <!-- Label for a button in a banner to learn more about why we temporarily can't process the user's contacts -->
-    <string name="reminder_cds_warning_learn_more">Learn more</string>
+    <string name="reminder_cds_warning_learn_more">Дознајте повеќе</string>
     <!-- Body text of a banner that will show at the top of the chat list when the user has so many contacts that we cannot ever process them -->
-    <string name="reminder_cds_permanent_error_body">Signal\'s private contact discovery can\'t process your phone\'s contacts.</string>
+    <string name="reminder_cds_permanent_error_body">Приватното откривање на контакти на Signal не може да ги обработи контактите на вашиот телефон.</string>
     <!-- Label for a button in a banner to learn more about why we cannot process the user's contacts -->
-    <string name="reminder_cds_permanent_error_learn_more">Learn more</string>
+    <string name="reminder_cds_permanent_error_learn_more">Дознајте повеќе</string>
 
     <!-- media_preview -->
     <string name="media_preview__save_title">Зачувај</string>
@@ -4013,6 +4027,8 @@
     <string name="SmsSettingsFragment__use_as_default_sms_app">Користи како стандардна СМС апликација</string>
     <!-- Preference title to export sms -->
     <string name="SmsSettingsFragment__export_sms_messages">Извезете SMS пораки</string>
+    <!-- Preference title to re-export sms -->
+    <string name="SmsSettingsFragment__export_sms_messages_again">Повторно извези SMS пораки</string>
     <!-- Preference title to delete sms -->
     <string name="SmsSettingsFragment__remove_sms_messages">Отстранете SMS пораки</string>
     <!-- Snackbar text to confirm deletion -->
@@ -4021,6 +4037,8 @@
     <string name="SmsSettingsFragment__you_can_remove_sms_messages_from_signal_in_settings">Можете да ги отстраните SMS пораките од Signal во Поставувања во кое било време.</string>
     <!-- Description for export sms preference -->
     <string name="SmsSettingsFragment__you_can_export_your_sms_messages_to_your_phones_sms_database">Можете да ги извезете вашите SMS пораки во базата на SMS податоци на вашиот телефон.</string>
+    <!-- Description for re-export sms preference -->
+    <string name="SmsSettingsFragment__exporting_again_can_result_in_duplicate_messages">Повторното извезување може да доведе до дупликат пораки.</string>
     <!-- Description for remove sms preference -->
     <string name="SmsSettingsFragment__remove_sms_messages_from_signal_to_clear_up_storage_space">Отстранете ги SMS пораките од Signal за да ослободите меморија.</string>
     <!-- Information message shown at the top of sms settings to indicate it is being removed soon. -->
@@ -4193,11 +4211,16 @@
     <string name="NotificationsSettingsFragment__unknown_ringtone">Непознат звук</string>
 
     <!-- ConversationSettingsFragment -->
+    <!-- Dialog title displayed when non-admin tries to add a story to an audience group -->
+    <string name="ConversationSettingsFragment__cant_add_to_group_story">Can\'t add to group story</string>
+    <!-- Dialog message displayed when non-admin tries to add a story to an audience group -->
+    <string name="ConversationSettingsFragment__only_admins_of_this_group_can_add_to_its_story">Only admins of this group can add to its story</string>
     <!-- Error toasted when no activity can handle the add contact intent -->
     <string name="ConversationSettingsFragment__contacts_app_not_found">Не е пронајдена апликација за контакти</string>
     <string name="ConversationSettingsFragment__send_message">Испрати порака</string>
     <string name="ConversationSettingsFragment__start_video_call">Започни видео повик</string>
     <string name="ConversationSettingsFragment__start_audio_call">Започни аудио повик</string>
+    <string name="ConversationSettingsFragment__story">Story</string>
     <string name="ConversationSettingsFragment__message">Порака</string>
     <string name="ConversationSettingsFragment__video">Видео</string>
     <string name="ConversationSettingsFragment__audio">Аудио</string>
@@ -4362,6 +4385,10 @@
     <string name="MultiselectForwardFragment__limit_reached">Постигнат максимум</string>
 
     <!-- Media V2 -->
+    <!-- Dialog message when sending a story via an add to group story button -->
+    <string name="MediaReviewFragment__add_to_the_group_story">Add to the group story \"%1$s\"</string>
+    <!-- Positive dialog action when sending a story via an add to group story button -->
+    <string name="MediaReviewFragment__add_to_story">Add to story</string>
     <string name="MediaReviewFragment__add_a_message">Додај порака</string>
     <string name="MediaReviewFragment__add_a_reply">Додај одговор</string>
     <string name="MediaReviewFragment__send_to">Испрати на</string>
@@ -4408,11 +4435,11 @@
 
     <string name="ViewBadgeBottomSheetDialogFragment__become_a_sustainer">Станете поддржувач</string>
     <!-- Title of a page in the bottom sheet. Placeholder is a user's short-name -->
-    <string name="ViewBadgeBottomSheetDialogFragment__s_supports_signal">%1$s supports Signal</string>
+    <string name="ViewBadgeBottomSheetDialogFragment__s_supports_signal">%1$s го поддржува Signal</string>
     <!-- Description of a page in the bottom sheet of a monthly badge. Placeholder is a user's short-name -->
-    <string name="ViewBadgeBottomSheetDialogFragment__s_supports_signal_with_a_monthly">%1$s supports Signal with a monthly donation. Signal is a nonprofit with no advertisers or investors, supported only by people like you.</string>
+    <string name="ViewBadgeBottomSheetDialogFragment__s_supports_signal_with_a_monthly">%1$s го поддржува Signal со месечна донација. Signal е непрофитна организација без реклами и инвеститори, поддржана само од луѓе како Вас.</string>
     <!-- Description of a page in the bottom sheet of a one-time badge. Placeholder is a user's short-name -->
-    <string name="ViewBadgeBottomSheetDialogFragment__s_supports_signal_with_a_donation">%1$s supports Signal with a donation. Signal is a nonprofit with no advertisers or investors, supported only by people like you.</string>
+    <string name="ViewBadgeBottomSheetDialogFragment__s_supports_signal_with_a_donation">%1$s го поддржа Signal со донација. Signal е непрофитна организација без реклами и инвеститори, поддржана само од луѓе како Вас.</string>
 
     <string name="ImageView__badge">Беџ</string>
 
@@ -4438,17 +4465,17 @@
     <string name="Subscription__expires_s">Истекува на %1$s</string>
 
     <!-- Title of learn more sheet -->
-    <string name="SubscribeLearnMoreBottomSheetDialogFragment__signal_is_different">Signal is different.</string>
+    <string name="SubscribeLearnMoreBottomSheetDialogFragment__signal_is_different">Signal е различен.</string>
     <!-- First small text blurb on learn more sheet -->
-    <string name="SubscribeLearnMoreBottomSheetDialogFragment__private_messaging">Private messaging. No ads, no trackers, no surveillance.</string>
+    <string name="SubscribeLearnMoreBottomSheetDialogFragment__private_messaging">Приватно допишување. Без реклами, без тракери, без надзор.</string>
     <!-- Second small text blurb on learn more sheet -->
-    <string name="SubscribeLearnMoreBottomSheetDialogFragment__signal_is_supported_by">Signal is supported by donations, meaning that your privacy is at the center of everything we do. Signal is built for you; not your data and not for profit.</string>
+    <string name="SubscribeLearnMoreBottomSheetDialogFragment__signal_is_supported_by">Signal е поддржан од донации, што значи дека вашата приватност е во фокусот на сè што правиме. Signal е создаден за вас, не за вашите податоци или за профит.</string>
     <!-- Third small text blurb on learn more sheet -->
-    <string name="SubscribeLearnMoreBottomSheetDialogFragment__if_you_can">If you can, please donate today to keep Signal fun, dependable, and available for everyone.</string>
+    <string name="SubscribeLearnMoreBottomSheetDialogFragment__if_you_can">Доколку сте во можност, ве молиме донирајте денес за Signal да остане забавен, веродостоен и достапен за сите.</string>
 
     <string name="SubscribeThanksForYourSupportBottomSheetDialogFragment__thanks_for_your_support">Ви благодариме за Вашата поддршка!</string>
     <!-- Subtext underneath the dialog title on the thanks sheet -->
-    <string name="SubscribeThanksForYourSupportBottomSheetDialogFragment__youve_earned_a_donor_badge">You\'ve earned a donor badge from Signal! Display it on your profile to show off your support.</string>
+    <string name="SubscribeThanksForYourSupportBottomSheetDialogFragment__youve_earned_a_donor_badge">Добивте беџ за донатори од Signal! Прикажете го на вашиот профил за да ја нагласите вашата поддршка.</string>
     <string name="SubscribeThanksForYourSupportBottomSheetDialogFragment__you_can_also">Можете исто така да</string>
     <string name="SubscribeThanksForYourSupportBottomSheetDialogFragment__become_a_montly_sustainer">Станете месечен поддржувач</string>
     <string name="SubscribeThanksForYourSupportBottomSheetDialogFragment__display_on_profile">Прикажи на профил</string>
@@ -4587,6 +4614,8 @@
     <string name="DeclineCode__your_card_has_expired">Вашата картичка е истечена. Ажурирајте го Вашиот начин на плаќање во Google Pay и обидете се повторно.</string>
     <!-- Stripe decline code go to google pay action label -->
     <string name="DeclineCode__go_to_google_pay">Одете на Google Pay</string>
+    <!-- Stripe decline code try credit card again action label -->
+    <string name="DeclineCode__try">Try again</string>
     <!-- Stripe decline code incorrect card number -->
     <string name="DeclineCode__your_card_number_is_incorrect">Бројот на Вашата картичка е неточен. Ажурирајте го во Google Pay и обидете се повторно.</string>
     <!-- Stripe decline code incorrect cvc -->
@@ -4601,6 +4630,22 @@
     <string name="DeclineCode__try_completing_the_payment_again">Обидете се повторно да го завршите плаќањето или контактирајте со Вашата банка за повеќе информации.</string>
     <!-- Stripe decline code processing error -->
     <string name="DeclineCode__try_again">Обидете се повторно или контактирајте со Вашата банка за повеќе информации.</string>
+
+    <!-- Credit Card decline code error strings -->
+    <!-- Stripe decline code approve_with_id for credit cards displayed in a notification or dialog -->
+    <string name="DeclineCode__verify_your_card_details_are_correct_and_try_again">Verify your card details are correct and try again.</string>
+    <!-- Stripe decline code call_issuer for credit cards displayed in a notification or dialog -->
+    <string name="DeclineCode__verify_your_card_details_are_correct_and_try_again_if_the_problem_continues">Verify your card details are correct and try again. If the problem continues, contact your bank.</string>
+    <!-- Stripe decline code expired_card for credit cards displayed in a notification or dialog -->
+    <string name="DeclineCode__your_card_has_expired_verify_your_card_details">Your card has expired. Verify your card details are correct and try again.</string>
+    <!-- Stripe decline code incorrect_cvc and invalid_cvc for credit cards displayed in a notification or dialog -->
+    <string name="DeclineCode__your_cards_cvc_number_is_incorrect_verify_your_card_details">Your card\'s CVC number is incorrect. Verify your card details are correct and try again.</string>
+    <!-- Stripe decline code invalid_expiry_month for credit cards displayed in a notification or dialog -->
+    <string name="DeclineCode__the_expiration_month_on_your_card_is_incorrect">The expiration month on your card is incorrect. Verify your card details are correct and try again.</string>
+    <!-- Stripe decline code invalid_expiry_year for credit cards displayed in a notification or dialog -->
+    <string name="DeclineCode__the_expiration_year_on_your_card_is_incorrect">The expiration year on your card is incorrect. Verify your card details are correct and try again.</string>
+    <!-- Stripe decline code incorrect_number and invalid_number for credit cards displayed in a notification or dialog -->
+    <string name="DeclineCode__your_card_number_is_incorrect_verify_your_card_details">Your card number is incorrect. Verify your card details are correct and try again.</string>
 
     <!-- Title of create notification profile screen -->
     <string name="EditNotificationProfileFragment__name_your_profile">Именувајте го профилот</string>
@@ -4852,6 +4897,8 @@
         <item quantity="one">%1$d одговор</item>
         <item quantity="other">%1$d одговори</item>
     </plurals>
+    <!-- Label on group stories to add a story -->
+    <string name="StoryViewerPageFragment__add">Add</string>
     <!-- Used when view receipts are disabled -->
     <string name="StoryViewerPageFragment__views_off">Прегледите се исклучени</string>
     <!-- Used to join views and replies when both exist on a story item -->
@@ -4871,7 +4918,7 @@
     <!-- Displayed when a story has no views -->
     <string name="StoryViewsFragment__no_views_yet">Сè уште нема прегледи</string>
     <!-- Displayed when user has disabled receipts -->
-    <string name="StoryViewsFragment__enable_view_receipts_to_see_whos_viewed_your_story">Enable view receipts to see who\'s viewed your stories.</string>
+    <string name="StoryViewsFragment__enable_view_receipts_to_see_whos_viewed_your_story">Овозможете потврди за прочитани пораки за да видите кој ви ги гледал приказните.</string>
     <!-- Button label displayed when user has disabled receipts -->
     <string name="StoryViewsFragment__go_to_settings">Оди во поставувањата</string>
     <!-- Dialog action to remove viewer from a story -->
@@ -5197,6 +5244,11 @@
         <item quantity="one">%1$s · %2$d гледач</item>
         <item quantity="other">%1$s · %2$d гледачи</item>
     </plurals>
+    <!-- Label under name for my story -->
+    <plurals name="ContactSearchItems__my_story_s_dot_d_excluded">
+        <item quantity="one">%1$s · %2$d excluded</item>
+        <item quantity="other">%1$s · %2$d excluded</item>
+    </plurals>
     <!-- Label under name for My Story when first sending to my story -->
     <string name="ContactSearchItems__tap_to_choose_your_viewers">Допри за да ги одбереш гледачите</string>
     <!-- Label for context menu item to open story settings -->
@@ -5426,6 +5478,16 @@
     <!-- Message of dialog -->
     <string name="RemoveSmsMessagesDialogFragment__you_can_now_remove_sms_messages_from_signal">Сега можете да ги отстраните SMS пораките од Signal за да ослободите меморија. Сè уште ќе бидат достапни за другите SMS апликации на вашиот телефон, дури и ако ги отстраните.</string>
 
+    <!-- ReExportSmsMessagesDialogFragment -->
+    <!-- Action button to re-export messages -->
+    <string name="ReExportSmsMessagesDialogFragment__continue">Продолжи</string>
+    <!-- Action button to cancel re-export process -->
+    <string name="ReExportSmsMessagesDialogFragment__cancel">Откажи</string>
+    <!-- Title of dialog -->
+    <string name="ReExportSmsMessagesDialogFragment__export_sms_again">Сакате повторно да се извезат SMS пораките?</string>
+    <!-- Message of dialog -->
+    <string name="ReExportSmsMessagesDialogFragment__you_already_exported_your_sms_messages">Веќе ги имате извезено вашите SMS пораки.\nПРЕДУПРЕДУВАЊЕ: Доколку продолжите, може да имате дупликат пораки.</string>
+
     <!-- SetSignalAsDefaultSmsAppFragment -->
     <!-- Title of the screen -->
     <string name="SetSignalAsDefaultSmsAppFragment__set_signal_as_the_default_sms_app">Поставете ја Signal како стандардна SMS апликација</string>
@@ -5506,11 +5568,11 @@
 
     <!-- DonateToSignalFragment -->
     <!-- Title below avatar -->
-    <string name="DonateToSignalFragment__privacy_over_profit">Privay over profit</string>
+    <string name="DonateToSignalFragment__privacy_over_profit">Приватност пред профит</string>
     <!-- Continue button label -->
     <string name="DonateToSignalFragment__continue">Продолжи</string>
     <!-- Description below title -->
-    <string name="DonateToSignalFragment__private_messaging">Private messaging, funded by you. No ads, no tracking, no compromise. Donate now to support Signal.</string>
+    <string name="DonateToSignalFragment__private_messaging">Приватно допишување, финансирано од вас. Без реклами, без тракери, без компромис. Донирајте сега за да го поддржите Signal.</string>
     <!-- Donation pill toggle monthly text -->
     <string name="DonationPillToggle__monthly">Месечно</string>
     <!-- Donation pill toggle one-time text -->
@@ -5530,47 +5592,61 @@
     </plurals>
     <!-- Button label for paying with a credit card -->
     <string name="GatewaySelectorBottomSheet__credit_or_debit_card">Кредитна или дебитна картичка</string>
+    <!-- Sheet summary when giving a gift -->
+    <string name="GatewaySelectorBottomSheet__send_a_gift_badge">Испратете подарок беџ</string>
 
     <!-- StripePaymentInProgressFragment -->
     <string name="StripePaymentInProgressFragment__cancelling">Се откажува…</string>
 
     <!-- The title of a bottom sheet dialog that tells the user we temporarily can't process their contacts. -->
-    <string name="CdsTemporaryErrorBottomSheet_title">Too many contacts have been processed</string>
+    <string name="CdsTemporaryErrorBottomSheet_title">Обработени се премногу контакти</string>
     <!-- The first part of the body text in a bottom sheet dialog that tells the user we temporarily can't process their contacts. The placeholder represents the number of days the user will have to wait until they can again. -->
     <plurals name="CdsTemporaryErrorBottomSheet_body1">
-        <item quantity="one">Another attempt to process your contacts will be made within %1$d day.</item>
-        <item quantity="other">Another attempt to process your contacts will be made within %1$d days.</item>
+        <item quantity="one">Ќе има друг обид за обработка на вашите контакти во рок од %1$d ден.</item>
+        <item quantity="other">Ќе има друг обид за обработка на вашите контакти во рок од %1$d дена.</item>
     </plurals>
     <!-- The second part of the body text in a bottom sheet dialog that advises the user to remove contacts from their phone to fix the issue. -->
-    <string name="CdsTemporaryErrorBottomSheet_body2">To resolve this issue sooner, you can consider removing contacts or accounts on your phone that are syncing a lot of contacts.</string>
+    <string name="CdsTemporaryErrorBottomSheet_body2">За порано да се реши овој проблем, можете да пробате да отстраните контакти или кориснички сметки на вашиот телефон кои синхронизираат многу контакти.</string>
     <!-- A button label in a bottom sheet that will navigate the user to their contacts settings. -->
-    <string name="CdsTemporaryErrorBottomSheet_contacts_button">Open contacts</string>
+    <string name="CdsTemporaryErrorBottomSheet_contacts_button">Отворете ги контактите</string>
     <!-- A toast that will be shown if we are unable to open the user's default contacts app. -->
-    <string name="CdsTemporaryErrorBottomSheet_no_contacts_toast">No contacts app found</string>
+    <string name="CdsTemporaryErrorBottomSheet_no_contacts_toast">Не е пронајдена апликација за контакти</string>
 
     <!-- The title of a bottom sheet dialog that tells the user we can't process their contacts. -->
-    <string name="CdsPermanentErrorBottomSheet_title">Your contacts can\'t be processed</string>
+    <string name="CdsPermanentErrorBottomSheet_title">Вашите контакти не може да се обработат</string>
     <!-- The first part of the body text in a bottom sheet dialog that tells the user we can't process their contacts. -->
-    <string name="CdsPermanentErrorBottomSheet_body">The number of contacts on your phone exceeds the limit Signal can process. To find contacts on Signal, consider removing contacts or accounts on your phone that are syncing a lot of contacts.</string>
+    <string name="CdsPermanentErrorBottomSheet_body">Бројот на контакти на вашиот телефон го надминува ограничениот број кој Signal може да го обработи. За да ги пронајдете вашите контакти на Signal, можете да пробате да отстраните контакти или кориснички сметки на вашиот телефон кои синхронизираат многу контакти.</string>
     <!-- The first part of the body text in a bottom sheet dialog that tells the user we can't process their contacts. -->
-    <string name="CdsPermanentErrorBottomSheet_learn_more">Learn more</string>
+    <string name="CdsPermanentErrorBottomSheet_learn_more">Дознајте повеќе</string>
     <!-- A button label in a bottom sheet that will navigate the user to their contacts settings. -->
-    <string name="CdsPermanentErrorBottomSheet_contacts_button">Open contacts</string>
+    <string name="CdsPermanentErrorBottomSheet_contacts_button">Отворете ги контактите</string>
     <!-- A toast that will be shown if we are unable to open the user's default contacts app. -->
-    <string name="CdsPermanentErrorBottomSheet_no_contacts_toast">No contacts app found</string>
+    <string name="CdsPermanentErrorBottomSheet_no_contacts_toast">Не е пронајдена апликација за контакти</string>
 
     <!-- PaymentMessageView -->
     <!-- In-chat conversation message shown when you sent a payment to another person, placeholder is the other person name -->
-    <string name="PaymentMessageView_you_sent_s">You sent %1$s</string>
+    <string name="PaymentMessageView_you_sent_s">Испративте на %1$s</string>
     <!-- In-chat conversation message shown when another person sent a payment to you, placeholder is the other person name -->
-    <string name="PaymentMessageView_s_sent_you">%1$s sent you</string>
+    <string name="PaymentMessageView_s_sent_you">%1$s ви испрати</string>
 
     <!-- YourInformationIsPrivateBottomSheet -->
-    <string name="YourInformationIsPrivateBottomSheet__your_information_is_private">Your information is private</string>
-    <string name="YourInformationIsPrivateBottomSheet__signal_does_not_collect">Signal does not collect or store any of your personal information when you make a donation.</string>
-    <string name="YourInformationIsPrivateBottomSheet__we_use_stripe">We use Stripe as our payment processor to receive your donations. We don\'t access, store, or save any of the information you provide to them.</string>
-    <string name="YourInformationIsPrivateBottomSheet__signal_does_not_and_cannot">Signal does not and cannot connect your donation to your Signal account.</string>
-    <string name="YourInformationIsPrivateBottomSheet__thank_you">Thank you for your support!</string>
+    <string name="YourInformationIsPrivateBottomSheet__your_information_is_private">Вашите податоци се приватни</string>
+    <string name="YourInformationIsPrivateBottomSheet__signal_does_not_collect">Signal не ги собира ниту сочувува вашите лични податоци кога донирате.</string>
+    <string name="YourInformationIsPrivateBottomSheet__we_use_stripe">Го користиме Stripe како наш платен систем за примање на вашите донации. Немаме пристап и не ги сочувуваме податоците кои им ги обезбедувате.</string>
+    <string name="YourInformationIsPrivateBottomSheet__signal_does_not_and_cannot">Signal не ја поврзува и не може да ја поврзе вашата донација со вашата корисничка сметка на Signal.</string>
+    <string name="YourInformationIsPrivateBottomSheet__thank_you">Ви благодариме за поддршката!</string>
+
+    <!-- GroupStoryEducationSheet -->
+    <!-- Displayed as the title of the education bottom sheet -->
+    <string name="GroupStoryEducationSheet__introducing_group_stories">Ви претставуваме групни приказни</string>
+    <!-- Line item on the sheet explaining group stories -->
+    <string name="GroupStoryEducationSheet__share_story_updates_to">Споделете новости на приказната во групен разговор од кој сте дел.</string>
+    <!-- Line item on the sheet explaining that anyone in the group can share to group stories -->
+    <string name="GroupStoryEducationSheet__anyone_in_the_group">Сите во групниот разговор ќе можат да додаваат новости на приказната.</string>
+    <!-- Line item on the sheet explaining that anyone in the group can view replies -->
+    <string name="GroupStoryEducationSheet__all_group_chat_members">Сите членови на групниот разговор можат да ги видат одговорите на приказните.</string>
+    <!-- Button label to dismiss sheet -->
+    <string name="GroupStoryEducationSheet__next">Следно</string>
 
     <!-- EOF -->
 

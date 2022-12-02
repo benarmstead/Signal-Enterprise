@@ -20,16 +20,15 @@ import org.thoughtcrime.securesms.components.settings.app.subscription.manage.Su
 import org.thoughtcrime.securesms.dependencies.ApplicationDependencies
 import org.thoughtcrime.securesms.jobmanager.JobTracker
 import org.thoughtcrime.securesms.keyvalue.SignalStore
+import org.thoughtcrime.securesms.recipients.Recipient
 import org.thoughtcrime.securesms.subscription.LevelUpdate
 import org.thoughtcrime.securesms.subscription.Subscriber
 import org.thoughtcrime.securesms.subscription.Subscription
 import org.thoughtcrime.securesms.util.InternetConnectionObserver
 import org.thoughtcrime.securesms.util.PlatformCurrencyUtil
-import org.thoughtcrime.securesms.util.next
 import org.thoughtcrime.securesms.util.rx.RxStore
 import org.whispersystems.signalservice.api.subscriptions.ActiveSubscription
 import org.whispersystems.signalservice.api.subscriptions.SubscriberId
-import org.whispersystems.signalservice.api.util.Preconditions
 import java.math.BigDecimal
 import java.text.DecimalFormat
 import java.text.DecimalFormatSymbols
@@ -56,8 +55,6 @@ class DonateToSignalViewModel(
   private val networkDisposable = CompositeDisposable()
   private val _actions = PublishSubject.create<DonateToSignalAction>()
   private val _activeSubscription = PublishSubject.create<ActiveSubscription>()
-
-  private var gatewayRequest: GatewayRequest? = null
 
   val state = store.stateFlowable.observeOn(AndroidSchedulers.mainThread())
   val actions: Observable<DonateToSignalAction> = _actions.observeOn(AndroidSchedulers.mainThread())
@@ -120,7 +117,15 @@ class DonateToSignalViewModel(
   }
 
   fun toggleDonationType() {
-    store.update { it.copy(donateToSignalType = it.donateToSignalType.next()) }
+    store.update {
+      it.copy(
+        donateToSignalType = when (it.donateToSignalType) {
+          DonateToSignalType.ONE_TIME -> DonateToSignalType.MONTHLY
+          DonateToSignalType.MONTHLY -> DonateToSignalType.ONE_TIME
+          DonateToSignalType.GIFT -> error("We are in an illegal state")
+        }
+      )
+    }
   }
 
   fun setSelectedSubscription(subscription: Subscription) {
@@ -178,7 +183,8 @@ class DonateToSignalViewModel(
       label = snapshot.badge!!.description,
       price = amount.amount,
       currencyCode = amount.currency.currencyCode,
-      level = snapshot.level.toLong()
+      level = snapshot.level.toLong(),
+      recipientId = Recipient.self().id
     )
   }
 
@@ -186,6 +192,7 @@ class DonateToSignalViewModel(
     return when (snapshot.donateToSignalType) {
       DonateToSignalType.ONE_TIME -> getOneTimeAmount(snapshot.oneTimeDonationState)
       DonateToSignalType.MONTHLY -> getSelectedSubscriptionCost()
+      DonateToSignalType.GIFT -> error("This ViewModel does not support gifts.")
     }
   }
 
@@ -346,18 +353,6 @@ class DonateToSignalViewModel(
     monthlyDonationDisposables.clear()
     networkDisposable.clear()
     store.dispose()
-  }
-
-  fun provideGatewayRequestForGooglePay(request: GatewayRequest) {
-    Log.d(TAG, "Provided with a gateway request.")
-    Preconditions.checkState(gatewayRequest == null)
-    gatewayRequest = request
-  }
-
-  fun consumeGatewayRequestForGooglePay(): GatewayRequest? {
-    val request = gatewayRequest
-    gatewayRequest = null
-    return request
   }
 
   class Factory(

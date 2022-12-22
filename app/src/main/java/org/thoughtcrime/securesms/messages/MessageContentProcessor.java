@@ -104,9 +104,7 @@ import org.thoughtcrime.securesms.linkpreview.LinkPreview;
 import org.thoughtcrime.securesms.linkpreview.LinkPreviewUtil;
 import org.thoughtcrime.securesms.mms.IncomingMediaMessage;
 import org.thoughtcrime.securesms.mms.MmsException;
-import org.thoughtcrime.securesms.mms.OutgoingExpirationUpdateMessage;
 import org.thoughtcrime.securesms.mms.OutgoingMediaMessage;
-import org.thoughtcrime.securesms.mms.OutgoingSecureMediaMessage;
 import org.thoughtcrime.securesms.mms.QuoteModel;
 import org.thoughtcrime.securesms.mms.SlideDeck;
 import org.thoughtcrime.securesms.mms.StickerSlide;
@@ -198,6 +196,7 @@ import java.util.concurrent.TimeUnit;
  * Takes data about a decrypted message, transforms it into user-presentable data, and writes that
  * data to our data stores.
  */
+@SuppressWarnings({ "OptionalGetWithoutIsPresent", "OptionalIsPresent" })
 public final class MessageContentProcessor {
 
   private static final String TAG = Log.tag(MessageContentProcessor.class);
@@ -616,7 +615,7 @@ public final class MessageContentProcessor {
       database.markAsMissedCall(smsMessageId.get(), message.getType() == OfferMessage.Type.VIDEO_CALL);
     } else {
       RemotePeer remotePeer        = new RemotePeer(senderRecipient.getId(), new CallId(message.getId()));
-      byte[]     remoteIdentityKey = ApplicationDependencies.getProtocolStore().aci().identities().getIdentityRecord(senderRecipient.getId()).map(record -> record.getIdentityKey().serialize()).orElse(null);
+      byte[]     remoteIdentityKey = ApplicationDependencies.getProtocolStore().aci().identities().getIdentityRecord(senderRecipient.getId()).map(record -> record.getIdentityKey().serialize()).get();
 
       ApplicationDependencies.getSignalCallManager()
                              .receivedOffer(new WebRtcData.CallMetadata(remotePeer, content.getSenderDevice()),
@@ -634,7 +633,7 @@ public final class MessageContentProcessor {
   {
     log(String.valueOf(content), "handleCallAnswerMessage...");
     RemotePeer remotePeer        = new RemotePeer(senderRecipient.getId(), new CallId(message.getId()));
-    byte[]     remoteIdentityKey = ApplicationDependencies.getProtocolStore().aci().identities().getIdentityRecord(senderRecipient.getId()).map(record -> record.getIdentityKey().serialize()).orElse(null);
+    byte[]     remoteIdentityKey = ApplicationDependencies.getProtocolStore().aci().identities().getIdentityRecord(senderRecipient.getId()).map(record -> record.getIdentityKey().serialize()).get();
 
     ApplicationDependencies.getSignalCallManager()
                            .receivedAnswer(new WebRtcData.CallMetadata(remotePeer, content.getSenderDevice()),
@@ -1462,7 +1461,17 @@ public final class MessageContentProcessor {
   private void handleStoryMessage(@NonNull SignalServiceContent content, @NonNull SignalServiceStoryMessage message, @NonNull Recipient senderRecipient, @NonNull Recipient threadRecipient) throws StorageFailedException {
     log(content.getTimestamp(), "Story message.");
 
-    if (!threadRecipient.isActiveGroup() && !(senderRecipient.isProfileSharing() || senderRecipient.isSystemContact())) {
+    if (threadRecipient.isInactiveGroup()) {
+      warn(content.getTimestamp(), "Dropping a group story from a group we're no longer in.");
+      return;
+    }
+
+    if (threadRecipient.isGroup() && !SignalDatabase.groups().isCurrentMember(threadRecipient.requireGroupId().requirePush(), senderRecipient.getId())) {
+      warn(content.getTimestamp(), "Dropping a group story from a user who's no longer a member.");
+      return;
+    }
+
+    if (!threadRecipient.isGroup() && !(senderRecipient.isProfileSharing() || senderRecipient.isSystemContact())) {
       warn(content.getTimestamp(), "Dropping story from an untrusted source.");
       return;
     }
@@ -1956,9 +1965,9 @@ public final class MessageContentProcessor {
     MessageTable database  = SignalDatabase.mms();
     Recipient    recipient = getSyncMessageDestination(message);
 
-    OutgoingExpirationUpdateMessage expirationUpdateMessage = new OutgoingExpirationUpdateMessage(recipient,
-        message.getTimestamp(),
-        TimeUnit.SECONDS.toMillis(message.getDataMessage().get().getExpiresInSeconds()));
+    OutgoingMediaMessage expirationUpdateMessage = OutgoingMediaMessage.expirationUpdateMessage(recipient,
+                                                                                                message.getTimestamp(),
+                                                                                                TimeUnit.SECONDS.toMillis(message.getDataMessage().get().getExpiresInSeconds()));
 
     long threadId  = SignalDatabase.threads().getOrCreateThreadIdFor(recipient);
     long messageId = database.insertMessageOutbox(expirationUpdateMessage, threadId, false, null);
@@ -2033,9 +2042,8 @@ public final class MessageContentProcessor {
                                                                    getMentions(message.getDataMessage().get().getMentions()).orElse(Collections.emptyList()),
                                                                    Collections.emptySet(),
                                                                    Collections.emptySet(),
-                                                                   null);
-
-      mediaMessage = new OutgoingSecureMediaMessage(mediaMessage);
+                                                                   null,
+                                                                   true);
 
       if (recipient.getExpiresInSeconds() != message.getDataMessage().get().getExpiresInSeconds()) {
         handleSynchronizeSentExpirationUpdate(message);
@@ -2153,9 +2161,8 @@ public final class MessageContentProcessor {
                                                                  Collections.emptyList(),
                                                                  Collections.emptySet(),
                                                                  Collections.emptySet(),
-                                                                 null);
-
-    mediaMessage = new OutgoingSecureMediaMessage(mediaMessage);
+                                                                 null,
+                                                                 true);
 
     MmsTable database = SignalDatabase.mms();
     long     threadId = SignalDatabase.threads().getOrCreateThreadIdFor(recipient);
@@ -2249,9 +2256,8 @@ public final class MessageContentProcessor {
                                                                  mentions.orElse(Collections.emptyList()),
                                                                  Collections.emptySet(),
                                                                  Collections.emptySet(),
-                                                                 giftBadge.orElse(null));
-
-    mediaMessage = new OutgoingSecureMediaMessage(mediaMessage);
+                                                                 giftBadge.orElse(null),
+                                                                 true);
 
     if (recipients.getExpiresInSeconds() != message.getDataMessage().get().getExpiresInSeconds()) {
       handleSynchronizeSentExpirationUpdate(message);
@@ -2433,16 +2439,10 @@ public final class MessageContentProcessor {
                                                                            -1,
                                                                            expiresInMillis,
                                                                            false,
-                                                                           ThreadTable.DistributionTypes.DEFAULT,
                                                                            StoryType.NONE,
-                                                                           null,
-                                                                           false,
-                                                                           null,
                                                                            Collections.emptyList(),
                                                                            Collections.emptyList(),
-                                                                           Collections.emptyList(),
-                                                                           null);
-      outgoingMediaMessage = new OutgoingSecureMediaMessage(outgoingMediaMessage);
+                                                                           true);
 
       messageId = SignalDatabase.mms().insertMessageOutbox(outgoingMediaMessage, threadId, false, GroupReceiptTable.STATUS_UNKNOWN, null);
       database  = SignalDatabase.mms();

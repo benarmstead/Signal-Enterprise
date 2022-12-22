@@ -80,7 +80,6 @@ public final class FeatureFlags {
   private static final String SENDER_KEY_MAX_AGE                = "android.senderKeyMaxAge";
   private static final String RETRY_RECEIPTS                    = "android.retryReceipts";
   private static final String MAX_GROUP_CALL_RING_SIZE          = "global.calling.maxGroupCallRingSize";
-  private static final String GROUP_CALL_RINGING                = "android.calling.groupCallRinging.3";
   private static final String STORIES_TEXT_FUNCTIONS            = "android.stories.text.functions";
   private static final String HARDWARE_AEC_BLOCKLIST_MODELS     = "android.calling.hardwareAecBlockList";
   private static final String SOFTWARE_AEC_BLOCKLIST_MODELS     = "android.calling.softwareAecBlockList";
@@ -106,7 +105,8 @@ public final class FeatureFlags {
   public  static final String PAYPAL_DISABLED_REGIONS           = "global.donations.paypalDisabledRegions";
   private static final String CDS_HARD_LIMIT                    = "android.cds.hardLimit";
   private static final String CHAT_FILTERS                      = "android.chat.filters";
-  private static final String PAYPAL_DONATIONS                  = "android.donations.paypal";
+  private static final String PAYPAL_ONE_TIME_DONATIONS         = "android.oneTimePayPalDonations.2";
+  private static final String PAYPAL_RECURRING_DONATIONS        = "android.recurringPayPalDonations";
 
   /**
    * We will only store remote values for flags in this set. If you want a flag to be controllable
@@ -139,7 +139,6 @@ public final class FeatureFlags {
       RETRY_RESPOND_MAX_AGE,
       RETRY_RECEIPTS,
       MAX_GROUP_CALL_RING_SIZE,
-      GROUP_CALL_RINGING,
       SENDER_KEY_MAX_AGE,
       STORIES_TEXT_FUNCTIONS,
       HARDWARE_AEC_BLOCKLIST_MODELS,
@@ -166,7 +165,8 @@ public final class FeatureFlags {
       KEEP_MUTED_CHATS_ARCHIVED,
       CDS_HARD_LIMIT,
       CHAT_FILTERS,
-      PAYPAL_DONATIONS
+      PAYPAL_ONE_TIME_DONATIONS,
+      PAYPAL_RECURRING_DONATIONS
   );
 
   @VisibleForTesting
@@ -214,7 +214,6 @@ public final class FeatureFlags {
       RETRY_RESPOND_MAX_AGE,
       RETRY_RECEIPTS,
       MAX_GROUP_CALL_RING_SIZE,
-      GROUP_CALL_RINGING,
       SENDER_KEY_MAX_AGE,
       DONATE_MEGAPHONE,
       HARDWARE_AEC_BLOCKLIST_MODELS,
@@ -438,11 +437,6 @@ public final class FeatureFlags {
     return getLong(MAX_GROUP_CALL_RING_SIZE, 16);
   }
 
-  /** Whether or not to show the group call ring toggle in the UI. */
-  public static boolean groupCallRinging() {
-    return getBoolean(GROUP_CALL_RINGING, false);
-  }
-
   /** A comma-separated list of country codes where payments should be disabled. */
   public static String paymentsCountryBlocklist() {
     return getString(PAYMENTS_COUNTRY_BLOCKLIST, "98,963,53,850,7");
@@ -590,10 +584,17 @@ public final class FeatureFlags {
   }
 
   /**
-   * Whether or not we should allow PayPal payments for donations
+   * Whether or not we should allow PayPal payments for one-time donations
    */
-  public static boolean paypalDonations() {
-    return getBoolean(PAYPAL_DONATIONS, Environment.IS_STAGING);
+  public static boolean paypalOneTimeDonations() {
+    return getBoolean(PAYPAL_ONE_TIME_DONATIONS, Environment.IS_STAGING);
+  }
+
+  /**
+   * Whether or not we should allow PayPal payments for recurring donations
+   */
+  public static boolean paypalRecurringDonations() {
+    return getBoolean(PAYPAL_RECURRING_DONATIONS, false);
   }
 
   /** Only for rendering debug info. */

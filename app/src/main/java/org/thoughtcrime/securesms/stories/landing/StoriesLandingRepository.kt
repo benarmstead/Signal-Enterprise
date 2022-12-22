@@ -44,12 +44,12 @@ class StoriesLandingRepository(context: Context) {
 
         stories.forEach {
           val recipient = Recipient.resolved(it.recipientId)
-          if (recipient.isDistributionList || it.isOutgoing) {
+          if (recipient.isDistributionList || (it.isOutgoing && !recipient.isInactiveGroup())) {
             val list = mapping[myStories] ?: emptyList()
             mapping[myStories] = list + it
           }
 
-          if (!recipient.isDistributionList && !recipient.isBlocked) {
+          if (!recipient.isDistributionList && !recipient.isBlocked && !recipient.isInactiveGroup()) {
             val list = mapping[recipient] ?: emptyList()
             mapping[recipient] = list + it
           }
@@ -105,7 +105,7 @@ class StoriesLandingRepository(context: Context) {
         Observable.just(emptyList())
       } else {
         Observable.combineLatest(observables) {
-          it.toList() as List<StoriesLandingItemData>
+          it.filterIsInstance<StoriesLandingItemData>()
         }
       }
     }.subscribeOn(Schedulers.io())

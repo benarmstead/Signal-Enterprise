@@ -642,7 +642,10 @@ public class AttachmentTable extends DatabaseTable {
       dataInfo.file.delete();
     } else {
       long threadId = SignalDatabase.mms().getThreadIdForMessage(mmsId);
-      SignalDatabase.threads().updateSnippetUriSilently(threadId, PartAuthority.getAttachmentDataUri(attachmentId));
+
+      if (!SignalDatabase.mms().isStory(mmsId)) {
+        SignalDatabase.threads().updateSnippetUriSilently(threadId, PartAuthority.getAttachmentDataUri(attachmentId));
+      }
 
       notifyConversationListeners(threadId);
       notifyConversationListListeners();
@@ -697,6 +700,7 @@ public class AttachmentTable extends DatabaseTable {
     contentValues.put(HEIGHT, sourceAttachment.getHeight());
     contentValues.put(CONTENT_TYPE, sourceAttachment.getContentType());
     contentValues.put(VISUAL_HASH, getVisualHashStringOrNull(sourceAttachment));
+    contentValues.put(TRANSFORM_PROPERTIES, sourceAttachment.getTransformProperties().serialize());
 
     database.update(TABLE_NAME, contentValues, PART_ID_WHERE, destinationId.toStrings());
   }
@@ -1604,7 +1608,7 @@ public class AttachmentTable extends DatabaseTable {
       return new TransformProperties(true, false, 0, 0, sentMediaQuality);
     }
 
-    @NonNull String serialize() {
+    public @NonNull String serialize() {
       return JsonUtil.toJson(this);
     }
 

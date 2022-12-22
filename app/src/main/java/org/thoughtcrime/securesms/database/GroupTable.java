@@ -50,6 +50,7 @@ import org.whispersystems.signalservice.api.util.UuidUtil;
 import java.io.Closeable;
 import java.security.SecureRandom;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -137,7 +138,7 @@ public class GroupTable extends DatabaseTable implements RecipientIdDatabaseRefe
       TIMESTAMP, ACTIVE, MMS, V2_MASTER_KEY, V2_REVISION, V2_DECRYPTED_GROUP, LAST_FORCE_UPDATE_TIMESTAMP
   };
 
-  static final List<String> TYPED_GROUP_PROJECTION = Stream.of(GROUP_PROJECTION).map(columnName -> TABLE_NAME + "." + columnName).toList();
+  static final List<String> TYPED_GROUP_PROJECTION = Stream.of(GROUP_PROJECTION).filterNot(it -> it.equals(RECIPIENT_ID)).map(columnName -> TABLE_NAME + "." + columnName).toList();
 
   public GroupTable(Context context, SignalDatabase databaseHelper) {
     super(context, databaseHelper);
@@ -352,7 +353,7 @@ public class GroupTable extends DatabaseTable implements RecipientIdDatabaseRefe
   public Reader queryGroupsByRecency(@NonNull GroupQuery groupQuery) {
     SqlUtil.Query query = getGroupQueryWhereStatement(groupQuery.searchQuery, groupQuery.includeInactive, !groupQuery.includeV1, !groupQuery.includeMms);
     String sql = "SELECT * FROM " + TABLE_NAME +
-                 " LEFT JOIN " + ThreadTable.TABLE_NAME + " ON " + RECIPIENT_ID + " = " + ThreadTable.TABLE_NAME + "." + ThreadTable.RECIPIENT_ID +
+                 " LEFT JOIN " + ThreadTable.TABLE_NAME + " ON " + GroupTable.TABLE_NAME + "." + RECIPIENT_ID + " = " + ThreadTable.TABLE_NAME + "." + ThreadTable.RECIPIENT_ID +
                  " WHERE " + query.getWhere() +
                  " ORDER BY " + ThreadTable.TABLE_NAME + "." + ThreadTable.DATE + " DESC";
 

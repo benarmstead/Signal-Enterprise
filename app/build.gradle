@@ -1,3 +1,5 @@
+import com.android.build.api.dsl.ManagedVirtualDevice
+
 apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
 apply plugin: 'com.google.protobuf'
@@ -11,7 +13,7 @@ apply from: 'static-ips.gradle'
 
 repositories {
     maven {
-        url "https://raw.github.com/signalapp/maven/master/sqlcipher/release/"
+        url "https://raw.githubusercontent.com/signalapp/maven/master/sqlcipher/release/"
         content {
             includeGroupByRegex "org\\.signal.*"
         }
@@ -50,8 +52,8 @@ ktlint {
     version = "0.43.2"
 }
 
-def canonicalVersionCode = 1172
-def canonicalVersionName = "6.4.0"
+def canonicalVersionCode = 1183
+def canonicalVersionName = "6.6.1"
 
 def postFixSize = 100
 def abiPostFix = ['universal'   : 0,
@@ -93,10 +95,6 @@ android {
         freeCompilerArgs = ["-Xallow-result-return-type"]
     }
 
-    dexOptions {
-        javaMaxHeapSize "4g"
-    }
-
     signingConfigs {
         if (keystores.debug != null) {
             debug {
@@ -113,6 +111,17 @@ android {
 
         unitTests {
             includeAndroidResources = true
+        }
+
+        managedDevices {
+            devices {
+                pixel3api30 (ManagedVirtualDevice) {
+                    device = "Pixel 3"
+                    apiLevel = 30
+                    systemImageSource = "google-atd"
+                    require64Bit = false
+                }
+            }
         }
     }
 
@@ -165,7 +174,7 @@ android {
         multiDexEnabled true
 
         vectorDrawables.useSupportLibrary = true
-        project.ext.set("archivesBaseName", "Signal");
+        project.ext.set("archivesBaseName", "Signal")
 
         manifestPlaceholders = [mapsKey:"AIzaSyCSx9xea86GwDKGznCAULE9Y5a8b-TfN9U"]
 
@@ -575,7 +584,7 @@ def getLastCommitTimestamp() {
     }
 
     new ByteArrayOutputStream().withStream { os ->
-        def result = exec {
+        exec {
             executable = 'git'
             args = ['log', '-1', '--pretty=format:%ct']
             standardOutput = os
@@ -587,20 +596,20 @@ def getLastCommitTimestamp() {
 
 def getGitHash() {
     if (!(new File('.git').exists())) {
-        return "abcd1234"
+        throw new IllegalStateException("Must be a git repository to guarantee reproducible builds! (git hash is part of APK)")
     }
 
     def stdout = new ByteArrayOutputStream()
     exec {
-        commandLine 'git', 'rev-parse', '--short', 'HEAD'
+        commandLine 'git', 'rev-parse', 'HEAD'
         standardOutput = stdout
     }
-    return stdout.toString().trim()
+    return stdout.toString().trim().substring(0, 12)
 }
 
 def getCurrentGitTag() {
     if (!(new File('.git').exists())) {
-        return ''
+        throw new IllegalStateException("Must be a git repository to guarantee reproducible builds! (git hash is part of APK)")
     }
 
     def stdout = new ByteArrayOutputStream()
@@ -634,13 +643,13 @@ def loadKeystoreProperties(filename) {
     if (keystorePropertiesFile.exists()) {
         def keystoreProperties = new Properties()
         keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
-        return keystoreProperties;
+        return keystoreProperties
     } else {
-        return null;
+        return null
     }
 }
 
-def getDateSuffix() {
+static def getDateSuffix() {
     def date = new Date()
     def formattedDate = date.format('yyyy-MM-dd-HH:mm')
     return formattedDate

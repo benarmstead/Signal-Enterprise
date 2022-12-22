@@ -111,6 +111,9 @@
         <action
             android:id="@+id/action_creditCardFragment_to_yourInformationIsPrivateBottomSheet"
             app:destination="@id/yourInformationIsPrivateBottomSheet" />
+        <action
+            android:id="@+id/action_creditCardFragment_to_stripePaymentInProgressFragment"
+            app:destination="@id/stripePaymentInProgressFragment" />
     </fragment>
 
     <dialog
@@ -154,6 +157,9 @@
         <action
             android:id="@+id/action_paypalPaymentInProgressFragment_to_paypalConfirmationFragment"
             app:destination="@id/paypalConfirmationFragment" />
+        <action
+            android:id="@+id/action_paypalPaymentInProgressFragment_to_paypalCompleteOrderBottomSheet"
+            app:destination="@id/paypalCompleteOrderBottomSheet" />
     </dialog>
 
     <dialog
@@ -167,5 +173,17 @@
             app:argType="android.net.Uri"
             app:nullable="false" />
 
+    </dialog>
+
+    <dialog
+        android:id="@+id/paypalCompleteOrderBottomSheet"
+        android:name="org.thoughtcrime.securesms.components.settings.app.subscription.donate.paypal.PayPalCompleteOrderBottomSheet"
+        android:label="paypal_complete_order_bottom_sheet"
+        tools:layout="@layout/dsl_settings_bottom_sheet">
+
+        <argument
+            android:name="request"
+            app:argType="org.thoughtcrime.securesms.components.settings.app.subscription.donate.gateway.GatewayRequest"
+            app:nullable="false" />
     </dialog>
 </navigation>

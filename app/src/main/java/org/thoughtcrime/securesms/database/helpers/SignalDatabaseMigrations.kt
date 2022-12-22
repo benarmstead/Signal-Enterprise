@@ -21,6 +21,8 @@ import org.thoughtcrime.securesms.database.helpers.migration.V162_ThreadUnreadSe
 import org.thoughtcrime.securesms.database.helpers.migration.V163_RemoteMegaphoneSnoozeSupportMigration
 import org.thoughtcrime.securesms.database.helpers.migration.V164_ThreadDatabaseReadIndexMigration
 import org.thoughtcrime.securesms.database.helpers.migration.V165_MmsMessageBoxPaymentTransactionIndexMigration
+import org.thoughtcrime.securesms.database.helpers.migration.V166_ThreadAndMessageForeignKeys
+import org.thoughtcrime.securesms.database.helpers.migration.V167_RecreateReactionTriggers
 
 /**
  * Contains all of the database migrations for [SignalDatabase]. Broken into a separate file for cleanliness.
@@ -29,7 +31,7 @@ object SignalDatabaseMigrations {
 
   val TAG: String = Log.tag(SignalDatabaseMigrations.javaClass)
 
-  const val DATABASE_VERSION = 165
+  const val DATABASE_VERSION = 167
 
   @JvmStatic
   fun migrate(context: Application, db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
@@ -99,6 +101,14 @@ object SignalDatabaseMigrations {
 
     if (oldVersion < 165) {
       V165_MmsMessageBoxPaymentTransactionIndexMigration.migrate(context, db, oldVersion, newVersion)
+    }
+
+    if (oldVersion < 166) {
+      V166_ThreadAndMessageForeignKeys.migrate(context, db, oldVersion, newVersion)
+    }
+
+    if (oldVersion < 167) {
+      V167_RecreateReactionTriggers.migrate(context, db, oldVersion, newVersion)
     }
   }
 

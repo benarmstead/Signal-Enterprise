@@ -1,7 +1,5 @@
 package org.thoughtcrime.securesms.components.settings.app.subscription.donate
 
-import android.content.Context
-import android.content.DialogInterface
 import android.text.SpannableStringBuilder
 import android.view.View
 import android.view.ViewGroup
@@ -16,7 +14,6 @@ import androidx.navigation.fragment.navArgs
 import androidx.recyclerview.widget.RecyclerView
 import com.airbnb.lottie.LottieAnimationView
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
-import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
 import org.signal.core.util.dp
 import org.signal.core.util.logging.Log
 import org.signal.core.util.money.FiatMoney
@@ -30,9 +27,6 @@ import org.thoughtcrime.securesms.components.settings.DSLSettingsFragment
 import org.thoughtcrime.securesms.components.settings.DSLSettingsText
 import org.thoughtcrime.securesms.components.settings.app.subscription.boost.Boost
 import org.thoughtcrime.securesms.components.settings.app.subscription.donate.gateway.GatewayRequest
-import org.thoughtcrime.securesms.components.settings.app.subscription.errors.DonationError
-import org.thoughtcrime.securesms.components.settings.app.subscription.errors.DonationErrorDialogs
-import org.thoughtcrime.securesms.components.settings.app.subscription.errors.DonationErrorParams
 import org.thoughtcrime.securesms.components.settings.app.subscription.errors.DonationErrorSource
 import org.thoughtcrime.securesms.components.settings.app.subscription.models.CurrencySelection
 import org.thoughtcrime.securesms.components.settings.app.subscription.models.NetworkFailure
@@ -80,8 +74,6 @@ class DonateToSignalFragment :
     }
   }
 
-  private var errorDialog: DialogInterface? = null
-
   private val args: DonateToSignalFragmentArgs by navArgs()
   private val viewModel: DonateToSignalViewModel by viewModels(factoryProducer = {
     DonateToSignalViewModel.Factory(args.startType)
@@ -114,7 +106,7 @@ class DonateToSignalFragment :
   }
 
   override fun bindAdapter(adapter: MappingAdapter) {
-    donationCheckoutDelegate = DonationCheckoutDelegate(this, this)
+    donationCheckoutDelegate = DonationCheckoutDelegate(this, this, DonationErrorSource.BOOST, DonationErrorSource.SUBSCRIPTION)
 
     val recyclerView = this.recyclerView!!
     recyclerView.overScrollMode = RecyclerView.OVER_SCROLL_IF_CONTENT_SCROLLS
@@ -139,19 +131,6 @@ class DonateToSignalFragment :
     DonationPillToggle.register(adapter)
 
     disposables.bindTo(viewLifecycleOwner)
-
-    disposables += DonationError.getErrorsForSource(DonationErrorSource.BOOST)
-      .observeOn(AndroidSchedulers.mainThread())
-      .subscribe { error ->
-        showErrorDialog(error)
-      }
-
-    disposables += DonationError.getErrorsForSource(DonationErrorSource.SUBSCRIPTION)
-      .observeOn(AndroidSchedulers.mainThread())
-      .subscribe { error ->
-        showErrorDialog(error)
-      }
-
     disposables += viewModel.actions.subscribe { action ->
       when (action) {
         is DonateToSignalAction.DisplayCurrencySelectionDialog -> {
@@ -263,6 +242,7 @@ class DonateToSignalFragment :
       when (state.donateToSignalType) {
         DonateToSignalType.ONE_TIME -> displayOneTimeSelection(state.areFieldsEnabled, state.oneTimeDonationState)
         DonateToSignalType.MONTHLY -> displayMonthlySelection(state.areFieldsEnabled, state.monthlyDonationState)
+        DonateToSignalType.GIFT -> error("This fragment does not support gifts.")
       }
 
       space(20.dp)
@@ -331,6 +311,8 @@ class DonateToSignalFragment :
             selectedBoost = state.selectedBoost,
             currency = state.customAmount.currency,
             isCustomAmountFocused = state.isCustomAmountFocused,
+            isCustomAmountTooSmall = state.shouldDisplayCustomAmountTooSmallError,
+            minimumAmount = state.minimumDonationAmountOfSelectedCurrency,
             isEnabled = areFieldsEnabled,
             onBoostClick = { view, boost ->
               startAnimationAboveSelectedBoost(view)
@@ -389,36 +371,6 @@ class DonateToSignalFragment :
     }
   }
 
-  private fun showErrorDialog(throwable: Throwable) {
-    if (errorDialog != null) {
-      Log.d(TAG, "Already displaying an error dialog. Skipping.", throwable, true)
-    } else {
-      Log.d(TAG, "Displaying donation error dialog.", true)
-      errorDialog = DonationErrorDialogs.show(
-        requireContext(), throwable,
-        object : DonationErrorDialogs.DialogCallback() {
-          var tryCCAgain = false
-
-          override fun onTryCreditCardAgain(context: Context): DonationErrorParams.ErrorAction<Unit>? {
-            return DonationErrorParams.ErrorAction(
-              label = R.string.DeclineCode__try,
-              action = {
-                tryCCAgain = true
-              }
-            )
-          }
-
-          override fun onDialogDismissed() {
-            errorDialog = null
-            if (!tryCCAgain) {
-              findNavController().popBackStack()
-            }
-          }
-        }
-      )
-    }
-  }
-
   private fun startAnimationAboveSelectedBoost(view: View) {
     val animationView = getAnimationContainer(view)
     val viewProjection = Projection.relativeToViewRoot(view, null)
@@ -471,5 +423,9 @@ class DonateToSignalFragment :
 
   override fun onProcessorActionProcessed() {
     viewModel.refreshActiveSubscription()
+  }
+
+  override fun onUserCancelledPaymentFlow() {
+    findNavController().popBackStack(R.id.donateToSignalFragment, false)
   }
 }

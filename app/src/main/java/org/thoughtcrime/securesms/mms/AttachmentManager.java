@@ -448,7 +448,7 @@ public class AttachmentManager {
                      if (address != null) {
                        Intent intent = new Intent(fragment.requireContext(), PaymentsActivity.class);
                        intent.putExtra(PaymentsActivity.EXTRA_PAYMENTS_STARTING_ACTION, R.id.action_directly_to_createPayment);
-                       intent.putExtra(PaymentsActivity.EXTRA_STARTING_ARGUMENTS, new CreatePaymentFragmentArgs.Builder(new PayeeParcelable(recipient.getId())).build().toBundle());
+                       intent.putExtra(PaymentsActivity.EXTRA_STARTING_ARGUMENTS, new CreatePaymentFragmentArgs.Builder(new PayeeParcelable(recipient.getId())).setFinishOnConfirm(true).build().toBundle());
                        fragment.startActivity(intent);
                      } else if (FeatureFlags.paymentsRequestActivateFlow()) {
                        showRequestToActivatePayments(fragment.requireContext(), recipient);
@@ -463,7 +463,7 @@ public class AttachmentManager {
         .setTitle(context.getString(R.string.AttachmentManager__not_activated_payments, recipient.getShortDisplayName(context)))
         .setMessage(context.getString(R.string.AttachmentManager__request_to_activate_payments))
         .setPositiveButton(context.getString(R.string.AttachmentManager__send_request), (dialog, which) -> {
-          OutgoingRequestToActivatePaymentMessages outgoingMessage = new OutgoingRequestToActivatePaymentMessages(recipient, System.currentTimeMillis(), 0);
+          OutgoingMediaMessage outgoingMessage = OutgoingMediaMessage.requestToActivatePaymentsMessage(recipient, System.currentTimeMillis(), 0);
           MessageSender.send(context, outgoingMessage, SignalDatabase.threads().getOrCreateThreadIdFor(recipient), false, null, null);
         })
         .setNegativeButton(context.getString(R.string.AttachmentManager__cancel), null)

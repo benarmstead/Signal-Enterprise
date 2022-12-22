@@ -8,14 +8,18 @@ import android.view.View
 import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import androidx.activity.ComponentDialog
 import androidx.core.os.bundleOf
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.setFragmentResult
+import androidx.lifecycle.DefaultLifecycleObserver
+import androidx.lifecycle.LifecycleOwner
 import androidx.navigation.fragment.navArgs
 import org.signal.core.util.logging.Log
 import org.thoughtcrime.securesms.R
 import org.thoughtcrime.securesms.components.ViewBinderDelegate
 import org.thoughtcrime.securesms.components.settings.app.subscription.PayPalRepository
+import org.thoughtcrime.securesms.components.settings.app.subscription.donate.DonationWebViewOnBackPressedCallback
 import org.thoughtcrime.securesms.databinding.DonationWebviewFragmentBinding
 import org.thoughtcrime.securesms.util.visible
 
@@ -47,10 +51,20 @@ class PayPalConfirmationDialogFragment : DialogFragment(R.layout.donation_webvie
 
   @SuppressLint("SetJavaScriptEnabled")
   override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-    binding.webView.webViewClient = PayPalWebClient()
+    val client = PayPalWebClient()
+    viewLifecycleOwner.lifecycle.addObserver(client)
+    binding.webView.webViewClient = client
     binding.webView.settings.javaScriptEnabled = true
     binding.webView.settings.cacheMode = WebSettings.LOAD_NO_CACHE
     binding.webView.loadUrl(args.uri.toString())
+
+    (requireDialog() as ComponentDialog).onBackPressedDispatcher.addCallback(
+      viewLifecycleOwner,
+      DonationWebViewOnBackPressedCallback(
+        this::dismissAllowingStateLoss,
+        binding.webView
+      )
+    )
   }
 
   override fun onDismiss(dialog: DialogInterface) {
@@ -59,21 +73,31 @@ class PayPalConfirmationDialogFragment : DialogFragment(R.layout.donation_webvie
     setFragmentResult(REQUEST_KEY, result ?: Bundle())
   }
 
-  private inner class PayPalWebClient : WebViewClient() {
+  private inner class PayPalWebClient : WebViewClient(), DefaultLifecycleObserver {
+
+    private var isDestroyed = false
+
+    override fun onDestroy(owner: LifecycleOwner) {
+      isDestroyed = true
+    }
 
     override fun onPageStarted(view: WebView?, url: String?, favicon: Bitmap?) {
-      if (!isFinished) {
+      if (!isDestroyed) {
         binding.progress.visible = true
       }
     }
 
     override fun onPageCommitVisible(view: WebView?, url: String?) {
-      if (!isFinished) {
+      if (!isDestroyed) {
         binding.progress.visible = false
       }
     }
 
     override fun onPageFinished(view: WebView?, url: String?) {
+      if (isDestroyed) {
+        return
+      }
+
       if (url?.startsWith(PayPalRepository.ONE_TIME_RETURN_URL) == true) {
         val confirmationResult = PayPalConfirmationResult.fromUrl(url)
         if (confirmationResult != null) {

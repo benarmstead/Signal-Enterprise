@@ -197,7 +197,6 @@ public abstract class MessageTable extends DatabaseTable implements MmsSmsColumn
   public abstract void endTransaction(SQLiteDatabase database);
   public abstract void setTransactionSuccessful();
   public abstract void endTransaction();
-  public abstract SQLiteStatement createInsertStatement(SQLiteDatabase database);
 
   public abstract void ensureMigration();
 
@@ -233,7 +232,7 @@ public abstract class MessageTable extends DatabaseTable implements MmsSmsColumn
   final @NonNull String getOutgoingTypeClause() {
     List<String> segments = new ArrayList<>(Types.OUTGOING_MESSAGE_TYPES.length);
     for (long outgoingMessageType : Types.OUTGOING_MESSAGE_TYPES) {
-      segments.add("(" + getTypeField() + " & " + Types.BASE_TYPE_MASK + " = " + outgoingMessageType + ")");
+      segments.add("(" + getTableName() + "." + getTypeField() + " & " + Types.BASE_TYPE_MASK + " = " + outgoingMessageType + ")");
     }
 
     return Util.join(segments, " OR ");
@@ -269,7 +268,9 @@ public abstract class MessageTable extends DatabaseTable implements MmsSmsColumn
   }
 
   public boolean hasSmsExportMessage(long threadId) {
-    return SQLiteDatabaseExtensionsKt.exists(getReadableDatabase(), getTableName(), THREAD_ID_WHERE + " AND " + getTypeField() + " = ?", threadId, Types.SMS_EXPORT_TYPE);
+    return SQLiteDatabaseExtensionsKt.exists(getReadableDatabase(), getTableName())
+        .where(THREAD_ID_WHERE + " AND " + getTypeField() + " = ?", threadId, Types.SMS_EXPORT_TYPE)
+        .run();
   }
 
   final int getSecureMessageCountForInsights() {
@@ -560,7 +561,7 @@ public abstract class MessageTable extends DatabaseTable implements MmsSmsColumn
   public void remapRecipient(@NonNull RecipientId fromId, @NonNull RecipientId toId) {
     ContentValues values = new ContentValues();
     values.put(RECIPIENT_ID, toId.serialize());
-    getWritableDatabase().update(getTableName(), values, RECIPIENT_ID + " = ?", SqlUtil.buildArgs(toId));
+    getWritableDatabase().update(getTableName(), values, RECIPIENT_ID + " = ?", SqlUtil.buildArgs(fromId));
   }
 
   @Override

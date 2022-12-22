@@ -15,11 +15,13 @@ import org.signal.core.util.delete
 import org.signal.core.util.logging.Log
 import org.signal.core.util.or
 import org.signal.core.util.readToList
+import org.signal.core.util.readToSingleLong
 import org.signal.core.util.requireBoolean
 import org.signal.core.util.requireInt
 import org.signal.core.util.requireLong
 import org.signal.core.util.requireString
 import org.signal.core.util.select
+import org.signal.core.util.toSingleLine
 import org.signal.core.util.update
 import org.signal.core.util.withinTransaction
 import org.signal.libsignal.zkgroup.InvalidInputException
@@ -76,14 +78,13 @@ class ThreadTable(context: Context, databaseHelper: SignalDatabase) : DatabaseTa
     const val TABLE_NAME = "thread"
     const val ID = "_id"
     const val DATE = "date"
-    const val MEANINGFUL_MESSAGES = "message_count"
-    const val RECIPIENT_ID = "thread_recipient_id"
-    const val SNIPPET = "snippet"
-    const val SNIPPET_CHARSET = "snippet_charset"
+    const val MEANINGFUL_MESSAGES = "meaningful_messages"
+    const val RECIPIENT_ID = "recipient_id"
     const val READ = "read"
     const val UNREAD_COUNT = "unread_count"
     const val TYPE = "type"
     const val ERROR = "error"
+    const val SNIPPET = "snippet"
     const val SNIPPET_TYPE = "snippet_type"
     const val SNIPPET_URI = "snippet_uri"
     const val SNIPPET_CONTENT_TYPE = "snippet_content_type"
@@ -106,11 +107,10 @@ class ThreadTable(context: Context, databaseHelper: SignalDatabase) : DatabaseTa
         $DATE INTEGER DEFAULT 0, 
         $MEANINGFUL_MESSAGES INTEGER DEFAULT 0,
         $RECIPIENT_ID INTEGER,
-        $SNIPPET TEXT, 
-        $SNIPPET_CHARSET INTEGER DEFAULT 0, 
         $READ INTEGER DEFAULT ${ReadStatus.READ.serialize()}, 
         $TYPE INTEGER DEFAULT 0, 
         $ERROR INTEGER DEFAULT 0, 
+        $SNIPPET TEXT, 
         $SNIPPET_TYPE INTEGER DEFAULT 0, 
         $SNIPPET_URI TEXT DEFAULT NULL, 
         $SNIPPET_CONTENT_TYPE TEXT DEFAULT NULL, 
@@ -143,7 +143,6 @@ class ThreadTable(context: Context, databaseHelper: SignalDatabase) : DatabaseTa
       MEANINGFUL_MESSAGES,
       RECIPIENT_ID,
       SNIPPET,
-      SNIPPET_CHARSET,
       READ,
       UNREAD_COUNT,
       TYPE,
@@ -343,7 +342,7 @@ class ThreadTable(context: Context, databaseHelper: SignalDatabase) : DatabaseTa
       mmsSms.getConversation(threadId).use { cursor ->
         if (cursor.count > length) {
           cursor.moveToPosition(length - 1)
-          max(trimBeforeDate, cursor.requireLong(MmsSmsColumns.NORMALIZED_DATE_RECEIVED))
+          max(trimBeforeDate, cursor.requireLong(MmsSmsColumns.DATE_RECEIVED))
         } else {
           trimBeforeDate
         }
@@ -520,6 +519,7 @@ class ThreadTable(context: Context, databaseHelper: SignalDatabase) : DatabaseTa
     val allCount: Long = readableDatabase
       .select("SUM($UNREAD_COUNT)")
       .from(TABLE_NAME)
+      .where("$ARCHIVED = ?", 0)
       .run()
       .use { cursor ->
         if (cursor.moveToFirst()) {
@@ -532,7 +532,7 @@ class ThreadTable(context: Context, databaseHelper: SignalDatabase) : DatabaseTa
     val forcedUnreadCount: Long = readableDatabase
       .select("COUNT(*)")
       .from(TABLE_NAME)
-      .where("$READ = ?", ReadStatus.FORCED_UNREAD.serialize())
+      .where("$READ = ? AND $ARCHIVED = ?", ReadStatus.FORCED_UNREAD.serialize(), 0)
       .run()
       .use { cursor ->
         if (cursor.moveToFirst()) {
@@ -701,14 +701,14 @@ class ThreadTable(context: Context, databaseHelper: SignalDatabase) : DatabaseTa
     }
 
     if (hideSelf) {
-      where += " AND $RECIPIENT_ID != ${Recipient.self().id.toLong()}"
+      where += " AND $TABLE_NAME.$RECIPIENT_ID != ${Recipient.self().id.toLong()}"
     }
 
     where += " AND $ARCHIVED = 0"
     where += " AND ${RecipientTable.TABLE_NAME}.${RecipientTable.BLOCKED} = 0"
 
     if (SignalStore.releaseChannelValues().releaseChannelRecipientId != null) {
-      where += " AND $RECIPIENT_ID != ${SignalStore.releaseChannelValues().releaseChannelRecipientId!!.toLong()}"
+      where += " AND $TABLE_NAME.$RECIPIENT_ID != ${SignalStore.releaseChannelValues().releaseChannelRecipientId!!.toLong()}"
     }
 
     val query = createQuery(
@@ -1073,13 +1073,7 @@ class ThreadTable(context: Context, databaseHelper: SignalDatabase) : DatabaseTa
       .from(TABLE_NAME)
       .where("$RECIPIENT_ID = ?", recipientId)
       .run()
-      .use { cursor ->
-        return if (cursor.moveToFirst()) {
-          cursor.requireLong(ID)
-        } else {
-          -1
-        }
-      }
+      .readToSingleLong(-1)
   }
 
   fun getOrCreateValidThreadId(recipient: Recipient, candidateId: Long): Long {
@@ -1457,6 +1451,10 @@ class ThreadTable(context: Context, databaseHelper: SignalDatabase) : DatabaseTa
       check(primary != null)
       check(secondary != null)
 
+      for (table in threadIdDatabaseTables) {
+        table.remapThread(secondary.threadId, primary.threadId)
+      }
+
       writableDatabase
         .delete(TABLE_NAME)
         .where("$ID = ?", secondary.threadId)
@@ -1635,10 +1633,6 @@ class ThreadTable(context: Context, databaseHelper: SignalDatabase) : DatabaseTa
 
   fun readerFor(cursor: Cursor): Reader {
     return Reader(cursor)
-  }
-
-  private fun String.toSingleLine(): String {
-    return this.trimIndent().split("\n").joinToString(separator = " ")
   }
 
   private fun ConversationFilter.toQuery(): String {

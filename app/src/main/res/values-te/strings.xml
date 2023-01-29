@@ -224,6 +224,8 @@
     <string name="ContactsCursorLoader_recent_chats">ఇటీవలి చాట్లు</string>
     <string name="ContactsCursorLoader_contacts">కాంటాక్ట్స్</string>
     <string name="ContactsCursorLoader_groups">సమూహాలు</string>
+    <!-- Contact search header for individuals who the user has not started a conversation with but is in a group with -->
+    <string name="ContactsCursorLoader_group_members">సమూహ సభ్యులు</string>
     <string name="ContactsCursorLoader_phone_number_search">ఫోన్ నంబర్ శోధన</string>
     <!-- Header for username search -->
     <string name="ContactsCursorLoader_find_by_username">యూజర్‌నేమ్ ద్వారా కనుగొనండి</string>
@@ -231,6 +233,10 @@
     <string name="ContactsCursorLoader_my_stories">నా స్టోరీస్</string>
     <!-- Text for a button that brings up a bottom sheet to create a new story. -->
     <string name="ContactsCursorLoader_new">కొత్తది</string>
+    <!-- Header for conversation search section labeled "Chats" -->
+    <string name="ContactsCursorLoader__chats">మాటామంతి</string>
+    <!-- Header for conversation search section labeled "Messages" -->
+    <string name="ContactsCursorLoader__messages">సందేశాలు</string>
 
     <!-- ContactsDatabase -->
     <string name="ContactsDatabase_message_s">%1$sకి సందేశం పంపు</string>
@@ -593,6 +599,8 @@
     <string name="BackupsPreferenceFragment__create_backup">ప్రత్యామ్నాయ సృష్టించు</string>
     <string name="BackupsPreferenceFragment__last_backup">మునుపటి బ్యాకప్: %1$s</string>
     <string name="BackupsPreferenceFragment__backup_folder">బ్యాకప్ ఫోల్డర్</string>
+    <!-- Title for a preference item allowing the user to selected the hour of the day when their chats are backed up. -->
+    <string name="BackupsPreferenceFragment__backup_time">Backup time</string>
     <string name="BackupsPreferenceFragment__verify_backup_passphrase">బ్యాకప్ పాస్‌ఫ్రేజ్‌ని ధృవీకరించండి</string>
     <string name="BackupsPreferenceFragment__test_your_backup_passphrase">మీ ప్రత్యామ్నాయము పాస్‌ఫ్రేజ్‌ని పరీక్షించండి మరియు అది సరిపోతుందో లేదో ధృవీకరించండి</string>
     <string name="BackupsPreferenceFragment__turn_on">ఆరంభించండి</string>
@@ -622,6 +630,50 @@
     <string name="DateUtils_minutes_ago">%1$dm</string>
     <string name="DateUtils_today">నేడు</string>
     <string name="DateUtils_yesterday">నిన్న</string>
+    <!-- When scheduling a message, %1$s replaced with either today, tonight, or tomorrow. %2$s replaced with the time. e.g. Tonight at 9:00pm -->
+    <string name="DateUtils_schedule_at">%2$s వద్ద %1$s</string>
+    <!-- Used when getting a time in the future. For example, Tomorrow at 9:00pm -->
+    <string name="DateUtils_tomorrow">Tomorrow</string>
+    <!-- Used in the context: Tonight at 9:00pm for example. Specifically this is after 7pm -->
+    <string name="DateUtils_tonight">Tonight</string>
+
+    <!-- Scheduled Messages -->
+    <!-- Title for dialog that shows all the users scheduled messages for a chat -->
+    <string name="ScheduledMessagesBottomSheet__schedules_messages">Scheduled messages</string>
+    <!-- Option when scheduling a message to select a specific date and time to send a message -->
+    <string name="ScheduledMessages_pick_time">Pick Date &amp; Time</string>
+    <!-- Title for dialog explaining to users how the scheduled messages work -->
+    <string name="ScheduleMessageFTUXBottomSheet__title">Scheduled messages</string>
+    <!-- Disclaimer text for scheduled messages explaining to users that the scheduled messages will only send if connected to the internet -->
+    <string name="ScheduleMessageFTUXBottomSheet__disclaimer">When you send a scheduled message, make sure your device will be on and connected to the internet at the time of sending. If not, your message will send when your device reconnects.</string>
+    <!-- Confirmation button text acknowledging the user understands the disclaimer -->
+    <string name="ScheduleMessageFTUXBottomSheet__okay">సరే</string>
+    <!-- Title for section asking users to allow alarm permissions for scheduled messages -->
+    <string name="ScheduleMessageFTUXBottomSheet_enable_title">To enable message scheduling:</string>
+    <!-- Title for dialog asking users to allow alarm permissions for scheduled messages -->
+    <string name="ReenableScheduleMessagesDialogFragment_reenable_title">To re-enable message scheduling:</string>
+    <!-- Title of dialog with a calendar to select the date the user wants to schedule a message. -->
+    <string name="ScheduleMessageTimePickerBottomSheet__select_date_title">Select date</string>
+    <!-- Title of dialog with a clock to select the time at which the user wants to schedule a message. -->
+    <string name="ScheduleMessageTimePickerBottomSheet__select_time_title">Select time</string>
+    <!-- Title of dialog that allows user to set the time and day that their message will be sent -->
+    <string name="ScheduleMessageTimePickerBottomSheet__dialog_title">Schedule message</string>
+    <!-- Text for confirmation button when scheduling messages that allows the user to confirm and schedule the sending time -->
+    <string name="ScheduleMessageTimePickerBottomSheet__schedule_send">Schedule send</string>
+
+    <!-- Disclaimer in message scheduling dialog. %1$s replaced with a GMT offset (e.g. GMT-05:00), and %2$s is replaced with the time zone name (e.g. Eastern Standard Time) -->
+    <string name="ScheduleMessageTimePickerBottomSheet__timezone_disclaimer">All times in (%1$s) %2$s</string>
+
+    <!-- Context menu option to send a scheduled message now -->
+    <string name="ScheduledMessagesBottomSheet_menu_send_now">Send now</string>
+    <!-- Context menu option to reschedule a selected message -->
+    <string name="ScheduledMessagesBottomSheet_menu_reschedule">Reschedule</string>
+    <!-- Button in dialog asking user if they are sure they want to delete the selected scheduled message -->
+    <string name="ScheduledMessagesBottomSheet_delete_dialog_action">తొలగించండి</string>
+    <!-- Button in dialog asking user if they are sure they want to delete the selected scheduled message -->
+    <string name="ScheduledMessagesBottomSheet_delete_dialog_message">Delete selected scheduled message?</string>
+    <!-- Progress message shown while deleting selected scheduled message -->
+    <string name="ScheduledMessagesBottomSheet_deleting_progress_message">Deleting scheduled message…</string>
 
     <!-- DecryptionFailedDialog -->
     <string name="DecryptionFailedDialog_chat_session_refreshed">చాట్ సెషన్ రిఫ్రెష్ చేయబడింది</string>
@@ -861,7 +913,7 @@
 
     <string name="ManageGroupActivity_you_dont_have_the_rights_to_do_this">దీన్ని చేయడానికి మీకు హక్కులు లేవు</string>
     <string name="ManageGroupActivity_not_capable">మీరు జోడించిన ఎవరైనా క్రొత్త సమూహాలకు మద్దతు ఇవ్వరు మరియు Signal‌ను నవీకరించాలి</string>
-    <string name="ManageGroupActivity_not_announcement_capable">మీరు జోడించిన ఎవరికో సపోర్ట్ అనౌన్స్‌మెంట్ గ్రూపులు మద్దతు ఇవ్వవు, Signal ని అప్‌డేట్ చేసుకోవాల్సి ఉంటుంది.</string>
+    <string name="ManageGroupActivity_not_announcement_capable">మీరు జోడించిన ఎవరికో అనౌన్స్‌మెంట్ గ్రూపులు మద్దతు ఇవ్వవు, Signal ని అప్‌డేట్ చేసుకోవాల్సి ఉంటుంది.</string>
     <string name="ManageGroupActivity_failed_to_update_the_group">సమూహాన్ని నవీకరించడంలో విఫలమైంది</string>
     <string name="ManageGroupActivity_youre_not_a_member_of_the_group">మీరు సమూహంలో సభ్యుడు కాదు</string>
     <string name="ManageGroupActivity_failed_to_update_the_group_please_retry_later">సమూహాన్ని నవీకరించడంలో విఫలమైంది దయచేసి తరువాత మళ్లీ ప్రయత్నించండి</string>
@@ -1152,11 +1204,29 @@
     <string name="MessageRecord_left_group">మీరు సమూహం నుండి వైదొలిగారు</string>
     <string name="MessageRecord_you_updated_group">మీరు ఈ సమూహాన్ని నవీకరించారు.</string>
     <string name="MessageRecord_the_group_was_updated">సమూహం నవీకరించబడింది.</string>
-    <string name="MessageRecord_you_called_date">మీరు %1$s కు కాల్ చేశారు.</string>
-    <string name="MessageRecord_missed_audio_call_date">తప్పిన ఆడియో కాల్ . %1$s</string>
-    <string name="MessageRecord_missed_video_call_date">తప్పిన వీడియో కాల్ . %1$s</string>
+    <!-- Update message shown when placing an outgoing 1:1 voice/audio call and it\'s answered by the other party -->
+    <string name="MessageRecord_outgoing_voice_call">అవుట్‌గోయింగ్ వాయిస్ కాల్</string>
+    <!-- Update message shown when placing an outgoing 1:1 video call and it\'s answered by the other party -->
+    <string name="MessageRecord_outgoing_video_call">అవుట్‌గోయింగ్ వీడియో కాల్</string>
+    <!-- Update message shown when placing an outgoing 1:1 voice/audio call and it\'s not answered by the other party -->
+    <string name="MessageRecord_unanswered_voice_call">సమాధానం ఇవ్వని వాయిస్ కాల్</string>
+    <!-- Update message shown when placing an outgoing 1:1 video call and it\'s not answered by the other party -->
+    <string name="MessageRecord_unanswered_video_call">సమాధానం ఇవ్వని వీడియో కాల్</string>
+    <!-- Update message shown when receiving an incoming 1:1 voice/audio call and it\'s answered -->
+    <string name="MessageRecord_incoming_voice_call">ఇన్‌కమింగ్ వాయిస్ కాల్</string>
+    <!-- Update message shown when receiving an incoming 1:1 video call and answered -->
+    <string name="MessageRecord_incoming_video_call">ఇన్‌కమింగ్ వీడియో కాల్</string>
+    <!-- Update message shown when receiving an incoming 1:1 voice/audio call and not answered -->
+    <string name="MessageRecord_missed_voice_call">మిస్డ్ వాయిస్ కాల్</string>
+    <!-- Update message shown when receiving an incoming 1:1 video call and not answered -->
+    <string name="MessageRecord_missed_video_call">మిస్డ్ వీడియో కాల్</string>
+    <!-- Update message shown when receiving an incoming 1:1 voice/audio call and explicitly declined -->
+    <string name="MessageRecord_you_declined_a_voice_call">మీరు ఒక వాయిస్ కాల్‌ను నిరాకరించారు</string>
+    <!-- Update message shown when receiving an incoming 1:1 video call and explicitly declined -->
+    <string name="MessageRecord_you_declined_a_video_call">మీరు ఒక వీడియో కాల్‌ను నిరాకరించారు</string>
+    <!-- Call update formatter string to place the update message next to a time stamp. e.g., \'Incoming voice call · 11:11am\' -->
+    <string name="MessageRecord_call_message_with_date">%1$s · %2$s</string>
     <string name="MessageRecord_s_updated_group">%1$s సమూహాన్ని నవీకరించారు.</string>
-    <string name="MessageRecord_s_called_you_date">%1$s మీకు కాల్ చేసారు %2$s</string>
     <string name="MessageRecord_s_joined_signal">1%1$s Signal ఉంది!</string>
     <string name="MessageRecord_you_disabled_disappearing_messages">మీరు అదృశ్య సందేశాలను డిసేబుల్ చేసారు.</string>
     <string name="MessageRecord_s_disabled_disappearing_messages">%1$s డిసేబుల్ కనుమరుగవుతున్న సందేశాలు.</string>
@@ -1344,10 +1414,12 @@
     <string name="MessageRecord_s_changed_their_phone_number">%1$s వారి ఫోన్ నెంబర్‌ని మార్చారు.</string>
     <!-- Update item message shown in the release channel when someone is already a sustainer so we ask them if they want to boost. -->
     <string name="MessageRecord_like_this_new_feature_help_support_signal_with_a_one_time_donation">ఈ కొత్త ఫీచర్ నచ్చిందా? ఒక్కసారి విరాళంతో Signal కు మద్దతు ఇవ్వడానికి సహాయపడండి.</string>
-    <!-- Update item message shown when we merge two threads together -->
+    <!-- Update item message shown when we merge two threads together. First placeholder is a name, second placeholder is a phone number. -->
     <string name="MessageRecord_your_message_history_with_s_and_their_number_s_has_been_merged">%1$s తో మీ సందేశ చరిత్ర మరియు వాటి నంబరు %2$s విలీనం చేయబడ్డాయి.</string>
-    <!-- Update item message shown when we merge two threads together and we don\'t know the phone number of the other thread -->
+    <!-- Update item message shown when we merge two threads together and we don\'t know the phone number of the other thread. The placeholder is a person\'s name. -->
     <string name="MessageRecord_your_message_history_with_s_and_another_chat_has_been_merged">%1$s తో మీ సందేశ చరిత్ర మరియు వాటికి సంబంధించిన మరో చాట్ విలీనం చేయబడ్డాయి.</string>
+    <!-- Update item message shown when you find out a phone number belongs to a person you had a conversation with. First placeholder is a phone number, second placeholder is a name. -->
+    <string name="MessageRecord_s_belongs_to_s">%1$s %2$s కు చెందినది</string>
     <!-- Message to notify sender that activate payments request has been sent to the recipient -->
     <string name="MessageRecord_you_sent_request">చెల్లింపులను యాక్టివేట్ చేయడానికి మీరు %1$s కు ఒక అభ్యర్థనను పంపారు</string>
     <!-- Request message from recipient to activate payments -->
@@ -1676,8 +1748,7 @@
     <string name="RegistrationActivity_select_your_country">మీ దేశాన్ని ఎంచుకోండి</string>
     <string name="RegistrationActivity_you_must_specify_your_country_code">మీరు మీ దేశం కోడ్ తప్పకుండా పేర్కొనాలి
     </string>
-    <string name="RegistrationActivity_you_must_specify_your_phone_number">మీరు మీ ఫోను నంబరు తప్పకుండా పేర్కొనాలి
-    </string>
+    <string name="RegistrationActivity_please_enter_a_valid_phone_number_to_register">నమోదు చేయడానికి దయచేసి చెల్లుబాటు అయ్యే ఫోన్ నంబర్‌ను నమోదు చేయండి.</string>
     <string name="RegistrationActivity_invalid_number">చెల్లని సంఖ్య</string>
     <string name="RegistrationActivity_the_number_you_specified_s_is_invalid">మీరు పేర్కొన్న సంఖ్య (%1$s) చెల్లదు.
     </string>
@@ -1707,7 +1778,6 @@
     <string name="RegistrationActivity_next">తరువాత</string>
     <string name="RegistrationActivity_continue">కొనసాగించు</string>
     <string name="RegistrationActivity_take_privacy_with_you_be_yourself_in_every_message">మీతో గోప్యతను తీసుకోండి.\nప్రతి సందేశంలో మీరే ఉండండి.</string>
-    <string name="RegistrationActivity_enter_your_phone_number_to_get_started">ప్రారంభించడానికి మీ ఫోన్ నంబర్‌ను నమోదు చేయండి</string>
     <string name="RegistrationActivity_enter_your_phone_number">మీ ఫోన్ నంబర్‌ను నమోదు చేయండి</string>
     <string name="RegistrationActivity_you_will_receive_a_verification_code">మీరు ధృవీకరణ కోడ్‌ను అందుకుంటారు. క్యారియర్ రేట్లు వర్తించవచ్చు.</string>
     <string name="RegistrationActivity_enter_the_code_we_sent_to_s">మేము పంపిన కోడ్‌ను నమోదు చేయండి %1$s</string>
@@ -1715,7 +1785,10 @@
 
     <string name="RegistrationActivity_phone_number_description">ఫోను నంబరు</string>
     <string name="RegistrationActivity_country_code_description">దేశం కోడ్</string>
+    <string name="RegistrationActivity_country_code_hint">దేశం</string>
     <string name="RegistrationActivity_call">కాల్</string>
+    <string name="RegistrationActivity_verification_code">ధృవీకరణ కోడ్</string>
+    <string name="RegistrationActivity_resend_code">మళ్ళీ పంపు కోడ్</string>
 
     <!-- RegistrationLockV2Dialog -->
     <string name="RegistrationLockV2Dialog_turn_on_registration_lock">రిజిస్ట్రేషన్ లాక్ ఆన్ చేయాలా?</string>
@@ -1837,10 +1910,6 @@
     <string name="ThreadRecord_left_the_group">సమూహన్ని వదిలివేయుట</string>
     <string name="ThreadRecord_secure_session_reset">సురక్షిత సెషన్ పునరుద్ధరించు.</string>
     <string name="ThreadRecord_draft">చిత్తు పత్రం:</string>
-    <string name="ThreadRecord_called">మీరు కాల్ చెసారు</string>
-    <string name="ThreadRecord_called_you">మీకు కాల్ చెసారు</string>
-    <string name="ThreadRecord_missed_audio_call">తప్పిన ఆడియో కాల్</string>
-    <string name="ThreadRecord_missed_video_call">తప్పిన వీడియో కాల్</string>
     <string name="ThreadRecord_media_message">మీడియ సందేశం</string>
     <string name="ThreadRecord_sticker">స్టికర్</string>
     <string name="ThreadRecord_view_once_photo">ఒకసారి-దృశ్యం ఫోటో</string>
@@ -1873,11 +1942,11 @@
     <string name="ThreadRecord_video">వీడియో</string>
     <string name="ThreadRecord_chat_session_refreshed">చాట్ సెషన్ రిఫ్రెష్ చేయబడింది</string>
     <!-- Displayed in the notification when the user is sent a gift -->
-    <string name="ThreadRecord__you_received_a_gift">మీరు ఒక బహుమతిని అందుకున్నారు</string>
+    <string name="ThreadRecord__s_donated_for_you">మీ కొరకు %1$s విరాళం ఇచ్చారు</string>
     <!-- Displayed in the notification when the user sends a gift -->
-    <string name="ThreadRecord__you_sent_a_gift">మీరు ఒక బహుమతిని పంపారు</string>
+    <string name="ThreadRecord__you_donated_for_s">మీరు %1$s కొరకు విరాళం ఇచ్చారు</string>
     <!-- Displayed in the notification when the user has opened a received gift -->
-    <string name="ThreadRecord__you_redeemed_a_gift_badge">మీరు ఒక బహుమతి బ్యాడ్జిని రిడీమ్ చేసుకున్నారు</string>
+    <string name="ThreadRecord__you_redeemed_a_badge">మీరు ఒక బ్యాడ్జీని రీడిమ్ చేసుకున్నారు</string>
     <!-- Displayed in the conversation list when someone reacted to your story -->
     <string name="ThreadRecord__reacted_s_to_your_story">మీ స్టోరీకు %1$s ప్రతిస్పందించారు</string>
     <!-- Displayed in the conversation list when you reacted to someone\'s story -->
@@ -1984,13 +2053,15 @@
     <string name="MediaPreviewActivity_s_to_you">%1$s నుంచి మీకు</string>
     <string name="MediaPreviewActivity_media_no_longer_available">మీడియా ఇకపై అందుబాటులో లేదు.</string>
     <!-- Notifying the user that the device has encountered a technical issue and is unable to render a video. -->
-    <string name="MediaPreviewActivity_unable_to_play_media">Unable to play media.</string>
+    <string name="MediaPreviewActivity_unable_to_play_media">మీడియాను ప్లే చేయలేకపోయింది.</string>
     <string name="MediaPreviewActivity_error_finding_message">సందేశాన్ని కనుగొనడంలో లోపం.</string>
     <string name="MediaPreviewActivity_cant_find_an_app_able_to_share_this_media">ఈ మీడియాను భాగస్వామ్యం చేయగల అనువర్తనాన్ని కనుగొనలేకపోయాము.</string>
     <string name="MediaPreviewActivity_dismiss_due_to_error">మూసివెయ్యి</string>
     <string name="MediaPreviewFragment_edit_media_error">మీడియా లోపం</string>
     <!-- This is displayed as a toast notification when we encounter an error deleting a message, including potentially on other people\'s devices -->
     <string name="MediaPreviewFragment_media_delete_error">సందేశాన్ని తొలగించడంలో లోపం. సందేశం ఇప్పటికీ ఉండవచ్చు</string>
+    <!-- A suffix to be attached to truncated captions that the user may tap onto to view the entire text caption -->
+    <string name="MediaPreviewFragment_see_more">%1$s… <b>Read More</b></string>
 
     <!-- MessageNotifier -->
     <string name="MessageNotifier_d_new_messages_in_d_conversations">%2$d సంభాషణలొ కొత్త %1$d సందేశాలు</string>
@@ -2055,6 +2126,8 @@
 
     <!-- SearchToolbar -->
     <string name="SearchToolbar_search">వెతకండి</string>
+    <!-- Hint when searching filtered chat content -->
+    <string name="SearchToolbar_search_unread_chats">చదవని చాట్‌లను శోధించండి</string>
     <string name="SearchToolbar_search_for_conversations_contacts_and_messages">సంభాషణలు, పరిచయాలు మరియు సందేశాల కోసం శోధించండి</string>
 
     <!-- Material3 Search Toolbar -->
@@ -2085,6 +2158,9 @@
     <!-- UnauthorizedReminder -->
     <string name="UnauthorizedReminder_device_no_longer_registered">పరికరం నమోదు చేయబడలేదు</string>
     <string name="UnauthorizedReminder_this_is_likely_because_you_registered_your_phone_number_with_Signal_on_a_different_device">మీరు వేరొక పరికరంలో Signal మీ ఫోన్ నంబర్ను నమోదు చేసి ఉండవచ్చు. తిరిగి నమోదు చేయడానికి నొక్కండి.</string>
+
+    <!-- Push notification when the app is forcibly logged out by the server. -->
+    <string name="LoggedOutNotification_you_have_been_logged_out">మీరు ఈ పరికరంపై Signal నుండి లాగ్ అవుట్ అయ్యారు.</string>
 
     <!-- EnclaveFailureReminder -->
     <!-- Banner message to update app to use payments -->
@@ -2176,6 +2252,8 @@
     <string name="conversation_activity__type_message_push">Signal మెసేజ్</string>
     <string name="conversation_activity__type_message_sms_insecure">భద్రతలేని సందేశం</string>
     <string name="conversation_activity__type_message_mms_insecure">భద్రతలేని MMS</string>
+    <!-- Option in send button context menu to schedule the message instead of sending it directly -->
+    <string name="conversation_activity__option_schedule_message">Schedule message</string>
     <string name="conversation_activity__from_sim_name">%1$s నుండి</string>
     <string name="conversation_activity__sim_n">%1$dSIM</string>
     <string name="conversation_activity__send">పంపించు</string>
@@ -2248,7 +2326,7 @@
     <!-- Label indicating that the story being replied to no longer exists -->
     <string name="QuoteView_no_longer_available">ఇక ఏమాత్రం లభ్యం కాదు</string>
     <!-- Label for quoted gift -->
-    <string name="QuoteView__gift">బహుమతి</string>
+    <string name="QuoteView__donation_for_a_friend">ఒక స్నేహితుడి కొరకు విరాళం</string>
 
     <!-- conversation_fragment -->
     <string name="conversation_fragment__scroll_to_the_bottom_content_description">దిగువకు స్క్రోల్ చెయ్యి</string>
@@ -2404,8 +2482,8 @@
 
     <!-- BadDecryptLearnMoreDialog -->
     <string name="BadDecryptLearnMoreDialog_delivery_issue">నిర్వహణ సమస్య</string>
-    <string name="BadDecryptLearnMoreDialog_couldnt_be_delivered_individual">%1$s నుంచి సందేశం, స్టిక్కర్, రియాక్షన్, లేదా రీడ్ రిసిప్ట్‌ని మీకు డెలివరీ చేయలేం. వారు మీకు నేరుగా లేదా గ్రూపులో పంపడానికి ప్రయత్నించి ఉండవచ్చు.</string>
-    <string name="BadDecryptLearnMoreDialog_couldnt_be_delivered_group">%1$s నుంచి సందేశం, స్టిక్కర్, రియాక్షన్, లేదా రీడ్ రిసిప్ట్ మీకు డెలివరీ చేయబడదు.</string>
+    <string name="BadDecryptLearnMoreDialog_couldnt_be_delivered_individual">%1$s నుంచి సందేశం, స్టిక్కర్, ప్రతిస్పందన, లేదా రీడ్ రిసిప్ట్‌ని మీకు డెలివరీ చేయలేం. వారు మీకు నేరుగా లేదా గ్రూపులో పంపడానికి ప్రయత్నించి ఉండవచ్చు.</string>
+    <string name="BadDecryptLearnMoreDialog_couldnt_be_delivered_group">%1$s నుంచి సందేశం, స్టిక్కర్, ప్రతిస్పందన, లేదా రీడ్ రిసిప్ట్ మీకు డెలివరీ చేయబడదు.</string>
 
     <!-- profile_create_activity -->
     <string name="CreateProfileActivity_first_name_required">మొదటి పేరు (అవసరం)</string>
@@ -3064,6 +3142,16 @@
     <!-- conversation_callable_insecure -->
     <string name="conversation_add_to_contacts__menu_add_to_contacts">పరిచయాలకు జోడించండి</string>
 
+    <!-- conversation scheduled messages bar -->
+
+    <!-- Label for button in a banner to show all messages currently scheduled -->
+    <string name="conversation_scheduled_messages_bar__see_all">అన్నింటిని చూడు</string>
+    <!-- Body text for banner to show all scheduled messages for the chat that tells the user how many scheduled messages there are -->
+    <plurals name="conversation_scheduled_messages_bar__number_of_messages">
+        <item quantity="one">%1$d message scheduled</item>
+        <item quantity="other">%1$d messages scheduled</item>
+    </plurals>
+
     <!-- conversation_group_options -->
     <string name="convesation_group_options__recipients_list">గ్రహీతల జాబితా</string>
     <string name="conversation_group_options__delivery">చేర్చుట</string>
@@ -3156,11 +3244,13 @@
     <string name="CreateKbsPinFragment__create_a_new_pin">క్రొత్త పిన్ను సృష్టించండి</string>
     <string name="CreateKbsPinFragment__you_can_choose_a_new_pin_as_long_as_this_device_is_registered">ఈ పరికరం నమోదు చేయబడినంత వరకు మీరు మీ పిన్‌ను మార్చవచ్చు.</string>
     <string name="CreateKbsPinFragment__create_your_pin">మీ పిన్ను సృష్టించండి</string>
-    <string name="CreateKbsPinFragment__pins_keep_information_stored_with_signal_encrypted">పిన్‌లు Signal గుప్తీకరించిన సమాచారాన్ని నిల్వ చేస్తాయి కాబట్టి మీరు మాత్రమే దీన్ని యాక్సెస్ చేయవచ్చు. మీరు మళ్లీ ఇన్‌స్టాల్ చేసినప్పుడు మీ ప్రొఫైల్, సెట్టింగ్‌లు మరియు పరిచయాలు పునరుద్ధరించబడతాయి. యాప్ తెరవడానికి మీకు మీ పిన్ అవసరం లేదు</string>
+    <string name="CreateKbsPinFragment__pins_can_help_you_restore_your_account">PINs can help you restore your account and keep your info encrypted with Signal. </string>
     <string name="CreateKbsPinFragment__choose_a_stronger_pin">బలమైన పిన్ను ఎంచుకోండి</string>
 
     <!-- ConfirmKbsPinFragment -->
     <string name="ConfirmKbsPinFragment__pins_dont_match">పిన్‌లు సరిపోలడం లేదు. మళ్ళీ ప్రయత్నించండి.</string>
+    <!-- Prompt for the user to repeat entering the PIN in order to help them remember it correctly.   -->
+    <string name="ConfirmKbsPinFragment__re_enter_the_pin_you_just_created">Re-enter the PIN you just created.</string>
     <string name="ConfirmKbsPinFragment__confirm_your_pin">మీ పిన్ను నిర్ధారించండి.</string>
     <string name="ConfirmKbsPinFragment__pin_creation_failed">పిన్ సృష్టి విఫలమైంది</string>
     <string name="ConfirmKbsPinFragment__your_pin_was_not_saved">మీ పిన్ సేవ్ చేయబడలేదు. తరువాత పిన్ సృష్టించమని మేము మిమ్మల్ని అడుగుతాము.</string>
@@ -3300,7 +3390,7 @@
     <!-- Error message shown if a very large attachment is encountered during the backup creation and causes the backup to fail -->
     <string name="LocalBackupJobApi29_your_backup_contains_a_very_large_file">మీ బ్యాకప్‌లో బ్యాకప్ చేయలేని చాలా పెద్ద ఫైలు ఉంది. దయచేసి దానిని తొలగించండి మరియు కొత్త బ్యాకప్‌ని సృష్టించండి.</string>
     <string name="LocalBackupJobApi29_tap_to_manage_backups">ప్రత్యామ్నాయములు ను నిర్వహించడానికి నొక్కండి.</string>
-    <string name="RegistrationActivity_wrong_number">తప్పు సంఖ్య</string>
+    <string name="RegistrationActivity_wrong_number">తపైనా సంఖ్యా?</string>
     <string name="RegistrationActivity_call_me_instead_available_in">బదులుగా నాకు కాల్ చేయండి \n (అందుబాటులో ఉంది %1$02d:%2$02d)</string>
     <string name="RegistrationActivity_contact_signal_support">Signal మద్దతును సంప్రదించండి</string>
     <string name="RegistrationActivity_code_support_subject">Signal రిజిస్ట్రేషన్ - Android కోసం ధృవీకరణ కోడ్</string>
@@ -3404,7 +3494,7 @@
     <string name="DeviceTransferSetup__wifi_direct_screen">WiFi డైరెక్ట్ స్క్రీన్</string>
     <string name="DeviceTransferSetup__try_turning_wifi_off_and_on_on_both_devices">రెండు పరికరాలపై Wi-Fiని ఆన్ చేసి, ఆఫ్ చేయడం ద్వారా ప్రయత్నించండి.</string>
     <string name="DeviceTransferSetup__make_sure_both_devices_are_in_transfer_mode">రెండు పరికరాలు కూడా ట్రాన్స్‌ఫర్ మోడ్‌లో ఉన్నట్లుగా ధృవీకరించుకోండి.</string>
-    <string name="DeviceTransferSetup__go_to_support_page">సపోర్ట్ పేజీకి వెళ్లండి</string>
+    <string name="DeviceTransferSetup__go_to_support_page">మద్దతు పేజీకి వెళ్లండి</string>
     <string name="DeviceTransferSetup__try_again">మళ్ళీ ప్రయత్నించండి</string>
     <string name="DeviceTransferSetup__waiting_for_other_device">మరో పరికరం కొరకు వేచి ఉంది</string>
     <string name="DeviceTransferSetup__tap_continue_on_your_other_device_to_start_the_transfer">బదిలీని ప్రారంభించడానికి మీ మరో పరికరంపై కొనసాగండి మీద తట్టండి.</string>
@@ -3953,7 +4043,7 @@
     <string name="CustomExpireTimerSelectorView__weeks">వారాలు</string>
 
     <!-- HelpSettingsFragment -->
-    <string name="HelpSettingsFragment__support_center">సపోర్ట్ సెంటర్</string>
+    <string name="HelpSettingsFragment__support_center">మద్దతు సెంటర్</string>
     <string name="HelpSettingsFragment__contact_us">మమ్మల్ని సంప్రదించండి</string>
     <string name="HelpSettingsFragment__version">వివరణము</string>
     <string name="HelpSettingsFragment__debug_log">డీబగ్ సంఘటన లేకరి</string>
@@ -4023,7 +4113,7 @@
     <string name="AddAProfilePhotoMegaphone__add_photo">ఫోటో జోడించండి</string>
 
     <!-- BecomeASustainerMegaphone -->
-    <string name="BecomeASustainerMegaphone__become_a_sustainer">పోషకుడు అవ్వండి</string>
+    <string name="BecomeASustainerMegaphone__become_a_sustainer">విరాళకర్త అవ్వండి</string>
     <!-- Displayed in the Become a Sustainer megaphone -->
     <string name="BecomeASustainerMegaphone__signal_is_powered_by">Signal మీలాంటి వ్యక్తుల సహాయంతో పని చేస్తుంది. విరాళం ఇవ్వండి మరియు ఒక బ్యాడ్జిని పొందండి.</string>
     <string name="BecomeASustainerMegaphone__not_now">ఇప్పుడు కాదు</string>
@@ -4232,7 +4322,7 @@
     <!-- Positive dialog action when sending a story via an add to group story button -->
     <string name="MediaReviewFragment__add_to_story">స్టోరీకు జోడించండి</string>
     <string name="MediaReviewFragment__add_a_message">ఒక సందేశాన్ని జోడించండి</string>
-    <string name="MediaReviewFragment__add_a_reply">రిప్లై జోడించండి</string>
+    <string name="MediaReviewFragment__add_a_reply">ప్రత్యుత్తరమును జోడించండి</string>
     <string name="MediaReviewFragment__send_to">వీరికి పంపండి</string>
     <string name="MediaReviewFragment__view_once_message">సందేశాన్ని ఒక్కసారి చూడండి</string>
     <string name="MediaReviewFragment__one_or_more_items_were_too_large">ఒకటి లేదా అంతకంటే ఎక్కువ ఐటమ్‌లు చాలా పొడవుగా ఉన్నాయి</string>
@@ -4271,7 +4361,8 @@
     <string name="SelectFeaturedBadgeFragment__you_must_select_a_badge">మీరు తప్పకుండా ఒక బ్యాడ్జిని ఎంచుకోవాలి</string>
     <string name="SelectFeaturedBadgeFragment__failed_to_update_profile">ప్రొఫైల్‌ని అప్‌డేట్ చేయడం విఫలమైంది</string>
 
-    <string name="ViewBadgeBottomSheetDialogFragment__become_a_sustainer">పోషకుడు అవ్వండి</string>
+    <!-- Displayed on primary button in the bottom sheet as a call-to-action to launch into the donation flow -->
+    <string name="ViewBadgeBottomSheetDialogFragment__donate_now">ఇప్పుడు విరాళం ఇవ్వండి</string>
     <!-- Title of a page in the bottom sheet. Placeholder is a user\'s short-name -->
     <string name="ViewBadgeBottomSheetDialogFragment__s_supports_signal">Signal కు %1$s మద్దతు ఇస్తారు</string>
     <!-- Description of a page in the bottom sheet of a monthly badge. Placeholder is a user\'s short-name -->
@@ -4311,7 +4402,7 @@
     <!-- Subtext underneath the dialog title on the thanks sheet -->
     <string name="SubscribeThanksForYourSupportBottomSheetDialogFragment__youve_earned_a_donor_badge">Signal నుంచి ఒక విరాళకర్త బ్యాడ్జిని మీరు సంపాదించారు! మీ మద్దతును చూపించేందుకు మీ ప్రొఫైల్‌లో దానిని ప్రదర్శించండి.</string>
     <string name="SubscribeThanksForYourSupportBottomSheetDialogFragment__you_can_also">మీరు కూడా</string>
-    <string name="SubscribeThanksForYourSupportBottomSheetDialogFragment__become_a_montly_sustainer">నెలవారీ పోషకులు అవ్వండి.</string>
+    <string name="SubscribeThanksForYourSupportBottomSheetDialogFragment__become_a_montly_sustainer">నెలవారీ విరాళకర్త అవ్వండి.</string>
     <string name="SubscribeThanksForYourSupportBottomSheetDialogFragment__display_on_profile">ప్రొఫైల్‌పై ప్రదర్శించు</string>
     <string name="SubscribeThanksForYourSupportBottomSheetDialogFragment__make_featured_badge">ఫీచర్డ్ బ్యాడ్జిని తయారు చేయండి</string>
     <string name="SubscribeThanksForYourSupportBottomSheetDialogFragment__continue">కొనసాగు</string>
@@ -4335,7 +4426,7 @@
     <!-- Preference heading for other ways to donate -->
     <string name="ManageDonationsFragment__other_ways_to_give">ఇవ్వడానికి ఇతర మార్గాలు</string>
     <!-- Preference label to launch badge gifting -->
-    <string name="ManageDonationsFragment__gift_a_badge">బ్యాడ్జిని బహుమతిగా ఇవ్వండి</string>
+    <string name="ManageDonationsFragment__donate_for_a_friend">ఒక స్నేహితుడి కొరకు విరాళం ఇవ్వండి</string>
 
     <string name="Boost__enter_custom_amount">అనుకూల మొత్తాన్ని ఎంటర్ చేయండి</string>
     <string name="Boost__one_time_contribution">ఒక్కసారి కంట్రిబ్యూషన్</string>
@@ -4358,7 +4449,7 @@
     <string name="ExpiredBadgeBottomSheetDialogFragment__you_can_reactivate">ఒక్కసారి సహకారంతో మీరు మీ బూస్ట్ బ్యాడ్జిని మరో 30 రోజులపాటు రీయాక్టివేట్ చేయవచ్చు.</string>
     <!-- Displayed when we do not think the user is a subscriber when their boost expires -->
     <string name="ExpiredBadgeBottomSheetDialogFragment__you_can_keep">మీరు Signal ను ఉపయోగించడం కొనసాగించవచ్చు, కానీ మీకోసం రూపొందించిన సాంకేతికతకు మద్దతు ఇవ్వడానికి, నెలవారీ విరాళం ఇవ్వడం ద్వారా విరాళకర్తగా అయ్యేందుకు పరిగణించండి.</string>
-    <string name="ExpiredBadgeBottomSheetDialogFragment__become_a_sustainer">పోషకుడు అవ్వండి</string>
+    <string name="ExpiredBadgeBottomSheetDialogFragment__become_a_sustainer">విరాళకర్త అవ్వండి</string>
     <string name="ExpiredBadgeBottomSheetDialogFragment__add_a_boost">బూస్ట్ జోడించండి</string>
     <string name="ExpiredBadgeBottomSheetDialogFragment__not_now">ఇప్పుడు కాదు</string>
     <!-- Copy displayed when badge expires after user inactivity -->
@@ -4367,13 +4458,13 @@
     <string name="ExpiredBadgeBottomSheetDialogFragment__your_recurring_monthly_donation_was_canceled">మేము మీ చెల్లింపును ప్రాసెస్ చేయలేకపోవడం వల్ల, మీ పునరావృత నెలవారీ విరాళం రద్దు చేయబడింది. మీ బ్యాడ్జి మీ ప్రొఫైల్‌పై ఇక ఏమాత్రం కనిపించదు.</string>
     <!-- Copy displayed when badge expires after a payment failure and we have a displayable charge failure reason -->
     <string name="ExpiredBadgeBottomSheetDialogFragment__your_recurring_monthly_donation_was_canceled_s">మీ పునరావృత నెలవారీ విరాళం రద్దు చేయబడింది. %1$s మీ %2$s బ్యాడ్జి మీ ప్రొఫైల్‌పై ఇక ఏమాత్రం కనిపించదు.</string>
-    <string name="ExpiredBadgeBottomSheetDialogFragment__you_can">మీరు Signal ను ఉపయోగించడం కొనసాగించవచ్చు కానీ యాప్‌కు సపోర్ట్ చేయడానికి మరియు మీ బ్యాడ్జిని రీయాక్టివేట్ చేయడానికి, ఇప్పుడు పునరుద్ధరించండి.</string>
+    <string name="ExpiredBadgeBottomSheetDialogFragment__you_can">మీరు Signal ను ఉపయోగించడం కొనసాగించవచ్చు కానీ యాప్‌కు మద్దతు ఇవ్వడానికి మరియు మీ బ్యాడ్జిని రీయాక్టివేట్ చేయడానికి, ఇప్పుడు పునరుద్ధరించండి.</string>
     <string name="ExpiredBadgeBottomSheetDialogFragment__renew_subscription">సబ్‌స్క్రిప్షన్‌ను పునరుద్ధరించండి</string>
     <!-- Button label to send user to Google Pay website -->
     <string name="ExpiredBadgeBottomSheetDialogFragment__go_to_google_pay">Google Pay కు వెళ్లండి</string>
 
     <string name="CantProcessSubscriptionPaymentBottomSheetDialogFragment__cant_process_subscription_payment">సబ్‌స్క్రిప్షన్ చెల్లింపును ప్రాసెస్ చేయలేము</string>
-    <string name="CantProcessSubscriptionPaymentBottomSheetDialogFragment__were_having_trouble">మీ Signal పోషకుడి పేమెంట్‌ని కలెక్ట్ చేసుకోవడంలో మాకు సమస్య ఉంది. మీ చెల్లింపు విధానం అప్ టూ డేట్‌గా ఉన్నట్లుగా దయచేసి ధృవీకరించుకోండి. ఒకవేళ ఇది లేనట్లయితే, దానిని Google Payలో అప్‌డేట్ చేయండి. Signal కొన్నిరోజుల్లో మళ్లీ చెల్లింపును ప్రాసెస్ చేయడానికి ప్రయత్నిస్తుంది.</string>
+    <string name="CantProcessSubscriptionPaymentBottomSheetDialogFragment__were_having_trouble">మీ Signal విరాళకర్త పేమెంట్‌ని కలెక్ట్ చేసుకోవడంలో మాకు సమస్య ఉంది. మీ చెల్లింపు విధానం అప్ టూ డేట్‌గా ఉన్నట్లుగా దయచేసి ధృవీకరించుకోండి. ఒకవేళ ఇది లేనట్లయితే, దానిని Google Payలో అప్‌డేట్ చేయండి. Signal కొన్నిరోజుల్లో మళ్లీ చెల్లింపును ప్రాసెస్ చేయడానికి ప్రయత్నిస్తుంది.</string>
     <string name="CantProcessSubscriptionPaymentBottomSheetDialogFragment__dont_show_this_again">దీనిని మళ్లీ చూపించవద్దు</string>
 
     <string name="Subscription__contact_support">మద్దతును సంప్రదించండి</string>
@@ -4391,10 +4482,10 @@
     <string name="DonationsErrors__failed_to_validate_badge">బ్యాడ్జిని చెల్లుబాటు చేయడంలో విఫలమైంది</string>
     <!-- Displayed when badge credential couldn\'t be verified -->
     <string name="DonationsErrors__could_not_validate">సర్వీర్ ప్రతిస్పందనను వాలిడేట్ చేయలేకపోయింది. దయచేసి సపోర్ట్‌ని సంప్రదించండి.</string>
-    <!-- Displayed as title when some generic error happens during gift badge sending -->
-    <string name="DonationsErrors__failed_to_send_gift_badge">బహుమతి బ్యాడ్జిని పంపడంలో విఫలమైంది</string>
-    <!-- Displayed as message when some generic error happens during gift badge sending -->
-    <string name="DonationsErrors__could_not_send_gift_badge">బహుమతి బ్యాడ్జిని పంపలేకపోయింది. దయచేసి మద్దతును సంప్రదించండి.</string>
+    <!-- Displayed as title when some generic error happens during sending donation on behalf of another user -->
+    <string name="DonationsErrors__donation_failed">విరాళం ఇవ్వడం విఫలమైంది</string>
+    <!-- Displayed as message when some generic error happens during sending donation on behalf of another user -->
+    <string name="DonationsErrors__your_payment_was_processed_but">మీ చెల్లింపు ప్రాసెస్ చేయబడింది, అయితే Android మీ విరాళ సందేశాన్ని పంపలేకపోయింది. దయచేసి సపోర్ట్‌ని సంప్రదించండి.</string>
     <string name="DonationsErrors__your_badge_could_not">మీ బ్యాడ్జి మీ ఖాతాకు జోడించబడలేదు, కానీ మీకు ఛార్జ్ విధంచబడి ఉండవచ్చు. దయచేసి మద్దతును సంప్రదించండి.</string>
     <string name="DonationsErrors__your_payment_is_still">మీ పేమెంట్ ఇంకా ప్రాసెసింగ్‌లో ఉంది. మీ కనెక్షన్‌పై ఆధారపడి దీనికి కొన్ని నిమిషాలు పట్టవచ్చు.</string>
     <string name="DonationsErrors__failed_to_cancel_subscription">సబ్‌స్క్రిప్షన్ రద్దు చేయడంలో విఫలమైంది</string>
@@ -4403,16 +4494,16 @@
     <string name="NetworkFailure__network_error_check_your_connection_and_try_again">నెట్‌వర్క్ దోషం. మీ కనెక్షన్ చెక్ చేసి, మళ్లీ ప్రయత్నించండి.</string>
     <string name="NetworkFailure__retry">మళ్ళీ ప్రయత్నించు</string>
     <!-- Displayed as a dialog title when the selected recipient for a gift doesn\'t support gifting -->
-    <string name="DonationsErrors__cant_send_gift">బహుమతిని పంపలేదు</string>
+    <string name="DonationsErrors__cannot_send_donation">విరాళాన్ని పంపలేరు</string>
     <!-- Displayed as a dialog message when the selected recipient for a gift doesn\'t support gifting -->
-    <string name="DonationsErrors__target_does_not_support_gifting">ఈ గ్రహీత బహుమతి బ్యాడ్జీలను అందుకోలేని Signal వెర్షన్‌ను ఉపయోగిస్తున్నారు. వారు తాజా వెర్షన్‌కు అప్‌డేట్ చేసినప్పుడు వారు బహుమతులను పొందగలుగుతారు.</string>
-    <!-- Displayed as a dialog title when the user\'s profile could not be fetched, likely due to lack of internet -->
-    <string name="DonationsErrors__couldnt_send_gift">బహుమతిని పంపలేకపోయారు</string>
+    <string name="DonationsErrors__this_user_cant_receive_donations_until">ఈ యూజర్ వారి Signalని అప్‌గ్రేడ్ చేసుకునేంత వరకు విరాళాలను పొందలేడు.</string>
     <!-- Displayed as a dialog message when the user\'s profile could not be fetched, likely due to lack of internet -->
-    <string name="DonationsErrors__please_check_your_network_connection">నెట్‌వర్క్ దోషం కారణంగా మీ బహుమతిని పంపలేకపోయింది. మీ కనెక్షన్‌ని తనిఖీ చేయండి మరియు మళ్లీ ప్రయత్నించండి.</string>
+    <string name="DonationsErrors__your_donation_could_not_be_sent">ఒక నెట్‌వర్క్ దోషం కారణంగా మీ విరాళాన్ని పంపలేరు. మీ కనెక్షన్‌ను తనిఖీ చేయండి మరియు మళ్ళీ ప్రయత్నించండి.</string>
 
     <!-- Gift message view title -->
-    <string name="GiftMessageView__gift_badge">బహుమతి బ్యాడ్జి</string>
+    <string name="GiftMessageView__donation_to_s">%1$sకు విరాళం ఇవ్వండి</string>
+    <!-- Gift message view title for incoming donations -->
+    <string name="GiftMessageView__s_donated_to_signal_on">మీ తరఫున %1$s Signalకు విరాళం ఇచ్చారు</string>
     <!-- Gift badge redeem action label -->
     <string name="GiftMessageView__redeem">రీడిమ్</string>
     <!-- Gift badge view action label -->
@@ -4623,7 +4714,7 @@
     <!-- Donation receipts one-time tab label -->
     <string name="DonationReceiptListFragment__one_time">ఒక్క-సారి</string>
     <!-- Donation receipts gift tab label -->
-    <string name="DonationReceiptListFragment__gift">బహుమతి</string>
+    <string name="DonationReceiptListFragment__donation_for_a_friend">ఒక స్నేహితుడి కొరకు విరాళం</string>
     <!-- Donation receipts boost row label -->
     <!-- Donation receipts details title -->
     <!-- Donation receipts donation type heading -->
@@ -4735,7 +4826,7 @@
     <!-- Displayed when viewing a post that has failed to send -->
     <string name="StoryViewerPageFragment__send_failed">పంపడం విఫలమైంది. మళ్ళీ ప్రయత్నించడానికి తట్టండి</string>
     <!-- Label for the reply button in story viewer, which will launch the group story replies bottom sheet. -->
-    <string name="StoryViewerPageFragment__reply_to_group">గ్రూపుకు రిప్లై ఇవ్వండి</string>
+    <string name="StoryViewerPageFragment__reply_to_group">గ్రూపుకు ప్రత్యుత్తరము ఇవ్వండి</string>
     <!-- Displayed when a story has no views -->
     <string name="StoryViewsFragment__no_views_yet">ఇంకా ఎలాంటి వీక్షణలు లేవు</string>
     <!-- Displayed when user has disabled receipts -->
@@ -4933,7 +5024,7 @@
     <!-- Displayed in story caption when content is longer than 5 lines -->
     <string name="StoryViewerPageFragment__see_more">… మరిన్ని చూడండి</string>
     <!-- Displayed in toast after sending a direct reply -->
-    <string name="StoryDirectReplyDialogFragment__sending_reply">రిప్లై పంపుతోంది…</string>
+    <string name="StoryDirectReplyDialogFragment__sending_reply">ప్రత్యుత్తరము పంపుతోంది…</string>
     <!-- Displayed in the viewer when a story is no longer available -->
     <string name="StorySlateView__this_story_is_no_longer_available">ఈ స్టోరీ ఇక ఏమాత్రం అందుబాటులో లేదు.</string>
     <!-- Displayed in the viewer when a story has permanently failed to download. -->
@@ -4973,22 +5064,23 @@
         <item quantity="one">%1$s · %2$d రోజు కాలవ్యవధి</item>
         <item quantity="other">%1$s · %2$d రోజుల కాలవ్యవధి</item>
     </plurals>
-    <!-- Tagline for gift row items -->
-    <string name="GiftRowItem__send_a_gift_badge">బహుమతి బ్యాడ్జిని పంపండి</string>
     <!-- Headline text on start fragment for gifting a badge -->
-    <string name="GiftFlowStartFragment__gift_a_badge">బ్యాడ్జిని బహుమతిగా ఇవ్వండి</string>
+    <string name="GiftFlowStartFragment__donate_for_a_friend">ఒక స్నేహితుడి కొరకు విరాళం ఇవ్వండి</string>
     <!-- Description text on start fragment for gifting a badge -->
-    <string name="GiftFlowStartFragment__gift_someone_a_badge">Signal కు వారి పేరిట విరాళం ఇవ్వడం ద్వారా ఎవరికైనా ఒక బ్యాడ్జిని బహుమతిగా ఇవ్వండి. వారి ప్రొఫైల్ ఫోటోపై ప్రదర్శించడానికి వారు ఒక బ్యాడ్జిని పొందుతారు.</string>
+    <plurals name="GiftFlowStartFragment__support_signal_by">
+        <item quantity="one">Signal ఉపయోగించే స్నేహితుడు లేదా కుటుంబ సభ్యుడి కొరకు విరాళం ఇవ్వడం ద్వారా Signalకు మద్దతు ఇవ్వండి. %1$d రోజుపాటు వారి ప్రొఫైల్‌లో ప్రదర్శించడానికి వారు ఒక బ్యాడ్జీని పొందుతారు.</item>
+        <item quantity="other">Signal ఉపయోగించే స్నేహితుడు లేదా కుటుంబ సభ్యుడి కొరకు విరాళం ఇవ్వడం ద్వారా Signalకు మద్దతు ఇవ్వండి. %1$d రోజులపాటు వారి ప్రొఫైల్‌లో ప్రదర్శించడానికి వారు ఒక బ్యాడ్జీని పొందుతారు.</item>
+    </plurals>
     <!-- Action button label for start fragment for gifting a badge -->
     <string name="GiftFlowStartFragment__next">తరువాత</string>
     <!-- Title text on choose recipient page for badge gifting -->
     <string name="GiftFlowRecipientSelectionFragment__choose_recipient">గ్రహీతను ఎంచుకోండి</string>
     <!-- Title text on confirm gift page -->
-    <string name="GiftFlowConfirmationFragment__confirm_gift">బహుమతిని ధృవీకరించండి</string>
+    <string name="GiftFlowConfirmationFragment__confirm_donation">విరాళాన్ని ధృవీకరించండి</string>
     <!-- Heading text specifying who the gift will be sent to -->
     <string name="GiftFlowConfirmationFragment__send_to">వీరికి పంపండి</string>
     <!-- Text explaining that gift will be sent to the chosen recipient -->
-    <string name="GiftFlowConfirmationFragment__your_gift_will_be_sent_in">మీ గిఫ్ట్ గ్రహీతకు 1 టూ 1 సందేశంలో పంపబడుతుంది. మీస్వంత సందేశాన్ని దిగువన జోడించండి.</string>
+    <string name="GiftFlowConfirmationFragment__the_recipient_will_be_notified">గ్రహీతకు 1 ఆన్ 1 సందేశంలో విరాళం గురించి తెలియజేస్తారు. మీ స్వంత సందేశాన్ని దిగువన జోడించండి.</string>
     <!-- Text explaining that this gift is a one time donation -->
     <string name="GiftFlowConfirmationFragment__one_time_donation">ఒక్కసారి విరాళం</string>
     <!-- Hint for add message input -->
@@ -4996,29 +5088,29 @@
     <!-- Displayed in the dialog while verifying the chosen recipient -->
     <string name="GiftFlowConfirmationFragment__verifying_recipient">గ్రహీతను ధృవీకరిస్తోంది…</string>
     <!-- Title for sheet shown when opening a redeemed gift -->
-    <string name="ViewReceivedGiftBottomSheet__s_sent_you_a_gift">%1$s మీకు ఒక బహుమతిని పంపారు</string>
+    <string name="ViewReceivedGiftBottomSheet__s_made_a_donation_for_you">%1$s మీ కొరకు విరాళం ఇచ్చారు</string>
     <!-- Title for sheet shown when opening a sent gift -->
     <string name="ViewSentGiftBottomSheet__thanks_for_your_support">మీ సపోర్ట్‌కు ధన్యవాదాలు!</string>
     <!-- Description for sheet shown when opening a redeemed gift -->
-    <string name="ViewReceivedGiftBottomSheet__youve_received_a_gift_badge">మీరు %1$s నుంచి ఒక బహుమతి బ్యాడ్జిని అందుకున్నారు! మీ ప్రొఫైల్‌పై ఈ బ్యాడ్జిని ప్రదర్శించడం ద్వారా అవగాహన పెంపొందించేందుకు Signal కు సహాయపడండి.</string>
+    <string name="ViewReceivedGiftBottomSheet__s_made_a_donation_to_signal">%1$s మీ తరపున Signalకి విరాళం ఇచ్చారు! మీ ప్రొఫైల్‌లో Signal కోసం మీ మద్దతును చూపండి.</string>
     <!-- Description for sheet shown when opening a sent gift -->
-    <string name="ViewSentGiftBottomSheet__youve_gifted_a_badge">మీరు %1$sకు బ్యాడ్జిని బహుమతిగా ఇచ్చారు. వారు అంగీకరించినప్పుడు, వారి బ్యాడ్జిని చూపించేందుకు లేదా దాచిపెట్టేందుకు వారికి ఎంపిక ఇవ్వబడుతుంది.</string>
+    <string name="ViewSentGiftBottomSheet__youve_made_a_donation_to_signal">మీరు %1$s తరఫున Signalకు విరాళం ఇచ్చారు. వారి ప్రొఫైల్‌లో తమ మద్దతును చూపించే ఆప్షన్ ఇస్తారు.</string>
     <!-- Primary action for pending gift sheet to redeem badge now -->
     <string name="ViewReceivedGiftSheet__redeem">రీడిమ్</string>
     <!-- Primary action for pending gift sheet to redeem badge later -->
     <string name="ViewReceivedGiftSheet__not_now">ఇప్పుడు కాదు</string>
     <!-- Dialog text while redeeming a gift -->
-    <string name="ViewReceivedGiftSheet__redeeming_gift">బహుమతిని రీడిమ్ చేస్తోంది…</string>
+    <string name="ViewReceivedGiftSheet__redeeming_badge">బ్యాడ్జీని రీడిమ్ చేయడం…</string>
     <!-- Snackbar text when user presses "not now" on redemption sheet -->
     <string name="ConversationFragment__you_can_redeem_your_badge_later">మీరు తరువాత మీ బ్యాడ్జిని రిడీమ్ చేయవచ్చు.</string>
     <!-- Description text in gift thanks sheet -->
-    <string name="GiftThanksSheet__youve_gifted_a_badge_to_s">మీరు %1$sకు బ్యాడ్జిని బహుమతిగా ఇచ్చారు. వారు అంగీకరించినప్పుడు, వారి బ్యాడ్జిని చూపించేందుకు లేదా దాచిపెట్టేందుకు వారికి ఎంపిక ఇవ్వబడుతుంది.</string>
+    <string name="GiftThanksSheet__youve_made_a_donation">మీరు %1$s తరఫున Signalకు విరాళం ఇచ్చారు. వారి ప్రొఫైల్‌లో తమ మద్దతును చూపించే ఆప్షన్ ఇస్తారు.</string>
     <!-- Expired gift sheet title -->
-    <string name="ExpiredGiftSheetConfiguration__your_gift_badge_has_expired">మీ బహుమతి బ్యాడ్జి గడువు తీరింది</string>
+    <string name="ExpiredGiftSheetConfiguration__your_badge_has_expired">మీ బ్యాడ్జీ గడువు తీరింది</string>
     <!-- Expired gift sheet top description text -->
-    <string name="ExpiredGiftSheetConfiguration__your_gift_badge_has_expired_and_is">మీ బహుమతి బ్యాడ్జి గడువు తీరింది, మరియు మీ ప్రొఫైల్‌పై ఇతరులకు ఇక ఏమాత్రం కనిపించదు.</string>
+    <string name="ExpiredGiftSheetConfiguration__your_badge_has_expired_and_is">మీ బహుమతి బ్యాడ్జీ గడువు తీరింది మరియు మీ ప్రొఫైల్‌పై ఇతరులకు ఇక ఏమాత్రం కనిపించదు.</string>
     <!-- Expired gift sheet bottom description text -->
-    <string name="ExpiredGiftSheetConfiguration__to_continue">మీ కొరకు రూపొందించిన టెక్నాలజీకి మద్దతు ఇవ్వడాన్ని కొనసాగించేందుకు, దయచేసి నెలవారీ పోషకులు అవ్వండి.</string>
+    <string name="ExpiredGiftSheetConfiguration__to_continue">మీ కొరకు రూపొందించిన టెక్నాలజీకి మద్దతు ఇవ్వడాన్ని కొనసాగించేందుకు, దయచేసి నెలవారీ విరాళకర్త అవ్వండి.</string>
     <!-- Expired gift sheet make a monthly donation button -->
     <string name="ExpiredGiftSheetConfiguration__make_a_monthly_donation">నెలవారీ విరాళం ఇవ్వండి</string>
     <!-- Expired gift sheet not now button -->
@@ -5070,12 +5162,12 @@
     <string name="ContactSearchMediator__delete_the_custom">అనుకూల కథ \"%1$s\" ను తొలగించేదా?</string>
     <!-- Dialog action item for deleting a custom story -->
     <string name="ContactSearchMediator__delete">తొలగించండి</string>
-    <!-- Gift expiry days remaining -->
+    <!-- Donation for a friend expiry days remaining -->
     <plurals name="Gifts__d_days_remaining">
         <item quantity="one">%1$d రోజు మిగిలి ఉంది</item>
         <item quantity="other">%1$d రోజులు మిగిలి ఉన్నాయి</item>
     </plurals>
-    <!-- Gift expiry hours remaining -->
+    <!-- Donation for a friend expiry hours remaining -->
     <plurals name="Gifts__d_hours_remaining">
         <item quantity="one">%1$d గంట మిగిలి ఉన్నాయి</item>
         <item quantity="other">%1$d గంటలు మిగిలి ఉన్నాయి</item>
@@ -5085,7 +5177,7 @@
         <item quantity="one">%1$d నిమిషం మిగిలి ఉంది</item>
         <item quantity="other">%1$d నిమిషాలు మిగిలి ఉంది</item>
     </plurals>
-    <!-- Gift expiry expired -->
+    <!-- Donation for a friend expiry expired -->
     <string name="Gifts__expired">గడువు తీరింది</string>
 
     <!-- Label indicating that a user can tap to advance to the next post in a story -->
@@ -5329,9 +5421,9 @@
     <!-- Phase 1 Small megaphone title indicating sms is going away -->
     <string name="SmsExportMegaphone__sms_support_going_away">SMS మద్దతు కనుమరుగవబోతోంది</string>
     <!-- Phase 1 small megaphone description indicating sms is going away -->
-    <string name="SmsExportMegaphone__sms_support_will_be_removed_soon_to_focus_on_encrypted_messaging">ఎన్‌క్రిప్ట్ చేసిన సందేశాలు పంపడంపై దృష్టి పెట్టడానికి త్వరలో SMS మద్దతు తొలగించబడుతుంది.</string>
+    <string name="SmsExportMegaphone__dont_worry_encrypted_signal_messages_will_continue_to_work">చింతించవద్దు, ఎన్‌క్రిప్ట్ చేసిన Signal సందేశాలు పని చేయడం కొనసాగిస్తాయి.</string>
     <!-- Phase 1 small megaphone button that takes the user to the sms export flow -->
-    <string name="SmsExportMegaphone__export_sms">SMS ఎగుమతి చేయండి</string>
+    <string name="SmsExportMegaphone__continue">కొనసాగండి</string>
     <!-- Title for screen shown after sms export has completed -->
     <string name="ExportSmsCompleteFragment__export_complete">ఎగుమతి పూర్తయింది</string>
     <!-- Button to continue to next screen -->
@@ -5388,8 +5480,8 @@
     </plurals>
     <!-- Button label for paying with a credit card -->
     <string name="GatewaySelectorBottomSheet__credit_or_debit_card">క్రెడిట్ లేదా డెబిట్ కార్డు</string>
-    <!-- Sheet summary when giving a gift -->
-    <string name="GatewaySelectorBottomSheet__send_a_gift_badge">బహుమతి బ్యాడ్జిని పంపండి</string>
+    <!-- Sheet summary when giving donating for a friend -->
+    <string name="GatewaySelectorBottomSheet__donate_for_a_friend">ఒక స్నేహితుడి కొరకు విరాళం ఇవ్వండి</string>
 
     <!-- StripePaymentInProgressFragment -->
     <string name="StripePaymentInProgressFragment__cancelling">రద్దు చేస్తోంది…</string>
@@ -5441,6 +5533,7 @@
     <string name="GroupStoryEducationSheet__all_group_chat_members">గ్రూప్ చాట్ సభ్యులు అందరూ కథ ప్రత్యుత్తరాలను వీక్షించవచ్చు.</string>
     <!-- Button label to dismiss sheet -->
     <string name="GroupStoryEducationSheet__next">తరువాత</string>
+    <string name="Registration_country_code_entry_hint">+0</string>
 
     <!-- EOF -->
 
@@ -5448,4 +5541,34 @@
     <string name="PaypalCompleteOrderBottomSheet__donate">విరాళం ఇవ్వండి</string>
     <string name="PaypalCompleteOrderBottomSheet__payment">చెల్లింపు</string>
 
+    <!-- ChatFilter -->
+    <!-- Displayed in a pill at the top of the chat list when it is filtered by unread messages -->
+    <string name="ChatFilter__filtered_by_unread">చదవనివాటి ద్వారా ఫిల్టర్ చేయబడింది</string>
+    <!-- Displayed underneath the filter circle at the top of the chat list when the user pulls at a very low velocity -->
+    <string name="ChatFilter__pull_to_filter">ఫిల్టర్ చేయడానికి లాగండి</string>
+    <!-- Displayed in the "clear filter" item in the chat feed if the user opened the filter from the overflow menu -->
+    <string name="ChatFilter__tip_pull_down">చిట్కా: ఫిల్టర్ చేయడానికి చాట్ జాబితాపై కిందకు లాగండి</string>
+
+    <!-- Title for screen describing that sms support is going to be removed soon -->
+    <string name="SmsRemoval_title_going_away">SMS మద్దతు కనుమరుగవబోతోంది</string>
+    <!-- Bullet point message shown on describing screen as first bullet why sms is being removed -->
+    <string name="SmsRemoval_info_bullet_1">Signal యాప్‌లో SMS మెసేజింగ్‌కు త్వరలో మద్దతు తొలగించబడుతుంది.</string>
+    <!-- Bullet point message shown on describing screen as second bullet why sms is being removed -->
+    <string name="SmsRemoval_info_bullet_2">SMS సందేశాలు Signal సందేశాల కంటే భిన్నంగా ఉంటాయి. <b>ఇది ఎన్‌క్రిప్ట్ చేసిన Signal మెసేజింగ్‌ను ప్రభావితం చేయదు, ఇది పని చేయడం కొనసాగుతుంది.</b></string>
+    <!-- Bullet point message shown on describing screen as third bullet why sms is being removed -->
+    <string name="SmsRemoval_info_bullet_3">మీరు మీ SMS సందేశాలను ఎగుమతి చేయవచ్చు మరియు కొత్త SMS యాప్‌ను ఎంచుకోవచ్చు.</string>
+    <!-- Bullet point message shown on describing screen as first bullet variant why sms is being removed when user is locked out of sms -->
+    <string name="SmsRemoval_info_bullet_1_phase_3">SMS సందేశాలను పంపడానికి Signal మద్దతును తొలగించింది.</string>
+    <!-- Button label on sms removal info/megaphone to start the export SMS flow -->
+    <string name="SmsRemoval_export_sms">SMS ఎగుమతి చేయండి</string>
+
+    <!-- Text Formatting -->
+    <!-- Popup menu label for applying bold style -->
+    <string name="TextFormatting_bold">బోల్డ్</string>
+    <!-- Popup menu label for applying italic style -->
+    <string name="TextFormatting_italic">Italic</string>
+    <!-- Popup menu label for applying strikethrough style -->
+    <string name="TextFormatting_strikethrough">Strikethrough</string>
+    <!-- Popup menu label for applying monospace font style -->
+    <string name="TextFormatting_monospace">Monospace</string>
 </resources>

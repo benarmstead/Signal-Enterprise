@@ -2,6 +2,7 @@ package org.thoughtcrime.securesms.mediapreview
 
 import android.content.Context
 import android.content.Intent
+import android.text.SpannableString
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
 import io.reactivex.rxjava3.core.Completable
 import io.reactivex.rxjava3.core.Flowable
@@ -19,6 +20,8 @@ import org.thoughtcrime.securesms.database.MediaTable.Sorting
 import org.thoughtcrime.securesms.database.SignalDatabase
 import org.thoughtcrime.securesms.database.SignalDatabase.Companion.media
 import org.thoughtcrime.securesms.database.model.MessageRecord
+import org.thoughtcrime.securesms.database.model.MmsMessageRecord
+import org.thoughtcrime.securesms.longmessage.resolveBody
 import org.thoughtcrime.securesms.recipients.RecipientId
 import org.thoughtcrime.securesms.sms.MessageSender
 import org.thoughtcrime.securesms.util.AttachmentUtil
@@ -38,7 +41,7 @@ class MediaPreviewRepository {
    * @param sorting the ordering of the results
    * @param limit the maximum quantity of the results
    */
-  fun getAttachments(startingAttachmentId: AttachmentId, threadId: Long, sorting: Sorting, limit: Int = 500): Flowable<Result> {
+  fun getAttachments(context: Context, startingAttachmentId: AttachmentId, threadId: Long, sorting: Sorting, limit: Int = 500): Flowable<Result> {
     return Single.fromCallable {
       media.getGalleryMediaForThread(threadId, sorting).use { cursor ->
         val mediaRecords = mutableListOf<MediaTable.MediaRecord>()
@@ -71,7 +74,12 @@ class MediaPreviewRepository {
             }
           }
         }
-        Result(itemPosition, mediaRecords.toList())
+        val messageIds = mediaRecords.mapNotNull { it.attachment?.mmsId }.toSet()
+        val messages: Map<Long, SpannableString> = SignalDatabase.messages.getMessages(messageIds)
+          .map { it as MmsMessageRecord }
+          .associate { it.id to it.resolveBody(context).getDisplayBody(context) }
+
+        Result(itemPosition, mediaRecords.toList(), messages)
       }
     }.subscribeOn(Schedulers.io()).toFlowable()
   }
@@ -84,18 +92,18 @@ class MediaPreviewRepository {
 
   fun remoteDelete(attachment: DatabaseAttachment): Completable {
     return Completable.fromRunnable {
-      MessageSender.sendRemoteDelete(attachment.mmsId, true)
+      MessageSender.sendRemoteDelete(attachment.mmsId)
     }.subscribeOn(Schedulers.io())
   }
 
   fun getMessagePositionIntent(context: Context, messageId: Long): Single<Intent> {
     return Single.fromCallable {
       val stopwatch = Stopwatch("Message Position Intent")
-      val messageRecord: MessageRecord = SignalDatabase.mms.getMessageRecord(messageId)
+      val messageRecord: MessageRecord = SignalDatabase.messages.getMessageRecord(messageId)
       stopwatch.split("get message record")
 
       val threadId: Long = messageRecord.threadId
-      val messagePosition: Int = SignalDatabase.mmsSms.getMessagePositionInConversation(threadId, messageRecord.dateReceived)
+      val messagePosition: Int = SignalDatabase.messages.getMessagePositionInConversation(threadId, messageRecord.dateReceived)
       stopwatch.split("get message position")
 
       val recipientId: RecipientId = SignalDatabase.threads.getRecipientForThreadId(threadId)?.id ?: throw IllegalStateException("Could not find recipient for thread ID $threadId")
@@ -110,5 +118,5 @@ class MediaPreviewRepository {
       .observeOn(AndroidSchedulers.mainThread())
   }
 
-  data class Result(val initialPosition: Int, val records: List<MediaTable.MediaRecord>)
+  data class Result(val initialPosition: Int, val records: List<MediaTable.MediaRecord>, val messageBodies: Map<Long, SpannableString>)
 }

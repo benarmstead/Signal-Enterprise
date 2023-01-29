@@ -46,6 +46,7 @@ import org.thoughtcrime.securesms.R;
 import org.thoughtcrime.securesms.conversation.colors.Colorizable;
 import org.thoughtcrime.securesms.conversation.colors.Colorizer;
 import org.thoughtcrime.securesms.conversation.mutiselect.MultiselectPart;
+import org.thoughtcrime.securesms.database.model.MediaMmsMessageRecord;
 import org.thoughtcrime.securesms.database.model.MessageRecord;
 import org.thoughtcrime.securesms.giph.mp4.GiphyMp4Playable;
 import org.thoughtcrime.securesms.giph.mp4.GiphyMp4PlaybackPolicyEnforcer;
@@ -120,6 +121,8 @@ public class ConversationAdapter
   private Colorizer           colorizer;
   private boolean             isTypingViewEnabled;
   private boolean             condensedMode;
+  private boolean             scheduledMessagesMode;
+  private PulseRequest        pulseRequest;
 
   public ConversationAdapter(@NonNull Context context,
                       @NonNull LifecycleOwner lifecycleOwner,
@@ -260,6 +263,11 @@ public class ConversationAdapter
     notifyDataSetChanged();
   }
 
+  public void setScheduledMessagesMode(boolean scheduledMessagesMode) {
+    this.scheduledMessagesMode = scheduledMessagesMode;
+    notifyDataSetChanged();
+  }
+
   @Override
   public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
     switch (getItemViewType(position)) {
@@ -330,7 +338,11 @@ public class ConversationAdapter
 
     if (conversationMessage == null) return -1;
 
-    calendar.setTimeInMillis(conversationMessage.getMessageRecord().getDateSent());
+    if (scheduledMessagesMode) {
+      calendar.setTimeInMillis(((MediaMmsMessageRecord) conversationMessage.getMessageRecord()).getScheduledDate());
+    } else {
+      calendar.setTimeInMillis(conversationMessage.getMessageRecord().getDateSent());
+    }
     return calendar.get(Calendar.YEAR) * 1000L + calendar.get(Calendar.DAY_OF_YEAR);
   }
 
@@ -344,7 +356,11 @@ public class ConversationAdapter
     Context             context             = viewHolder.itemView.getContext();
     ConversationMessage conversationMessage = Objects.requireNonNull(getItem(position));
 
-    viewHolder.setText(DateUtils.getConversationDateHeaderString(viewHolder.itemView.getContext(), locale, conversationMessage.getMessageRecord().getDateSent()));
+    if (scheduledMessagesMode) {
+      viewHolder.setText(DateUtils.getScheduledMessagesDateHeaderString(viewHolder.itemView.getContext(), locale, ((MediaMmsMessageRecord) conversationMessage.getMessageRecord()).getScheduledDate()));
+    } else {
+      viewHolder.setText(DateUtils.getConversationDateHeaderString(viewHolder.itemView.getContext(), locale, conversationMessage.getMessageRecord().getDateSent()));
+    }
 
     if (type == HEADER_TYPE_POPOVER_DATE) {
       if (hasWallpaper) {
@@ -487,8 +503,16 @@ public class ConversationAdapter
       int correctedPosition = isHeaderPosition(position) ? position + 1 : position;
 
       recordToPulse = getItem(correctedPosition);
+      pulseRequest = new PulseRequest(position, recordToPulse.getMessageRecord().isOutgoing());
       notifyItemChanged(correctedPosition);
     }
+  }
+
+  @Nullable
+  public PulseRequest consumePulseRequest() {
+    PulseRequest request = pulseRequest;
+    pulseRequest = null;
+    return request;
   }
 
   /**
@@ -767,6 +791,37 @@ public class ConversationAdapter
   private static class PlaceholderViewHolder extends RecyclerView.ViewHolder {
     PlaceholderViewHolder(@NonNull View itemView) {
       super(itemView);
+    }
+  }
+
+  public static class PulseRequest {
+    private final int     position;
+    private final boolean isOutgoing;
+
+    PulseRequest(int position, boolean isOutgoing) {
+      this.position   = position;
+      this.isOutgoing = isOutgoing;
+    }
+
+    public int getPosition() {
+      return position;
+    }
+
+    public boolean isOutgoing() {
+      return isOutgoing;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+      final PulseRequest that = (PulseRequest) o;
+      return position == that.position;
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(position);
     }
   }
 

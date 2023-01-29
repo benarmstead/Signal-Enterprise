@@ -10,8 +10,7 @@ import org.thoughtcrime.securesms.attachments.DatabaseAttachment;
 import org.thoughtcrime.securesms.crypto.MasterSecret;
 import org.thoughtcrime.securesms.database.AttachmentTable;
 import org.thoughtcrime.securesms.database.MessageTable;
-import org.thoughtcrime.securesms.database.MmsTable;
-import org.thoughtcrime.securesms.database.MmsTable.Reader;
+import org.thoughtcrime.securesms.database.MessageTable.MmsReader;
 import org.thoughtcrime.securesms.database.PushTable;
 import org.thoughtcrime.securesms.database.SignalDatabase;
 import org.thoughtcrime.securesms.database.model.MessageRecord;
@@ -246,12 +245,12 @@ public class LegacyMigrationJob extends MigrationJob {
 
   private void schedulePendingIncomingParts(Context context) {
     final AttachmentTable          attachmentDb       = SignalDatabase.attachments();
-    final MessageTable             mmsDb              = SignalDatabase.mms();
+    final MessageTable             mmsDb              = SignalDatabase.messages();
     final List<DatabaseAttachment> pendingAttachments = SignalDatabase.attachments().getPendingAttachments();
 
     Log.i(TAG, pendingAttachments.size() + " pending parts.");
     for (DatabaseAttachment attachment : pendingAttachments) {
-      final Reader        reader = MmsTable.readerFor(mmsDb.getMessageCursor(attachment.getMmsId()));
+      final MmsReader     reader = MessageTable.mmsReaderFor(mmsDb.getMessageCursor(attachment.getMmsId()));
       final MessageRecord record = reader.getNext();
 
       if (attachment.hasData()) {

@@ -5,48 +5,57 @@ import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.ViewModelProvider
-import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
 import io.reactivex.rxjava3.core.Observable
 import org.thoughtcrime.securesms.R
+import org.thoughtcrime.securesms.conversationlist.chatfilter.ConversationFilterRequest
 import org.thoughtcrime.securesms.groups.SelectionLimits
 import org.thoughtcrime.securesms.keyvalue.SignalStore
+import org.thoughtcrime.securesms.search.SearchRepository
 import org.thoughtcrime.securesms.stories.settings.custom.PrivateStorySettingsFragment
 import org.thoughtcrime.securesms.stories.settings.my.MyStorySettingsFragment
 import org.thoughtcrime.securesms.stories.settings.privacy.ChooseInitialMyStoryMembershipBottomSheetDialogFragment
+import org.thoughtcrime.securesms.util.Debouncer
 import org.thoughtcrime.securesms.util.SpanUtil
 import org.thoughtcrime.securesms.util.adapter.mapping.PagingMappingAdapter
 import org.thoughtcrime.securesms.util.livedata.LiveDataUtil
+import java.util.concurrent.TimeUnit
 
 class ContactSearchMediator(
   private val fragment: Fragment,
-  recyclerView: RecyclerView,
   selectionLimits: SelectionLimits,
   displayCheckBox: Boolean,
-  displaySmsTag: ContactSearchItems.DisplaySmsTag,
+  displaySmsTag: ContactSearchAdapter.DisplaySmsTag,
   mapStateToConfiguration: (ContactSearchState) -> ContactSearchConfiguration,
   private val contactSelectionPreFilter: (View?, Set<ContactSearchKey>) -> Set<ContactSearchKey> = { _, s -> s },
-  performSafetyNumberChecks: Boolean = true
+  performSafetyNumberChecks: Boolean = true,
+  adapterFactory: AdapterFactory = DefaultAdapterFactory,
+  arbitraryRepository: ArbitraryRepository? = null,
 ) {
 
-  private val viewModel: ContactSearchViewModel = ViewModelProvider(fragment, ContactSearchViewModel.Factory(selectionLimits, ContactSearchRepository(), performSafetyNumberChecks)).get(ContactSearchViewModel::class.java)
+  private val queryDebouncer = Debouncer(300, TimeUnit.MILLISECONDS)
+
+  private val viewModel: ContactSearchViewModel = ViewModelProvider(
+    fragment,
+    ContactSearchViewModel.Factory(
+      selectionLimits = selectionLimits,
+      repository = ContactSearchRepository(),
+      performSafetyNumberChecks = performSafetyNumberChecks,
+      arbitraryRepository = arbitraryRepository,
+      searchRepository = SearchRepository(fragment.requireContext().getString(R.string.note_to_self))
+    )
+  )[ContactSearchViewModel::class.java]
+
+  val adapter = adapterFactory.create(
+    displayCheckBox = displayCheckBox,
+    displaySmsTag = displaySmsTag,
+    recipientListener = this::toggleSelection,
+    storyListener = this::toggleStorySelection,
+    storyContextMenuCallbacks = StoryContextMenuCallbacks()
+  ) { viewModel.expandSection(it.sectionKey) }
 
   init {
-
-    val adapter = PagingMappingAdapter<ContactSearchKey>()
-    recyclerView.adapter = adapter
-
-    ContactSearchItems.register(
-      mappingAdapter = adapter,
-      displayCheckBox = displayCheckBox,
-      displaySmsTag = displaySmsTag,
-      recipientListener = this::toggleSelection,
-      storyListener = this::toggleStorySelection,
-      storyContextMenuCallbacks = StoryContextMenuCallbacks(),
-      expandListener = { viewModel.expandSection(it.sectionKey) }
-    )
-
     val dataAndSelection: LiveData<Pair<List<ContactSearchData>, Set<ContactSearchKey>>> = LiveDataUtil.combineLatest(
       viewModel.data,
       viewModel.selectionState,
@@ -54,7 +63,7 @@ class ContactSearchMediator(
     )
 
     dataAndSelection.observe(fragment.viewLifecycleOwner) { (data, selection) ->
-      adapter.submitList(ContactSearchItems.toMappingModelList(data, selection))
+      adapter.submitList(ContactSearchAdapter.toMappingModelList(data, selection, arbitraryRepository))
     }
 
     viewModel.controller.observe(fragment.viewLifecycleOwner) { controller ->
@@ -67,7 +76,13 @@ class ContactSearchMediator(
   }
 
   fun onFilterChanged(filter: String?) {
-    viewModel.setQuery(filter)
+    queryDebouncer.publish {
+      viewModel.setQuery(filter)
+    }
+  }
+
+  fun onConversationFilterRequestChanged(conversationFilterRequest: ConversationFilterRequest) {
+    viewModel.setConversationFilterRequest(conversationFilterRequest)
   }
 
   fun setKeysSelected(keys: Set<ContactSearchKey>) {
@@ -90,7 +105,7 @@ class ContactSearchMediator(
     return viewModel.errorEventsStream.observeOn(AndroidSchedulers.mainThread())
   }
 
-  fun addToVisibleGroupStories(groupStories: Set<ContactSearchKey.RecipientSearchKey.Story>) {
+  fun addToVisibleGroupStories(groupStories: Set<ContactSearchKey.RecipientSearchKey>) {
     viewModel.addToVisibleGroupStories(groupStories)
   }
 
@@ -114,7 +129,7 @@ class ContactSearchMediator(
     }
   }
 
-  private inner class StoryContextMenuCallbacks : ContactSearchItems.StoryContextMenuCallbacks {
+  private inner class StoryContextMenuCallbacks : ContactSearchAdapter.StoryContextMenuCallbacks {
     override fun onOpenStorySettings(story: ContactSearchData.Story) {
       if (story.recipient.isMyStory) {
         MyStorySettingsFragment.createAsDialog()
@@ -141,6 +156,34 @@ class ContactSearchMediator(
         .setPositiveButton(SpanUtil.color(ContextCompat.getColor(fragment.requireContext(), R.color.signal_colorError), fragment.getString(R.string.ContactSearchMediator__delete))) { _, _ -> viewModel.deletePrivateStory(story) }
         .setNegativeButton(android.R.string.cancel) { _, _ -> }
         .show()
+    }
+  }
+
+  /**
+   * Wraps the construction of a PagingMappingAdapter<ContactSearchKey> so that it can
+   * be swapped for another implementation, allow listeners to be wrapped, etc.
+   */
+  fun interface AdapterFactory {
+    fun create(
+      displayCheckBox: Boolean,
+      displaySmsTag: ContactSearchAdapter.DisplaySmsTag,
+      recipientListener: (View, ContactSearchData.KnownRecipient, Boolean) -> Unit,
+      storyListener: (View, ContactSearchData.Story, Boolean) -> Unit,
+      storyContextMenuCallbacks: ContactSearchAdapter.StoryContextMenuCallbacks,
+      expandListener: (ContactSearchData.Expand) -> Unit
+    ): PagingMappingAdapter<ContactSearchKey>
+  }
+
+  private object DefaultAdapterFactory : AdapterFactory {
+    override fun create(
+      displayCheckBox: Boolean,
+      displaySmsTag: ContactSearchAdapter.DisplaySmsTag,
+      recipientListener: (View, ContactSearchData.KnownRecipient, Boolean) -> Unit,
+      storyListener: (View, ContactSearchData.Story, Boolean) -> Unit,
+      storyContextMenuCallbacks: ContactSearchAdapter.StoryContextMenuCallbacks,
+      expandListener: (ContactSearchData.Expand) -> Unit
+    ): PagingMappingAdapter<ContactSearchKey> {
+      return ContactSearchAdapter(displayCheckBox, displaySmsTag, recipientListener, storyListener, storyContextMenuCallbacks, expandListener)
     }
   }
 }

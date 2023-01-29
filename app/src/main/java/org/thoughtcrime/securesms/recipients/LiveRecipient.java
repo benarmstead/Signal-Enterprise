@@ -15,7 +15,7 @@ import org.signal.core.util.ThreadUtil;
 import org.signal.core.util.logging.Log;
 import org.thoughtcrime.securesms.database.DistributionListTables;
 import org.thoughtcrime.securesms.database.GroupTable;
-import org.thoughtcrime.securesms.database.GroupTable.GroupRecord;
+import org.thoughtcrime.securesms.database.model.GroupRecord;
 import org.thoughtcrime.securesms.database.RecipientTable;
 import org.thoughtcrime.securesms.database.SignalDatabase;
 import org.thoughtcrime.securesms.database.model.DistributionListRecord;
@@ -50,11 +50,11 @@ public final class LiveRecipient {
   LiveRecipient(@NonNull Context context, @NonNull Recipient defaultRecipient) {
     this.context                  = context.getApplicationContext();
     this.liveData                 = new MutableLiveData<>(defaultRecipient);
-    this.recipient      = new AtomicReference<>(defaultRecipient);
-    this.recipientTable = SignalDatabase.recipients();
-    this.groupDatabase  = SignalDatabase.groups();
-    this.distributionListTables = SignalDatabase.distributionLists();
-    this.observers              = new CopyOnWriteArraySet<>();
+    this.recipient                = new AtomicReference<>(defaultRecipient);
+    this.recipientTable           = SignalDatabase.recipients();
+    this.groupDatabase            = SignalDatabase.groups();
+    this.distributionListTables   = SignalDatabase.distributionLists();
+    this.observers                = new CopyOnWriteArraySet<>();
     this.foreverObserver          = recipient -> {
       ThreadUtil.postToMain(() -> {
         for (RecipientForeverObserver o : observers) {

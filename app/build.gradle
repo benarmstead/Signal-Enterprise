@@ -52,8 +52,8 @@ ktlint {
     version = "0.43.2"
 }
 
-def canonicalVersionCode = 1183
-def canonicalVersionName = "6.6.1"
+def canonicalVersionCode = 1202
+def canonicalVersionName = "6.10.2"
 
 def postFixSize = 100
 def abiPostFix = ['universal'   : 0,
@@ -104,6 +104,11 @@ android {
                 keyPassword keystores.debug.keyPassword
             }
         }
+    }
+
+    dependenciesInfo {
+        includeInBundle false
+        includeInApk false
     }
 
     testOptions {
@@ -266,6 +271,7 @@ android {
                     'proguard/proguard-retrofit.pro',
                     'proguard/proguard-webrtc.pro',
                     'proguard/proguard-klinker.pro',
+                    'proguard/proguard-mobilecoin.pro',
                     'proguard/proguard-retrolambda.pro',
                     'proguard/proguard-okhttp.pro',
                     'proguard/proguard-ez-vcard.pro',

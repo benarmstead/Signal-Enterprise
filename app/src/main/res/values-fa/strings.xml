@@ -224,6 +224,8 @@
     <string name="ContactsCursorLoader_recent_chats">آخرین گفتگوها</string>
     <string name="ContactsCursorLoader_contacts">مخاطبین</string>
     <string name="ContactsCursorLoader_groups">گروه‌ها‌</string>
+    <!-- Contact search header for individuals who the user has not started a conversation with but is in a group with -->
+    <string name="ContactsCursorLoader_group_members">اعضا‌ی گروه</string>
     <string name="ContactsCursorLoader_phone_number_search">جستجوی شماره‌تلفن</string>
     <!-- Header for username search -->
     <string name="ContactsCursorLoader_find_by_username">جستجو با نام کاربری</string>
@@ -231,6 +233,10 @@
     <string name="ContactsCursorLoader_my_stories">استوری‌های من</string>
     <!-- Text for a button that brings up a bottom sheet to create a new story. -->
     <string name="ContactsCursorLoader_new">جدید</string>
+    <!-- Header for conversation search section labeled "Chats" -->
+    <string name="ContactsCursorLoader__chats">گفتگوها</string>
+    <!-- Header for conversation search section labeled "Messages" -->
+    <string name="ContactsCursorLoader__messages">پیام‌ها</string>
 
     <!-- ContactsDatabase -->
     <string name="ContactsDatabase_message_s">ارسال پیام به %1$s</string>
@@ -593,6 +599,8 @@
     <string name="BackupsPreferenceFragment__create_backup">ایجاد پشتیبان</string>
     <string name="BackupsPreferenceFragment__last_backup">آخرین پشتیبان‌گیری: %1$s</string>
     <string name="BackupsPreferenceFragment__backup_folder">پوشهٔ پشتیبان</string>
+    <!-- Title for a preference item allowing the user to selected the hour of the day when their chats are backed up. -->
+    <string name="BackupsPreferenceFragment__backup_time">Backup time</string>
     <string name="BackupsPreferenceFragment__verify_backup_passphrase">گذرواژهٔ پشتیبان را وارسی کنید</string>
     <string name="BackupsPreferenceFragment__test_your_backup_passphrase">گذرواژهٔ پشتیبان خود را امتحان کرده و همخوانی داشتن آن را وارسی کنید.</string>
     <string name="BackupsPreferenceFragment__turn_on">روشن</string>
@@ -622,6 +630,50 @@
     <string name="DateUtils_minutes_ago">%1$d دقیقه</string>
     <string name="DateUtils_today">امروز</string>
     <string name="DateUtils_yesterday">دیروز</string>
+    <!-- When scheduling a message, %1$s replaced with either today, tonight, or tomorrow. %2$s replaced with the time. e.g. Tonight at 9:00pm -->
+    <string name="DateUtils_schedule_at">%1$s در %2$s</string>
+    <!-- Used when getting a time in the future. For example, Tomorrow at 9:00pm -->
+    <string name="DateUtils_tomorrow">Tomorrow</string>
+    <!-- Used in the context: Tonight at 9:00pm for example. Specifically this is after 7pm -->
+    <string name="DateUtils_tonight">Tonight</string>
+
+    <!-- Scheduled Messages -->
+    <!-- Title for dialog that shows all the users scheduled messages for a chat -->
+    <string name="ScheduledMessagesBottomSheet__schedules_messages">Scheduled messages</string>
+    <!-- Option when scheduling a message to select a specific date and time to send a message -->
+    <string name="ScheduledMessages_pick_time">Pick Date &amp; Time</string>
+    <!-- Title for dialog explaining to users how the scheduled messages work -->
+    <string name="ScheduleMessageFTUXBottomSheet__title">Scheduled messages</string>
+    <!-- Disclaimer text for scheduled messages explaining to users that the scheduled messages will only send if connected to the internet -->
+    <string name="ScheduleMessageFTUXBottomSheet__disclaimer">When you send a scheduled message, make sure your device will be on and connected to the internet at the time of sending. If not, your message will send when your device reconnects.</string>
+    <!-- Confirmation button text acknowledging the user understands the disclaimer -->
+    <string name="ScheduleMessageFTUXBottomSheet__okay">خوب</string>
+    <!-- Title for section asking users to allow alarm permissions for scheduled messages -->
+    <string name="ScheduleMessageFTUXBottomSheet_enable_title">To enable message scheduling:</string>
+    <!-- Title for dialog asking users to allow alarm permissions for scheduled messages -->
+    <string name="ReenableScheduleMessagesDialogFragment_reenable_title">To re-enable message scheduling:</string>
+    <!-- Title of dialog with a calendar to select the date the user wants to schedule a message. -->
+    <string name="ScheduleMessageTimePickerBottomSheet__select_date_title">Select date</string>
+    <!-- Title of dialog with a clock to select the time at which the user wants to schedule a message. -->
+    <string name="ScheduleMessageTimePickerBottomSheet__select_time_title">Select time</string>
+    <!-- Title of dialog that allows user to set the time and day that their message will be sent -->
+    <string name="ScheduleMessageTimePickerBottomSheet__dialog_title">Schedule message</string>
+    <!-- Text for confirmation button when scheduling messages that allows the user to confirm and schedule the sending time -->
+    <string name="ScheduleMessageTimePickerBottomSheet__schedule_send">Schedule send</string>
+
+    <!-- Disclaimer in message scheduling dialog. %1$s replaced with a GMT offset (e.g. GMT-05:00), and %2$s is replaced with the time zone name (e.g. Eastern Standard Time) -->
+    <string name="ScheduleMessageTimePickerBottomSheet__timezone_disclaimer">All times in (%1$s) %2$s</string>
+
+    <!-- Context menu option to send a scheduled message now -->
+    <string name="ScheduledMessagesBottomSheet_menu_send_now">Send now</string>
+    <!-- Context menu option to reschedule a selected message -->
+    <string name="ScheduledMessagesBottomSheet_menu_reschedule">Reschedule</string>
+    <!-- Button in dialog asking user if they are sure they want to delete the selected scheduled message -->
+    <string name="ScheduledMessagesBottomSheet_delete_dialog_action">حذف</string>
+    <!-- Button in dialog asking user if they are sure they want to delete the selected scheduled message -->
+    <string name="ScheduledMessagesBottomSheet_delete_dialog_message">Delete selected scheduled message?</string>
+    <!-- Progress message shown while deleting selected scheduled message -->
+    <string name="ScheduledMessagesBottomSheet_deleting_progress_message">Deleting scheduled message…</string>
 
     <!-- DecryptionFailedDialog -->
     <string name="DecryptionFailedDialog_chat_session_refreshed">نشست گفتگو تازه‌سازی شد</string>
@@ -1152,11 +1204,29 @@
     <string name="MessageRecord_left_group">شما گروه را ترک کردید.</string>
     <string name="MessageRecord_you_updated_group">شما گروه را به‌روزرسانی کردید.</string>
     <string name="MessageRecord_the_group_was_updated">گروه به‌روزرسانی شد.</string>
-    <string name="MessageRecord_you_called_date">شما تماس گرفتید · %1$s</string>
-    <string name="MessageRecord_missed_audio_call_date">تماس صوتی از دست رفته · %1$s</string>
-    <string name="MessageRecord_missed_video_call_date">تماس تصویری از دست رفته · %1$s</string>
+    <!-- Update message shown when placing an outgoing 1:1 voice/audio call and it\'s answered by the other party -->
+    <string name="MessageRecord_outgoing_voice_call">تماس صوتی خروجی</string>
+    <!-- Update message shown when placing an outgoing 1:1 video call and it\'s answered by the other party -->
+    <string name="MessageRecord_outgoing_video_call">تماس تصویری خروجی</string>
+    <!-- Update message shown when placing an outgoing 1:1 voice/audio call and it\'s not answered by the other party -->
+    <string name="MessageRecord_unanswered_voice_call">تماس صوتی بی‌پاسخ</string>
+    <!-- Update message shown when placing an outgoing 1:1 video call and it\'s not answered by the other party -->
+    <string name="MessageRecord_unanswered_video_call">تماس تصویری بی‌پاسخ</string>
+    <!-- Update message shown when receiving an incoming 1:1 voice/audio call and it\'s answered -->
+    <string name="MessageRecord_incoming_voice_call">تماس صوتی دریافتی</string>
+    <!-- Update message shown when receiving an incoming 1:1 video call and answered -->
+    <string name="MessageRecord_incoming_video_call">تماس تصویری دریافتی</string>
+    <!-- Update message shown when receiving an incoming 1:1 voice/audio call and not answered -->
+    <string name="MessageRecord_missed_voice_call">تماس صوتی ازدست‌رفته</string>
+    <!-- Update message shown when receiving an incoming 1:1 video call and not answered -->
+    <string name="MessageRecord_missed_video_call">تماس تصویری ازدست‌رفته</string>
+    <!-- Update message shown when receiving an incoming 1:1 voice/audio call and explicitly declined -->
+    <string name="MessageRecord_you_declined_a_voice_call">یک تماس صوتی را رد کردید</string>
+    <!-- Update message shown when receiving an incoming 1:1 video call and explicitly declined -->
+    <string name="MessageRecord_you_declined_a_video_call">یک تماس تصویری را رد کردید</string>
+    <!-- Call update formatter string to place the update message next to a time stamp. e.g., \'Incoming voice call · 11:11am\' -->
+    <string name="MessageRecord_call_message_with_date">%1$s · %2$s</string>
     <string name="MessageRecord_s_updated_group">%1$s گروه را به‌روزرسانی کرد.</string>
-    <string name="MessageRecord_s_called_you_date">%1$s با شما تماس گرفت · %2$s</string>
     <string name="MessageRecord_s_joined_signal">%1$s در سیگنال است!</string>
     <string name="MessageRecord_you_disabled_disappearing_messages">شما پیام‌های ناپدید شونده را غیرفعال کردید.</string>
     <string name="MessageRecord_s_disabled_disappearing_messages">%1$s پیام‌های ناپدید شونده را غیرفعال کرد.</string>
@@ -1344,10 +1414,12 @@
     <string name="MessageRecord_s_changed_their_phone_number">%1$s شماره‌تلفن خود را تغییر داد.</string>
     <!-- Update item message shown in the release channel when someone is already a sustainer so we ask them if they want to boost. -->
     <string name="MessageRecord_like_this_new_feature_help_support_signal_with_a_one_time_donation">این قابلیت جدید را می‌پسندید؟ با کمک مالی یک‌باره از سیگنال پشتیبانی کنید.</string>
-    <!-- Update item message shown when we merge two threads together -->
+    <!-- Update item message shown when we merge two threads together. First placeholder is a name, second placeholder is a phone number. -->
     <string name="MessageRecord_your_message_history_with_s_and_their_number_s_has_been_merged">سابقه پیام شما با %1$s و شماره او %2$s ادغام شده است.</string>
-    <!-- Update item message shown when we merge two threads together and we don\'t know the phone number of the other thread -->
+    <!-- Update item message shown when we merge two threads together and we don\'t know the phone number of the other thread. The placeholder is a person\'s name. -->
     <string name="MessageRecord_your_message_history_with_s_and_another_chat_has_been_merged">سابقه پیام شما با %1$s و گفتگوی دیگری که متعلق به او بود ادغام شده است.</string>
+    <!-- Update item message shown when you find out a phone number belongs to a person you had a conversation with. First placeholder is a phone number, second placeholder is a name. -->
+    <string name="MessageRecord_s_belongs_to_s">%1$s متعلق به %2$s است</string>
     <!-- Message to notify sender that activate payments request has been sent to the recipient -->
     <string name="MessageRecord_you_sent_request">شما به %1$s درخواستی برای فعال کردن پرداخت‌ها ارسال کردید</string>
     <!-- Request message from recipient to activate payments -->
@@ -1676,8 +1748,7 @@
     <string name="RegistrationActivity_select_your_country">کشور خود را انتخاب کنید</string>
     <string name="RegistrationActivity_you_must_specify_your_country_code">شما باید کد کشور خود را مشخص کنید
     </string>
-    <string name="RegistrationActivity_you_must_specify_your_phone_number">شما باید شماره‌تلفن خود را مشخص کنید
-    </string>
+    <string name="RegistrationActivity_please_enter_a_valid_phone_number_to_register">برای عضویت یک شماره تلفن معتبر وارد کنید.</string>
     <string name="RegistrationActivity_invalid_number">شماره نامعتبر</string>
     <string name="RegistrationActivity_the_number_you_specified_s_is_invalid">شماره‌ای که شما مشخص کرده‌اید (%1$s) معتبر نیست.
     </string>
@@ -1707,7 +1778,6 @@
     <string name="RegistrationActivity_next">بعدی</string>
     <string name="RegistrationActivity_continue">ادامه</string>
     <string name="RegistrationActivity_take_privacy_with_you_be_yourself_in_every_message">حریم خصوصی را همراه داشته باشید.\nدر هر پیام خودتان باشید.</string>
-    <string name="RegistrationActivity_enter_your_phone_number_to_get_started">برای آغاز کردن شماره‌تلفن خود را وارد کنید</string>
     <string name="RegistrationActivity_enter_your_phone_number">شماره‌تلفن خود را وارد کنید</string>
     <string name="RegistrationActivity_you_will_receive_a_verification_code">شما یک کد وارسی دریافت خواهید کرد. نرخ‌های اپراتور ممکن است اعمال شوند.</string>
     <string name="RegistrationActivity_enter_the_code_we_sent_to_s">کد‌ی را که به %1$s ارسال کردیم وارد کنید</string>
@@ -1715,7 +1785,10 @@
 
     <string name="RegistrationActivity_phone_number_description">شماره‌تلفن</string>
     <string name="RegistrationActivity_country_code_description">کد کشور</string>
+    <string name="RegistrationActivity_country_code_hint">کشور</string>
     <string name="RegistrationActivity_call">تماس</string>
+    <string name="RegistrationActivity_verification_code">کد تآیید</string>
+    <string name="RegistrationActivity_resend_code">ارسال دوبارهٔ کد</string>
 
     <!-- RegistrationLockV2Dialog -->
     <string name="RegistrationLockV2Dialog_turn_on_registration_lock">روشن کردن قفل ثبت‌نام؟</string>
@@ -1837,10 +1910,6 @@
     <string name="ThreadRecord_left_the_group">گروه را ترک کرد</string>
     <string name="ThreadRecord_secure_session_reset">بازنشانی نشست امن.</string>
     <string name="ThreadRecord_draft">پیش‌نویس:</string>
-    <string name="ThreadRecord_called">شما تماس گرفتید</string>
-    <string name="ThreadRecord_called_you">با شما تماس گرفت</string>
-    <string name="ThreadRecord_missed_audio_call">تماس صوتی از دست رفته</string>
-    <string name="ThreadRecord_missed_video_call">تماس تصویری از دست رفته</string>
     <string name="ThreadRecord_media_message">پیام رسانه‌ای</string>
     <string name="ThreadRecord_sticker">استیکر</string>
     <string name="ThreadRecord_view_once_photo">عکس یکبار مصرف</string>
@@ -1873,11 +1942,11 @@
     <string name="ThreadRecord_video">ویدئو</string>
     <string name="ThreadRecord_chat_session_refreshed">نشست گفتگو تازه‌سازی شد</string>
     <!-- Displayed in the notification when the user is sent a gift -->
-    <string name="ThreadRecord__you_received_a_gift">یک هدیه دریافت کردید</string>
+    <string name="ThreadRecord__s_donated_for_you">%1$s از طرف شما کمک مالی اهدا کرد</string>
     <!-- Displayed in the notification when the user sends a gift -->
-    <string name="ThreadRecord__you_sent_a_gift">شما یک هدیه فرستادید</string>
+    <string name="ThreadRecord__you_donated_for_s">از طرف %1$s کمک مالی اهدا کردید</string>
     <!-- Displayed in the notification when the user has opened a received gift -->
-    <string name="ThreadRecord__you_redeemed_a_gift_badge">شما یک نشان هدیه آزادسازی کردید</string>
+    <string name="ThreadRecord__you_redeemed_a_badge">یک نشان آزادسازی کردید</string>
     <!-- Displayed in the conversation list when someone reacted to your story -->
     <string name="ThreadRecord__reacted_s_to_your_story">با %1$s به استوری شما واکنش نشان داد</string>
     <!-- Displayed in the conversation list when you reacted to someone\'s story -->
@@ -1984,13 +2053,15 @@
     <string name="MediaPreviewActivity_s_to_you">%1$s به شما</string>
     <string name="MediaPreviewActivity_media_no_longer_available">رسانه دیگر در دسترس نیست.</string>
     <!-- Notifying the user that the device has encountered a technical issue and is unable to render a video. -->
-    <string name="MediaPreviewActivity_unable_to_play_media">Unable to play media.</string>
+    <string name="MediaPreviewActivity_unable_to_play_media">پخش رسانه امکان‌پذیر نیست.</string>
     <string name="MediaPreviewActivity_error_finding_message">خطا در یافتن پیام.</string>
     <string name="MediaPreviewActivity_cant_find_an_app_able_to_share_this_media">برنامه‌ای برای اشتراک‌گذاری این رسانه پیدا نشد.</string>
     <string name="MediaPreviewActivity_dismiss_due_to_error">بستن</string>
     <string name="MediaPreviewFragment_edit_media_error">خطای رسانه</string>
     <!-- This is displayed as a toast notification when we encounter an error deleting a message, including potentially on other people\'s devices -->
     <string name="MediaPreviewFragment_media_delete_error">خطا در حذف پیام، ممکن است پیام همچنان وجود داشته باشد</string>
+    <!-- A suffix to be attached to truncated captions that the user may tap onto to view the entire text caption -->
+    <string name="MediaPreviewFragment_see_more">%1$s… <b>Read More</b></string>
 
     <!-- MessageNotifier -->
     <string name="MessageNotifier_d_new_messages_in_d_conversations">%1$d پیام جدید در %2$d مکالمه</string>
@@ -2055,6 +2126,8 @@
 
     <!-- SearchToolbar -->
     <string name="SearchToolbar_search">جستجو</string>
+    <!-- Hint when searching filtered chat content -->
+    <string name="SearchToolbar_search_unread_chats">جستجوی چت‌های خوانده‌نشده</string>
     <string name="SearchToolbar_search_for_conversations_contacts_and_messages">جستجو برای مکالمه‌ها، مخاطبان و پیام‌ها</string>
 
     <!-- Material3 Search Toolbar -->
@@ -2085,6 +2158,9 @@
     <!-- UnauthorizedReminder -->
     <string name="UnauthorizedReminder_device_no_longer_registered">این دستگاه دیگر ثبت‌نام شده نیست</string>
     <string name="UnauthorizedReminder_this_is_likely_because_you_registered_your_phone_number_with_Signal_on_a_different_device">این احتمالاً به این خاطر است که شما ثبت‌نام شماره‌تلفن خود را با دستگاهی دیگر در سیگنال انجام داده‌اید. برای ثبت‌نام دوباره ضربه بزنید.</string>
+
+    <!-- Push notification when the app is forcibly logged out by the server. -->
+    <string name="LoggedOutNotification_you_have_been_logged_out">در این دستگاه از سیگنال خارج شده‌اید.</string>
 
     <!-- EnclaveFailureReminder -->
     <!-- Banner message to update app to use payments -->
@@ -2176,6 +2252,8 @@
     <string name="conversation_activity__type_message_push">پیام سیگنال</string>
     <string name="conversation_activity__type_message_sms_insecure">پیامک ناامن</string>
     <string name="conversation_activity__type_message_mms_insecure">فراپیام ناامن</string>
+    <!-- Option in send button context menu to schedule the message instead of sending it directly -->
+    <string name="conversation_activity__option_schedule_message">Schedule message</string>
     <string name="conversation_activity__from_sim_name">از %1$s</string>
     <string name="conversation_activity__sim_n">سیم کارت %1$d</string>
     <string name="conversation_activity__send">ارسال</string>
@@ -2248,7 +2326,7 @@
     <!-- Label indicating that the story being replied to no longer exists -->
     <string name="QuoteView_no_longer_available">دیگر در دسترس نیست</string>
     <!-- Label for quoted gift -->
-    <string name="QuoteView__gift">هدیه</string>
+    <string name="QuoteView__donation_for_a_friend">اهدای کمک مالی از طرف یکی از دوستان</string>
 
     <!-- conversation_fragment -->
     <string name="conversation_fragment__scroll_to_the_bottom_content_description">رفتن به پایین</string>
@@ -3064,6 +3142,16 @@
     <!-- conversation_callable_insecure -->
     <string name="conversation_add_to_contacts__menu_add_to_contacts">افزودن به مخاطبین</string>
 
+    <!-- conversation scheduled messages bar -->
+
+    <!-- Label for button in a banner to show all messages currently scheduled -->
+    <string name="conversation_scheduled_messages_bar__see_all">مشاهدهٔ همه</string>
+    <!-- Body text for banner to show all scheduled messages for the chat that tells the user how many scheduled messages there are -->
+    <plurals name="conversation_scheduled_messages_bar__number_of_messages">
+        <item quantity="one">%1$d message scheduled</item>
+        <item quantity="other">%1$d messages scheduled</item>
+    </plurals>
+
     <!-- conversation_group_options -->
     <string name="convesation_group_options__recipients_list">فهرست گیرندگان</string>
     <string name="conversation_group_options__delivery">تحویل</string>
@@ -3156,11 +3244,13 @@
     <string name="CreateKbsPinFragment__create_a_new_pin">یک پین جدید ایجاد کنید</string>
     <string name="CreateKbsPinFragment__you_can_choose_a_new_pin_as_long_as_this_device_is_registered">تا زمانی که این دستگاه ثبت شده باشد شما می‌توانید پین خود را تغییر دهید.</string>
     <string name="CreateKbsPinFragment__create_your_pin">پین خود را ایجاد کنید</string>
-    <string name="CreateKbsPinFragment__pins_keep_information_stored_with_signal_encrypted">پین‌ها اطلاعات ذخیره شدهٔ سمت سیگنال را رمزگذاری شده نگاه می‌دارند تا فقط شما بتوانید به آن‌ها دسترسی داشته باشید. پروفایل شما، تنظیمات و مخاطبین هنگام نصب مجدد بازگردانی خواهند شد. برای باز کردن برنامه به پین احتیاج نخواهید داشت.</string>
+    <string name="CreateKbsPinFragment__pins_can_help_you_restore_your_account">PINs can help you restore your account and keep your info encrypted with Signal. </string>
     <string name="CreateKbsPinFragment__choose_a_stronger_pin">یک پین قوی‌تر انتخاب کنید</string>
 
     <!-- ConfirmKbsPinFragment -->
     <string name="ConfirmKbsPinFragment__pins_dont_match">پین‌ها مطابقت ندارند. دوباره تلاش کنید.</string>
+    <!-- Prompt for the user to repeat entering the PIN in order to help them remember it correctly.   -->
+    <string name="ConfirmKbsPinFragment__re_enter_the_pin_you_just_created">Re-enter the PIN you just created.</string>
     <string name="ConfirmKbsPinFragment__confirm_your_pin">پین خود را تأیید کنید</string>
     <string name="ConfirmKbsPinFragment__pin_creation_failed">ایجاد پین ناموفق بود</string>
     <string name="ConfirmKbsPinFragment__your_pin_was_not_saved">پین شما ذخیره نشد. ما بعداً از شما خواهیم خواست تا یک پین دیگر ایجاد کنید.</string>
@@ -3300,7 +3390,7 @@
     <!-- Error message shown if a very large attachment is encountered during the backup creation and causes the backup to fail -->
     <string name="LocalBackupJobApi29_your_backup_contains_a_very_large_file">نسخه پشتیبان شما دارای یک فایل بسیار حجیم است که نمی‌توان از آن نسخه پشتیبان تهیه کرد. لطفا آن را حذف کنید و یک نسخه پشتیبان جدید ایجاد کنید.</string>
     <string name="LocalBackupJobApi29_tap_to_manage_backups">برای مدیریت پشتیبان‌ها ضربه بزنید.</string>
-    <string name="RegistrationActivity_wrong_number">شمارهٔ اشتباه</string>
+    <string name="RegistrationActivity_wrong_number">شماره اشتباه؟</string>
     <string name="RegistrationActivity_call_me_instead_available_in">در عوض با من تماس بگیر \n (موجود در %1$02d:%2$02d)</string>
     <string name="RegistrationActivity_contact_signal_support">تماس با پشتیبانی سیگنال</string>
     <string name="RegistrationActivity_code_support_subject">ثبت‌نام سیگنال - کد وارسی برای اندروید</string>
@@ -4271,7 +4361,8 @@
     <string name="SelectFeaturedBadgeFragment__you_must_select_a_badge">باید یک نشان انتخاب کنید</string>
     <string name="SelectFeaturedBadgeFragment__failed_to_update_profile">به‌روزرسانی پروفایل ناموفق بود</string>
 
-    <string name="ViewBadgeBottomSheetDialogFragment__become_a_sustainer">به یک حامی تبدیل شوید</string>
+    <!-- Displayed on primary button in the bottom sheet as a call-to-action to launch into the donation flow -->
+    <string name="ViewBadgeBottomSheetDialogFragment__donate_now">اکنون اهدا کنید</string>
     <!-- Title of a page in the bottom sheet. Placeholder is a user\'s short-name -->
     <string name="ViewBadgeBottomSheetDialogFragment__s_supports_signal">%1$s از سیگنال پشتیبانی می‌کند</string>
     <!-- Description of a page in the bottom sheet of a monthly badge. Placeholder is a user\'s short-name -->
@@ -4335,7 +4426,7 @@
     <!-- Preference heading for other ways to donate -->
     <string name="ManageDonationsFragment__other_ways_to_give">سایر روش‌های اهداء</string>
     <!-- Preference label to launch badge gifting -->
-    <string name="ManageDonationsFragment__gift_a_badge">هدیه دادن یک نشان</string>
+    <string name="ManageDonationsFragment__donate_for_a_friend">از طرف یکی از دوستان کمک مالی اهدا کنید</string>
 
     <string name="Boost__enter_custom_amount">وارد کردن مبلغ دلخواه</string>
     <string name="Boost__one_time_contribution">کمک اهدایی یک‌-باره</string>
@@ -4391,10 +4482,10 @@
     <string name="DonationsErrors__failed_to_validate_badge">اعتبار نشان تایید نشد</string>
     <!-- Displayed when badge credential couldn\'t be verified -->
     <string name="DonationsErrors__could_not_validate">اعتبار پاسخ سرور تایید نشد. لطفاً با پشتیبانی تماس بگیرید.</string>
-    <!-- Displayed as title when some generic error happens during gift badge sending -->
-    <string name="DonationsErrors__failed_to_send_gift_badge">نشان هدیه ارسال نشد</string>
-    <!-- Displayed as message when some generic error happens during gift badge sending -->
-    <string name="DonationsErrors__could_not_send_gift_badge">نشان هدیه ارسال نشد. لطفاً با پشتیبانی تماس بگیرید.</string>
+    <!-- Displayed as title when some generic error happens during sending donation on behalf of another user -->
+    <string name="DonationsErrors__donation_failed">اهدای کمک مالی انجام نشد</string>
+    <!-- Displayed as message when some generic error happens during sending donation on behalf of another user -->
+    <string name="DonationsErrors__your_payment_was_processed_but">پرداختتان پردازش شد اما سیگنال نتوانست پیام اهدای کمک مالی شما را ارسال کند. لطفاً با پشتیبانی تماس بگیرید.</string>
     <string name="DonationsErrors__your_badge_could_not">نشان شما به حساب کاربری‌تان اضافه نشد، اما ممکن است هزینه‌ای از شما کسر شده باشد. لطفاً با پشتیبانی تماس بگیرید.</string>
     <string name="DonationsErrors__your_payment_is_still">پرداخت شما هنوز در حال پردازش است. این فرآیند بسته به اتصال اینترنت شما ممکن است چند دقیقه به طول بیانجامد.</string>
     <string name="DonationsErrors__failed_to_cancel_subscription">لغو اشتراک انجام نشد</string>
@@ -4403,16 +4494,16 @@
     <string name="NetworkFailure__network_error_check_your_connection_and_try_again">خطای شبکه. اتصال خود را بررسی و دوباره امتحان کنید.</string>
     <string name="NetworkFailure__retry">تلاش مجدد</string>
     <!-- Displayed as a dialog title when the selected recipient for a gift doesn\'t support gifting -->
-    <string name="DonationsErrors__cant_send_gift">ارسال هدیه ممکن نیست</string>
+    <string name="DonationsErrors__cannot_send_donation">امکان ارسال کمک مالی وجود ندارد</string>
     <!-- Displayed as a dialog message when the selected recipient for a gift doesn\'t support gifting -->
-    <string name="DonationsErrors__target_does_not_support_gifting">این گیرنده از نسخه‌ای از سیگنال استفاده می‌کند که نمی‌تواند نشان‌های هدیه را دریافت کند. وقتی به آخرین نسخه به‌روزرسانی کند، می‌تواند هدیه دریافت کند.</string>
-    <!-- Displayed as a dialog title when the user\'s profile could not be fetched, likely due to lack of internet -->
-    <string name="DonationsErrors__couldnt_send_gift">ارسال هدیه انجام نشد</string>
+    <string name="DonationsErrors__this_user_cant_receive_donations_until">این کاربر تا زمانی که سیگنال را ارتقا ندهد، نمی‌تواند اهدای کمک مالی را دریافت کند.</string>
     <!-- Displayed as a dialog message when the user\'s profile could not be fetched, likely due to lack of internet -->
-    <string name="DonationsErrors__please_check_your_network_connection">هدیه شما به‌دلیل خطای شبکه ارسال نشد. اتصال خود را بررسی و دوباره تلاش کنید.</string>
+    <string name="DonationsErrors__your_donation_could_not_be_sent">کمک مالی اهدایی شما به دلیل خطای شبکه ارسال نشد. اتصال خود را بررسی و دوباره تلاش کنید.</string>
 
     <!-- Gift message view title -->
-    <string name="GiftMessageView__gift_badge">نشان هدیه</string>
+    <string name="GiftMessageView__donation_to_s">اهدای کمک مالی به %1$s</string>
+    <!-- Gift message view title for incoming donations -->
+    <string name="GiftMessageView__s_donated_to_signal_on">%1$s از طرف شما به سیگنال کمک مالی اهدا کرد</string>
     <!-- Gift badge redeem action label -->
     <string name="GiftMessageView__redeem">آزادسازی</string>
     <!-- Gift badge view action label -->
@@ -4623,7 +4714,7 @@
     <!-- Donation receipts one-time tab label -->
     <string name="DonationReceiptListFragment__one_time">یک‌باره</string>
     <!-- Donation receipts gift tab label -->
-    <string name="DonationReceiptListFragment__gift">هدیه</string>
+    <string name="DonationReceiptListFragment__donation_for_a_friend">اهدای کمک مالی از طرف یکی از دوستان</string>
     <!-- Donation receipts boost row label -->
     <!-- Donation receipts details title -->
     <!-- Donation receipts donation type heading -->
@@ -4973,22 +5064,23 @@
         <item quantity="one">%1$s · به مدت %2$d روز</item>
         <item quantity="other">%1$s · به مدت %2$d روز</item>
     </plurals>
-    <!-- Tagline for gift row items -->
-    <string name="GiftRowItem__send_a_gift_badge">ارسال نشان هدیه</string>
     <!-- Headline text on start fragment for gifting a badge -->
-    <string name="GiftFlowStartFragment__gift_a_badge">یک نشان هدیه دهید</string>
+    <string name="GiftFlowStartFragment__donate_for_a_friend">از طرف یکی از دوستان کمک مالی اهدا کنید</string>
     <!-- Description text on start fragment for gifting a badge -->
-    <string name="GiftFlowStartFragment__gift_someone_a_badge">با اهدای کمک مالی به سیگنال به نام شخص دیگر، به او یک نشان هدیه دهید. او یک نشان برای نمایش در عکس نمایه خود دریافت خواهد کرد.</string>
+    <plurals name="GiftFlowStartFragment__support_signal_by">
+        <item quantity="one">با اهدای کمک مالی از طرف یکی از دوستان یا اعضای خانواده که از سیگنال استفاده می‌کند، از سیگنال پشتیبانی کنید. او نشانی برای نمایش در نمایه‌اش به مدت %1$d روز دریافت خواهد کرد</item>
+        <item quantity="other">با اهدای کمک مالی از طرف یکی از دوستان یا اعضای خانواده که از سیگنال استفاده می‌کند، از سیگنال پشتیبانی کنید. او نشانی برای نمایش در نمایه‌اش به مدت %1$d روز دریافت خواهد کرد</item>
+    </plurals>
     <!-- Action button label for start fragment for gifting a badge -->
     <string name="GiftFlowStartFragment__next">بعدی</string>
     <!-- Title text on choose recipient page for badge gifting -->
     <string name="GiftFlowRecipientSelectionFragment__choose_recipient">انتخاب گیرنده</string>
     <!-- Title text on confirm gift page -->
-    <string name="GiftFlowConfirmationFragment__confirm_gift">تایید هدیه</string>
+    <string name="GiftFlowConfirmationFragment__confirm_donation">تایید اهدای کمک مالی</string>
     <!-- Heading text specifying who the gift will be sent to -->
     <string name="GiftFlowConfirmationFragment__send_to">ارسال به</string>
     <!-- Text explaining that gift will be sent to the chosen recipient -->
-    <string name="GiftFlowConfirmationFragment__your_gift_will_be_sent_in">هدیه شما در یک پیام 1 به 1 به گیرنده ارسال خواهد شد. پیام خود را در پایین اضافه کنید.</string>
+    <string name="GiftFlowConfirmationFragment__the_recipient_will_be_notified">دریافت‌کننده با یک پیام اختصاصی از کمک مالی اهدایی مطلع خواهد شد. پیام خود را در زیر اضافه کنید.</string>
     <!-- Text explaining that this gift is a one time donation -->
     <string name="GiftFlowConfirmationFragment__one_time_donation">کمک مالی یک‌باره</string>
     <!-- Hint for add message input -->
@@ -4996,27 +5088,27 @@
     <!-- Displayed in the dialog while verifying the chosen recipient -->
     <string name="GiftFlowConfirmationFragment__verifying_recipient">در حال تایید گیرندگان…</string>
     <!-- Title for sheet shown when opening a redeemed gift -->
-    <string name="ViewReceivedGiftBottomSheet__s_sent_you_a_gift">%1$s یک هدیه برای شما فرستاد</string>
+    <string name="ViewReceivedGiftBottomSheet__s_made_a_donation_for_you">%1$s از طرف شما کمک مالی اهدا کرد</string>
     <!-- Title for sheet shown when opening a sent gift -->
     <string name="ViewSentGiftBottomSheet__thanks_for_your_support">از پشتیبانی شما سپاسگزاریم!</string>
     <!-- Description for sheet shown when opening a redeemed gift -->
-    <string name="ViewReceivedGiftBottomSheet__youve_received_a_gift_badge">شما از %1$s یک نشان هدیه دریافت کرده‌اید! با نمایش این نشان در نمایه‌تان، به سیگنال در ایجاد آگاهی کمک کنید.</string>
+    <string name="ViewReceivedGiftBottomSheet__s_made_a_donation_to_signal">%1$s از طرف شما به سیگنال کمک مالی اهدا کرد! حمایت خود را از سیگنال در نمایه خود نشان دهید.</string>
     <!-- Description for sheet shown when opening a sent gift -->
-    <string name="ViewSentGiftBottomSheet__youve_gifted_a_badge">شما به %1$s یک نشان هدیه داده‌اید. وقتی آن را قبول کند، به او حق انتخاب داده می‌شود که نشان خود را در معرض دید قرار دهد یا آن را پنهان کند.</string>
+    <string name="ViewSentGiftBottomSheet__youve_made_a_donation_to_signal">شما از طرف %1$s به سیگنال کمک مالی اهدا کرده‌اید. به او امکان داده می‌شود که حمایت خود را در نمایه ‌اش نشان دهد.</string>
     <!-- Primary action for pending gift sheet to redeem badge now -->
     <string name="ViewReceivedGiftSheet__redeem">آزادسازی</string>
     <!-- Primary action for pending gift sheet to redeem badge later -->
     <string name="ViewReceivedGiftSheet__not_now">حالا نه</string>
     <!-- Dialog text while redeeming a gift -->
-    <string name="ViewReceivedGiftSheet__redeeming_gift">آزادسازی هدیه…</string>
+    <string name="ViewReceivedGiftSheet__redeeming_badge">در حال آزادسازی نشان…</string>
     <!-- Snackbar text when user presses "not now" on redemption sheet -->
     <string name="ConversationFragment__you_can_redeem_your_badge_later">می‌توانید بعدا نشان خود را آزادسازی کنید.</string>
     <!-- Description text in gift thanks sheet -->
-    <string name="GiftThanksSheet__youve_gifted_a_badge_to_s">شما به %1$s یک نشان هدیه داده‌اید. وقتی آن را قبول کند، به او حق انتخاب داده می‌شود که نشان خود را در معرض دید قرار دهد یا آن را پنهان کند.</string>
+    <string name="GiftThanksSheet__youve_made_a_donation">شما از طرف %1$s به سیگنال کمک مالی اهدا کرده‌اید. به او امکان داده می‌شود که حمایت خود را در نمایه‌اش نشان دهد.</string>
     <!-- Expired gift sheet title -->
-    <string name="ExpiredGiftSheetConfiguration__your_gift_badge_has_expired">نشان هدیه شما منقضی شده است</string>
+    <string name="ExpiredGiftSheetConfiguration__your_badge_has_expired">نشان شما منقضی شده است</string>
     <!-- Expired gift sheet top description text -->
-    <string name="ExpiredGiftSheetConfiguration__your_gift_badge_has_expired_and_is">نشان هدیه شما منقضی شده است، و دیگر در نمایه‌تان برای دیگران قابل مشاهده نیست.</string>
+    <string name="ExpiredGiftSheetConfiguration__your_badge_has_expired_and_is">نشان شما منقضی شده است و دیگر روی نمایه‌تان برای دیگران قابل مشاهده نیست.</string>
     <!-- Expired gift sheet bottom description text -->
     <string name="ExpiredGiftSheetConfiguration__to_continue">برای ادامهٔ حمایت از تکنولوژی‌ای که برای شما ساخته شده است. لطفاً تبدیل شدن به یک حامی ماهانه را در نظر بگیرید.</string>
     <!-- Expired gift sheet make a monthly donation button -->
@@ -5070,12 +5162,12 @@
     <string name="ContactSearchMediator__delete_the_custom">استوری سفارشی «%1$s» حذف شود؟</string>
     <!-- Dialog action item for deleting a custom story -->
     <string name="ContactSearchMediator__delete">حذف</string>
-    <!-- Gift expiry days remaining -->
+    <!-- Donation for a friend expiry days remaining -->
     <plurals name="Gifts__d_days_remaining">
         <item quantity="one">%1$d روز باقی مانده</item>
         <item quantity="other">%1$d روز باقی مانده</item>
     </plurals>
-    <!-- Gift expiry hours remaining -->
+    <!-- Donation for a friend expiry hours remaining -->
     <plurals name="Gifts__d_hours_remaining">
         <item quantity="one">%1$d ساعت باقی مانده</item>
         <item quantity="other">%1$d ساعت باقی مانده</item>
@@ -5085,7 +5177,7 @@
         <item quantity="one">%1$d دقیقه باقی مانده</item>
         <item quantity="other">%1$d دقیقه باقی مانده</item>
     </plurals>
-    <!-- Gift expiry expired -->
+    <!-- Donation for a friend expiry expired -->
     <string name="Gifts__expired">منقضی شده</string>
 
     <!-- Label indicating that a user can tap to advance to the next post in a story -->
@@ -5329,9 +5421,9 @@
     <!-- Phase 1 Small megaphone title indicating sms is going away -->
     <string name="SmsExportMegaphone__sms_support_going_away">پشتیبانی پیامک حذف می‌شود</string>
     <!-- Phase 1 small megaphone description indicating sms is going away -->
-    <string name="SmsExportMegaphone__sms_support_will_be_removed_soon_to_focus_on_encrypted_messaging">پشتیبانی پیامک به‌زودی حذف خواهد شد تا روی پیام‌های رمزگذاری‌شده تمرکز شود.</string>
+    <string name="SmsExportMegaphone__dont_worry_encrypted_signal_messages_will_continue_to_work">نگران نباشید، پیام‌های رمزگذاری‌شده سیگنال همچنان کار خواهند کرد.</string>
     <!-- Phase 1 small megaphone button that takes the user to the sms export flow -->
-    <string name="SmsExportMegaphone__export_sms">صدور پیامک</string>
+    <string name="SmsExportMegaphone__continue">ادامه</string>
     <!-- Title for screen shown after sms export has completed -->
     <string name="ExportSmsCompleteFragment__export_complete">صدور انجام شد</string>
     <!-- Button to continue to next screen -->
@@ -5388,8 +5480,8 @@
     </plurals>
     <!-- Button label for paying with a credit card -->
     <string name="GatewaySelectorBottomSheet__credit_or_debit_card">کارت اعتباری یا دبیت کارت</string>
-    <!-- Sheet summary when giving a gift -->
-    <string name="GatewaySelectorBottomSheet__send_a_gift_badge">ارسال نشان هدیه</string>
+    <!-- Sheet summary when giving donating for a friend -->
+    <string name="GatewaySelectorBottomSheet__donate_for_a_friend">از طرف یکی از دوستان اهدا کنید</string>
 
     <!-- StripePaymentInProgressFragment -->
     <string name="StripePaymentInProgressFragment__cancelling">در حال لغو…</string>
@@ -5441,6 +5533,7 @@
     <string name="GroupStoryEducationSheet__all_group_chat_members">همه اعضای چت گروهی می‌توانند پاسخ‌های استوری‌ها را مشاهده کنند.</string>
     <!-- Button label to dismiss sheet -->
     <string name="GroupStoryEducationSheet__next">بعدی</string>
+    <string name="Registration_country_code_entry_hint">+0</string>
 
     <!-- EOF -->
 
@@ -5448,4 +5541,34 @@
     <string name="PaypalCompleteOrderBottomSheet__donate">اهدای کمک مالی</string>
     <string name="PaypalCompleteOrderBottomSheet__payment">پرداخت</string>
 
+    <!-- ChatFilter -->
+    <!-- Displayed in a pill at the top of the chat list when it is filtered by unread messages -->
+    <string name="ChatFilter__filtered_by_unread">فیلترشده بر اساس خوانده‌نشده‌ها</string>
+    <!-- Displayed underneath the filter circle at the top of the chat list when the user pulls at a very low velocity -->
+    <string name="ChatFilter__pull_to_filter">بکشید تا فیلتر شود</string>
+    <!-- Displayed in the "clear filter" item in the chat feed if the user opened the filter from the overflow menu -->
+    <string name="ChatFilter__tip_pull_down">نکته: لیست چت را پایین بکشید تا فیلتر شود</string>
+
+    <!-- Title for screen describing that sms support is going to be removed soon -->
+    <string name="SmsRemoval_title_going_away">پشتیبانی پیامکی به‌زودی برداشته می‌شود</string>
+    <!-- Bullet point message shown on describing screen as first bullet why sms is being removed -->
+    <string name="SmsRemoval_info_bullet_1">به‌زودی دیگر از ارسال پیامک در برنامه سیگنال پشتیبانی نمی‌شود.</string>
+    <!-- Bullet point message shown on describing screen as second bullet why sms is being removed -->
+    <string name="SmsRemoval_info_bullet_2">پیامک‌ها با پیام‌های سیگنال تفاوت دارند. <b>این تغییر بر پیام‌های رمزگذاری‌شده سیگنال تأثیری نخواهد داشت و آن‌ها همچنان کار خواهند کرد.</b></string>
+    <!-- Bullet point message shown on describing screen as third bullet why sms is being removed -->
+    <string name="SmsRemoval_info_bullet_3">می‌توانید پیامک‌هایتان را صادر کنید و برنامه پیامک جدیدی را انتخاب کنید.</string>
+    <!-- Bullet point message shown on describing screen as first bullet variant why sms is being removed when user is locked out of sms -->
+    <string name="SmsRemoval_info_bullet_1_phase_3">سیگنال پشتیبانی برای ارسال پیامک را حذف کرده است.</string>
+    <!-- Button label on sms removal info/megaphone to start the export SMS flow -->
+    <string name="SmsRemoval_export_sms">صادر کردن پیامک</string>
+
+    <!-- Text Formatting -->
+    <!-- Popup menu label for applying bold style -->
+    <string name="TextFormatting_bold">برجسته</string>
+    <!-- Popup menu label for applying italic style -->
+    <string name="TextFormatting_italic">Italic</string>
+    <!-- Popup menu label for applying strikethrough style -->
+    <string name="TextFormatting_strikethrough">Strikethrough</string>
+    <!-- Popup menu label for applying monospace font style -->
+    <string name="TextFormatting_monospace">Monospace</string>
 </resources>

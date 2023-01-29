@@ -101,6 +101,7 @@ import org.whispersystems.signalservice.internal.push.SendGroupMessageResponse;
 import org.whispersystems.signalservice.internal.push.SendMessageResponse;
 import org.whispersystems.signalservice.internal.push.SignalServiceProtos;
 import org.whispersystems.signalservice.internal.push.SignalServiceProtos.AttachmentPointer;
+import org.whispersystems.signalservice.internal.push.SignalServiceProtos.BodyRange;
 import org.whispersystems.signalservice.internal.push.SignalServiceProtos.CallMessage;
 import org.whispersystems.signalservice.internal.push.SignalServiceProtos.Content;
 import org.whispersystems.signalservice.internal.push.SignalServiceProtos.DataMessage;
@@ -600,6 +601,8 @@ public class SignalServiceMessageSender {
       urgent  = message.getRequest().get().isUrgent();
     } else if (message.getPniIdentity().isPresent()) {
       content = createPniIdentityContent(message.getPniIdentity().get());
+    } else if (message.getCallEvent().isPresent()) {
+      content = createCallEventContent(message.getCallEvent().get());
     } else {
       throw new IOException("Unsupported sync message!");
     }
@@ -843,6 +846,10 @@ public class SignalServiceMessageSender {
       builder.setTextAttachment(createTextAttachment(message.getTextAttachment().get()));
     }
 
+    if (message.getBodyRanges().isPresent()) {
+      builder.addAllBodyRanges(message.getBodyRanges().get());
+    }
+
     builder.setAllowsReplies(message.getAllowsReplies().orElse(true));
 
     return container.setStoryMessage(builder).build();
@@ -927,13 +934,18 @@ public class SignalServiceMessageSender {
       List<SignalServiceDataMessage.Mention> mentions = message.getQuote().get().getMentions();
       if (mentions != null && !mentions.isEmpty()) {
         for (SignalServiceDataMessage.Mention mention : mentions) {
-          quoteBuilder.addBodyRanges(DataMessage.BodyRange.newBuilder()
-                                                          .setStart(mention.getStart())
-                                                          .setLength(mention.getLength())
-                                                          .setMentionUuid(mention.getServiceId().toString()));
+          quoteBuilder.addBodyRanges(BodyRange.newBuilder()
+                                              .setStart(mention.getStart())
+                                              .setLength(mention.getLength())
+                                              .setMentionUuid(mention.getServiceId().toString()));
         }
 
         builder.setRequiredProtocolVersion(Math.max(DataMessage.ProtocolVersion.MENTIONS_VALUE, builder.getRequiredProtocolVersion()));
+      }
+
+      List<BodyRange> bodyRanges = message.getQuote().get().getBodyRanges();
+      if (bodyRanges != null) {
+        quoteBuilder.addAllBodyRanges(bodyRanges);
       }
 
       List<SignalServiceDataMessage.Quote.QuotedAttachment> attachments = message.getQuote().get().getAttachments();
@@ -970,10 +982,10 @@ public class SignalServiceMessageSender {
 
     if (message.getMentions().isPresent()) {
       for (SignalServiceDataMessage.Mention mention : message.getMentions().get()) {
-        builder.addBodyRanges(DataMessage.BodyRange.newBuilder()
-                                                   .setStart(mention.getStart())
-                                                   .setLength(mention.getLength())
-                                                   .setMentionUuid(mention.getServiceId().toString()));
+        builder.addBodyRanges(BodyRange.newBuilder()
+                                       .setStart(mention.getStart())
+                                       .setLength(mention.getLength())
+                                       .setMentionUuid(mention.getServiceId().toString()));
       }
       builder.setRequiredProtocolVersion(Math.max(DataMessage.ProtocolVersion.MENTIONS_VALUE, builder.getRequiredProtocolVersion()));
     }
@@ -1022,7 +1034,12 @@ public class SignalServiceMessageSender {
     }
 
     if (message.getGroupCallUpdate().isPresent()) {
-      builder.setGroupCallUpdate(DataMessage.GroupCallUpdate.newBuilder().setEraId(message.getGroupCallUpdate().get().getEraId()));
+      String eraId = message.getGroupCallUpdate().get().getEraId();
+      if (eraId != null) {
+        builder.setGroupCallUpdate(DataMessage.GroupCallUpdate.newBuilder().setEraId(eraId));
+      } else {
+        builder.setGroupCallUpdate(DataMessage.GroupCallUpdate.getDefaultInstance());
+      }
     }
 
     if (message.getPayment().isPresent()) {
@@ -1056,6 +1073,10 @@ public class SignalServiceMessageSender {
 
       builder.setGiftBadge(DataMessage.GiftBadge.newBuilder()
                                                 .setReceiptCredentialPresentation(ByteString.copyFrom(giftBadge.getReceiptCredentialPresentation().serialize())));
+    }
+
+    if (message.getBodyRanges().isPresent()) {
+      builder.addAllBodyRanges(message.getBodyRanges().get());
     }
 
     builder.setTimestamp(message.getTimestamp());
@@ -1513,14 +1534,21 @@ public class SignalServiceMessageSender {
     }
 
     Content.Builder     container = Content.newBuilder();
-    SyncMessage.Builder builder   = SyncMessage.newBuilder().setRequest(request);
+    SyncMessage.Builder builder   = createSyncMessageBuilder().setRequest(request);
 
     return container.setSyncMessage(builder).build();
   }
 
   private Content createPniIdentityContent(SyncMessage.PniIdentity proto) {
     Content.Builder     container = Content.newBuilder();
-    SyncMessage.Builder builder   = SyncMessage.newBuilder().setPniIdentity(proto);
+    SyncMessage.Builder builder   = createSyncMessageBuilder().setPniIdentity(proto);
+
+    return container.setSyncMessage(builder).build();
+  }
+
+  private Content createCallEventContent(SyncMessage.CallEvent proto) {
+    Content.Builder     container = Content.newBuilder();
+    SyncMessage.Builder builder   = createSyncMessageBuilder().setCallEvent(proto);
 
     return container.setSyncMessage(builder).build();
   }
@@ -1785,7 +1813,7 @@ public class SignalServiceMessageSender {
         if (content.getContent().isPresent() && content.getContent().get().getSyncMessage() != null && content.getContent().get().getSyncMessage().hasSent()) {
           Log.d(TAG, "[sendMessage][" + timestamp + "] Sending a sent sync message to devices: " + messages.getDevices());
         } else if (content.getContent().isPresent() && content.getContent().get().hasSenderKeyDistributionMessage()) {
-          Log.d(TAG, "[sendMessage][" + timestamp + "] Sending a SKDM to " + messages.getDestination() + " for devices: " + messages.getDevices() + (content.getContent().get().getDataMessage() != null ? " (it's piggy-backing on a DataMessage)" : ""));
+          Log.d(TAG, "[sendMessage][" + timestamp + "] Sending a SKDM to " + messages.getDestination() + " for devices: " + messages.getDevices() + (content.getContent().get().hasDataMessage() ? " (it's piggy-backing on a DataMessage)" : ""));
         }
 
         if (cancelationSignal != null && cancelationSignal.isCanceled()) {

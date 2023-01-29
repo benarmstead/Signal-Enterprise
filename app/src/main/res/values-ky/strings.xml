@@ -224,6 +224,8 @@
     <string name="ContactsCursorLoader_recent_chats">Соңку маектер</string>
     <string name="ContactsCursorLoader_contacts">Байланыштар</string>
     <string name="ContactsCursorLoader_groups">Топтор</string>
+    <!-- Contact search header for individuals who the user has not started a conversation with but is in a group with -->
+    <string name="ContactsCursorLoader_group_members">Топтун мүчөлөрү</string>
     <string name="ContactsCursorLoader_phone_number_search">Телефон номерин издөө</string>
     <!-- Header for username search -->
     <string name="ContactsCursorLoader_find_by_username">Колдонуучу аты боюнча издөө</string>
@@ -231,6 +233,10 @@
     <string name="ContactsCursorLoader_my_stories">Менин окуяларым</string>
     <!-- Text for a button that brings up a bottom sheet to create a new story. -->
     <string name="ContactsCursorLoader_new">Жаңы</string>
+    <!-- Header for conversation search section labeled "Chats" -->
+    <string name="ContactsCursorLoader__chats">Маектер</string>
+    <!-- Header for conversation search section labeled "Messages" -->
+    <string name="ContactsCursorLoader__messages">Билдирүүлөр</string>
 
     <!-- ContactsDatabase -->
     <string name="ContactsDatabase_message_s">Билдирүү %1$s</string>
@@ -573,6 +579,8 @@
     <string name="BackupsPreferenceFragment__create_backup">Камдык көчүрмөсүн түзүү</string>
     <string name="BackupsPreferenceFragment__last_backup">Акыркы жолу качан сакталган: %1$s</string>
     <string name="BackupsPreferenceFragment__backup_folder">Камдык көчүрмөлөрдүн папкасы</string>
+    <!-- Title for a preference item allowing the user to selected the hour of the day when their chats are backed up. -->
+    <string name="BackupsPreferenceFragment__backup_time">Backup time</string>
     <string name="BackupsPreferenceFragment__verify_backup_passphrase">Камдык көчүрмөнүн сыр сөз айкашын текшерүү</string>
     <string name="BackupsPreferenceFragment__test_your_backup_passphrase">Камдык көчүрмөңүздүн сыр сөз айкашын сынап көрүп, анын иштеп жатканын текшериңиз</string>
     <string name="BackupsPreferenceFragment__turn_on">Күйгүзүү</string>
@@ -602,6 +610,50 @@
     <string name="DateUtils_minutes_ago">%1$dмүн</string>
     <string name="DateUtils_today">Бүгүн</string>
     <string name="DateUtils_yesterday">Кечээ</string>
+    <!-- When scheduling a message, %1$s replaced with either today, tonight, or tomorrow. %2$s replaced with the time. e.g. Tonight at 9:00pm -->
+    <string name="DateUtils_schedule_at">%1$s - %2$s</string>
+    <!-- Used when getting a time in the future. For example, Tomorrow at 9:00pm -->
+    <string name="DateUtils_tomorrow">Tomorrow</string>
+    <!-- Used in the context: Tonight at 9:00pm for example. Specifically this is after 7pm -->
+    <string name="DateUtils_tonight">Tonight</string>
+
+    <!-- Scheduled Messages -->
+    <!-- Title for dialog that shows all the users scheduled messages for a chat -->
+    <string name="ScheduledMessagesBottomSheet__schedules_messages">Scheduled messages</string>
+    <!-- Option when scheduling a message to select a specific date and time to send a message -->
+    <string name="ScheduledMessages_pick_time">Pick Date &amp; Time</string>
+    <!-- Title for dialog explaining to users how the scheduled messages work -->
+    <string name="ScheduleMessageFTUXBottomSheet__title">Scheduled messages</string>
+    <!-- Disclaimer text for scheduled messages explaining to users that the scheduled messages will only send if connected to the internet -->
+    <string name="ScheduleMessageFTUXBottomSheet__disclaimer">When you send a scheduled message, make sure your device will be on and connected to the internet at the time of sending. If not, your message will send when your device reconnects.</string>
+    <!-- Confirmation button text acknowledging the user understands the disclaimer -->
+    <string name="ScheduleMessageFTUXBottomSheet__okay">Макул</string>
+    <!-- Title for section asking users to allow alarm permissions for scheduled messages -->
+    <string name="ScheduleMessageFTUXBottomSheet_enable_title">To enable message scheduling:</string>
+    <!-- Title for dialog asking users to allow alarm permissions for scheduled messages -->
+    <string name="ReenableScheduleMessagesDialogFragment_reenable_title">To re-enable message scheduling:</string>
+    <!-- Title of dialog with a calendar to select the date the user wants to schedule a message. -->
+    <string name="ScheduleMessageTimePickerBottomSheet__select_date_title">Select date</string>
+    <!-- Title of dialog with a clock to select the time at which the user wants to schedule a message. -->
+    <string name="ScheduleMessageTimePickerBottomSheet__select_time_title">Select time</string>
+    <!-- Title of dialog that allows user to set the time and day that their message will be sent -->
+    <string name="ScheduleMessageTimePickerBottomSheet__dialog_title">Schedule message</string>
+    <!-- Text for confirmation button when scheduling messages that allows the user to confirm and schedule the sending time -->
+    <string name="ScheduleMessageTimePickerBottomSheet__schedule_send">Schedule send</string>
+
+    <!-- Disclaimer in message scheduling dialog. %1$s replaced with a GMT offset (e.g. GMT-05:00), and %2$s is replaced with the time zone name (e.g. Eastern Standard Time) -->
+    <string name="ScheduleMessageTimePickerBottomSheet__timezone_disclaimer">All times in (%1$s) %2$s</string>
+
+    <!-- Context menu option to send a scheduled message now -->
+    <string name="ScheduledMessagesBottomSheet_menu_send_now">Send now</string>
+    <!-- Context menu option to reschedule a selected message -->
+    <string name="ScheduledMessagesBottomSheet_menu_reschedule">Reschedule</string>
+    <!-- Button in dialog asking user if they are sure they want to delete the selected scheduled message -->
+    <string name="ScheduledMessagesBottomSheet_delete_dialog_action">Өчүрүү</string>
+    <!-- Button in dialog asking user if they are sure they want to delete the selected scheduled message -->
+    <string name="ScheduledMessagesBottomSheet_delete_dialog_message">Delete selected scheduled message?</string>
+    <!-- Progress message shown while deleting selected scheduled message -->
+    <string name="ScheduledMessagesBottomSheet_deleting_progress_message">Deleting scheduled message…</string>
 
     <!-- DecryptionFailedDialog -->
     <string name="DecryptionFailedDialog_chat_session_refreshed">Маектин сессиясы жаңырды</string>
@@ -1104,11 +1156,29 @@
     <string name="MessageRecord_left_group">Топтон чыктыңыз.</string>
     <string name="MessageRecord_you_updated_group">Топту жаңырттыңыз.</string>
     <string name="MessageRecord_the_group_was_updated">Топ жаңыртылды.</string>
-    <string name="MessageRecord_you_called_date">Сиз чалдыңыз · %1$s</string>
-    <string name="MessageRecord_missed_audio_call_date">Жооп берилбеген аудио чалуу · %1$s</string>
-    <string name="MessageRecord_missed_video_call_date">Жооп берилбеген видео чалуу · %1$s</string>
+    <!-- Update message shown when placing an outgoing 1:1 voice/audio call and it\'s answered by the other party -->
+    <string name="MessageRecord_outgoing_voice_call">Чыгуучу аудио чалуу</string>
+    <!-- Update message shown when placing an outgoing 1:1 video call and it\'s answered by the other party -->
+    <string name="MessageRecord_outgoing_video_call">Чыгуучу аудио чалуу</string>
+    <!-- Update message shown when placing an outgoing 1:1 voice/audio call and it\'s not answered by the other party -->
+    <string name="MessageRecord_unanswered_voice_call">Жооп берилбеген аудио чалуу</string>
+    <!-- Update message shown when placing an outgoing 1:1 video call and it\'s not answered by the other party -->
+    <string name="MessageRecord_unanswered_video_call">Жооп берилбеген аудио чалуу</string>
+    <!-- Update message shown when receiving an incoming 1:1 voice/audio call and it\'s answered -->
+    <string name="MessageRecord_incoming_voice_call">Келүүчү аудио чалуу</string>
+    <!-- Update message shown when receiving an incoming 1:1 video call and answered -->
+    <string name="MessageRecord_incoming_video_call">Келүүчү аудио чалуу</string>
+    <!-- Update message shown when receiving an incoming 1:1 voice/audio call and not answered -->
+    <string name="MessageRecord_missed_voice_call">Кабыл алынбаган аудио чалуу</string>
+    <!-- Update message shown when receiving an incoming 1:1 video call and not answered -->
+    <string name="MessageRecord_missed_video_call">Кабыл алынбаган аудио чалуу</string>
+    <!-- Update message shown when receiving an incoming 1:1 voice/audio call and explicitly declined -->
+    <string name="MessageRecord_you_declined_a_voice_call">Аудио чалуудан баш тарттыңыз</string>
+    <!-- Update message shown when receiving an incoming 1:1 video call and explicitly declined -->
+    <string name="MessageRecord_you_declined_a_video_call">Видео чалуудан баш тарттыңыз</string>
+    <!-- Call update formatter string to place the update message next to a time stamp. e.g., \'Incoming voice call · 11:11am\' -->
+    <string name="MessageRecord_call_message_with_date">%1$s · %2$s</string>
     <string name="MessageRecord_s_updated_group">%1$s топту жаңыртты.</string>
-    <string name="MessageRecord_s_called_you_date">%1$s сизге чалды · %2$s</string>
     <string name="MessageRecord_s_joined_signal">%1$s Signal\'да!</string>
     <string name="MessageRecord_you_disabled_disappearing_messages">Жоголуп кетүүчү билдирүүлөрдү өчүрүп койдуңуз.</string>
     <string name="MessageRecord_s_disabled_disappearing_messages">%1$s жоголуп кетүүчү билдирүүлөрдү өчүрүп койду.</string>
@@ -1288,10 +1358,12 @@
     <string name="MessageRecord_s_changed_their_phone_number">%1$s телефон номерин өзгөрттү.</string>
     <!-- Update item message shown in the release channel when someone is already a sustainer so we ask them if they want to boost. -->
     <string name="MessageRecord_like_this_new_feature_help_support_signal_with_a_one_time_donation">Бул жаңы функция жактыбы? Бир жолу салым кошуп, Signal кызматына колдоо көрсөтүңүз.</string>
-    <!-- Update item message shown when we merge two threads together -->
+    <!-- Update item message shown when we merge two threads together. First placeholder is a name, second placeholder is a phone number. -->
     <string name="MessageRecord_your_message_history_with_s_and_their_number_s_has_been_merged">%1$s менен болгон билдирүүлөр таржымалыңыз жана алардын номери %2$s бирикти.</string>
-    <!-- Update item message shown when we merge two threads together and we don\'t know the phone number of the other thread -->
+    <!-- Update item message shown when we merge two threads together and we don\'t know the phone number of the other thread. The placeholder is a person\'s name. -->
     <string name="MessageRecord_your_message_history_with_s_and_another_chat_has_been_merged">%1$s менен болгон билдирүүлөр таржымалыңыз жана аларга таандык маек бирикти.</string>
+    <!-- Update item message shown when you find out a phone number belongs to a person you had a conversation with. First placeholder is a phone number, second placeholder is a name. -->
+    <string name="MessageRecord_s_belongs_to_s">(%1$s) %2$s таандык.</string>
     <!-- Message to notify sender that activate payments request has been sent to the recipient -->
     <string name="MessageRecord_you_sent_request">Төлөмдөр кызматын иштетүү өтүнүчүн жөнөттүңүз: %1$s</string>
     <!-- Request message from recipient to activate payments -->
@@ -1606,8 +1678,7 @@
     <string name="RegistrationActivity_select_your_country">Өлкөңүздү тандаңыз</string>
     <string name="RegistrationActivity_you_must_specify_your_country_code">Өлкөңүздүн кодун киргизүү зарыл
     </string>
-    <string name="RegistrationActivity_you_must_specify_your_phone_number">Телефон номериңизди киргизүү зарыл
-    </string>
+    <string name="RegistrationActivity_please_enter_a_valid_phone_number_to_register">Please enter a valid phone number to register.</string>
     <string name="RegistrationActivity_invalid_number">Жараксыз номер</string>
     <string name="RegistrationActivity_the_number_you_specified_s_is_invalid">Сиз киргизген номер (%1$s) жараксыз.
     </string>
@@ -1636,7 +1707,6 @@
     <string name="RegistrationActivity_next">Кийинки</string>
     <string name="RegistrationActivity_continue">Улантуу</string>
     <string name="RegistrationActivity_take_privacy_with_you_be_yourself_in_every_message">Купуялуулукту сактаңыз. \\ NБардык билдирүүлөрдө өзүңүздөй жооп бериңиз.</string>
-    <string name="RegistrationActivity_enter_your_phone_number_to_get_started">Баштоо үчүн телефон номериңизди киргизиңиз</string>
     <string name="RegistrationActivity_enter_your_phone_number">Телефон номериңизди киргизиңиз</string>
     <string name="RegistrationActivity_you_will_receive_a_verification_code">Сиз текшерүү кодун аласыз. Оператордун тарифтери колдонулушу мүмкүн.</string>
     <string name="RegistrationActivity_enter_the_code_we_sent_to_s">%1$sномерине жиберилген кодду киргизиңиз</string>
@@ -1644,7 +1714,10 @@
 
     <string name="RegistrationActivity_phone_number_description">Телефон номериңиз</string>
     <string name="RegistrationActivity_country_code_description">Өлкөнүн коду</string>
+    <string name="RegistrationActivity_country_code_hint">Country</string>
     <string name="RegistrationActivity_call">Чалуу</string>
+    <string name="RegistrationActivity_verification_code">Verification Code</string>
+    <string name="RegistrationActivity_resend_code">Resend Code</string>
 
     <!-- RegistrationLockV2Dialog -->
     <string name="RegistrationLockV2Dialog_turn_on_registration_lock">Катталууну Кулпулоо колдонулсунбу?</string>
@@ -1766,10 +1839,6 @@
     <string name="ThreadRecord_left_the_group">Топтон чыгып кеттиңиз</string>
     <string name="ThreadRecord_secure_session_reset">Корголгон сеанс токтотулду.</string>
     <string name="ThreadRecord_draft">Долбоор:</string>
-    <string name="ThreadRecord_called">Сиз чалдыңыз</string>
-    <string name="ThreadRecord_called_you">Сизге чалды</string>
-    <string name="ThreadRecord_missed_audio_call">Жооп берилбеген аудио чалуу</string>
-    <string name="ThreadRecord_missed_video_call">Жооп берилбеген видео чалуу</string>
     <string name="ThreadRecord_media_message">MMS билдирүүсү</string>
     <string name="ThreadRecord_sticker">Стикер</string>
     <string name="ThreadRecord_view_once_photo">Бир жолу көрүлүүчү сүрөт</string>
@@ -1802,11 +1871,11 @@
     <string name="ThreadRecord_video">Видео</string>
     <string name="ThreadRecord_chat_session_refreshed">Маектин сессиясы жаңырды</string>
     <!-- Displayed in the notification when the user is sent a gift -->
-    <string name="ThreadRecord__you_received_a_gift">Белек алдыңыз</string>
+    <string name="ThreadRecord__s_donated_for_you">%1$s сиз үчүн колдоо көрсөттү</string>
     <!-- Displayed in the notification when the user sends a gift -->
-    <string name="ThreadRecord__you_sent_a_gift">Белек жөнөттүңүз</string>
+    <string name="ThreadRecord__you_donated_for_s">%1$s үчүн колдоо көрсөттүңүз</string>
     <!-- Displayed in the notification when the user has opened a received gift -->
-    <string name="ThreadRecord__you_redeemed_a_gift_badge">Белекке төшбелги алдыңыз</string>
+    <string name="ThreadRecord__you_redeemed_a_badge">Төшбелги алдыңыз</string>
     <!-- Displayed in the conversation list when someone reacted to your story -->
     <string name="ThreadRecord__reacted_s_to_your_story">Окуяңызга %1$s деген реакция кылды</string>
     <!-- Displayed in the conversation list when you reacted to someone\'s story -->
@@ -1912,13 +1981,15 @@
     <string name="MediaPreviewActivity_s_to_you">%1$s сизге</string>
     <string name="MediaPreviewActivity_media_no_longer_available">Мындай медиафайл жок.</string>
     <!-- Notifying the user that the device has encountered a technical issue and is unable to render a video. -->
-    <string name="MediaPreviewActivity_unable_to_play_media">Unable to play media.</string>
+    <string name="MediaPreviewActivity_unable_to_play_media">Медиа ойнотулбай жатат.</string>
     <string name="MediaPreviewActivity_error_finding_message">Билдирүү табылган жок.</string>
     <string name="MediaPreviewActivity_cant_find_an_app_able_to_share_this_media">Ушул медиафайлды бөлүшө турган колдонмо табылган жок.</string>
     <string name="MediaPreviewActivity_dismiss_due_to_error">Жабуу</string>
     <string name="MediaPreviewFragment_edit_media_error">Медиа катасы</string>
     <!-- This is displayed as a toast notification when we encounter an error deleting a message, including potentially on other people\'s devices -->
     <string name="MediaPreviewFragment_media_delete_error">Билдирүү өчкөн жок, Билдирүү дагы деле көрүнүшү мүмкүн</string>
+    <!-- A suffix to be attached to truncated captions that the user may tap onto to view the entire text caption -->
+    <string name="MediaPreviewFragment_see_more">%1$s… <b>Read More</b></string>
 
     <!-- MessageNotifier -->
     <string name="MessageNotifier_d_new_messages_in_d_conversations">%2$d сүйлөшүүдө %1$d жаңы билдирүү</string>
@@ -1983,6 +2054,8 @@
 
     <!-- SearchToolbar -->
     <string name="SearchToolbar_search">Издөө</string>
+    <!-- Hint when searching filtered chat content -->
+    <string name="SearchToolbar_search_unread_chats">Окула элек маектерди издөө</string>
     <string name="SearchToolbar_search_for_conversations_contacts_and_messages">Сүйлөшүүлөрдү, байланыштарды жана билдирүүлөрдү издөө</string>
 
     <!-- Material3 Search Toolbar -->
@@ -2012,6 +2085,9 @@
     <!-- UnauthorizedReminder -->
     <string name="UnauthorizedReminder_device_no_longer_registered">Түзмөк катталбай калды</string>
     <string name="UnauthorizedReminder_this_is_likely_because_you_registered_your_phone_number_with_Signal_on_a_different_device">Signal орнотулган телефон номериңизди башка түзмөктө каттадыңыз окшойт. Кайра каттоо үчүн басып коюңуз.</string>
+
+    <!-- Push notification when the app is forcibly logged out by the server. -->
+    <string name="LoggedOutNotification_you_have_been_logged_out">Бул түзмөктө Signal\'дан чыгып кеттиңиз.</string>
 
     <!-- EnclaveFailureReminder -->
     <!-- Banner message to update app to use payments -->
@@ -2100,6 +2176,8 @@
     <string name="conversation_activity__type_message_push">Signal билдирүүсү</string>
     <string name="conversation_activity__type_message_sms_insecure">Корголбогон SMS</string>
     <string name="conversation_activity__type_message_mms_insecure">Корголбогон MMS</string>
+    <!-- Option in send button context menu to schedule the message instead of sending it directly -->
+    <string name="conversation_activity__option_schedule_message">Schedule message</string>
     <string name="conversation_activity__from_sim_name">Каяктан: %1$s</string>
     <string name="conversation_activity__sim_n">SIM %1$d</string>
     <string name="conversation_activity__send">Жөнөтүү</string>
@@ -2172,7 +2250,7 @@
     <!-- Label indicating that the story being replied to no longer exists -->
     <string name="QuoteView_no_longer_available">Мындай окуя жок</string>
     <!-- Label for quoted gift -->
-    <string name="QuoteView__gift">Белек</string>
+    <string name="QuoteView__donation_for_a_friend">Дос үчүн колдоо көрсөтүү</string>
 
     <!-- conversation_fragment -->
     <string name="conversation_fragment__scroll_to_the_bottom_content_description">Ылдый сыдыруу</string>
@@ -2979,6 +3057,15 @@
     <!-- conversation_callable_insecure -->
     <string name="conversation_add_to_contacts__menu_add_to_contacts">Байланыштарга кошуу</string>
 
+    <!-- conversation scheduled messages bar -->
+
+    <!-- Label for button in a banner to show all messages currently scheduled -->
+    <string name="conversation_scheduled_messages_bar__see_all">Баарын көрүү</string>
+    <!-- Body text for banner to show all scheduled messages for the chat that tells the user how many scheduled messages there are -->
+    <plurals name="conversation_scheduled_messages_bar__number_of_messages">
+        <item quantity="other">%1$d messages scheduled</item>
+    </plurals>
+
     <!-- conversation_group_options -->
     <string name="convesation_group_options__recipients_list">Алуучулар тизмеси</string>
     <string name="conversation_group_options__delivery">Жеткирүү</string>
@@ -3069,11 +3156,13 @@
     <string name="CreateKbsPinFragment__create_a_new_pin">Жаңы PIN код түзүү</string>
     <string name="CreateKbsPinFragment__you_can_choose_a_new_pin_as_long_as_this_device_is_registered">Бул түзмөк катталганда сиз PIN кодуңузду өзгөртө аласыз.</string>
     <string name="CreateKbsPinFragment__create_your_pin">PIN код түзүңүз</string>
-    <string name="CreateKbsPinFragment__pins_keep_information_stored_with_signal_encrypted">PIN код Signal\'да сакталган маалыматты шифрленген формада сактайт, андыктан ага сиз гана кире аласыз. Профилиңиз, тууралоолоруңуз жана байланыштарыңыз кайра орнотулгандан кийин калыбына келтирилет. Колдонмону ачуу үчүн сизге PIN коддун кереги жок.</string>
+    <string name="CreateKbsPinFragment__pins_can_help_you_restore_your_account">PINs can help you restore your account and keep your info encrypted with Signal. </string>
     <string name="CreateKbsPinFragment__choose_a_stronger_pin">Күчтүү PIN тандаңыз</string>
 
     <!-- ConfirmKbsPinFragment -->
     <string name="ConfirmKbsPinFragment__pins_dont_match">PIN коддор дал келбейт. Кайталап көрүңүз.</string>
+    <!-- Prompt for the user to repeat entering the PIN in order to help them remember it correctly.   -->
+    <string name="ConfirmKbsPinFragment__re_enter_the_pin_you_just_created">Re-enter the PIN you just created.</string>
     <string name="ConfirmKbsPinFragment__confirm_your_pin">PIN кодуңузду ырастаңыз.</string>
     <string name="ConfirmKbsPinFragment__pin_creation_failed">PIN код түзүлбөй калды</string>
     <string name="ConfirmKbsPinFragment__your_pin_was_not_saved">PIN кодуңуз сакталган жок. PIN кодду кийинчерээк түзүүнү сунуштайбыз.</string>
@@ -3208,7 +3297,7 @@
     <!-- Error message shown if a very large attachment is encountered during the backup creation and causes the backup to fail -->
     <string name="LocalBackupJobApi29_your_backup_contains_a_very_large_file">Камдык көчүрмөңүздө өтө көлөмдүү файл болгондуктан, ал түзүлгөн жок. Аны өчүрүп туруп, жаңысын түзүңүз.</string>
     <string name="LocalBackupJobApi29_tap_to_manage_backups">Камдык көчүрмөлөрдү башкаруу үчүн басыңыз.</string>
-    <string name="RegistrationActivity_wrong_number">Туура эмес номер</string>
+    <string name="RegistrationActivity_wrong_number">Wrong number?</string>
     <string name="RegistrationActivity_call_me_instead_available_in">Анын ордуна мага чалыңыз \n (%1$02d:%2$02dүчүн колдонууга мүмкүн)</string>
     <string name="RegistrationActivity_contact_signal_support">Signal\'дын кардарларды колдоо кызматы менен байланышыңыз</string>
     <string name="RegistrationActivity_code_support_subject">Signal\'ды каттоо - Android үчүн текшерүү коду</string>
@@ -4169,7 +4258,8 @@
     <string name="SelectFeaturedBadgeFragment__you_must_select_a_badge">Төшбелги тандашыңыз керек</string>
     <string name="SelectFeaturedBadgeFragment__failed_to_update_profile">Профиль жаңыртылбай калды</string>
 
-    <string name="ViewBadgeBottomSheetDialogFragment__become_a_sustainer">Колдоочу болуңуз</string>
+    <!-- Displayed on primary button in the bottom sheet as a call-to-action to launch into the donation flow -->
+    <string name="ViewBadgeBottomSheetDialogFragment__donate_now">Колдоо көрсөтүү</string>
     <!-- Title of a page in the bottom sheet. Placeholder is a user\'s short-name -->
     <string name="ViewBadgeBottomSheetDialogFragment__s_supports_signal">%1$s Signal\'ды колдонот</string>
     <!-- Description of a page in the bottom sheet of a monthly badge. Placeholder is a user\'s short-name -->
@@ -4233,7 +4323,7 @@
     <!-- Preference heading for other ways to donate -->
     <string name="ManageDonationsFragment__other_ways_to_give">Берүүнүн башка жолдору</string>
     <!-- Preference label to launch badge gifting -->
-    <string name="ManageDonationsFragment__gift_a_badge">Белекке төшбелги берүү</string>
+    <string name="ManageDonationsFragment__donate_for_a_friend">Дос үчүн колдоо көрсөтүңүз</string>
 
     <string name="Boost__enter_custom_amount">Өзүңүздүн суммаңызды киргизиңиз</string>
     <string name="Boost__one_time_contribution">Бир жолку салым</string>
@@ -4289,10 +4379,10 @@
     <string name="DonationsErrors__failed_to_validate_badge">Төшбелгинин жарактуулугу текшерилбей калды</string>
     <!-- Displayed when badge credential couldn\'t be verified -->
     <string name="DonationsErrors__could_not_validate">Сервердин жообу текшерилбей калды. Сураныч, кардарларды колдоо кызматына кайрылыңыз.</string>
-    <!-- Displayed as title when some generic error happens during gift badge sending -->
-    <string name="DonationsErrors__failed_to_send_gift_badge">Белек төшбелгиси жөнөтүлбөй калды</string>
-    <!-- Displayed as message when some generic error happens during gift badge sending -->
-    <string name="DonationsErrors__could_not_send_gift_badge">Белек төшбелгиси жөнөтүлгөн жок. Кардарларды колдоо кызматына кайрылыңыз.</string>
+    <!-- Displayed as title when some generic error happens during sending donation on behalf of another user -->
+    <string name="DonationsErrors__donation_failed">Болбой калды</string>
+    <!-- Displayed as message when some generic error happens during sending donation on behalf of another user -->
+    <string name="DonationsErrors__your_payment_was_processed_but">Төлөмүңүз алынды, бирок Signal колдоо көрсөткөнүңүз тууралуу билдирүү жөнөтө алган жок. Кардарларды колдоо кызматына кайрылыңыз.</string>
     <string name="DonationsErrors__your_badge_could_not">Сизден төлөм алынганы менен, төшбелгиңиз аккаунтуңузга кошулбай калды окшойт. Кардарларды тейлеген кызматка кайрылыңыз.</string>
     <string name="DonationsErrors__your_payment_is_still">Төлөмүңүз дагы эле иштетилүүдө. Бул сиздин туташууңузга жараша бир нече мүнөткө созулушу мүмкүн.</string>
     <string name="DonationsErrors__failed_to_cancel_subscription">Жазылуу токтотулган жок</string>
@@ -4301,16 +4391,16 @@
     <string name="NetworkFailure__network_error_check_your_connection_and_try_again">Тармак катасы. Туташууңузду текшерип, кайра аракет кылыңыз.</string>
     <string name="NetworkFailure__retry">Кайра аракет кылуу</string>
     <!-- Displayed as a dialog title when the selected recipient for a gift doesn\'t support gifting -->
-    <string name="DonationsErrors__cant_send_gift">Белекти жөнөтүү мүмкүн болбой жатат</string>
+    <string name="DonationsErrors__cannot_send_donation">Жөнөтүлбөй калды</string>
     <!-- Displayed as a dialog message when the selected recipient for a gift doesn\'t support gifting -->
-    <string name="DonationsErrors__target_does_not_support_gifting">Бул колдонуучунун Signal версиясында белекке төшбелгилер алынбайт. Белектерди алуу үчүн эң акыркы версияны орнотушу керек.</string>
-    <!-- Displayed as a dialog title when the user\'s profile could not be fetched, likely due to lack of internet -->
-    <string name="DonationsErrors__couldnt_send_gift">Белек жөнөтүлгөн жок</string>
+    <string name="DonationsErrors__this_user_cant_receive_donations_until">Signal\'дын версиясын жаңыртмайынча, бул колдонуучу колдоону ала албайт</string>
     <!-- Displayed as a dialog message when the user\'s profile could not be fetched, likely due to lack of internet -->
-    <string name="DonationsErrors__please_check_your_network_connection">Белегиңиз тармактагы катадан улам жөнөтүлгөн жок. Интернет туташууңузду текшерип, кайталап көрүңүз.</string>
+    <string name="DonationsErrors__your_donation_could_not_be_sent">Интернет жок болгондуктан, колдооңуз жөнөтүлгөн жок. Байланышыңызды текшерип, кайталап көрүңүз.</string>
 
     <!-- Gift message view title -->
-    <string name="GiftMessageView__gift_badge">Белек төшбелги</string>
+    <string name="GiftMessageView__donation_to_s">%1$s үчүн колдоо көрсөтүү</string>
+    <!-- Gift message view title for incoming donations -->
+    <string name="GiftMessageView__s_donated_to_signal_on">%1$s сиздин атыңыздан Signal\'га колдоо көрсөттү</string>
     <!-- Gift badge redeem action label -->
     <string name="GiftMessageView__redeem">Төлөө</string>
     <!-- Gift badge view action label -->
@@ -4521,7 +4611,7 @@
     <!-- Donation receipts one-time tab label -->
     <string name="DonationReceiptListFragment__one_time">Бир жолку</string>
     <!-- Donation receipts gift tab label -->
-    <string name="DonationReceiptListFragment__gift">Белек</string>
+    <string name="DonationReceiptListFragment__donation_for_a_friend">Дос үчүн колдоо көрсөтүү</string>
     <!-- Donation receipts boost row label -->
     <!-- Donation receipts details title -->
     <!-- Donation receipts donation type heading -->
@@ -4863,22 +4953,22 @@
     <plurals name="GiftRowItem_s_dot_d_day_duration">
         <item quantity="other">%1$s · %2$d күнгө созулат</item>
     </plurals>
-    <!-- Tagline for gift row items -->
-    <string name="GiftRowItem__send_a_gift_badge">Белекке төшбелги жөнөтүү</string>
     <!-- Headline text on start fragment for gifting a badge -->
-    <string name="GiftFlowStartFragment__gift_a_badge">Белекке төшбелги берүү</string>
+    <string name="GiftFlowStartFragment__donate_for_a_friend">Дос үчүн колдоо көрсөтүңүз</string>
     <!-- Description text on start fragment for gifting a badge -->
-    <string name="GiftFlowStartFragment__gift_someone_a_badge">Кимдир-бирөөнүн атынан Signal\'га колдоо көрсөтүп, аларга белекке төшбелги бериңиз. Алар профиль сүрөтүндө көрсөтүлө турган төшбелги алышат.</string>
+    <plurals name="GiftFlowStartFragment__support_signal_by">
+        <item quantity="other">Signal\'ды пайдаланган досуңузга же үй-бүлө мүчөңүзгө белек берип, Signal\'га колдоо көрсөтүңүз. Алар алган төшбелги профилинде %1$d күн көрүнүп турат</item>
+    </plurals>
     <!-- Action button label for start fragment for gifting a badge -->
     <string name="GiftFlowStartFragment__next">Кийинки</string>
     <!-- Title text on choose recipient page for badge gifting -->
     <string name="GiftFlowRecipientSelectionFragment__choose_recipient">Алуучуну тандаңыз</string>
     <!-- Title text on confirm gift page -->
-    <string name="GiftFlowConfirmationFragment__confirm_gift">Белекти ырастоо</string>
+    <string name="GiftFlowConfirmationFragment__confirm_donation">Колдоону ырастоо</string>
     <!-- Heading text specifying who the gift will be sent to -->
     <string name="GiftFlowConfirmationFragment__send_to">Жөнөтүү</string>
     <!-- Text explaining that gift will be sent to the chosen recipient -->
-    <string name="GiftFlowConfirmationFragment__your_gift_will_be_sent_in">Белегиңиз алуучуга 1ге 1 билдирүү менен жөнөтүлөт. Төмөндө өз билдирүүңүздү кошуңуз.</string>
+    <string name="GiftFlowConfirmationFragment__the_recipient_will_be_notified">Алуучу колдоо тууралуу билдирүү алат. Төмөн жакка бир нерсе деп коюңуз.</string>
     <!-- Text explaining that this gift is a one time donation -->
     <string name="GiftFlowConfirmationFragment__one_time_donation">Бир жолку колдоо</string>
     <!-- Hint for add message input -->
@@ -4886,27 +4976,27 @@
     <!-- Displayed in the dialog while verifying the chosen recipient -->
     <string name="GiftFlowConfirmationFragment__verifying_recipient">Алуучу текшерилүүдө…</string>
     <!-- Title for sheet shown when opening a redeemed gift -->
-    <string name="ViewReceivedGiftBottomSheet__s_sent_you_a_gift">%1$s сизге белек жөнөттү</string>
+    <string name="ViewReceivedGiftBottomSheet__s_made_a_donation_for_you">%1$s сизге колдоо көрсөттү</string>
     <!-- Title for sheet shown when opening a sent gift -->
     <string name="ViewSentGiftBottomSheet__thanks_for_your_support">Колдооңуз үчүн рахмат!</string>
     <!-- Description for sheet shown when opening a redeemed gift -->
-    <string name="ViewReceivedGiftBottomSheet__youve_received_a_gift_badge">%1$s сизге төшбелги белекке берди! Аны профилиңизде көрсөтүп, Signal\'ды баарына таанытыңыз.</string>
+    <string name="ViewReceivedGiftBottomSheet__s_made_a_donation_to_signal">%1$s Signal\'га сиздин атыңыздан колдоо көрсөттү! Signal\'ды колдогонуңузду профилиңизде көрсөтүңүз.</string>
     <!-- Description for sheet shown when opening a sent gift -->
-    <string name="ViewSentGiftBottomSheet__youve_gifted_a_badge">Бул адамга төшбелги бердиңиз: %1$s. Ал белекти алгандан кийин, аны көрсөтүүнү же жашырууну өзү чечет.</string>
+    <string name="ViewSentGiftBottomSheet__youve_made_a_donation_to_signal">%1$s атынан Signal\'га колдоо көрсөттүңүз. Signal\'ды колдогонун профилинде көрсөтө алышат.</string>
     <!-- Primary action for pending gift sheet to redeem badge now -->
     <string name="ViewReceivedGiftSheet__redeem">Төлөө</string>
     <!-- Primary action for pending gift sheet to redeem badge later -->
     <string name="ViewReceivedGiftSheet__not_now">Азыр эмес</string>
     <!-- Dialog text while redeeming a gift -->
-    <string name="ViewReceivedGiftSheet__redeeming_gift">Белек кабыл алынууда…</string>
+    <string name="ViewReceivedGiftSheet__redeeming_badge">Төшбелги алынууда…</string>
     <!-- Snackbar text when user presses "not now" on redemption sheet -->
     <string name="ConversationFragment__you_can_redeem_your_badge_later">Төшбелгиңизди кийинчерээк алсаңыз болот.</string>
     <!-- Description text in gift thanks sheet -->
-    <string name="GiftThanksSheet__youve_gifted_a_badge_to_s">Бул адамга төшбелги бердиңиз: %1$s. Ал белекти алгандан кийин, аны көрсөтүүнү же жашырууну өзү чечет.</string>
+    <string name="GiftThanksSheet__youve_made_a_donation">%1$s атынан Signal\'га колдоо көрсөттүңүз. Signal\'ды колдогонун профилинде көрсөтө алышат.</string>
     <!-- Expired gift sheet title -->
-    <string name="ExpiredGiftSheetConfiguration__your_gift_badge_has_expired">Белек төшбелгиңиздин мөөнөтү бүттү</string>
+    <string name="ExpiredGiftSheetConfiguration__your_badge_has_expired">Төшбелгиңиздин мөөнөтү бүттү</string>
     <!-- Expired gift sheet top description text -->
-    <string name="ExpiredGiftSheetConfiguration__your_gift_badge_has_expired_and_is">Белек төшбелгиңиздин мөөнөтү бүтүп, профилиңизде башкаларга көрүнбөй калды.</string>
+    <string name="ExpiredGiftSheetConfiguration__your_badge_has_expired_and_is">Төшбелгиңиздин мөөнөтү бүтүп, профилиңизде башкаларга көрүнбөй калды.</string>
     <!-- Expired gift sheet bottom description text -->
     <string name="ExpiredGiftSheetConfiguration__to_continue">Сиз үчүн иштелип чыккан технологияны колдоону улантуу үчүн ай сайын Колдоочу болуңуз.</string>
     <!-- Expired gift sheet make a monthly donation button -->
@@ -4955,11 +5045,11 @@
     <string name="ContactSearchMediator__delete_the_custom">Жеке окуяны (\"%1$s\") өчүрөсүзбү?</string>
     <!-- Dialog action item for deleting a custom story -->
     <string name="ContactSearchMediator__delete">Өчүрүү</string>
-    <!-- Gift expiry days remaining -->
+    <!-- Donation for a friend expiry days remaining -->
     <plurals name="Gifts__d_days_remaining">
         <item quantity="other">%1$d күн калды</item>
     </plurals>
-    <!-- Gift expiry hours remaining -->
+    <!-- Donation for a friend expiry hours remaining -->
     <plurals name="Gifts__d_hours_remaining">
         <item quantity="other">%1$d саат калды</item>
     </plurals>
@@ -4967,7 +5057,7 @@
     <plurals name="Gifts__d_minutes_remaining">
         <item quantity="other">%1$d мүнөт калды</item>
     </plurals>
-    <!-- Gift expiry expired -->
+    <!-- Donation for a friend expiry expired -->
     <string name="Gifts__expired">Мөөнөтү бүттү</string>
 
     <!-- Label indicating that a user can tap to advance to the next post in a story -->
@@ -5209,9 +5299,9 @@
     <!-- Phase 1 Small megaphone title indicating sms is going away -->
     <string name="SmsExportMegaphone__sms_support_going_away">SMS менен жазышуу мүмкүнчүлүгү жок болот</string>
     <!-- Phase 1 small megaphone description indicating sms is going away -->
-    <string name="SmsExportMegaphone__sms_support_will_be_removed_soon_to_focus_on_encrypted_messaging">Шифрленген билдирүүлөргө басым жасоо үчүн SMS билдирүүлөр жакында иштебей калат.</string>
+    <string name="SmsExportMegaphone__dont_worry_encrypted_signal_messages_will_continue_to_work">Сарсанаа болбоңуз, Signal\'дагы билдирүүлөр мурункудай эле шифрлене берет.</string>
     <!-- Phase 1 small megaphone button that takes the user to the sms export flow -->
-    <string name="SmsExportMegaphone__export_sms">SMS билдирүүлөрүн өткөрүү</string>
+    <string name="SmsExportMegaphone__continue">Улантуу</string>
     <!-- Title for screen shown after sms export has completed -->
     <string name="ExportSmsCompleteFragment__export_complete">Өткөрүлдү</string>
     <!-- Button to continue to next screen -->
@@ -5266,8 +5356,8 @@
     </plurals>
     <!-- Button label for paying with a credit card -->
     <string name="GatewaySelectorBottomSheet__credit_or_debit_card">Насыя же дебет картасы</string>
-    <!-- Sheet summary when giving a gift -->
-    <string name="GatewaySelectorBottomSheet__send_a_gift_badge">Белекке төшбелги жөнөтүү</string>
+    <!-- Sheet summary when giving donating for a friend -->
+    <string name="GatewaySelectorBottomSheet__donate_for_a_friend">Дос үчүн колдоо көрсөтүңүз</string>
 
     <!-- StripePaymentInProgressFragment -->
     <string name="StripePaymentInProgressFragment__cancelling">Токтотулууда…</string>
@@ -5318,6 +5408,7 @@
     <string name="GroupStoryEducationSheet__all_group_chat_members">Топтук маектегилердин баары окуяга жазылган пикирлерди көрө алышат.</string>
     <!-- Button label to dismiss sheet -->
     <string name="GroupStoryEducationSheet__next">Кийинки</string>
+    <string name="Registration_country_code_entry_hint">+0</string>
 
     <!-- EOF -->
 
@@ -5325,4 +5416,34 @@
     <string name="PaypalCompleteOrderBottomSheet__donate">Колдоо көрсөтүү</string>
     <string name="PaypalCompleteOrderBottomSheet__payment">Төлөм</string>
 
+    <!-- ChatFilter -->
+    <!-- Displayed in a pill at the top of the chat list when it is filtered by unread messages -->
+    <string name="ChatFilter__filtered_by_unread">Алгач окула элек маектер</string>
+    <!-- Displayed underneath the filter circle at the top of the chat list when the user pulls at a very low velocity -->
+    <string name="ChatFilter__pull_to_filter">Иргөө үчүн ылдый тартыңыз</string>
+    <!-- Displayed in the "clear filter" item in the chat feed if the user opened the filter from the overflow menu -->
+    <string name="ChatFilter__tip_pull_down">Кеңеш: Иргөө үчүн маектер тизмесин ылдый тартыңыз</string>
+
+    <!-- Title for screen describing that sms support is going to be removed soon -->
+    <string name="SmsRemoval_title_going_away">SMS түрүндө жазыша албай каласыз</string>
+    <!-- Bullet point message shown on describing screen as first bullet why sms is being removed -->
+    <string name="SmsRemoval_info_bullet_1">Signal колдонмосунда мындан ары SMS түрүндө жазыша албай каласыз.</string>
+    <!-- Bullet point message shown on describing screen as second bullet why sms is being removed -->
+    <string name="SmsRemoval_info_bullet_2">SMS билдирүүлөр Signal билдирүүлөрүнөн айырмаланат. <b>Signal\'дагы билдирүүлөр мурункудай эле шифрлене берет.</b></string>
+    <!-- Bullet point message shown on describing screen as third bullet why sms is being removed -->
+    <string name="SmsRemoval_info_bullet_3">SMS билдирүүлөрүңүздү чыгарып алып, жаңы SMS колдонмосун тандасаңыз болот.</string>
+    <!-- Bullet point message shown on describing screen as first bullet variant why sms is being removed when user is locked out of sms -->
+    <string name="SmsRemoval_info_bullet_1_phase_3">Мындан ары Signal кызматында SMS билдирүүлөрүн жөнөтө албайсыз.</string>
+    <!-- Button label on sms removal info/megaphone to start the export SMS flow -->
+    <string name="SmsRemoval_export_sms">SMS билдирүүлөрүн өткөрүү</string>
+
+    <!-- Text Formatting -->
+    <!-- Popup menu label for applying bold style -->
+    <string name="TextFormatting_bold">Жоон</string>
+    <!-- Popup menu label for applying italic style -->
+    <string name="TextFormatting_italic">Italic</string>
+    <!-- Popup menu label for applying strikethrough style -->
+    <string name="TextFormatting_strikethrough">Strikethrough</string>
+    <!-- Popup menu label for applying monospace font style -->
+    <string name="TextFormatting_monospace">Monospace</string>
 </resources>

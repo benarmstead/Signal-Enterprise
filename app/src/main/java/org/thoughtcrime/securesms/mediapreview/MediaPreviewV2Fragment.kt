@@ -8,8 +8,8 @@ import android.content.DialogInterface
 import android.content.Intent
 import android.graphics.PorterDuff
 import android.graphics.PorterDuffColorFilter
-import android.os.Build
 import android.os.Bundle
+import android.text.SpannableString
 import android.text.SpannableStringBuilder
 import android.view.LayoutInflater
 import android.view.Menu
@@ -49,6 +49,7 @@ import org.thoughtcrime.securesms.conversation.mutiselect.forward.MultiselectFor
 import org.thoughtcrime.securesms.database.MediaTable
 import org.thoughtcrime.securesms.database.SignalDatabase
 import org.thoughtcrime.securesms.databinding.FragmentMediaPreviewV2Binding
+import org.thoughtcrime.securesms.mediapreview.caption.ExpandingCaptionView
 import org.thoughtcrime.securesms.mediapreview.mediarail.CenterDecoration
 import org.thoughtcrime.securesms.mediapreview.mediarail.MediaRailAdapter
 import org.thoughtcrime.securesms.mediapreview.mediarail.MediaRailAdapter.ImageLoadingListener
@@ -128,7 +129,7 @@ class MediaPreviewV2Fragment : LoggingFragment(R.layout.fragment_media_preview_v
     }
     viewModel.initialize(args.showThread, args.allMediaInRail, args.leftIsRecent)
     val sorting = MediaTable.Sorting.deserialize(args.sorting.ordinal)
-    viewModel.fetchAttachments(PartAuthority.requireAttachmentId(args.initialMediaUri), args.threadId, sorting)
+    viewModel.fetchAttachments(requireContext(), PartAuthority.requireAttachmentId(args.initialMediaUri), args.threadId, sorting)
   }
 
   @SuppressLint("RestrictedApi")
@@ -151,6 +152,9 @@ class MediaPreviewV2Fragment : LoggingFragment(R.layout.fragment_media_preview_v
     binding.mediaPager.registerOnPageChangeCallback(object : OnPageChangeCallback() {
       override fun onPageSelected(position: Int) {
         super.onPageSelected(position)
+        if (position != viewModel.currentPosition) {
+          debouncer.clear()
+        }
         viewModel.setCurrentPage(position)
       }
     })
@@ -165,11 +169,14 @@ class MediaPreviewV2Fragment : LoggingFragment(R.layout.fragment_media_preview_v
         { media -> jumpViewPagerToMedia(media) },
         object : ImageLoadingListener() {
           override fun onAllRequestsFinished() {
-            crossfadeViewIn(this@apply)
+            val willAnimateIn = crossfadeViewIn(this@apply)
+            if (!willAnimateIn) {
+              visible = true
+            }
           }
         }
       )
-      this.adapter = albumRailAdapter
+      adapter = albumRailAdapter
     }
   }
 
@@ -226,7 +233,7 @@ class MediaPreviewV2Fragment : LoggingFragment(R.layout.fragment_media_preview_v
       }
     }
 
-    bindTextViews(currentItem, currentState.showThread)
+    bindTextViews(currentItem, currentState.showThread, currentState.messageBodies)
     bindMenuItems(currentItem)
     bindMediaPreviewPlaybackControls(currentItem, getMediaPreviewFragmentFromChildFragmentManager(currentPosition))
 
@@ -237,18 +244,20 @@ class MediaPreviewV2Fragment : LoggingFragment(R.layout.fragment_media_preview_v
     }
     bindAlbumRail(albumThumbnailMedia, currentItem)
 
-    fullscreenHelper.showSystemUI()
     crossfadeViewIn(binding.mediaPreviewDetailsContainer)
   }
 
-  private fun bindTextViews(currentItem: MediaTable.MediaRecord, showThread: Boolean) {
+  private fun bindTextViews(currentItem: MediaTable.MediaRecord, showThread: Boolean, messageBodies: Map<Long, SpannableString>) {
     binding.toolbar.title = getTitleText(currentItem, showThread)
     binding.toolbar.subtitle = getSubTitleText(currentItem)
     val messageId: Long? = currentItem.attachment?.mmsId
     if (messageId != null) {
       binding.toolbar.setOnClickListener { v ->
         viewModel.jumpToFragment(v.context, messageId).subscribeBy(
-          onSuccess = { startActivity(it) },
+          onSuccess = {
+            startActivity(it)
+            requireActivity().finish()
+          },
           onError = {
             Log.e(TAG, "Could not find message position for message ID: $messageId", it)
             Toast.makeText(v.context, R.string.MediaPreviewActivity_error_finding_message, Toast.LENGTH_LONG).show()
@@ -258,8 +267,27 @@ class MediaPreviewV2Fragment : LoggingFragment(R.layout.fragment_media_preview_v
     }
 
     val caption = currentItem.attachment?.caption
-    binding.mediaPreviewCaption.text = caption
-    binding.mediaPreviewCaption.visible = caption != null
+    if (caption != null) {
+      bindCaptionView(caption)
+    } else {
+      bindCaptionView(messageBodies[messageId])
+    }
+  }
+
+  private fun bindCaptionView(displayBody: CharSequence?) {
+    val caption: ExpandingCaptionView = binding.mediaPreviewCaption
+    if (displayBody.isNullOrEmpty()) {
+      caption.visible = false
+    } else {
+      caption.expandedHeight = calculateExpandedHeight()
+      caption.fullCaptionText = displayBody
+      caption.visible = true
+    }
+  }
+
+  private fun calculateExpandedHeight(): Int {
+    val height: Int = view?.height ?: return ViewUtil.dpToPx(requireContext(), EXPANDED_CAPTION_HEIGHT_FALLBACK_DP)
+    return ((height - binding.toolbar.height - binding.mediaPreviewPlaybackControls.height) * EXPANDED_CAPTION_HEIGHT_PERCENT).roundToInt()
   }
 
   private fun bindMenuItems(currentItem: MediaTable.MediaRecord) {
@@ -297,46 +325,47 @@ class MediaPreviewV2Fragment : LoggingFragment(R.layout.fragment_media_preview_v
       forward(currentItem)
     }
     currentFragment?.setBottomButtonControls(binding.mediaPreviewPlaybackControls)
+    currentFragment?.autoPlayIfNeeded()
   }
 
   private fun bindAlbumRail(albumThumbnailMedia: List<Media>, currentItem: MediaTable.MediaRecord) {
     val albumRail: RecyclerView = binding.mediaPreviewPlaybackControls.recyclerView
     if (albumThumbnailMedia.size > 1) {
-      val albumPosition = albumThumbnailMedia.indexOfFirst { it.uri == currentItem.attachment?.uri }
-      if (albumRail.visibility == GONE) {
+      val firstRailDisplay = albumRail.visibility == GONE
+      if (firstRailDisplay) {
         albumRail.visibility = View.INVISIBLE
+        albumRail.alpha = 0f
       }
-
-      albumRailAdapter.currentItemPosition = albumPosition
-      albumRailAdapter.submitList(albumThumbnailMedia)
-      scrollAlbumRailToCurrentAdapterPosition()
+      val railItems = albumThumbnailMedia.map { MediaRailAdapter.MediaRailItem(it, it.uri == currentItem.attachment?.uri) }
+      albumRailAdapter.submitList(railItems) {
+        albumRail.post {
+          scrollAlbumRailToCurrentAdapterPosition(!firstRailDisplay)
+          crossfadeViewIn(albumRail)
+        }
+      }
     } else {
       albumRail.visibility = View.GONE
       albumRailAdapter.submitList(emptyList())
-      albumRailAdapter.imageLoadingListener.reset()
     }
   }
 
-  private fun scrollAlbumRailToCurrentAdapterPosition() {
-    val currentItemPosition = albumRailAdapter.currentItemPosition
-    val currentList = albumRailAdapter.currentList
+  private fun scrollAlbumRailToCurrentAdapterPosition(smooth: Boolean = true) {
+    val currentItemPosition = albumRailAdapter.findSelectedItemPosition()
     val albumRail: RecyclerView = binding.mediaPreviewPlaybackControls.recyclerView
-    albumRail.scrollToPosition(currentItemPosition)
-    for (i in currentList.indices) {
-      val isSelected = i == currentItemPosition
-      val stableId = albumRailAdapter.getItemId(i)
-      val viewHolder = albumRail.findViewHolderForItemId(stableId) as? MediaRailAdapter.MediaRailViewHolder
-      viewHolder?.setSelectedItem(isSelected)
-    }
     val offsetFromStart = (albumRail.width - individualItemWidth) / 2
     val smoothScroller = OffsetSmoothScroller(requireContext(), offsetFromStart)
     smoothScroller.targetPosition = currentItemPosition
     val layoutManager = albumRail.layoutManager as LinearLayoutManager
-    layoutManager.startSmoothScroll(smoothScroller)
+    if (smooth) {
+      layoutManager.scrollToPosition(currentItemPosition)
+      layoutManager.startSmoothScroll(smoothScroller)
+    } else {
+      layoutManager.scrollToPositionWithOffset(currentItemPosition, offsetFromStart)
+    }
   }
 
-  private fun crossfadeViewIn(view: View, duration: Long = 200) {
-    if (!view.isVisible && !fullscreenHelper.isSystemUiVisible) {
+  private fun crossfadeViewIn(view: View, duration: Long = 200): Boolean {
+    return if (!view.isVisible && !fullscreenHelper.isSystemUiVisible) {
       val viewPropertyAnimator = view.animate()
         .alpha(1f)
         .setDuration(duration)
@@ -348,10 +377,11 @@ class MediaPreviewV2Fragment : LoggingFragment(R.layout.fragment_media_preview_v
             scrollAlbumRailToCurrentAdapterPosition()
           }
         }
-      if (Build.VERSION.SDK_INT >= 21) {
-        viewPropertyAnimator.interpolator = PathInterpolator(0.17f, 0.17f, 0f, 1f)
-      }
+      viewPropertyAnimator.interpolator = PathInterpolator(0.17f, 0.17f, 0f, 1f)
       viewPropertyAnimator.start()
+      true
+    } else {
+      false
     }
   }
 
@@ -446,7 +476,6 @@ class MediaPreviewV2Fragment : LoggingFragment(R.layout.fragment_media_preview_v
 
     if (pagerAdapter.getFragmentTag(viewModel.currentPosition) == tag) {
       debouncer.clear()
-      fullscreenHelper.showSystemUI()
     }
   }
 
@@ -564,7 +593,7 @@ class MediaPreviewV2Fragment : LoggingFragment(R.layout.fragment_media_preview_v
   fun canRemotelyDelete(attachment: DatabaseAttachment): Boolean {
     val mmsId = attachment.mmsId
     val attachmentCount = SignalDatabase.attachments.getAttachmentsForMessage(mmsId).size
-    return attachmentCount <= 1 && RemoteDeleteUtil.isValidSend(listOf(SignalDatabase.mms.getMessageRecord(mmsId)), System.currentTimeMillis())
+    return attachmentCount <= 1 && RemoteDeleteUtil.isValidSend(listOf(SignalDatabase.messages.getMessageRecord(mmsId)), System.currentTimeMillis())
   }
 
   private fun editMediaItem(currentItem: MediaTable.MediaRecord) {
@@ -602,6 +631,9 @@ class MediaPreviewV2Fragment : LoggingFragment(R.layout.fragment_media_preview_v
   }
 
   companion object {
+    private const val EXPANDED_CAPTION_HEIGHT_FALLBACK_DP = 400
+    private const val EXPANDED_CAPTION_HEIGHT_PERCENT: Float = 0.7F
+
     private val TAG = Log.tag(MediaPreviewV2Fragment::class.java)
 
     const val ARGS_KEY: String = "args"

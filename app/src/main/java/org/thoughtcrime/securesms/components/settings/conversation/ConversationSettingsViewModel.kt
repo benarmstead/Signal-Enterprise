@@ -164,7 +164,8 @@ sealed class ConversationSettingsViewModel(
             contactLinkState = when {
               recipient.isSelf || recipient.isReleaseNotes || recipient.isBlocked -> ContactLinkState.NONE
               recipient.isSystemContact -> ContactLinkState.OPEN
-              else -> ContactLinkState.ADD
+              recipient.hasE164() -> ContactLinkState.ADD
+              else -> ContactLinkState.NONE
             }
           )
         )
@@ -276,7 +277,7 @@ sealed class ConversationSettingsViewModel(
             isMuted = recipient.isMuted,
             isMuteAvailable = true,
             isSearchAvailable = true,
-            isAddToStoryAvailable = recipient.isPushV2Group && !recipient.isBlocked && isActive
+            isAddToStoryAvailable = recipient.isPushV2Group && !recipient.isBlocked && isActive && !SignalStore.storyValues().isFeatureDisabled
           ),
           canModifyBlockedState = RecipientUtil.isBlockable(recipient),
           specificSettingsState = state.requireGroupSettingsState().copy(

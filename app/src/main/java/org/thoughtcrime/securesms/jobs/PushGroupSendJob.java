@@ -14,16 +14,16 @@ import org.signal.core.util.SetUtil;
 import org.signal.core.util.logging.Log;
 import org.signal.libsignal.protocol.util.Pair;
 import org.thoughtcrime.securesms.attachments.Attachment;
-import org.thoughtcrime.securesms.database.GroupTable;
 import org.thoughtcrime.securesms.database.GroupReceiptTable;
 import org.thoughtcrime.securesms.database.GroupReceiptTable.GroupReceiptInfo;
+import org.thoughtcrime.securesms.database.GroupTable;
 import org.thoughtcrime.securesms.database.MessageTable;
-import org.thoughtcrime.securesms.database.MmsTable;
 import org.thoughtcrime.securesms.database.NoSuchMessageException;
 import org.thoughtcrime.securesms.database.RecipientTable;
 import org.thoughtcrime.securesms.database.SignalDatabase;
 import org.thoughtcrime.securesms.database.documents.IdentityKeyMismatch;
 import org.thoughtcrime.securesms.database.documents.NetworkFailure;
+import org.thoughtcrime.securesms.database.model.GroupRecord;
 import org.thoughtcrime.securesms.database.model.MessageId;
 import org.thoughtcrime.securesms.database.model.MessageRecord;
 import org.thoughtcrime.securesms.dependencies.ApplicationDependencies;
@@ -37,7 +37,7 @@ import org.thoughtcrime.securesms.messages.GroupSendUtil;
 import org.thoughtcrime.securesms.messages.StorySendUtil;
 import org.thoughtcrime.securesms.mms.MessageGroupContext;
 import org.thoughtcrime.securesms.mms.MmsException;
-import org.thoughtcrime.securesms.mms.OutgoingMediaMessage;
+import org.thoughtcrime.securesms.mms.OutgoingMessage;
 import org.thoughtcrime.securesms.recipients.Recipient;
 import org.thoughtcrime.securesms.recipients.RecipientId;
 import org.thoughtcrime.securesms.recipients.RecipientUtil;
@@ -58,6 +58,7 @@ import org.whispersystems.signalservice.api.messages.SignalServiceStoryMessage;
 import org.whispersystems.signalservice.api.messages.shared.SharedContact;
 import org.whispersystems.signalservice.api.push.exceptions.ProofRequiredException;
 import org.whispersystems.signalservice.api.push.exceptions.ServerRejectedException;
+import org.whispersystems.signalservice.internal.push.SignalServiceProtos.BodyRange;
 import org.whispersystems.signalservice.internal.push.SignalServiceProtos.GroupContextV2;
 
 import java.io.IOException;
@@ -113,9 +114,18 @@ public final class PushGroupSendJob extends PushSendJob {
         throw new AssertionError("Not a group!");
       }
 
-      MessageTable         database = SignalDatabase.mms();
-      OutgoingMediaMessage message  = database.getOutgoingMessage(messageId);
-      Set<String>          attachmentUploadIds = enqueueCompressingAndUploadAttachmentsChains(jobManager, message);
+      MessageTable    database            = SignalDatabase.messages();
+      OutgoingMessage message             = database.getOutgoingMessage(messageId);
+
+      if (message.getScheduledDate() != -1) {
+        if (!filterAddresses.isEmpty()) {
+          throw new MmsException("Cannot schedule a group message with filter addresses!");
+        }
+        ApplicationDependencies.getScheduledMessageManager().scheduleIfNecessary();
+        return;
+      }
+
+      Set<String> attachmentUploadIds = enqueueCompressingAndUploadAttachmentsChains(jobManager, message);
 
       if (message.getGiftBadge() != null) {
         throw new MmsException("Cannot send a gift badge to a group!");
@@ -129,7 +139,7 @@ public final class PushGroupSendJob extends PushSendJob {
 
     } catch (NoSuchMessageException | MmsException e) {
       Log.w(TAG, "Failed to enqueue message.", e);
-      SignalDatabase.mms().markAsSentFailed(messageId);
+      SignalDatabase.messages().markAsSentFailed(messageId);
       notifyMediaMessageDeliveryFailed(context, messageId);
     }
   }
@@ -141,7 +151,7 @@ public final class PushGroupSendJob extends PushSendJob {
                              .build();
   }
 
-  private static boolean isGv2UpdateMessage(@NonNull OutgoingMediaMessage message) {
+  private static boolean isGv2UpdateMessage(@NonNull OutgoingMessage message) {
     return message.isGroupUpdate() && message.isV2Group();
   }
 
@@ -152,7 +162,7 @@ public final class PushGroupSendJob extends PushSendJob {
 
   @Override
   public void onAdded() {
-    SignalDatabase.mms().markAsSending(messageId);
+    SignalDatabase.messages().markAsSending(messageId);
   }
 
   @Override
@@ -161,9 +171,9 @@ public final class PushGroupSendJob extends PushSendJob {
   {
     SignalLocalMetrics.GroupMessageSend.onJobStarted(messageId);
 
-    MessageTable             database                   = SignalDatabase.mms();
-    OutgoingMediaMessage     message                    = database.getOutgoingMessage(messageId);
-    long                     threadId                   = database.getMessageRecord(messageId).getThreadId();
+    MessageTable    database = SignalDatabase.messages();
+    OutgoingMessage message  = database.getOutgoingMessage(messageId);
+    long            threadId = database.getMessageRecord(messageId).getThreadId();
     Set<NetworkFailure>      existingNetworkFailures    = new HashSet<>(message.getNetworkFailures());
     Set<IdentityKeyMismatch> existingIdentityMismatches = new HashSet<>(message.getIdentityKeyMismatches());
 
@@ -232,10 +242,10 @@ public final class PushGroupSendJob extends PushSendJob {
 
   @Override
   public void onFailure() {
-    SignalDatabase.mms().markAsSentFailed(messageId);
+    SignalDatabase.messages().markAsSentFailed(messageId);
   }
 
-  private List<SendMessageResult> deliver(OutgoingMediaMessage message, @NonNull Recipient groupRecipient, @NonNull List<Recipient> destinations)
+  private List<SendMessageResult> deliver(OutgoingMessage message, @NonNull Recipient groupRecipient, @NonNull List<Recipient> destinations)
       throws IOException, UntrustedIdentityException, UndeliverableMessageException
   {
     try {
@@ -247,13 +257,14 @@ public final class PushGroupSendJob extends PushSendJob {
       List<SharedContact>                        sharedContacts     = getSharedContactsFor(message);
       List<SignalServicePreview>                 previews           = getPreviewsFor(message);
       List<SignalServiceDataMessage.Mention>     mentions           = getMentionsFor(message.getMentions());
+      List<BodyRange>                            bodyRanges         = getBodyRanges(message);
       List<Attachment>                           attachments        = Stream.of(message.getAttachments()).filterNot(Attachment::isSticker).toList();
       List<SignalServiceAttachment>              attachmentPointers = getAttachmentPointersFor(attachments);
-      boolean isRecipientUpdate = Stream.of(SignalDatabase.groupReceipts().getGroupReceiptInfo(messageId))
-                                        .anyMatch(info -> info.getStatus() > GroupReceiptTable.STATUS_UNDELIVERED);
+      boolean                                    isRecipientUpdate  = Stream.of(SignalDatabase.groupReceipts().getGroupReceiptInfo(messageId))
+                                                                            .anyMatch(info -> info.getStatus() > GroupReceiptTable.STATUS_UNDELIVERED);
 
       if (message.getStoryType().isStory()) {
-        Optional<GroupTable.GroupRecord> groupRecord = SignalDatabase.groups().getGroup(groupId);
+        Optional<GroupRecord> groupRecord = SignalDatabase.groups().getGroup(groupId);
 
         if (groupRecord.isPresent() && groupRecord.get().isAnnouncementGroup() && !groupRecord.get().isAdmin(Recipient.self())) {
           throw new UndeliverableMessageException("Non-admins cannot send stories in announcement groups!");
@@ -267,15 +278,18 @@ public final class PushGroupSendJob extends PushSendJob {
 
           final SignalServiceStoryMessage storyMessage;
           if (message.getStoryType().isTextStory()) {
-            storyMessage = SignalServiceStoryMessage.forTextAttachment(Recipient.self().getProfileKey(), groupContext, StorySendUtil.deserializeBodyToStoryTextAttachment(message, this::getPreviewsFor), message.getStoryType()
-                                                                                                                                                                                                                 .isStoryWithReplies());
+            storyMessage = SignalServiceStoryMessage.forTextAttachment(Recipient.self().getProfileKey(),
+                                                                       groupContext,
+                                                                       StorySendUtil.deserializeBodyToStoryTextAttachment(message, this::getPreviewsFor),
+                                                                       message.getStoryType().isStoryWithReplies(),
+                                                                       bodyRanges);
           } else if (!attachmentPointers.isEmpty()) {
-            storyMessage = SignalServiceStoryMessage.forFileAttachment(Recipient.self().getProfileKey(), groupContext, attachmentPointers.get(0), message.getStoryType().isStoryWithReplies());
+            storyMessage = SignalServiceStoryMessage.forFileAttachment(Recipient.self().getProfileKey(), groupContext, attachmentPointers.get(0), message.getStoryType().isStoryWithReplies(), bodyRanges);
           } else {
             throw new UndeliverableMessageException("No attachment on non-text story.");
           }
 
-          return GroupSendUtil.sendGroupStoryMessage(context, groupId.requireV2(), destinations, isRecipientUpdate, new MessageId(messageId, true), message.getSentTimeMillis(), storyMessage);
+          return GroupSendUtil.sendGroupStoryMessage(context, groupId.requireV2(), destinations, isRecipientUpdate, new MessageId(messageId), message.getSentTimeMillis(), storyMessage);
         } else {
           throw new UndeliverableMessageException("No group found! " + groupId);
         }
@@ -297,12 +311,12 @@ public final class PushGroupSendJob extends PushSendJob {
                                                                               .withExpiration(groupRecipient.getExpiresInSeconds())
                                                                               .asGroupMessage(group)
                                                                               .build();
-          return GroupSendUtil.sendResendableDataMessage(context, groupRecipient.requireGroupId().requireV2(), null, destinations, isRecipientUpdate, ContentHint.IMPLICIT, new MessageId(messageId, true), groupDataMessage, message.isUrgent(), false);
+          return GroupSendUtil.sendResendableDataMessage(context, groupRecipient.requireGroupId().requireV2(), null, destinations, isRecipientUpdate, ContentHint.IMPLICIT, new MessageId(messageId), groupDataMessage, message.isUrgent(), false);
         } else {
           throw new UndeliverableMessageException("Messages can no longer be sent to V1 groups!");
         }
       } else {
-        Optional<GroupTable.GroupRecord> groupRecord = SignalDatabase.groups().getGroup(groupRecipient.requireGroupId());
+        Optional<GroupRecord> groupRecord = SignalDatabase.groups().getGroup(groupRecipient.requireGroupId());
 
         if (groupRecord.isPresent() && groupRecord.get().isAnnouncementGroup() && !groupRecord.get().isAdmin(Recipient.self())) {
           throw new UndeliverableMessageException("Non-admins cannot send messages in announcement groups!");
@@ -322,11 +336,12 @@ public final class PushGroupSendJob extends PushSendJob {
                                                                       .withSticker(sticker.orElse(null))
                                                                       .withSharedContacts(sharedContacts)
                                                                       .withPreviews(previews)
-                                                                      .withMentions(mentions);
+                                                                      .withMentions(mentions)
+                                                                      .withBodyRanges(bodyRanges);
 
         if (message.getParentStoryId() != null) {
           try {
-            MessageRecord storyRecord = SignalDatabase.mms().getMessageRecord(message.getParentStoryId().asMessageId().getId());
+            MessageRecord storyRecord = SignalDatabase.messages().getMessageRecord(message.getParentStoryId().asMessageId().getId());
             Recipient     recipient   = storyRecord.isOutgoing() ? Recipient.self() : storyRecord.getIndividualRecipient();
 
             destinations = destinations.stream()
@@ -356,7 +371,7 @@ public final class PushGroupSendJob extends PushSendJob {
                                                        destinations,
                                                        isRecipientUpdate,
                                                        ContentHint.RESENDABLE,
-                                                       new MessageId(messageId, true),
+                                                       new MessageId(messageId),
                                                        groupMessageBuilder.build(),
                                                        message.isUrgent(),
                                                        message.getStoryType().isStory() || message.getParentStoryId() != null);
@@ -374,7 +389,7 @@ public final class PushGroupSendJob extends PushSendJob {
                                          long messageId,
                                          long threadId,
                                          @Nullable Recipient groupRecipient,
-                                         @NonNull OutgoingMediaMessage message,
+                                         @NonNull OutgoingMessage message,
                                          @NonNull List<SendMessageResult> results,
                                          @NonNull List<Recipient> target,
                                          @NonNull List<RecipientId> skipped,
@@ -382,7 +397,7 @@ public final class PushGroupSendJob extends PushSendJob {
                                          @NonNull Set<IdentityKeyMismatch> existingIdentityMismatches)
       throws RetryLaterException, ProofRequiredException
   {
-    MmsTable            database   = SignalDatabase.mms();
+    MessageTable        database   = SignalDatabase.messages();
     RecipientAccessList accessList = new RecipientAccessList(target);
 
     List<NetworkFailure>             networkFailures           = Stream.of(results).filter(SendMessageResult::isNetworkFailure).map(result -> new NetworkFailure(accessList.requireIdByAddress(result.getAddress()))).toList();

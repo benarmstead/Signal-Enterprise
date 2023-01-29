@@ -224,6 +224,8 @@
     <string name="ContactsCursorLoader_recent_chats">சமீபத்திய உரையாடல்கள்</string>
     <string name="ContactsCursorLoader_contacts">தொடர்புகள்</string>
     <string name="ContactsCursorLoader_groups">குழுக்கள்</string>
+    <!-- Contact search header for individuals who the user has not started a conversation with but is in a group with -->
+    <string name="ContactsCursorLoader_group_members">குழு உறுப்பினர்கள்</string>
     <string name="ContactsCursorLoader_phone_number_search">தொலைபேசி எண் தேடல்</string>
     <!-- Header for username search -->
     <string name="ContactsCursorLoader_find_by_username">பயனர் பெயர் மூலம் கண்டறியவும்</string>
@@ -231,6 +233,10 @@
     <string name="ContactsCursorLoader_my_stories">எனது ஸ்டோரீஸ்</string>
     <!-- Text for a button that brings up a bottom sheet to create a new story. -->
     <string name="ContactsCursorLoader_new">புதியது</string>
+    <!-- Header for conversation search section labeled "Chats" -->
+    <string name="ContactsCursorLoader__chats">உரையாடல்கள்  </string>
+    <!-- Header for conversation search section labeled "Messages" -->
+    <string name="ContactsCursorLoader__messages">செய்திகள்</string>
 
     <!-- ContactsDatabase -->
     <string name="ContactsDatabase_message_s">செய்தி %1$s</string>
@@ -593,6 +599,8 @@
     <string name="BackupsPreferenceFragment__create_backup">காப்புப்பதிவு பயனர் தரவு உருவாக்கவும்</string>
     <string name="BackupsPreferenceFragment__last_backup">கடைசியாக மறுபிரதி எடுக்கப்பட்டது:%1$s</string>
     <string name="BackupsPreferenceFragment__backup_folder">மறுபிரதி கோப்புறை</string>
+    <!-- Title for a preference item allowing the user to selected the hour of the day when their chats are backed up. -->
+    <string name="BackupsPreferenceFragment__backup_time">Backup time</string>
     <string name="BackupsPreferenceFragment__verify_backup_passphrase">காப்புப்பிரதி கடவுச்சொற்றொடரை சரிபார்க்கவும்</string>
     <string name="BackupsPreferenceFragment__test_your_backup_passphrase">உங்கள் காப்புப்பிரதி கடவுச்சொற்றொடரைச் சோதித்து, அது பொருந்துமா என்பதைச் சரிபார்க்கவும்</string>
     <string name="BackupsPreferenceFragment__turn_on">இயக்கவும்</string>
@@ -622,6 +630,50 @@
     <string name="DateUtils_minutes_ago">%1$d மீ</string>
     <string name="DateUtils_today">இன்று</string>
     <string name="DateUtils_yesterday">நேற்று</string>
+    <!-- When scheduling a message, %1$s replaced with either today, tonight, or tomorrow. %2$s replaced with the time. e.g. Tonight at 9:00pm -->
+    <string name="DateUtils_schedule_at">%1$s இல் %2$s</string>
+    <!-- Used when getting a time in the future. For example, Tomorrow at 9:00pm -->
+    <string name="DateUtils_tomorrow">Tomorrow</string>
+    <!-- Used in the context: Tonight at 9:00pm for example. Specifically this is after 7pm -->
+    <string name="DateUtils_tonight">Tonight</string>
+
+    <!-- Scheduled Messages -->
+    <!-- Title for dialog that shows all the users scheduled messages for a chat -->
+    <string name="ScheduledMessagesBottomSheet__schedules_messages">Scheduled messages</string>
+    <!-- Option when scheduling a message to select a specific date and time to send a message -->
+    <string name="ScheduledMessages_pick_time">Pick Date &amp; Time</string>
+    <!-- Title for dialog explaining to users how the scheduled messages work -->
+    <string name="ScheduleMessageFTUXBottomSheet__title">Scheduled messages</string>
+    <!-- Disclaimer text for scheduled messages explaining to users that the scheduled messages will only send if connected to the internet -->
+    <string name="ScheduleMessageFTUXBottomSheet__disclaimer">When you send a scheduled message, make sure your device will be on and connected to the internet at the time of sending. If not, your message will send when your device reconnects.</string>
+    <!-- Confirmation button text acknowledging the user understands the disclaimer -->
+    <string name="ScheduleMessageFTUXBottomSheet__okay">சரி</string>
+    <!-- Title for section asking users to allow alarm permissions for scheduled messages -->
+    <string name="ScheduleMessageFTUXBottomSheet_enable_title">To enable message scheduling:</string>
+    <!-- Title for dialog asking users to allow alarm permissions for scheduled messages -->
+    <string name="ReenableScheduleMessagesDialogFragment_reenable_title">To re-enable message scheduling:</string>
+    <!-- Title of dialog with a calendar to select the date the user wants to schedule a message. -->
+    <string name="ScheduleMessageTimePickerBottomSheet__select_date_title">Select date</string>
+    <!-- Title of dialog with a clock to select the time at which the user wants to schedule a message. -->
+    <string name="ScheduleMessageTimePickerBottomSheet__select_time_title">Select time</string>
+    <!-- Title of dialog that allows user to set the time and day that their message will be sent -->
+    <string name="ScheduleMessageTimePickerBottomSheet__dialog_title">Schedule message</string>
+    <!-- Text for confirmation button when scheduling messages that allows the user to confirm and schedule the sending time -->
+    <string name="ScheduleMessageTimePickerBottomSheet__schedule_send">Schedule send</string>
+
+    <!-- Disclaimer in message scheduling dialog. %1$s replaced with a GMT offset (e.g. GMT-05:00), and %2$s is replaced with the time zone name (e.g. Eastern Standard Time) -->
+    <string name="ScheduleMessageTimePickerBottomSheet__timezone_disclaimer">All times in (%1$s) %2$s</string>
+
+    <!-- Context menu option to send a scheduled message now -->
+    <string name="ScheduledMessagesBottomSheet_menu_send_now">Send now</string>
+    <!-- Context menu option to reschedule a selected message -->
+    <string name="ScheduledMessagesBottomSheet_menu_reschedule">Reschedule</string>
+    <!-- Button in dialog asking user if they are sure they want to delete the selected scheduled message -->
+    <string name="ScheduledMessagesBottomSheet_delete_dialog_action">அழி</string>
+    <!-- Button in dialog asking user if they are sure they want to delete the selected scheduled message -->
+    <string name="ScheduledMessagesBottomSheet_delete_dialog_message">Delete selected scheduled message?</string>
+    <!-- Progress message shown while deleting selected scheduled message -->
+    <string name="ScheduledMessagesBottomSheet_deleting_progress_message">Deleting scheduled message…</string>
 
     <!-- DecryptionFailedDialog -->
     <string name="DecryptionFailedDialog_chat_session_refreshed">உரையாடல் அமர்வு புதுப்பிக்கப்பட்டது</string>
@@ -1152,11 +1204,29 @@
     <string name="MessageRecord_left_group">நீங்கள் குழுவை விட்டு விலகினீர்கள்.</string>
     <string name="MessageRecord_you_updated_group">நீங்கள் குழுவைப் புதுப்பித்தீர்கள்.</string>
     <string name="MessageRecord_the_group_was_updated">குழு புதுப்பிக்கப்பட்டது.</string>
-    <string name="MessageRecord_you_called_date">இந்த நபரை அழைத்தீர்கள் %1$s</string>
-    <string name="MessageRecord_missed_audio_call_date">தவறவிட்ட ஆடியோ அழைப்பு %1$s</string>
-    <string name="MessageRecord_missed_video_call_date">தவறவிட்ட வீடியோ அழைப்பு . %1$s</string>
+    <!-- Update message shown when placing an outgoing 1:1 voice/audio call and it\'s answered by the other party -->
+    <string name="MessageRecord_outgoing_voice_call">வெளிச்செல்லும் குரல் அழைப்பு</string>
+    <!-- Update message shown when placing an outgoing 1:1 video call and it\'s answered by the other party -->
+    <string name="MessageRecord_outgoing_video_call">வெளிச்செல்லும் வீடியோ அழைப்பு</string>
+    <!-- Update message shown when placing an outgoing 1:1 voice/audio call and it\'s not answered by the other party -->
+    <string name="MessageRecord_unanswered_voice_call">பதிலளிக்கப்படாத குரல் அழைப்பு</string>
+    <!-- Update message shown when placing an outgoing 1:1 video call and it\'s not answered by the other party -->
+    <string name="MessageRecord_unanswered_video_call">பதிலளிக்கப்படாத வீடியோ அழைப்பு</string>
+    <!-- Update message shown when receiving an incoming 1:1 voice/audio call and it\'s answered -->
+    <string name="MessageRecord_incoming_voice_call">உள்வரும் குரல் அழைப்பு</string>
+    <!-- Update message shown when receiving an incoming 1:1 video call and answered -->
+    <string name="MessageRecord_incoming_video_call">உள்வரும் வீடியோ அழைப்பு</string>
+    <!-- Update message shown when receiving an incoming 1:1 voice/audio call and not answered -->
+    <string name="MessageRecord_missed_voice_call">தவறவிட்ட குரல் அழைப்பு</string>
+    <!-- Update message shown when receiving an incoming 1:1 video call and not answered -->
+    <string name="MessageRecord_missed_video_call">தவறவிட்ட வீடியோ அழைப்பு</string>
+    <!-- Update message shown when receiving an incoming 1:1 voice/audio call and explicitly declined -->
+    <string name="MessageRecord_you_declined_a_voice_call">குரல் அழைப்பை மறுத்துவிட்டீர்கள்</string>
+    <!-- Update message shown when receiving an incoming 1:1 video call and explicitly declined -->
+    <string name="MessageRecord_you_declined_a_video_call">வீடியோ அழைப்பை மறுத்துவிட்டீர்கள்</string>
+    <!-- Call update formatter string to place the update message next to a time stamp. e.g., \'Incoming voice call · 11:11am\' -->
+    <string name="MessageRecord_call_message_with_date">%1$s · %2$s</string>
     <string name="MessageRecord_s_updated_group">%1$s குழு புதுப்பிக்கப்பட்டது .</string>
-    <string name="MessageRecord_s_called_you_date">%1$sஉங்களை அழைத்தார்%2$s</string>
     <string name="MessageRecord_s_joined_signal">%1$s Signal-இல் உள்ளார்!</string>
     <string name="MessageRecord_you_disabled_disappearing_messages">காணாமல் போகும் செய்திகளை முடக்கியுள்ளீர்கள்.</string>
     <string name="MessageRecord_s_disabled_disappearing_messages">%1$s ஆல் காணாமல் போகும் செய்திகள் முடக்கப்பட்டது .</string>
@@ -1344,10 +1414,12 @@
     <string name="MessageRecord_s_changed_their_phone_number">%1$s அவர்களது தொலைபேசி எண்ணை மாற்றியுள்ளார்.</string>
     <!-- Update item message shown in the release channel when someone is already a sustainer so we ask them if they want to boost. -->
     <string name="MessageRecord_like_this_new_feature_help_support_signal_with_a_one_time_donation">இந்த புதிய அம்சம் பிடித்திருக்கிறதா? ஒரு முறைக்கான நன்கொடை மூலம் Signalஐ ஆதரித்து உதவுங்கள்.</string>
-    <!-- Update item message shown when we merge two threads together -->
+    <!-- Update item message shown when we merge two threads together. First placeholder is a name, second placeholder is a phone number. -->
     <string name="MessageRecord_your_message_history_with_s_and_their_number_s_has_been_merged">%1$s உடனான உங்கள் செய்தி வரலாறு மற்றும் அவர்களின் எண் %2$s இணைக்கப்பட்டது.</string>
-    <!-- Update item message shown when we merge two threads together and we don\'t know the phone number of the other thread -->
+    <!-- Update item message shown when we merge two threads together and we don\'t know the phone number of the other thread. The placeholder is a person\'s name. -->
     <string name="MessageRecord_your_message_history_with_s_and_another_chat_has_been_merged">%1$s உடனான உங்கள் செய்தி வரலாறும் அவர்களுக்குச் சொந்தமான மற்றொரு சாட்டும் இணைக்கப்பட்டது.</string>
+    <!-- Update item message shown when you find out a phone number belongs to a person you had a conversation with. First placeholder is a phone number, second placeholder is a name. -->
+    <string name="MessageRecord_s_belongs_to_s">%1$s %2$s க்கு சொந்தமானது</string>
     <!-- Message to notify sender that activate payments request has been sent to the recipient -->
     <string name="MessageRecord_you_sent_request">கட்டணங்களைச் செயல்படுத்த %1$s க்குக் கோரிக்கை அனுப்பியுள்ளீர்கள்</string>
     <!-- Request message from recipient to activate payments -->
@@ -1676,8 +1748,7 @@
     <string name="RegistrationActivity_select_your_country">உங்கள் நாட்டை தேர்ந்தெடுக்கவும்</string>
     <string name="RegistrationActivity_you_must_specify_your_country_code">நீங்கள் கண்டிப்பாக குறிப்பிடவேண்டியது உங்கள்: நாட்டின் குறியீடு
     </string>
-    <string name="RegistrationActivity_you_must_specify_your_phone_number">நீங்கள் குறிப்பிடவேண்டியது உங்கள்: தொலைபேசி எண்
-    </string>
+    <string name="RegistrationActivity_please_enter_a_valid_phone_number_to_register">பதிவு செய்ய சரியான தொலைபேசி எண்ணை உள்ளிடவும்.</string>
     <string name="RegistrationActivity_invalid_number">செல்லா எண்</string>
     <string name="RegistrationActivity_the_number_you_specified_s_is_invalid">நீங்கள் குறிப்பிட்ட எண் (%1$s) செல்லாது.
     </string>
@@ -1707,7 +1778,6 @@
     <string name="RegistrationActivity_next">அடுத்தது</string>
     <string name="RegistrationActivity_continue">தொடர்</string>
     <string name="RegistrationActivity_take_privacy_with_you_be_yourself_in_every_message">உங்களுடன் தனியுரிமையைப் பெறுங்கள். ஒவ்வொரு செய்தியிலும் நீங்கள் நீங்கலாய் இருங்கள் .</string>
-    <string name="RegistrationActivity_enter_your_phone_number_to_get_started">தொடங்க உங்கள் தொலைபேசி எண்ணை உள்ளிடவும்</string>
     <string name="RegistrationActivity_enter_your_phone_number">உள்ளிடவும் உங்கள் தொலைபேசி எண்</string>
     <string name="RegistrationActivity_you_will_receive_a_verification_code">சரிபார்ப்புக் குறியீட்டைப் பெறுவீர்கள். கேரியர் கட்டணங்கள் பொருந்தக்கூடும்.</string>
     <string name="RegistrationActivity_enter_the_code_we_sent_to_s">நாங்கள் அனுப்பிய குறியீட்டை %1$s க்கு உள்ளிடவும்</string>
@@ -1715,7 +1785,10 @@
 
     <string name="RegistrationActivity_phone_number_description">தொலைபேசி எண்</string>
     <string name="RegistrationActivity_country_code_description">நாட்டின் குறியீடு</string>
+    <string name="RegistrationActivity_country_code_hint">நாடு</string>
     <string name="RegistrationActivity_call">அழை</string>
+    <string name="RegistrationActivity_verification_code">சரிபார்ப்புக் குறியீடு</string>
+    <string name="RegistrationActivity_resend_code">குறியீட்டை மீண்டும் அனுப்பு</string>
 
     <!-- RegistrationLockV2Dialog -->
     <string name="RegistrationLockV2Dialog_turn_on_registration_lock">பதிவு பூட்டை இயக்கவா?</string>
@@ -1837,10 +1910,6 @@
     <string name="ThreadRecord_left_the_group">குழுவிலிருந்து வெளியேறினார்</string>
     <string name="ThreadRecord_secure_session_reset">பாதுகாப்பான அமர்வை மீட்டெடுப்பு செய் .</string>
     <string name="ThreadRecord_draft">வரைவு:</string>
-    <string name="ThreadRecord_called">நீங்கள் அழைத்தீர்கள்</string>
-    <string name="ThreadRecord_called_you">உங்களை அழைத்தார்</string>
-    <string name="ThreadRecord_missed_audio_call">ஒலி அழைப்பு தவறவிட்டது</string>
-    <string name="ThreadRecord_missed_video_call">காணொளி அழைப்பு தவறவிட்டது</string>
     <string name="ThreadRecord_media_message">பல்லூடகச் செய்தி</string>
     <string name="ThreadRecord_sticker">ஒட்டிப்படம்</string>
     <string name="ThreadRecord_view_once_photo">காண்க-ஒருமுறை புகைப்படம்</string>
@@ -1873,11 +1942,11 @@
     <string name="ThreadRecord_video">காணொளி</string>
     <string name="ThreadRecord_chat_session_refreshed">உரையாடல் அமர்வு புதுப்பிக்கப்பட்டது</string>
     <!-- Displayed in the notification when the user is sent a gift -->
-    <string name="ThreadRecord__you_received_a_gift">நீங்கள் ஒரு பரிசு பெற்றுள்ளீர்கள்</string>
+    <string name="ThreadRecord__s_donated_for_you">%1$s உங்களுக்காக நன்கொடை அளித்துள்ளார்</string>
     <!-- Displayed in the notification when the user sends a gift -->
-    <string name="ThreadRecord__you_sent_a_gift">நீங்கள் ஒரு பரிசை அனுப்பியுள்ளீர்கள்</string>
+    <string name="ThreadRecord__you_donated_for_s">நீங்கள் %1$s க்கு நன்கொடை அளித்துள்ளீர்கள்</string>
     <!-- Displayed in the notification when the user has opened a received gift -->
-    <string name="ThreadRecord__you_redeemed_a_gift_badge">நீங்கள் ஒரு பரிசு பேட்ஜை ரிடீம் செய்துள்ளீர்கள்</string>
+    <string name="ThreadRecord__you_redeemed_a_badge">நீங்கள் ஒரு பேட்ஜை ரிடீம் செய்துள்ளீர்கள்</string>
     <!-- Displayed in the conversation list when someone reacted to your story -->
     <string name="ThreadRecord__reacted_s_to_your_story">உங்கள் ஸ்டோரிக்கு %1$s என்று எதிர்வினையாற்றினார்</string>
     <!-- Displayed in the conversation list when you reacted to someone\'s story -->
@@ -1984,13 +2053,15 @@
     <string name="MediaPreviewActivity_s_to_you">%1$s இடமிருந்து உங்களுக்கு</string>
     <string name="MediaPreviewActivity_media_no_longer_available">இந்த ஊடகம் சேமிப்பகத்தில் இல்லை.</string>
     <!-- Notifying the user that the device has encountered a technical issue and is unable to render a video. -->
-    <string name="MediaPreviewActivity_unable_to_play_media">Unable to play media.</string>
+    <string name="MediaPreviewActivity_unable_to_play_media">மீடியாவை இயக்க முடியவில்லை.</string>
     <string name="MediaPreviewActivity_error_finding_message">செய்தியைக் கண்டறிவதில் பிழை.</string>
     <string name="MediaPreviewActivity_cant_find_an_app_able_to_share_this_media">இந்த மீடியாவைப் பகிரக்கூடிய பயன்பாட்டைக் கண்டுபிடிக்க முடியவில்லை.</string>
     <string name="MediaPreviewActivity_dismiss_due_to_error">நெருக்கமான</string>
     <string name="MediaPreviewFragment_edit_media_error">மீடியா பிழை</string>
     <!-- This is displayed as a toast notification when we encounter an error deleting a message, including potentially on other people\'s devices -->
     <string name="MediaPreviewFragment_media_delete_error">செய்தியை நீக்குவதில் பிழை, செய்தி இன்னும் இருக்கலாம்</string>
+    <!-- A suffix to be attached to truncated captions that the user may tap onto to view the entire text caption -->
+    <string name="MediaPreviewFragment_see_more">%1$s… <b>Read More</b></string>
 
     <!-- MessageNotifier -->
     <string name="MessageNotifier_d_new_messages_in_d_conversations">%2$d உரையாடல்களில் %1$d புதிய செய்திகள்</string>
@@ -2055,6 +2126,8 @@
 
     <!-- SearchToolbar -->
     <string name="SearchToolbar_search">தேடு</string>
+    <!-- Hint when searching filtered chat content -->
+    <string name="SearchToolbar_search_unread_chats">படிக்காத சாட்களைத் தேடுங்கள்</string>
     <string name="SearchToolbar_search_for_conversations_contacts_and_messages">உரையாடல்கள், தொடர்புகள் மற்றும் செய்திகளைத் தேடுங்கள்</string>
 
     <!-- Material3 Search Toolbar -->
@@ -2085,6 +2158,9 @@
     <!-- UnauthorizedReminder -->
     <string name="UnauthorizedReminder_device_no_longer_registered">சாதனம் இனி பதிவு செய்யப்படவில்லை</string>
     <string name="UnauthorizedReminder_this_is_likely_because_you_registered_your_phone_number_with_Signal_on_a_different_device">உங்கள் தொலைபேசி எண்ணை Signal வேறு சாதனத்தில் பதிவு செய்ததால் இது நிகழலாம். மீண்டும் பதிவு செய்ய தட்டவும்.</string>
+
+    <!-- Push notification when the app is forcibly logged out by the server. -->
+    <string name="LoggedOutNotification_you_have_been_logged_out">இந்த டிவைஸில் Signal இல் இருந்து வெளியேறிவிட்டீர்கள்.</string>
 
     <!-- EnclaveFailureReminder -->
     <!-- Banner message to update app to use payments -->
@@ -2176,6 +2252,8 @@
     <string name="conversation_activity__type_message_push">Signal செய்தி</string>
     <string name="conversation_activity__type_message_sms_insecure">பாதுகாப்பற்ற SMS</string>
     <string name="conversation_activity__type_message_mms_insecure">பாதுகாப்பற்ற எம்.எம்.எஸ்</string>
+    <!-- Option in send button context menu to schedule the message instead of sending it directly -->
+    <string name="conversation_activity__option_schedule_message">Schedule message</string>
     <string name="conversation_activity__from_sim_name">%1$s இலிருந்து</string>
     <string name="conversation_activity__sim_n">சிம் 1%1$d</string>
     <string name="conversation_activity__send">அனுப்பு</string>
@@ -2248,7 +2326,7 @@
     <!-- Label indicating that the story being replied to no longer exists -->
     <string name="QuoteView_no_longer_available">இனி கிடைக்காது</string>
     <!-- Label for quoted gift -->
-    <string name="QuoteView__gift">பரிசு</string>
+    <string name="QuoteView__donation_for_a_friend">நண்பருக்கு நன்கொடை</string>
 
     <!-- conversation_fragment -->
     <string name="conversation_fragment__scroll_to_the_bottom_content_description">கீழே உருட்டவும்</string>
@@ -3064,6 +3142,16 @@
     <!-- conversation_callable_insecure -->
     <string name="conversation_add_to_contacts__menu_add_to_contacts">தொடர்புகளுடன் சேர்க்க</string>
 
+    <!-- conversation scheduled messages bar -->
+
+    <!-- Label for button in a banner to show all messages currently scheduled -->
+    <string name="conversation_scheduled_messages_bar__see_all">அனைத்தையும் பார்</string>
+    <!-- Body text for banner to show all scheduled messages for the chat that tells the user how many scheduled messages there are -->
+    <plurals name="conversation_scheduled_messages_bar__number_of_messages">
+        <item quantity="one">%1$d message scheduled</item>
+        <item quantity="other">%1$d messages scheduled</item>
+    </plurals>
+
     <!-- conversation_group_options -->
     <string name="convesation_group_options__recipients_list">பெறுநர்கள் பட்டியல்</string>
     <string name="conversation_group_options__delivery">விநியோகம்</string>
@@ -3156,11 +3244,13 @@
     <string name="CreateKbsPinFragment__create_a_new_pin">புதிய பின்னை உருவாக்கவும்</string>
     <string name="CreateKbsPinFragment__you_can_choose_a_new_pin_as_long_as_this_device_is_registered">நீங்கள் முடியும் மாற்றம் உங்கள் பின் இந்த வரை சாதனம் பதிவு செய்யப்பட்டுள்ளது.</string>
     <string name="CreateKbsPinFragment__create_your_pin">உங்கள் பின்னை உருவாக்கவும்</string>
-    <string name="CreateKbsPinFragment__pins_keep_information_stored_with_signal_encrypted">Signal இடம் சேமிக்கப்படும் தகவல்களை மறையாக்கி நீங்கள் மட்டும் அணுகும் வகையில் PIN-கள் வைக்கும். நீங்கள் மீண்டும் நிறுவும்போது உங்கள் சுயவிவரம், அமைப்புகள் மற்றும் தொடர்புகள் மீட்டமைக்கப்படும். பயன்பாட்டைத் திறக்க உங்கள் PIN தேவைப்படாது.</string>
+    <string name="CreateKbsPinFragment__pins_can_help_you_restore_your_account">PINs can help you restore your account and keep your info encrypted with Signal. </string>
     <string name="CreateKbsPinFragment__choose_a_stronger_pin">வலுவானதைத் தேர்வுசெய்க பின்</string>
 
     <!-- ConfirmKbsPinFragment -->
     <string name="ConfirmKbsPinFragment__pins_dont_match">பின்-கள் பொருந்தவில்லை. மீண்டும் முயற்சி செய்க.</string>
+    <!-- Prompt for the user to repeat entering the PIN in order to help them remember it correctly.   -->
+    <string name="ConfirmKbsPinFragment__re_enter_the_pin_you_just_created">Re-enter the PIN you just created.</string>
     <string name="ConfirmKbsPinFragment__confirm_your_pin">உங்கள் பின்னை உறுதிப்படுத்தவும்.</string>
     <string name="ConfirmKbsPinFragment__pin_creation_failed">பின் உருவாக்கம் தோல்வியடைந்தது</string>
     <string name="ConfirmKbsPinFragment__your_pin_was_not_saved">உங்கள் பின் சேமிக்கப்படவில்லை. பின்னை உருவாக்க நாங்கள் உங்களைத் தூண்டுவோம்.</string>
@@ -3300,7 +3390,7 @@
     <!-- Error message shown if a very large attachment is encountered during the backup creation and causes the backup to fail -->
     <string name="LocalBackupJobApi29_your_backup_contains_a_very_large_file">உங்கள் காப்புப்பிரதியில் நகலெடுக்க முடியாத மிகப் பெரிய கோப்பு ஒன்று உள்ளது. தயவுசெய்து அதை நீக்கிவிட்டு ஒரு புதிய காப்புப்பிரதியை உருவாக்கவும்.</string>
     <string name="LocalBackupJobApi29_tap_to_manage_backups">மறுபிரதிகளை நிர்வகிக்க தட்டவும்</string>
-    <string name="RegistrationActivity_wrong_number">தவறான எண்</string>
+    <string name="RegistrationActivity_wrong_number">தவறான எண்?</string>
     <string name="RegistrationActivity_call_me_instead_available_in">அதற்கு பதிலாக என்னை அழைக்கவும் \\ n ( %1$02d :%2$02d இல் கிடைக்கும்)</string>
     <string name="RegistrationActivity_contact_signal_support">Signal ஆதரவைத் தொடர்பு கொள்ளுங்கள்</string>
     <string name="RegistrationActivity_code_support_subject">Signal பதிவு - அண்ட்ராய்டு க்கான சரிபார்ப்புக் குறியீடு</string>
@@ -4271,7 +4361,8 @@
     <string name="SelectFeaturedBadgeFragment__you_must_select_a_badge">நீங்கள் ஒரு பேட்ஜைத் தேர்ந்தெடுக்க வேண்டும்</string>
     <string name="SelectFeaturedBadgeFragment__failed_to_update_profile">சுயவிவரத்தைப் புதுப்பிக்க இயலவில்லை</string>
 
-    <string name="ViewBadgeBottomSheetDialogFragment__become_a_sustainer">ஒரு காப்பாளராக மாறவும்</string>
+    <!-- Displayed on primary button in the bottom sheet as a call-to-action to launch into the donation flow -->
+    <string name="ViewBadgeBottomSheetDialogFragment__donate_now">நன்கொடை அளிக்கவும்</string>
     <!-- Title of a page in the bottom sheet. Placeholder is a user\'s short-name -->
     <string name="ViewBadgeBottomSheetDialogFragment__s_supports_signal">%1$s Signalஐ ஆதரிக்கிறார்</string>
     <!-- Description of a page in the bottom sheet of a monthly badge. Placeholder is a user\'s short-name -->
@@ -4335,7 +4426,7 @@
     <!-- Preference heading for other ways to donate -->
     <string name="ManageDonationsFragment__other_ways_to_give">கொடுக்க மற்ற வழிகள்</string>
     <!-- Preference label to launch badge gifting -->
-    <string name="ManageDonationsFragment__gift_a_badge">பேட்ஜைப் பரிசளிக்கலாம்</string>
+    <string name="ManageDonationsFragment__donate_for_a_friend">நண்பருக்காக நன்கொடை அளிக்கவும்</string>
 
     <string name="Boost__enter_custom_amount">விருப்பத் தொகையை உள்ளிடவும்</string>
     <string name="Boost__one_time_contribution">ஒரு முறைக்கான பங்களிப்பு</string>
@@ -4391,10 +4482,10 @@
     <string name="DonationsErrors__failed_to_validate_badge">பேட்ஜை சரிபார்ப்பது தோல்வியடைந்தது</string>
     <!-- Displayed when badge credential couldn\'t be verified -->
     <string name="DonationsErrors__could_not_validate">சர்வர் பதிலைச் சரிபார்க்க முடியவில்லை. தயவுசெய்து உதவி மையத்தை தொடர்பு கொள்ளவும்.</string>
-    <!-- Displayed as title when some generic error happens during gift badge sending -->
-    <string name="DonationsErrors__failed_to_send_gift_badge">பரிசு பேட்ஜ் அனுப்புவது தோல்வியடைந்தது</string>
-    <!-- Displayed as message when some generic error happens during gift badge sending -->
-    <string name="DonationsErrors__could_not_send_gift_badge">பரிசு பேட்ஜை அனுப்ப முடியவில்லை. தயவுசெய்து உதவி மையத்தை தொடர்பு கொள்ளவும்.</string>
+    <!-- Displayed as title when some generic error happens during sending donation on behalf of another user -->
+    <string name="DonationsErrors__donation_failed">நன்கொடை தோல்வியடைந்தது</string>
+    <!-- Displayed as message when some generic error happens during sending donation on behalf of another user -->
+    <string name="DonationsErrors__your_payment_was_processed_but">உங்கள் பணம் செலுத்தப்பட்டது ஆனால் Signal செயலியால் உங்கள் நன்கொடை செய்தியை அனுப்ப முடியவில்லை. தயவுசெய்து ஆதரவு மையத்தை தொடர்பு கொள்ளவும்.</string>
     <string name="DonationsErrors__your_badge_could_not">உங்கள் பேட்ஜை உங்கள் கணக்கில் சேர்க்க முடியவில்லை, ஆனால் உங்களிடம் கட்டணம் விதிக்கப்பட்டிருக்கலாம். தயவுசெய்து உதவி மையத்தை தொடர்பு கொள்ளவும்.</string>
     <string name="DonationsErrors__your_payment_is_still">உங்கள் கட்டணம் இன்னும் செயல்படுத்தப்படுகிறது. உங்கள் இணைப்பைப் பொறுத்து இதற்கு ஒரு சில நிமிடங்கள் ஆகலாம்.</string>
     <string name="DonationsErrors__failed_to_cancel_subscription">சந்தாவை ரத்து செய்ய முடியவில்லை</string>
@@ -4403,16 +4494,16 @@
     <string name="NetworkFailure__network_error_check_your_connection_and_try_again">நெட்வொர்க் பிழை. உங்கள் இணைப்பைச் சரிபார்த்து மீண்டும் முயலவும்.</string>
     <string name="NetworkFailure__retry">மீண்டும் முயற்சி செய்</string>
     <!-- Displayed as a dialog title when the selected recipient for a gift doesn\'t support gifting -->
-    <string name="DonationsErrors__cant_send_gift">பரிசை அனுப்ப முடியாது</string>
+    <string name="DonationsErrors__cannot_send_donation">நன்கொடை அனுப்ப முடியாது</string>
     <!-- Displayed as a dialog message when the selected recipient for a gift doesn\'t support gifting -->
-    <string name="DonationsErrors__target_does_not_support_gifting">இந்த பெறுநர் பயன்படுத்தும் Signal பதிப்பில் பரிசு பேட்ஜ்களைப் பெற முடியாது. சமீபத்திய பதிப்பிற்குப் புதுப்பிக்கும்போது அவர்களால் பரிசுகளைப் பெற முடியும்.</string>
-    <!-- Displayed as a dialog title when the user\'s profile could not be fetched, likely due to lack of internet -->
-    <string name="DonationsErrors__couldnt_send_gift">பரிசை அனுப்ப முடியவில்லை</string>
+    <string name="DonationsErrors__this_user_cant_receive_donations_until">Signalஐ மேம்படுத்தும் வரை இந்தப் பயனர் நன்கொடைகளைப் பெற முடியாது.</string>
     <!-- Displayed as a dialog message when the user\'s profile could not be fetched, likely due to lack of internet -->
-    <string name="DonationsErrors__please_check_your_network_connection">நெட்வொர்க் பிழையின் காரணமாக உங்கள் பரிசை அனுப்ப முடியவில்லை. உங்கள் இணைப்பைச் சரிபார்த்து மீண்டும் முயலவும்.</string>
+    <string name="DonationsErrors__your_donation_could_not_be_sent">நெட்வொர்க் பிழையின் காரணமாக உங்கள் நன்கொடையை அனுப்ப முடியவில்லை. உங்கள் இணைப்பைச் சரிபார்த்து மீண்டும் முயலவும்.</string>
 
     <!-- Gift message view title -->
-    <string name="GiftMessageView__gift_badge">பரிசு பேட்ஜ்</string>
+    <string name="GiftMessageView__donation_to_s">%1$s க்கு நன்கொடை</string>
+    <!-- Gift message view title for incoming donations -->
+    <string name="GiftMessageView__s_donated_to_signal_on">உங்கள் சார்பாக Signalக்கு %1$s நன்கொடை அளித்துள்ளார்</string>
     <!-- Gift badge redeem action label -->
     <string name="GiftMessageView__redeem">மீட்டெடு</string>
     <!-- Gift badge view action label -->
@@ -4623,7 +4714,7 @@
     <!-- Donation receipts one-time tab label -->
     <string name="DonationReceiptListFragment__one_time">ஒரு-முறை</string>
     <!-- Donation receipts gift tab label -->
-    <string name="DonationReceiptListFragment__gift">பரிசு</string>
+    <string name="DonationReceiptListFragment__donation_for_a_friend">நண்பருக்கு நன்கொடை</string>
     <!-- Donation receipts boost row label -->
     <!-- Donation receipts details title -->
     <!-- Donation receipts donation type heading -->
@@ -4973,22 +5064,23 @@
         <item quantity="one">%1$s · %2$d நாள் காலம்</item>
         <item quantity="other">%1$s · %2$d நாள் காலம்</item>
     </plurals>
-    <!-- Tagline for gift row items -->
-    <string name="GiftRowItem__send_a_gift_badge">ஒரு கிஃப்ட் பேட்ஜை அனுப்பவும்</string>
     <!-- Headline text on start fragment for gifting a badge -->
-    <string name="GiftFlowStartFragment__gift_a_badge">ஒரு பேட்ஜைப் பரிசளிக்கவும்</string>
+    <string name="GiftFlowStartFragment__donate_for_a_friend">நண்பருக்காக நன்கொடை அளிக்கவும்</string>
     <!-- Description text on start fragment for gifting a badge -->
-    <string name="GiftFlowStartFragment__gift_someone_a_badge">ஒருவரின் பெயரில் Signalக்கு நன்கொடை அளிப்பதன் மூலம் அவர்களுக்கு பேட்ஜைப் பரிசளிக்கவும். அவர்களின் சுயவிவரப் புகைப்படத்தில் காண்பிக்க ஒரு பேட்ஜைப் பெறுவார்கள்.</string>
+    <plurals name="GiftFlowStartFragment__support_signal_by">
+        <item quantity="one">Signalஐ பயன்படுத்தும் நண்பர் அல்லது குடும்ப உறுப்பினருக்கு நன்கொடை அளிப்பதன் மூலம் Signalஐ ஆதரிக்கவும். %1$d நாளுக்கு அவர்களின் ப்ரொஃபைலில் காண்பிக்க ஒரு பேட்ஜைப் பெறுவார்கள்</item>
+        <item quantity="other">சிக்னலைப் பயன்படுத்தும் நண்பர் அல்லது குடும்ப உறுப்பினருக்கு நன்கொடை அளிப்பதன் மூலம் சிக்னலை ஆதரிக்கவும். %1$d நாட்களுக்கு அவர்களின் ப்ரொஃபைலில் காண்பிக்க ஒரு பேட்ஜைப் பெறுவார்கள்</item>
+    </plurals>
     <!-- Action button label for start fragment for gifting a badge -->
     <string name="GiftFlowStartFragment__next">அடுத்தது</string>
     <!-- Title text on choose recipient page for badge gifting -->
     <string name="GiftFlowRecipientSelectionFragment__choose_recipient">பெறுநரைத் தேர்ந்தெடுக்கவும்</string>
     <!-- Title text on confirm gift page -->
-    <string name="GiftFlowConfirmationFragment__confirm_gift">பரிசை உறுதிசெய்யவும்</string>
+    <string name="GiftFlowConfirmationFragment__confirm_donation">நன்கொடையை உறுதிப்படுத்துதல்</string>
     <!-- Heading text specifying who the gift will be sent to -->
     <string name="GiftFlowConfirmationFragment__send_to">அனுப்பவும்</string>
     <!-- Text explaining that gift will be sent to the chosen recipient -->
-    <string name="GiftFlowConfirmationFragment__your_gift_will_be_sent_in">உங்கள் பரிசு பெறுநருக்கு 1 -க்கு 1 செய்தியில் அனுப்பப்படும். உங்கள் சொந்த செய்தியை கீழே சேர்க்கவும்.</string>
+    <string name="GiftFlowConfirmationFragment__the_recipient_will_be_notified">1 இல் 1 செய்தியில் நன்கொடை பெறுபவருக்கு அறிவிக்கப்படும். உங்கள் சொந்த செய்தியை கீழே சேர்க்கவும்.</string>
     <!-- Text explaining that this gift is a one time donation -->
     <string name="GiftFlowConfirmationFragment__one_time_donation">ஒரு முறைக்கான நன்கொடை</string>
     <!-- Hint for add message input -->
@@ -4996,27 +5088,27 @@
     <!-- Displayed in the dialog while verifying the chosen recipient -->
     <string name="GiftFlowConfirmationFragment__verifying_recipient">பெறுநரைச் சரிபார்க்கப்படுகிறது…</string>
     <!-- Title for sheet shown when opening a redeemed gift -->
-    <string name="ViewReceivedGiftBottomSheet__s_sent_you_a_gift">%1$s உங்களுக்கு ஒரு பரிசை அனுப்பியுள்ளார்</string>
+    <string name="ViewReceivedGiftBottomSheet__s_made_a_donation_for_you">%1$s உங்களுக்காக நன்கொடை அளித்துள்ளார்</string>
     <!-- Title for sheet shown when opening a sent gift -->
     <string name="ViewSentGiftBottomSheet__thanks_for_your_support">உங்கள் ஆதரவுக்கு நன்றி!</string>
     <!-- Description for sheet shown when opening a redeemed gift -->
-    <string name="ViewReceivedGiftBottomSheet__youve_received_a_gift_badge">%1$s இடமிருந்து கிஃப்ட் பேட்ஜைப் பெற்றுள்ளீர்கள்! உங்கள் சுயவிவரத்தில் இந்த பேட்ஜைக் காண்பிப்பதன் மூலம் விழிப்புணர்வை உருவாக்க சிக்னலுக்கு உதவுங்கள்.</string>
+    <string name="ViewReceivedGiftBottomSheet__s_made_a_donation_to_signal">உங்கள் சார்பாக Signalக்கு %1$s நன்கொடை அளித்துள்ளார்! உங்கள் புரொஃபைலில் Signalக்கான உங்கள் ஆதரவைக் காட்டுங்கள்.</string>
     <!-- Description for sheet shown when opening a sent gift -->
-    <string name="ViewSentGiftBottomSheet__youve_gifted_a_badge">நீங்கள் %1$sக்கு ஒரு பேட்ஜை பரிசளித்துள்ளீர்கள். அவர்கள் ஏற்றுக்கொண்டால், அவர்களின் பேட்ஜைக் காட்ட அல்லது மறைக்க அவர்களுக்கு விருப்பம் வழங்கப்படும்.</string>
+    <string name="ViewSentGiftBottomSheet__youve_made_a_donation_to_signal">%1$s சார்பாக Signalக்கு நன்கொடை அளித்துள்ளீர்கள். அவர்களின் புரொஃபைலில் தங்கள் ஆதரவைக் காட்ட அவர்களுக்கு விருப்பம் வழங்கப்படும்.</string>
     <!-- Primary action for pending gift sheet to redeem badge now -->
     <string name="ViewReceivedGiftSheet__redeem">மீட்டெடு</string>
     <!-- Primary action for pending gift sheet to redeem badge later -->
     <string name="ViewReceivedGiftSheet__not_now">இப்போது இல்லை</string>
     <!-- Dialog text while redeeming a gift -->
-    <string name="ViewReceivedGiftSheet__redeeming_gift">பரிசு மீட்டெடுக்கப்படுகிறது…</string>
+    <string name="ViewReceivedGiftSheet__redeeming_badge">பேட்ஜை ரிடீம் செய்கிறது…</string>
     <!-- Snackbar text when user presses "not now" on redemption sheet -->
     <string name="ConversationFragment__you_can_redeem_your_badge_later">உங்கள் பேட்ஜை பின்னர் நீங்கள் மீட்டெடுக்கலாம்.</string>
     <!-- Description text in gift thanks sheet -->
-    <string name="GiftThanksSheet__youve_gifted_a_badge_to_s">நீங்கள் %1$sக்கு ஒரு பேட்ஜை பரிசளித்துள்ளீர்கள். அவர்கள் ஏற்றுக்கொண்டால், அவர்களின் பேட்ஜைக் காட்ட அல்லது மறைக்க அவர்களுக்கு விருப்பம் வழங்கப்படும்.</string>
+    <string name="GiftThanksSheet__youve_made_a_donation">%1$s சார்பாக Signalக்கு நன்கொடை அளித்துள்ளீர்கள். அவர்களின் ப்ரொஃபைலில் தங்கள் ஆதரவைக் காட்ட அவர்களுக்கு விருப்பம் வழங்கப்படும்.</string>
     <!-- Expired gift sheet title -->
-    <string name="ExpiredGiftSheetConfiguration__your_gift_badge_has_expired">உங்களது கிஃப்ட் பேட்ஜ் காலாவதியாகிவிட்டது</string>
+    <string name="ExpiredGiftSheetConfiguration__your_badge_has_expired">உங்களது பேட்ஜ் காலாவதியாகிவிட்டது</string>
     <!-- Expired gift sheet top description text -->
-    <string name="ExpiredGiftSheetConfiguration__your_gift_badge_has_expired_and_is">உங்கள் கிஃப்ட் பேட்ஜ் காலாவதியானது, மற்றும் உங்கள் சுயவிவரத்தில் உள்ள மற்றவர்களுக்கு இனியும் அது காட்டப்படாது.</string>
+    <string name="ExpiredGiftSheetConfiguration__your_badge_has_expired_and_is">உங்கள் பேட்ஜ் காலாவதியானது, மற்றும் உங்கள் ப்ரொஃபைலில் உள்ள மற்றவர்களுக்கு இனியும் அது காட்டப்படாது.</string>
     <!-- Expired gift sheet bottom description text -->
     <string name="ExpiredGiftSheetConfiguration__to_continue">உங்களுக்காக உருவாக்கப்பட்ட தொழில்நுட்பத்தை தொடர்ந்து ஆதரிக்க, மாதாந்திர காப்பாளராக மாற கருத்தில் கொள்ளவும்.</string>
     <!-- Expired gift sheet make a monthly donation button -->
@@ -5070,12 +5162,12 @@
     <string name="ContactSearchMediator__delete_the_custom">\"%1$s\" தனிப்பயன் ஸ்டோரியை நீக்க வேண்டுமா?</string>
     <!-- Dialog action item for deleting a custom story -->
     <string name="ContactSearchMediator__delete">நீக்கு</string>
-    <!-- Gift expiry days remaining -->
+    <!-- Donation for a friend expiry days remaining -->
     <plurals name="Gifts__d_days_remaining">
         <item quantity="one">%1$d நாட்கள் மீதமுள்ளது</item>
         <item quantity="other">%1$d நாட்கள் மீதமுள்ளது</item>
     </plurals>
-    <!-- Gift expiry hours remaining -->
+    <!-- Donation for a friend expiry hours remaining -->
     <plurals name="Gifts__d_hours_remaining">
         <item quantity="one">%1$d மணிநேரம் மீதமுள்ளது</item>
         <item quantity="other">%1$d மணிநேரம் மீதமுள்ளது</item>
@@ -5085,7 +5177,7 @@
         <item quantity="one">%1$d நிமிடம் மீதமுள்ளது</item>
         <item quantity="other">%1$d நிமிடங்கள் மீதமுள்ளது</item>
     </plurals>
-    <!-- Gift expiry expired -->
+    <!-- Donation for a friend expiry expired -->
     <string name="Gifts__expired">காலாவதியாகிவிட்டது</string>
 
     <!-- Label indicating that a user can tap to advance to the next post in a story -->
@@ -5329,9 +5421,9 @@
     <!-- Phase 1 Small megaphone title indicating sms is going away -->
     <string name="SmsExportMegaphone__sms_support_going_away">எஸ்.எம்.எஸ் ஆதரவு நிறுத்தப்படுகிறது</string>
     <!-- Phase 1 small megaphone description indicating sms is going away -->
-    <string name="SmsExportMegaphone__sms_support_will_be_removed_soon_to_focus_on_encrypted_messaging">மறைகுறியாக்கப்பட்ட செய்தியிடலில் கவனம் செலுத்த எஸ்.எம்.எஸ் ஆதரவு விரைவில் அகற்றப்படும்.</string>
+    <string name="SmsExportMegaphone__dont_worry_encrypted_signal_messages_will_continue_to_work">கவலை வேண்டாம், குறியாக்கம் செய்யப்பட்ட Signal மெசேஜ்கள் தொடர்ந்து வேலை செய்யும்.</string>
     <!-- Phase 1 small megaphone button that takes the user to the sms export flow -->
-    <string name="SmsExportMegaphone__export_sms">எஸ்எம்எஸ்-ஐ ஏற்றுமதி செய்</string>
+    <string name="SmsExportMegaphone__continue">தொடர்க</string>
     <!-- Title for screen shown after sms export has completed -->
     <string name="ExportSmsCompleteFragment__export_complete">ஏற்றுமதி முடிந்தது</string>
     <!-- Button to continue to next screen -->
@@ -5388,8 +5480,8 @@
     </plurals>
     <!-- Button label for paying with a credit card -->
     <string name="GatewaySelectorBottomSheet__credit_or_debit_card">கிரெடிட் அல்லது டெபிட் கார்டு</string>
-    <!-- Sheet summary when giving a gift -->
-    <string name="GatewaySelectorBottomSheet__send_a_gift_badge">ஒரு கிஃப்ட் பேட்ஜை அனுப்பவும்</string>
+    <!-- Sheet summary when giving donating for a friend -->
+    <string name="GatewaySelectorBottomSheet__donate_for_a_friend">நண்பருக்காக நன்கொடை அளிக்கவும்</string>
 
     <!-- StripePaymentInProgressFragment -->
     <string name="StripePaymentInProgressFragment__cancelling">ரத்துசெய்கிறது…</string>
@@ -5441,6 +5533,7 @@
     <string name="GroupStoryEducationSheet__all_group_chat_members">அனைத்து குழு சாட்ஸ் உறுப்பினர்களும் ஸ்டோரி பதில்களைப் பார்க்கலாம்.</string>
     <!-- Button label to dismiss sheet -->
     <string name="GroupStoryEducationSheet__next">அடுத்தது</string>
+    <string name="Registration_country_code_entry_hint">+0</string>
 
     <!-- EOF -->
 
@@ -5448,4 +5541,34 @@
     <string name="PaypalCompleteOrderBottomSheet__donate">நன்கொடையளிக்கவும்</string>
     <string name="PaypalCompleteOrderBottomSheet__payment">கட்டணம்</string>
 
+    <!-- ChatFilter -->
+    <!-- Displayed in a pill at the top of the chat list when it is filtered by unread messages -->
+    <string name="ChatFilter__filtered_by_unread">படிக்காதவை வடிகட்டப்பட்டுள்ளன</string>
+    <!-- Displayed underneath the filter circle at the top of the chat list when the user pulls at a very low velocity -->
+    <string name="ChatFilter__pull_to_filter">வடிகட்ட இழுக்கவும்</string>
+    <!-- Displayed in the "clear filter" item in the chat feed if the user opened the filter from the overflow menu -->
+    <string name="ChatFilter__tip_pull_down">உதவிக்குறிப்பு: வடிகட்ட சாட் பட்டியலை கீழே இழுக்கவும்</string>
+
+    <!-- Title for screen describing that sms support is going to be removed soon -->
+    <string name="SmsRemoval_title_going_away">SMS ஆதரவு நிறுத்தப்படுகிறது</string>
+    <!-- Bullet point message shown on describing screen as first bullet why sms is being removed -->
+    <string name="SmsRemoval_info_bullet_1">Signal செயலியில் SMS மெசேஜ் அனுப்புதலுக்கான ஆதரவு விரைவில் நிறுத்தப்படும்.</string>
+    <!-- Bullet point message shown on describing screen as second bullet why sms is being removed -->
+    <string name="SmsRemoval_info_bullet_2">SMS மெசேஜ்களும் Signal மெசேஜ்களும் வேறுபட்டவை. <b>இது குறியாக்கம் செய்யப்பட்ட Signal மெசேஜைப் பாதிக்காது, அது தொடர்ந்து செயல்படும்.</b></string>
+    <!-- Bullet point message shown on describing screen as third bullet why sms is being removed -->
+    <string name="SmsRemoval_info_bullet_3">உங்கள் SMS மெசேஜ்களை ஏற்றுமதி செய்து புதிய SMS செயலியைத் தேர்வுசெய்யலாம்.</string>
+    <!-- Bullet point message shown on describing screen as first bullet variant why sms is being removed when user is locked out of sms -->
+    <string name="SmsRemoval_info_bullet_1_phase_3">SMS மெசேஜ்களை அனுப்புவதற்கான ஆதரவை Signal அகற்றியுள்ளது.</string>
+    <!-- Button label on sms removal info/megaphone to start the export SMS flow -->
+    <string name="SmsRemoval_export_sms">SMSஐ ஏற்றுமதி செய்</string>
+
+    <!-- Text Formatting -->
+    <!-- Popup menu label for applying bold style -->
+    <string name="TextFormatting_bold">போல்ட்</string>
+    <!-- Popup menu label for applying italic style -->
+    <string name="TextFormatting_italic">Italic</string>
+    <!-- Popup menu label for applying strikethrough style -->
+    <string name="TextFormatting_strikethrough">Strikethrough</string>
+    <!-- Popup menu label for applying monospace font style -->
+    <string name="TextFormatting_monospace">Monospace</string>
 </resources>

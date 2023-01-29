@@ -9,6 +9,7 @@ import android.content.res.ColorStateList
 import android.graphics.drawable.Drawable
 import android.media.AudioManager
 import android.os.Bundle
+import android.text.SpannableString
 import android.text.method.ScrollingMovementMethod
 import android.view.GestureDetector
 import android.view.MotionEvent
@@ -46,12 +47,14 @@ import org.thoughtcrime.securesms.contacts.avatars.FallbackPhoto20dp
 import org.thoughtcrime.securesms.contacts.avatars.GeneratedContactPhoto
 import org.thoughtcrime.securesms.contacts.paged.ContactSearchKey
 import org.thoughtcrime.securesms.conversation.ConversationIntents
+import org.thoughtcrime.securesms.conversation.MessageStyler
 import org.thoughtcrime.securesms.conversation.colors.AvatarColor
 import org.thoughtcrime.securesms.conversation.mutiselect.forward.MultiselectForwardBottomSheet
 import org.thoughtcrime.securesms.conversation.mutiselect.forward.MultiselectForwardFragment
 import org.thoughtcrime.securesms.conversation.mutiselect.forward.MultiselectForwardFragmentArgs
 import org.thoughtcrime.securesms.database.AttachmentTable
 import org.thoughtcrime.securesms.database.model.MediaMmsMessageRecord
+import org.thoughtcrime.securesms.database.model.databaseprotos.BodyRangeList
 import org.thoughtcrime.securesms.mediapreview.MediaPreviewFragment
 import org.thoughtcrime.securesms.mediapreview.VideoControlsDelegate
 import org.thoughtcrime.securesms.mms.GlideApp
@@ -803,8 +806,14 @@ class StoryViewerPageFragment :
 
   @SuppressLint("SetTextI18n")
   private fun presentCaption(caption: TextView, largeCaption: TextView, largeCaptionOverlay: View, storyPost: StoryPost) {
-    val displayBody: String = if (storyPost.content is StoryPost.Content.AttachmentContent) {
-      storyPost.content.attachment.caption ?: ""
+    val displayBody: CharSequence = if (storyPost.content is StoryPost.Content.AttachmentContent) {
+      val displayBodySpan = SpannableString(storyPost.content.attachment.caption ?: "")
+      val ranges: BodyRangeList? = storyPost.conversationMessage.messageRecord.messageRanges
+      if (ranges != null && displayBodySpan.isNotEmpty()) {
+        MessageStyler.style(ranges, displayBodySpan)
+      }
+
+      displayBodySpan
     } else {
       ""
     }
@@ -1184,7 +1193,7 @@ class StoryViewerPageFragment :
       scaleFactor = 1f
       isPerformingEndAnimation = true
       card.animate().scaleX(1f).scaleY(1f).setListener(object : AnimationCompleteListener() {
-        override fun onAnimationEnd(animation: Animator?) {
+        override fun onAnimationEnd(animation: Animator) {
           isPerformingEndAnimation = false
           viewModel.setIsUserScaling(false)
           sharedViewModel.setIsChildScrolling(false)
@@ -1255,7 +1264,7 @@ class StoryViewerPageFragment :
       return true
     }
 
-    override fun onFling(e1: MotionEvent?, e2: MotionEvent?, velocityX: Float, velocityY: Float): Boolean {
+    override fun onFling(e1: MotionEvent, e2: MotionEvent, velocityX: Float, velocityY: Float): Boolean {
       val isSideSwipe = abs(velocityX) > abs(velocityY)
       if (!isSideSwipe) {
         return false

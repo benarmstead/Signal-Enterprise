@@ -33,9 +33,9 @@ import org.thoughtcrime.securesms.color.ViewColorSet
 import org.thoughtcrime.securesms.components.ContactFilterView
 import org.thoughtcrime.securesms.components.TooltipPopup
 import org.thoughtcrime.securesms.components.WrapperDialogFragment
+import org.thoughtcrime.securesms.contacts.paged.ContactSearchAdapter
 import org.thoughtcrime.securesms.contacts.paged.ContactSearchConfiguration
 import org.thoughtcrime.securesms.contacts.paged.ContactSearchError
-import org.thoughtcrime.securesms.contacts.paged.ContactSearchItems
 import org.thoughtcrime.securesms.contacts.paged.ContactSearchKey
 import org.thoughtcrime.securesms.contacts.paged.ContactSearchMediator
 import org.thoughtcrime.securesms.contacts.paged.ContactSearchState
@@ -118,7 +118,16 @@ class MultiselectForwardFragment :
     view.minimumHeight = resources.displayMetrics.heightPixels
 
     contactSearchRecycler = view.findViewById(R.id.contact_selection_list)
-    contactSearchMediator = ContactSearchMediator(this, contactSearchRecycler, FeatureFlags.shareSelectionLimit(), !args.selectSingleRecipient, ContactSearchItems.DisplaySmsTag.DEFAULT, this::getConfiguration, this::filterContacts)
+    contactSearchMediator = ContactSearchMediator(
+      this,
+      FeatureFlags.shareSelectionLimit(),
+      !args.selectSingleRecipient,
+      ContactSearchAdapter.DisplaySmsTag.DEFAULT,
+      this::getConfiguration,
+      this::filterContacts
+    )
+
+    contactSearchRecycler.adapter = contactSearchMediator.adapter
 
     callback = findListener()!!
     disposables.bindTo(viewLifecycleOwner.lifecycle)
@@ -191,7 +200,7 @@ class MultiselectForwardFragment :
 
       shareSelectionAdapter.submitList(contactSelection.mapIndexed { index, key -> ShareSelectionMappingModel(key.requireShareContact(), index == 0) })
 
-      addMessage.visible = !args.forceDisableAddMessage && contactSelection.any { key -> key !is ContactSearchKey.RecipientSearchKey.Story } && args.multiShareArgs.isNotEmpty()
+      addMessage.visible = !args.forceDisableAddMessage && contactSelection.any { key -> !key.requireRecipientSearchKey().isStory } && args.multiShareArgs.isNotEmpty()
 
       if (contactSelection.isNotEmpty() && !bottomBar.isVisible) {
         bottomBar.animation = AnimationUtils.loadAnimation(requireContext(), R.anim.slide_fade_from_bottom)
@@ -237,13 +246,13 @@ class MultiselectForwardFragment :
 
     setFragmentResultListener(CreateStoryWithViewersFragment.REQUEST_KEY) { _, bundle ->
       val recipientId: RecipientId = bundle.getParcelable(CreateStoryWithViewersFragment.STORY_RECIPIENT)!!
-      contactSearchMediator.setKeysSelected(setOf(ContactSearchKey.RecipientSearchKey.Story(recipientId)))
+      contactSearchMediator.setKeysSelected(setOf(ContactSearchKey.RecipientSearchKey(recipientId, true)))
       contactFilterView.clear()
     }
 
     setFragmentResultListener(ChooseGroupStoryBottomSheet.GROUP_STORY) { _, bundle ->
       val groups: Set<RecipientId> = bundle.getParcelableArrayList<RecipientId>(ChooseGroupStoryBottomSheet.RESULT_SET)?.toSet() ?: emptySet()
-      val keys: Set<ContactSearchKey.RecipientSearchKey.Story> = groups.map { ContactSearchKey.RecipientSearchKey.Story(it) }.toSet()
+      val keys: Set<ContactSearchKey.RecipientSearchKey> = groups.map { ContactSearchKey.RecipientSearchKey(it, true) }.toSet()
       contactSearchMediator.addToVisibleGroupStories(keys)
       contactSearchMediator.setKeysSelected(keys)
       contactFilterView.clear()
@@ -350,7 +359,7 @@ class MultiselectForwardFragment :
     dismissibleDialog?.dismiss()
 
     val resultsBundle = Bundle().apply {
-      putParcelableArrayList(RESULT_SELECTION, ArrayList(selectedContacts.map { it.requireParcelable() }))
+      putParcelableArrayList(RESULT_SELECTION, ArrayList(selectedContacts.map { it.requireRecipientSearchKey() }))
     }
 
     callback.setResult(resultsBundle)
@@ -410,7 +419,9 @@ class MultiselectForwardFragment :
         val expandedConfig: ContactSearchConfiguration.ExpandConfig? = if (isSelectedMediaValidForNonStories()) {
           ContactSearchConfiguration.ExpandConfig(
             isExpanded = contactSearchState.expandedSections.contains(ContactSearchConfiguration.SectionKey.STORIES),
-            maxCountWhenNotExpanded = { it + 1 }
+            maxCountWhenNotExpanded = {
+              if (args.isWrappedInBottomSheet) 1 else it + 1
+            }
           )
         } else {
           null
@@ -443,6 +454,14 @@ class MultiselectForwardFragment :
             includeSelf = true
           )
         )
+
+        if (!query.isNullOrEmpty()) {
+          addSection(
+            ContactSearchConfiguration.Section.GroupMembers(
+              includeHeader = true
+            )
+          )
+        }
 
         addSection(
           ContactSearchConfiguration.Section.Groups(
@@ -487,7 +506,7 @@ class MultiselectForwardFragment :
   }
 
   override fun onMyStoryConfigured(recipientId: RecipientId) {
-    contactSearchMediator.setKeysSelected(setOf(ContactSearchKey.RecipientSearchKey.Story(recipientId)))
+    contactSearchMediator.setKeysSelected(setOf(ContactSearchKey.RecipientSearchKey(recipientId, true)))
     contactSearchMediator.refresh()
   }
 
@@ -514,7 +533,7 @@ class MultiselectForwardFragment :
     fun showBottomSheet(supportFragmentManager: FragmentManager, multiselectForwardFragmentArgs: MultiselectForwardFragmentArgs) {
       val fragment = MultiselectForwardBottomSheet()
 
-      showDialogFragment(supportFragmentManager, fragment, multiselectForwardFragmentArgs)
+      showDialogFragment(supportFragmentManager, fragment, multiselectForwardFragmentArgs.copy(isWrappedInBottomSheet = true))
     }
 
     @JvmStatic

@@ -68,7 +68,7 @@ class GiftSendJob private constructor(parameters: Parameters, private val recipi
 
     Log.i(TAG, "Sending gift badge to $recipientId...")
     var didInsert = false
-    MessageSender.send(context, outgoingMessage, thread, false, null) {
+    MessageSender.send(context, outgoingMessage, thread, MessageSender.SendType.SIGNAL, null) {
       didInsert = true
     }
 
@@ -80,7 +80,7 @@ class GiftSendJob private constructor(parameters: Parameters, private val recipi
         Log.i(TAG, "Sending additional message...")
 
         val result = MultiShareSender.sendSync(
-          MultiShareArgs.Builder(setOf(ContactSearchKey.RecipientSearchKey.KnownRecipient(recipientId)))
+          MultiShareArgs.Builder(setOf(ContactSearchKey.RecipientSearchKey(recipientId, false)))
             .withDraftText(trimmedMessage)
             .build()
         )

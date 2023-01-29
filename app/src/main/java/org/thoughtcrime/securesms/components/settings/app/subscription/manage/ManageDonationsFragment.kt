@@ -27,7 +27,6 @@ import org.thoughtcrime.securesms.help.HelpFragment
 import org.thoughtcrime.securesms.keyvalue.SignalStore
 import org.thoughtcrime.securesms.recipients.Recipient
 import org.thoughtcrime.securesms.subscription.Subscription
-import org.thoughtcrime.securesms.util.FeatureFlags
 import org.thoughtcrime.securesms.util.Material3OnScrollHelper
 import org.thoughtcrime.securesms.util.SpanUtil
 import org.thoughtcrime.securesms.util.adapter.mapping.MappingAdapter
@@ -218,7 +217,7 @@ class ManageDonationsFragment :
 
     clickPref(
       title = DSLSettingsText.from(R.string.ManageDonationsFragment__manage_subscription),
-      icon = DSLSettingsIcon.from(R.drawable.ic_person_white_24dp),
+      icon = DSLSettingsIcon.from(R.drawable.symbol_person_24),
       isEnabled = redemptionState != ManageDonationsState.SubscriptionRedemptionState.IN_PROGRESS,
       onClick = {
         findNavController().safeNavigate(ManageDonationsFragmentDirections.actionManageDonationsFragmentToDonateToSignalFragment(DonateToSignalType.MONTHLY))
@@ -245,10 +244,10 @@ class ManageDonationsFragment :
 
     sectionHeaderPref(R.string.ManageDonationsFragment__other_ways_to_give)
 
-    if (FeatureFlags.giftBadgeSendSupport() && Recipient.self().giftBadgesCapability == Recipient.Capability.SUPPORTED) {
+    if (Recipient.self().giftBadgesCapability == Recipient.Capability.SUPPORTED) {
       clickPref(
-        title = DSLSettingsText.from(R.string.ManageDonationsFragment__gift_a_badge),
-        icon = DSLSettingsIcon.from(R.drawable.ic_gift_24),
+        title = DSLSettingsText.from(R.string.ManageDonationsFragment__donate_for_a_friend),
+        icon = DSLSettingsIcon.from(R.drawable.symbol_gift_24),
         onClick = {
           startActivity(Intent(requireContext(), GiftFlowActivity::class.java))
         }
@@ -259,7 +258,7 @@ class ManageDonationsFragment :
   private fun DSLConfiguration.presentBadges() {
     clickPref(
       title = DSLSettingsText.from(R.string.ManageDonationsFragment__badges),
-      icon = DSLSettingsIcon.from(R.drawable.ic_badge_24),
+      icon = DSLSettingsIcon.from(R.drawable.symbol_badge_multi_24),
       onClick = {
         findNavController().safeNavigate(ManageDonationsFragmentDirections.actionManageDonationsFragmentToManageBadges())
       }
@@ -269,7 +268,7 @@ class ManageDonationsFragment :
   private fun DSLConfiguration.presentReceipts() {
     clickPref(
       title = DSLSettingsText.from(R.string.ManageDonationsFragment__donation_receipts),
-      icon = DSLSettingsIcon.from(R.drawable.ic_receipt_24),
+      icon = DSLSettingsIcon.from(R.drawable.symbol_receipt_24),
       onClick = {
         findNavController().safeNavigate(ManageDonationsFragmentDirections.actionManageDonationsFragmentToDonationReceiptListFragment())
       }
@@ -285,7 +284,7 @@ class ManageDonationsFragment :
 
     externalLinkPref(
       title = DSLSettingsText.from(R.string.ManageDonationsFragment__subscription_faq),
-      icon = DSLSettingsIcon.from(R.drawable.ic_help_24),
+      icon = DSLSettingsIcon.from(R.drawable.symbol_help_24),
       linkId = R.string.donate_url
     )
   }

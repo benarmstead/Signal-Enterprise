@@ -19,7 +19,6 @@ import org.thoughtcrime.securesms.contactshare.VCardUtil;
 import org.thoughtcrime.securesms.database.AttachmentTable;
 import org.thoughtcrime.securesms.database.MessageTable;
 import org.thoughtcrime.securesms.database.MessageTable.InsertResult;
-import org.thoughtcrime.securesms.database.MmsTable;
 import org.thoughtcrime.securesms.database.SignalDatabase;
 import org.thoughtcrime.securesms.dependencies.ApplicationDependencies;
 import org.thoughtcrime.securesms.groups.GroupId;
@@ -99,7 +98,7 @@ public class MmsDownloadJob extends BaseJob {
   @Override
   public void onAdded() {
     if (automatic && KeyCachingService.isLocked(context)) {
-      SignalDatabase.mms().markIncomingNotificationReceived(threadId);
+      SignalDatabase.messages().markIncomingNotificationReceived(threadId);
       ApplicationDependencies.getMessageNotifier().updateNotification(context);
     }
   }
@@ -110,8 +109,8 @@ public class MmsDownloadJob extends BaseJob {
       throw new NotReadyException();
     }
 
-    MessageTable                           database     = SignalDatabase.mms();
-    Optional<MmsTable.MmsNotificationInfo> notification = database.getNotification(messageId);
+    MessageTable                               database     = SignalDatabase.messages();
+    Optional<MessageTable.MmsNotificationInfo> notification = database.getNotification(messageId);
 
     if (!notification.isPresent()) {
       Log.w(TAG, "No notification for ID: " + messageId);
@@ -127,7 +126,7 @@ public class MmsDownloadJob extends BaseJob {
         throw new MmsException("Not registered");
       }
 
-      database.markDownloadState(messageId, MmsTable.Status.DOWNLOAD_CONNECTING);
+      database.markDownloadState(messageId, MessageTable.MmsStatus.DOWNLOAD_CONNECTING);
 
       String contentLocation = notification.get().getContentLocation();
       byte[] transactionId   = new byte[0];
@@ -153,25 +152,25 @@ public class MmsDownloadJob extends BaseJob {
       storeRetrievedMms(contentLocation, messageId, threadId, retrieveConf, notification.get().getSubscriptionId(), notification.get().getFrom());
     } catch (ApnUnavailableException e) {
       Log.w(TAG, e);
-      handleDownloadError(messageId, threadId, MmsTable.Status.DOWNLOAD_APN_UNAVAILABLE,
+      handleDownloadError(messageId, threadId, MessageTable.MmsStatus.DOWNLOAD_APN_UNAVAILABLE,
                           automatic);
     } catch (MmsException e) {
       Log.w(TAG, e);
       handleDownloadError(messageId, threadId,
-                          MmsTable.Status.DOWNLOAD_HARD_FAILURE,
+                          MessageTable.MmsStatus.DOWNLOAD_HARD_FAILURE,
                           automatic);
     } catch (MmsRadioException | IOException e) {
       Log.w(TAG, e);
       handleDownloadError(messageId, threadId,
-                          MmsTable.Status.DOWNLOAD_SOFT_FAILURE,
+                          MessageTable.MmsStatus.DOWNLOAD_SOFT_FAILURE,
                           automatic);
     }
   }
 
   @Override
   public void onFailure() {
-    MessageTable database = SignalDatabase.mms();
-    database.markDownloadState(messageId, MmsTable.Status.DOWNLOAD_SOFT_FAILURE);
+    MessageTable database = SignalDatabase.messages();
+    database.markDownloadState(messageId, MessageTable.MmsStatus.DOWNLOAD_SOFT_FAILURE);
 
     if (automatic) {
       database.markIncomingNotificationReceived(threadId);
@@ -189,7 +188,7 @@ public class MmsDownloadJob extends BaseJob {
                                  int subscriptionId, @Nullable RecipientId notificationFrom)
       throws MmsException
   {
-    MessageTable      database = SignalDatabase.mms();
+    MessageTable      database = SignalDatabase.messages();
     Optional<GroupId> group    = Optional.empty();
     Set<RecipientId>  members     = new HashSet<>();
     String            body        = null;
@@ -246,7 +245,7 @@ public class MmsDownloadJob extends BaseJob {
     }
 
     if (members.size() > 2) {
-      List<RecipientId> recipients = new ArrayList<>(members);
+      Set<RecipientId> recipients = new HashSet<>(members);
       group = Optional.of(SignalDatabase.groups().getOrCreateMmsGroupForMembers(recipients));
     }
     IncomingMediaMessage   message      = new IncomingMediaMessage(from, group, body, TimeUnit.SECONDS.toMillis(retrieved.getDate()), -1, System.currentTimeMillis(), attachments, subscriptionId, 0, false, false, false, Optional.of(sharedContacts), false, false);
@@ -260,7 +259,7 @@ public class MmsDownloadJob extends BaseJob {
 
   private void handleDownloadError(long messageId, long threadId, int downloadStatus, boolean automatic)
   {
-    MessageTable db = SignalDatabase.mms();
+    MessageTable db = SignalDatabase.messages();
 
     db.markDownloadState(messageId, downloadStatus);
 

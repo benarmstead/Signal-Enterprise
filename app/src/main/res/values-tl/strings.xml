@@ -224,6 +224,8 @@
     <string name="ContactsCursorLoader_recent_chats">Mga kamakailang chat</string>
     <string name="ContactsCursorLoader_contacts">Mga Kontak</string>
     <string name="ContactsCursorLoader_groups">Mga Grupo</string>
+    <!-- Contact search header for individuals who the user has not started a conversation with but is in a group with -->
+    <string name="ContactsCursorLoader_group_members">Mga kasapi ng grupo</string>
     <string name="ContactsCursorLoader_phone_number_search">Maghanap ng numero ng telepono</string>
     <!-- Header for username search -->
     <string name="ContactsCursorLoader_find_by_username">Hanapin gamit ang username</string>
@@ -231,6 +233,10 @@
     <string name="ContactsCursorLoader_my_stories">Stories Ko</string>
     <!-- Text for a button that brings up a bottom sheet to create a new story. -->
     <string name="ContactsCursorLoader_new">Bago</string>
+    <!-- Header for conversation search section labeled "Chats" -->
+    <string name="ContactsCursorLoader__chats">Mga chat</string>
+    <!-- Header for conversation search section labeled "Messages" -->
+    <string name="ContactsCursorLoader__messages">Mga Mensahe</string>
 
     <!-- ContactsDatabase -->
     <string name="ContactsDatabase_message_s">Mensahe %1$s</string>
@@ -593,6 +599,8 @@
     <string name="BackupsPreferenceFragment__create_backup">Lumikha ng backup</string>
     <string name="BackupsPreferenceFragment__last_backup">Huling backup: %1$s</string>
     <string name="BackupsPreferenceFragment__backup_folder">Backup folder</string>
+    <!-- Title for a preference item allowing the user to selected the hour of the day when their chats are backed up. -->
+    <string name="BackupsPreferenceFragment__backup_time">Backup time</string>
     <string name="BackupsPreferenceFragment__verify_backup_passphrase">Iberipika ang passphrase ng backup</string>
     <string name="BackupsPreferenceFragment__test_your_backup_passphrase">Subukan ang iyong passphrase ng backup at iberipika na magkatulad ito</string>
     <string name="BackupsPreferenceFragment__turn_on">Buksan</string>
@@ -622,6 +630,50 @@
     <string name="DateUtils_minutes_ago">%1$dm</string>
     <string name="DateUtils_today">Ngayong araw</string>
     <string name="DateUtils_yesterday">Kahapon</string>
+    <!-- When scheduling a message, %1$s replaced with either today, tonight, or tomorrow. %2$s replaced with the time. e.g. Tonight at 9:00pm -->
+    <string name="DateUtils_schedule_at">%1$s at %2$s</string>
+    <!-- Used when getting a time in the future. For example, Tomorrow at 9:00pm -->
+    <string name="DateUtils_tomorrow">Tomorrow</string>
+    <!-- Used in the context: Tonight at 9:00pm for example. Specifically this is after 7pm -->
+    <string name="DateUtils_tonight">Tonight</string>
+
+    <!-- Scheduled Messages -->
+    <!-- Title for dialog that shows all the users scheduled messages for a chat -->
+    <string name="ScheduledMessagesBottomSheet__schedules_messages">Scheduled messages</string>
+    <!-- Option when scheduling a message to select a specific date and time to send a message -->
+    <string name="ScheduledMessages_pick_time">Pick Date &amp; Time</string>
+    <!-- Title for dialog explaining to users how the scheduled messages work -->
+    <string name="ScheduleMessageFTUXBottomSheet__title">Scheduled messages</string>
+    <!-- Disclaimer text for scheduled messages explaining to users that the scheduled messages will only send if connected to the internet -->
+    <string name="ScheduleMessageFTUXBottomSheet__disclaimer">When you send a scheduled message, make sure your device will be on and connected to the internet at the time of sending. If not, your message will send when your device reconnects.</string>
+    <!-- Confirmation button text acknowledging the user understands the disclaimer -->
+    <string name="ScheduleMessageFTUXBottomSheet__okay">Okay</string>
+    <!-- Title for section asking users to allow alarm permissions for scheduled messages -->
+    <string name="ScheduleMessageFTUXBottomSheet_enable_title">To enable message scheduling:</string>
+    <!-- Title for dialog asking users to allow alarm permissions for scheduled messages -->
+    <string name="ReenableScheduleMessagesDialogFragment_reenable_title">To re-enable message scheduling:</string>
+    <!-- Title of dialog with a calendar to select the date the user wants to schedule a message. -->
+    <string name="ScheduleMessageTimePickerBottomSheet__select_date_title">Select date</string>
+    <!-- Title of dialog with a clock to select the time at which the user wants to schedule a message. -->
+    <string name="ScheduleMessageTimePickerBottomSheet__select_time_title">Select time</string>
+    <!-- Title of dialog that allows user to set the time and day that their message will be sent -->
+    <string name="ScheduleMessageTimePickerBottomSheet__dialog_title">Schedule message</string>
+    <!-- Text for confirmation button when scheduling messages that allows the user to confirm and schedule the sending time -->
+    <string name="ScheduleMessageTimePickerBottomSheet__schedule_send">Schedule send</string>
+
+    <!-- Disclaimer in message scheduling dialog. %1$s replaced with a GMT offset (e.g. GMT-05:00), and %2$s is replaced with the time zone name (e.g. Eastern Standard Time) -->
+    <string name="ScheduleMessageTimePickerBottomSheet__timezone_disclaimer">All times in (%1$s) %2$s</string>
+
+    <!-- Context menu option to send a scheduled message now -->
+    <string name="ScheduledMessagesBottomSheet_menu_send_now">Send now</string>
+    <!-- Context menu option to reschedule a selected message -->
+    <string name="ScheduledMessagesBottomSheet_menu_reschedule">Reschedule</string>
+    <!-- Button in dialog asking user if they are sure they want to delete the selected scheduled message -->
+    <string name="ScheduledMessagesBottomSheet_delete_dialog_action">Burahin</string>
+    <!-- Button in dialog asking user if they are sure they want to delete the selected scheduled message -->
+    <string name="ScheduledMessagesBottomSheet_delete_dialog_message">Delete selected scheduled message?</string>
+    <!-- Progress message shown while deleting selected scheduled message -->
+    <string name="ScheduledMessagesBottomSheet_deleting_progress_message">Deleting scheduled message…</string>
 
     <!-- DecryptionFailedDialog -->
     <string name="DecryptionFailedDialog_chat_session_refreshed">Chat session refreshed</string>
@@ -1152,11 +1204,29 @@
     <string name="MessageRecord_left_group">Nakaalis ka na sa grupo.</string>
     <string name="MessageRecord_you_updated_group">In-update mo ang grupo.</string>
     <string name="MessageRecord_the_group_was_updated">Ang group na ito\'y updated na.</string>
-    <string name="MessageRecord_you_called_date">Tumawag ka noong · %1$s</string>
-    <string name="MessageRecord_missed_audio_call_date">Missed audio call · %1$s</string>
-    <string name="MessageRecord_missed_video_call_date">Missed video call · %1$s</string>
+    <!-- Update message shown when placing an outgoing 1:1 voice/audio call and it\'s answered by the other party -->
+    <string name="MessageRecord_outgoing_voice_call">Outgoing voice call</string>
+    <!-- Update message shown when placing an outgoing 1:1 video call and it\'s answered by the other party -->
+    <string name="MessageRecord_outgoing_video_call">Outgoing video call</string>
+    <!-- Update message shown when placing an outgoing 1:1 voice/audio call and it\'s not answered by the other party -->
+    <string name="MessageRecord_unanswered_voice_call">\'Di nasagot na voice call</string>
+    <!-- Update message shown when placing an outgoing 1:1 video call and it\'s not answered by the other party -->
+    <string name="MessageRecord_unanswered_video_call">\'Di nasagot na video call</string>
+    <!-- Update message shown when receiving an incoming 1:1 voice/audio call and it\'s answered -->
+    <string name="MessageRecord_incoming_voice_call">Incoming voice call</string>
+    <!-- Update message shown when receiving an incoming 1:1 video call and answered -->
+    <string name="MessageRecord_incoming_video_call">Incoming video call</string>
+    <!-- Update message shown when receiving an incoming 1:1 voice/audio call and not answered -->
+    <string name="MessageRecord_missed_voice_call">Missed voice call</string>
+    <!-- Update message shown when receiving an incoming 1:1 video call and not answered -->
+    <string name="MessageRecord_missed_video_call">Missed video call</string>
+    <!-- Update message shown when receiving an incoming 1:1 voice/audio call and explicitly declined -->
+    <string name="MessageRecord_you_declined_a_voice_call">Nag-decline ka sa voice call</string>
+    <!-- Update message shown when receiving an incoming 1:1 video call and explicitly declined -->
+    <string name="MessageRecord_you_declined_a_video_call">Nag-decline ka sa video call</string>
+    <!-- Call update formatter string to place the update message next to a time stamp. e.g., \'Incoming voice call · 11:11am\' -->
+    <string name="MessageRecord_call_message_with_date">%1$s · %2$s</string>
     <string name="MessageRecord_s_updated_group">In-update ni %1$s ang grupo.</string>
-    <string name="MessageRecord_s_called_you_date">Tinawagan ka ni %1$s · %2$s</string>
     <string name="MessageRecord_s_joined_signal">Nasa Signal si %1$s!</string>
     <string name="MessageRecord_you_disabled_disappearing_messages">Dinisable mo ang mga naglalahong mensahe.</string>
     <string name="MessageRecord_s_disabled_disappearing_messages">Dinisable ni %1$s ang mga naglalahong mensahe.</string>
@@ -1344,10 +1414,12 @@
     <string name="MessageRecord_s_changed_their_phone_number">Pinalitan ni %1$s ang kanyang phone number.</string>
     <!-- Update item message shown in the release channel when someone is already a sustainer so we ask them if they want to boost. -->
     <string name="MessageRecord_like_this_new_feature_help_support_signal_with_a_one_time_donation">Nagustuhan mo ba bagong feature na ito? Suportahan ang Signal sa pamamagitan ng one-time donation.</string>
-    <!-- Update item message shown when we merge two threads together -->
+    <!-- Update item message shown when we merge two threads together. First placeholder is a name, second placeholder is a phone number. -->
     <string name="MessageRecord_your_message_history_with_s_and_their_number_s_has_been_merged">Pinagsama na ang inyong message history ni %1$s at ang kanyang number na %2$s.</string>
-    <!-- Update item message shown when we merge two threads together and we don\'t know the phone number of the other thread -->
+    <!-- Update item message shown when we merge two threads together and we don\'t know the phone number of the other thread. The placeholder is a person\'s name. -->
     <string name="MessageRecord_your_message_history_with_s_and_another_chat_has_been_merged">Pinagsama na ang iyong message history ni %1$s at isa pa niyang chat.</string>
+    <!-- Update item message shown when you find out a phone number belongs to a person you had a conversation with. First placeholder is a phone number, second placeholder is a name. -->
+    <string name="MessageRecord_s_belongs_to_s">Kay %2$s ang %1$s</string>
     <!-- Message to notify sender that activate payments request has been sent to the recipient -->
     <string name="MessageRecord_you_sent_request">Nag-send ka ng request kay %1$s para i-activate ang Payments</string>
     <!-- Request message from recipient to activate payments -->
@@ -1676,8 +1748,7 @@
     <string name="RegistrationActivity_select_your_country">Piliin ang iyong bansa</string>
     <string name="RegistrationActivity_you_must_specify_your_country_code">Kailangan mong tukuyin ang iyong country code
     </string>
-    <string name="RegistrationActivity_you_must_specify_your_phone_number">Kailangan mong tukuyin ang numero ng iyong telepono
-    </string>
+    <string name="RegistrationActivity_please_enter_a_valid_phone_number_to_register">Please enter a valid phone number to register.</string>
     <string name="RegistrationActivity_invalid_number">Hindi valid ang numero</string>
     <string name="RegistrationActivity_the_number_you_specified_s_is_invalid">Ang numerong iyong tinukoy (%1$s) ay hindi valid.
     </string>
@@ -1707,7 +1778,6 @@
     <string name="RegistrationActivity_next">Susunod</string>
     <string name="RegistrationActivity_continue">Magpatuloy</string>
     <string name="RegistrationActivity_take_privacy_with_you_be_yourself_in_every_message">Dalhin ang privacy kahit saan.\nMaging ikaw sa bawat mensahe.</string>
-    <string name="RegistrationActivity_enter_your_phone_number_to_get_started">Ilagay ang numero ng iyong telepono upang makapagsimula</string>
     <string name="RegistrationActivity_enter_your_phone_number">Ilagay ang numero ng iyong telepono</string>
     <string name="RegistrationActivity_you_will_receive_a_verification_code">Makakatanggap ka ng verification code. Maaaring mailapat ang mga singilin ng Carrier.</string>
     <string name="RegistrationActivity_enter_the_code_we_sent_to_s">Ilagay ang code na ipinadala namin sa %1$s</string>
@@ -1715,7 +1785,10 @@
 
     <string name="RegistrationActivity_phone_number_description">Numero ng telepono</string>
     <string name="RegistrationActivity_country_code_description">Country code</string>
+    <string name="RegistrationActivity_country_code_hint">Country</string>
     <string name="RegistrationActivity_call">Tawag</string>
+    <string name="RegistrationActivity_verification_code">Verification Code</string>
+    <string name="RegistrationActivity_resend_code">Resend Code</string>
 
     <!-- RegistrationLockV2Dialog -->
     <string name="RegistrationLockV2Dialog_turn_on_registration_lock">Paganahin ang Registration Lock?</string>
@@ -1837,10 +1910,6 @@
     <string name="ThreadRecord_left_the_group">Umalis sa grupo</string>
     <string name="ThreadRecord_secure_session_reset">Na-reset ang secure na sesyon.</string>
     <string name="ThreadRecord_draft">Draft:</string>
-    <string name="ThreadRecord_called">Tumawag ka</string>
-    <string name="ThreadRecord_called_you">Tinawagan ka</string>
-    <string name="ThreadRecord_missed_audio_call">Missed audio call</string>
-    <string name="ThreadRecord_missed_video_call">Missed video call</string>
     <string name="ThreadRecord_media_message">Mensaheng media</string>
     <string name="ThreadRecord_sticker">Sticker</string>
     <string name="ThreadRecord_view_once_photo">View-once na larawan</string>
@@ -1873,11 +1942,11 @@
     <string name="ThreadRecord_video">Video</string>
     <string name="ThreadRecord_chat_session_refreshed">Chat session refreshed</string>
     <!-- Displayed in the notification when the user is sent a gift -->
-    <string name="ThreadRecord__you_received_a_gift">Naka-receive ka ng gift</string>
+    <string name="ThreadRecord__s_donated_for_you">Nag-donate si %1$s para sa\'yo</string>
     <!-- Displayed in the notification when the user sends a gift -->
-    <string name="ThreadRecord__you_sent_a_gift">Nag-send ka ng gift</string>
+    <string name="ThreadRecord__you_donated_for_s">Nag-donate ka para kay %1$s</string>
     <!-- Displayed in the notification when the user has opened a received gift -->
-    <string name="ThreadRecord__you_redeemed_a_gift_badge">Nag-redeem ka ng gift badge</string>
+    <string name="ThreadRecord__you_redeemed_a_badge">Nag-redeem ka ng badge</string>
     <!-- Displayed in the conversation list when someone reacted to your story -->
     <string name="ThreadRecord__reacted_s_to_your_story">Nag-react ng %1$s sa story mo</string>
     <!-- Displayed in the conversation list when you reacted to someone\'s story -->
@@ -1984,13 +2053,15 @@
     <string name="MediaPreviewActivity_s_to_you">%1$s to you</string>
     <string name="MediaPreviewActivity_media_no_longer_available">Hindi na available ang media.</string>
     <!-- Notifying the user that the device has encountered a technical issue and is unable to render a video. -->
-    <string name="MediaPreviewActivity_unable_to_play_media">Unable to play media.</string>
+    <string name="MediaPreviewActivity_unable_to_play_media">Hindi ma-play ang media.</string>
     <string name="MediaPreviewActivity_error_finding_message">Nagka-error sa paghahanap ng message.</string>
     <string name="MediaPreviewActivity_cant_find_an_app_able_to_share_this_media">Walang makitang app na pwedeng mag-share ng media na ito.</string>
     <string name="MediaPreviewActivity_dismiss_due_to_error">Isara</string>
     <string name="MediaPreviewFragment_edit_media_error">Media Error</string>
     <!-- This is displayed as a toast notification when we encounter an error deleting a message, including potentially on other people\'s devices -->
     <string name="MediaPreviewFragment_media_delete_error">Nagka-error sa Pag-delete ng Message, Maaaring Narito Pa Ito</string>
+    <!-- A suffix to be attached to truncated captions that the user may tap onto to view the entire text caption -->
+    <string name="MediaPreviewFragment_see_more">%1$s… <b>Read More</b></string>
 
     <!-- MessageNotifier -->
     <string name="MessageNotifier_d_new_messages_in_d_conversations">%1$d bagong mensahe sa %2$d pag-uusap</string>
@@ -2055,6 +2126,8 @@
 
     <!-- SearchToolbar -->
     <string name="SearchToolbar_search">Maghanap</string>
+    <!-- Hint when searching filtered chat content -->
+    <string name="SearchToolbar_search_unread_chats">I-search ang unread chats</string>
     <string name="SearchToolbar_search_for_conversations_contacts_and_messages">Maghanap ng mga pag-uusap, kontak, at mensahe</string>
 
     <!-- Material3 Search Toolbar -->
@@ -2085,6 +2158,9 @@
     <!-- UnauthorizedReminder -->
     <string name="UnauthorizedReminder_device_no_longer_registered">Ang device ay hindi na rehistrado</string>
     <string name="UnauthorizedReminder_this_is_likely_because_you_registered_your_phone_number_with_Signal_on_a_different_device">Malamang na ito ay dahil inirehistro mo ang numero ng iyong telepono sa Signal sa ibang device. Pumindot para magparehistrong muli.</string>
+
+    <!-- Push notification when the app is forcibly logged out by the server. -->
+    <string name="LoggedOutNotification_you_have_been_logged_out">Na-log out ka sa Signal sa device na ito.</string>
 
     <!-- EnclaveFailureReminder -->
     <!-- Banner message to update app to use payments -->
@@ -2176,6 +2252,8 @@
     <string name="conversation_activity__type_message_push">Mensahe sa Signal</string>
     <string name="conversation_activity__type_message_sms_insecure">Hindi secure na SMS</string>
     <string name="conversation_activity__type_message_mms_insecure">Hindi secure na MMS</string>
+    <!-- Option in send button context menu to schedule the message instead of sending it directly -->
+    <string name="conversation_activity__option_schedule_message">Schedule message</string>
     <string name="conversation_activity__from_sim_name">Mula kay %1$s</string>
     <string name="conversation_activity__sim_n">SIM %1$d</string>
     <string name="conversation_activity__send">Ipadala</string>
@@ -2248,7 +2326,7 @@
     <!-- Label indicating that the story being replied to no longer exists -->
     <string name="QuoteView_no_longer_available">Hindi na available</string>
     <!-- Label for quoted gift -->
-    <string name="QuoteView__gift">Gift</string>
+    <string name="QuoteView__donation_for_a_friend">Donation para sa kaibigan</string>
 
     <!-- conversation_fragment -->
     <string name="conversation_fragment__scroll_to_the_bottom_content_description">Mag-scroll pababa</string>
@@ -3064,6 +3142,16 @@
     <!-- conversation_callable_insecure -->
     <string name="conversation_add_to_contacts__menu_add_to_contacts">Idagdag sa mga kontak</string>
 
+    <!-- conversation scheduled messages bar -->
+
+    <!-- Label for button in a banner to show all messages currently scheduled -->
+    <string name="conversation_scheduled_messages_bar__see_all">Ipakita lahat</string>
+    <!-- Body text for banner to show all scheduled messages for the chat that tells the user how many scheduled messages there are -->
+    <plurals name="conversation_scheduled_messages_bar__number_of_messages">
+        <item quantity="one">%1$d message scheduled</item>
+        <item quantity="other">%1$d messages scheduled</item>
+    </plurals>
+
     <!-- conversation_group_options -->
     <string name="convesation_group_options__recipients_list">Listahan ng mga tatanggap</string>
     <string name="conversation_group_options__delivery">Paghahatid</string>
@@ -3156,11 +3244,13 @@
     <string name="CreateKbsPinFragment__create_a_new_pin">Lumikha ng bagong PIN</string>
     <string name="CreateKbsPinFragment__you_can_choose_a_new_pin_as_long_as_this_device_is_registered">Mapapalitan mo ang iyong PIN hangga\'t rehistrado ang device na ito.</string>
     <string name="CreateKbsPinFragment__create_your_pin">Likhain ang iyong PIN</string>
-    <string name="CreateKbsPinFragment__pins_keep_information_stored_with_signal_encrypted">PINs keep information stored with Signal encrypted kaya ikaw lang ang may access dito. Ang iyong profile, settings, at contacts ay mare-restore when you reinstall. Hindi mo kailangan ng PIN para i-open ang app.</string>
+    <string name="CreateKbsPinFragment__pins_can_help_you_restore_your_account">PINs can help you restore your account and keep your info encrypted with Signal. </string>
     <string name="CreateKbsPinFragment__choose_a_stronger_pin">Pumili ng mas malakas na PIN</string>
 
     <!-- ConfirmKbsPinFragment -->
     <string name="ConfirmKbsPinFragment__pins_dont_match">Hindi tugma ang mga PIN. Subukang muli.</string>
+    <!-- Prompt for the user to repeat entering the PIN in order to help them remember it correctly.   -->
+    <string name="ConfirmKbsPinFragment__re_enter_the_pin_you_just_created">Re-enter the PIN you just created.</string>
     <string name="ConfirmKbsPinFragment__confirm_your_pin">Kumpirmahin ang iyong PIN.</string>
     <string name="ConfirmKbsPinFragment__pin_creation_failed">Nabigo ang paglikha ng PIN</string>
     <string name="ConfirmKbsPinFragment__your_pin_was_not_saved">Ang iyong PIN ay hindi nai-save. Paaalahanan ka namin na lumikha ng PIN sa ibang pagkakataon.</string>
@@ -3300,7 +3390,7 @@
     <!-- Error message shown if a very large attachment is encountered during the backup creation and causes the backup to fail -->
     <string name="LocalBackupJobApi29_your_backup_contains_a_very_large_file">Ang backup mo ay may lamang masyadong malaking file na hindi ma-back up. Mangyaring burahin ito at gumawa ng bagong backup.</string>
     <string name="LocalBackupJobApi29_tap_to_manage_backups">I-tap to manage backups.</string>
-    <string name="RegistrationActivity_wrong_number">Mali ang numero</string>
+    <string name="RegistrationActivity_wrong_number">Wrong number?</string>
     <string name="RegistrationActivity_call_me_instead_available_in">Sa halip ay tawagan ako \n (Maaari sa %1$02d:%2$02d)</string>
     <string name="RegistrationActivity_contact_signal_support">Makipag-ugnayan sa Suporta ng Signal</string>
     <string name="RegistrationActivity_code_support_subject">Pagpaparehistro sa Signal - Verification Code para sa Android</string>
@@ -4271,7 +4361,8 @@
     <string name="SelectFeaturedBadgeFragment__you_must_select_a_badge">Kailangan mong pumili ng badge</string>
     <string name="SelectFeaturedBadgeFragment__failed_to_update_profile">Failed to update profile</string>
 
-    <string name="ViewBadgeBottomSheetDialogFragment__become_a_sustainer">Become a sustainer</string>
+    <!-- Displayed on primary button in the bottom sheet as a call-to-action to launch into the donation flow -->
+    <string name="ViewBadgeBottomSheetDialogFragment__donate_now">Mag-donate na</string>
     <!-- Title of a page in the bottom sheet. Placeholder is a user\'s short-name -->
     <string name="ViewBadgeBottomSheetDialogFragment__s_supports_signal">Sinusuportahan ni %1$s ang Signal</string>
     <!-- Description of a page in the bottom sheet of a monthly badge. Placeholder is a user\'s short-name -->
@@ -4335,7 +4426,7 @@
     <!-- Preference heading for other ways to donate -->
     <string name="ManageDonationsFragment__other_ways_to_give">Other ways to give</string>
     <!-- Preference label to launch badge gifting -->
-    <string name="ManageDonationsFragment__gift_a_badge">Magregalo ng Badge</string>
+    <string name="ManageDonationsFragment__donate_for_a_friend">Mag-donate para sa Kaibigan</string>
 
     <string name="Boost__enter_custom_amount">Maglagay ng Custom Amount</string>
     <string name="Boost__one_time_contribution">One-time contribution</string>
@@ -4391,10 +4482,10 @@
     <string name="DonationsErrors__failed_to_validate_badge">Hindi na-validate ang badge</string>
     <!-- Displayed when badge credential couldn\'t be verified -->
     <string name="DonationsErrors__could_not_validate">Hindi ma-validate ang server response. Please contact support.</string>
-    <!-- Displayed as title when some generic error happens during gift badge sending -->
-    <string name="DonationsErrors__failed_to_send_gift_badge">Hindi na-send ang gift badge</string>
-    <!-- Displayed as message when some generic error happens during gift badge sending -->
-    <string name="DonationsErrors__could_not_send_gift_badge">Hindi ma-send ang gift badge. Paki contact ang support.</string>
+    <!-- Displayed as title when some generic error happens during sending donation on behalf of another user -->
+    <string name="DonationsErrors__donation_failed">Failed ang Donation</string>
+    <!-- Displayed as message when some generic error happens during sending donation on behalf of another user -->
+    <string name="DonationsErrors__your_payment_was_processed_but">Na-process na ang iyong payment pero hindi maipadala ng Signal ang iyong donation message. Kontakin ang support.</string>
     <string name="DonationsErrors__your_badge_could_not">Hindi ma-add ang badge mo sa iyong account, pero baka na-charge ang account mo. Paki contact ang support.</string>
     <string name="DonationsErrors__your_payment_is_still">Your payment is still being processed. This can take a few minutes depende sa internet connection mo.</string>
     <string name="DonationsErrors__failed_to_cancel_subscription">Hindi na-cancel ang subscription</string>
@@ -4403,16 +4494,16 @@
     <string name="NetworkFailure__network_error_check_your_connection_and_try_again">Network error. I-check ang iyong internet connection at subukan ulit.</string>
     <string name="NetworkFailure__retry">Subukang muli</string>
     <!-- Displayed as a dialog title when the selected recipient for a gift doesn\'t support gifting -->
-    <string name="DonationsErrors__cant_send_gift">Hindi maipadala ang gift</string>
+    <string name="DonationsErrors__cannot_send_donation">Hindi ma-send ang donation</string>
     <!-- Displayed as a dialog message when the selected recipient for a gift doesn\'t support gifting -->
-    <string name="DonationsErrors__target_does_not_support_gifting">Gumagamit ng version ng Signal na hindi makakatanggap ng gift badges ang taong padadalhan mo. Matatanggap niya lang ito kapag nag-update siya sa pinakabagong version ng app.</string>
-    <!-- Displayed as a dialog title when the user\'s profile could not be fetched, likely due to lack of internet -->
-    <string name="DonationsErrors__couldnt_send_gift">Hindi maipadala ang gift</string>
+    <string name="DonationsErrors__this_user_cant_receive_donations_until">Kailangang i-upgrade ng user na ito ang kanyang Signal app bago siya makatanggap ng donation.</string>
     <!-- Displayed as a dialog message when the user\'s profile could not be fetched, likely due to lack of internet -->
-    <string name="DonationsErrors__please_check_your_network_connection">Hindi maipadala ang iyong gift dahil sa problema sa network. I-check ang iyong connection at subukan ulit.</string>
+    <string name="DonationsErrors__your_donation_could_not_be_sent">Hindi maipadala ang donation mo dahil sa network error. I-check ang iyong connection at subukan ulit.</string>
 
     <!-- Gift message view title -->
-    <string name="GiftMessageView__gift_badge">Gift badge</string>
+    <string name="GiftMessageView__donation_to_s">Donation para kay %1$s</string>
+    <!-- Gift message view title for incoming donations -->
+    <string name="GiftMessageView__s_donated_to_signal_on">Nag-donate sa Signal si %1$s para sa iyo</string>
     <!-- Gift badge redeem action label -->
     <string name="GiftMessageView__redeem">I-redeem</string>
     <!-- Gift badge view action label -->
@@ -4623,7 +4714,7 @@
     <!-- Donation receipts one-time tab label -->
     <string name="DonationReceiptListFragment__one_time">One-time</string>
     <!-- Donation receipts gift tab label -->
-    <string name="DonationReceiptListFragment__gift">Gift</string>
+    <string name="DonationReceiptListFragment__donation_for_a_friend">Donation para sa kaibigan</string>
     <!-- Donation receipts boost row label -->
     <!-- Donation receipts details title -->
     <!-- Donation receipts donation type heading -->
@@ -4973,22 +5064,23 @@
         <item quantity="one">%1$s · %2$d day duration</item>
         <item quantity="other">%1$s · %2$d araw ang haba</item>
     </plurals>
-    <!-- Tagline for gift row items -->
-    <string name="GiftRowItem__send_a_gift_badge">Magpadala ng gift badge</string>
     <!-- Headline text on start fragment for gifting a badge -->
-    <string name="GiftFlowStartFragment__gift_a_badge">Magregalo ng Badge</string>
+    <string name="GiftFlowStartFragment__donate_for_a_friend">Mag-donate para sa Kaibigan</string>
     <!-- Description text on start fragment for gifting a badge -->
-    <string name="GiftFlowStartFragment__gift_someone_a_badge">Magregalo ng badge sa isang user sa pamamagitan ng pag-donate sa Signal na nakapangalan sa kanya. Makakakuha siya ng badge na pwedeng i-display sa kanyang profile photo.</string>
+    <plurals name="GiftFlowStartFragment__support_signal_by">
+        <item quantity="one">Suportahan ang Signal sa pamamagitan ng pag-donate para sa isang kaibigan o kamag-anak na gumagamit ng Signal. Makatatanggap sila ng isang badge na pwede nilang i-display sa kanilang profile sa loob ng %1$d araw</item>
+        <item quantity="other">Suportahan ang Signal sa pamamagitan ng pag-donate para sa isang kaibigan o kamag-anak na gumagamit ng Signal. Makatatanggap sila ng isang badge na pwede nilang i-display sa kanilang profile sa loob ng %1$d araw</item>
+    </plurals>
     <!-- Action button label for start fragment for gifting a badge -->
     <string name="GiftFlowStartFragment__next">Susunod</string>
     <!-- Title text on choose recipient page for badge gifting -->
     <string name="GiftFlowRecipientSelectionFragment__choose_recipient">Pumili ng recipient</string>
     <!-- Title text on confirm gift page -->
-    <string name="GiftFlowConfirmationFragment__confirm_gift">Confirm gift</string>
+    <string name="GiftFlowConfirmationFragment__confirm_donation">I-confirm ang donation</string>
     <!-- Heading text specifying who the gift will be sent to -->
     <string name="GiftFlowConfirmationFragment__send_to">I-send kay</string>
     <!-- Text explaining that gift will be sent to the chosen recipient -->
-    <string name="GiftFlowConfirmationFragment__your_gift_will_be_sent_in">Ang iyong gift ay ipapadala sa isang 1 on 1 message sa recipient. Mag-add ng iyong message sa baba.</string>
+    <string name="GiftFlowConfirmationFragment__the_recipient_will_be_notified">Ino-notifty ang recipient tungkol sa donation sa isang 1 on 1 message. Isulat ang iyong message sa baba.</string>
     <!-- Text explaining that this gift is a one time donation -->
     <string name="GiftFlowConfirmationFragment__one_time_donation">One-time donation</string>
     <!-- Hint for add message input -->
@@ -4996,27 +5088,27 @@
     <!-- Displayed in the dialog while verifying the chosen recipient -->
     <string name="GiftFlowConfirmationFragment__verifying_recipient">Verifying recipient…</string>
     <!-- Title for sheet shown when opening a redeemed gift -->
-    <string name="ViewReceivedGiftBottomSheet__s_sent_you_a_gift">Pinadalhan ka ni %1$s ng gift</string>
+    <string name="ViewReceivedGiftBottomSheet__s_made_a_donation_for_you">Nag-donate si %1$s para sa\'yo</string>
     <!-- Title for sheet shown when opening a sent gift -->
     <string name="ViewSentGiftBottomSheet__thanks_for_your_support">Maraming salamat sa iyong suporta!</string>
     <!-- Description for sheet shown when opening a redeemed gift -->
-    <string name="ViewReceivedGiftBottomSheet__youve_received_a_gift_badge">Nakatanggap ka ng isang gift badge mula kay %1$s! Tulungan ang Signal na gawing mas aware ang iba pang users sa pamamagitan ng pag-display ng badge na ito sa profile mo.</string>
+    <string name="ViewReceivedGiftBottomSheet__s_made_a_donation_to_signal">Nag-donate sa Signal si %1$s para sa iyo! Ipakita sa profile mo ang iyong pagsuporta sa Signal.</string>
     <!-- Description for sheet shown when opening a sent gift -->
-    <string name="ViewSentGiftBottomSheet__youve_gifted_a_badge">Nagregalo ka ng isang badge kay %1$s. Kapag tinanggap niya ito, mabibigyan siya ng choice na ipakita o itago ang kanyang natanggap na badge.</string>
+    <string name="ViewSentGiftBottomSheet__youve_made_a_donation_to_signal">Nag-donate ka sa Signal para kay %1$s. Mabibigyan siya ng option na ipakita ang kanyang suporta sa kanyang profile.</string>
     <!-- Primary action for pending gift sheet to redeem badge now -->
     <string name="ViewReceivedGiftSheet__redeem">I-redeem</string>
     <!-- Primary action for pending gift sheet to redeem badge later -->
     <string name="ViewReceivedGiftSheet__not_now">Hindi ngayon</string>
     <!-- Dialog text while redeeming a gift -->
-    <string name="ViewReceivedGiftSheet__redeeming_gift">Redeeming gift…</string>
+    <string name="ViewReceivedGiftSheet__redeeming_badge">Nire-redeem ang badge…</string>
     <!-- Snackbar text when user presses "not now" on redemption sheet -->
     <string name="ConversationFragment__you_can_redeem_your_badge_later">Maaari mong i-redeem ang iyong badge mamaya.</string>
     <!-- Description text in gift thanks sheet -->
-    <string name="GiftThanksSheet__youve_gifted_a_badge_to_s">Nagregalo ka ng isang badge kay %1$s. Kapag tinanggap niya ito, mabibigyan siya ng choice na ipakita o itago ang kanyang natanggap na badge.</string>
+    <string name="GiftThanksSheet__youve_made_a_donation">Nag-donate ka sa Signal para kay %1$s. Mabibigyan siya ng option na ipakita ang kanyang suporta sa kanyang profile.</string>
     <!-- Expired gift sheet title -->
-    <string name="ExpiredGiftSheetConfiguration__your_gift_badge_has_expired">Expired na ang iyong gift badge</string>
+    <string name="ExpiredGiftSheetConfiguration__your_badge_has_expired">Expired na ang iyong badge</string>
     <!-- Expired gift sheet top description text -->
-    <string name="ExpiredGiftSheetConfiguration__your_gift_badge_has_expired_and_is">Expired na ang iyong gift badge, at hindi na ito makikita ng iba sa profile mo.</string>
+    <string name="ExpiredGiftSheetConfiguration__your_badge_has_expired_and_is">Expired na ang iyong badge, at hindi na ito makikita ng iba sa profile mo.</string>
     <!-- Expired gift sheet bottom description text -->
     <string name="ExpiredGiftSheetConfiguration__to_continue">Para patuloy na masuportahan ang technology na inibuo para sa\'yo, i-consider ang pagiging isang monthly Sustainer.</string>
     <!-- Expired gift sheet make a monthly donation button -->
@@ -5070,12 +5162,12 @@
     <string name="ContactSearchMediator__delete_the_custom">Gusto mo bang i-delete ang custom story na \"%1$s\"?</string>
     <!-- Dialog action item for deleting a custom story -->
     <string name="ContactSearchMediator__delete">I-delete</string>
-    <!-- Gift expiry days remaining -->
+    <!-- Donation for a friend expiry days remaining -->
     <plurals name="Gifts__d_days_remaining">
         <item quantity="one">%1$d days remaining</item>
         <item quantity="other">%1$d days remaining</item>
     </plurals>
-    <!-- Gift expiry hours remaining -->
+    <!-- Donation for a friend expiry hours remaining -->
     <plurals name="Gifts__d_hours_remaining">
         <item quantity="one">%1$d hours remaining</item>
         <item quantity="other">%1$d hours remaining</item>
@@ -5085,7 +5177,7 @@
         <item quantity="one">%1$d minute remaining</item>
         <item quantity="other">%1$d minutes remaining</item>
     </plurals>
-    <!-- Gift expiry expired -->
+    <!-- Donation for a friend expiry expired -->
     <string name="Gifts__expired">Expired</string>
 
     <!-- Label indicating that a user can tap to advance to the next post in a story -->
@@ -5329,9 +5421,9 @@
     <!-- Phase 1 Small megaphone title indicating sms is going away -->
     <string name="SmsExportMegaphone__sms_support_going_away">Mawawala na ang SMS support</string>
     <!-- Phase 1 small megaphone description indicating sms is going away -->
-    <string name="SmsExportMegaphone__sms_support_will_be_removed_soon_to_focus_on_encrypted_messaging">Malapit nang tanggaling ang pagsuporta sa SMS para mag-focus sa encrypted messaging.</string>
+    <string name="SmsExportMegaphone__dont_worry_encrypted_signal_messages_will_continue_to_work">\'Wag kang mag-alala, patuloy na gagana ang encrypted Signal messages.</string>
     <!-- Phase 1 small megaphone button that takes the user to the sms export flow -->
-    <string name="SmsExportMegaphone__export_sms">I-export ang SMS</string>
+    <string name="SmsExportMegaphone__continue">Magpatuloy</string>
     <!-- Title for screen shown after sms export has completed -->
     <string name="ExportSmsCompleteFragment__export_complete">Tapos na ang pag-export</string>
     <!-- Button to continue to next screen -->
@@ -5388,8 +5480,8 @@
     </plurals>
     <!-- Button label for paying with a credit card -->
     <string name="GatewaySelectorBottomSheet__credit_or_debit_card">Credit o debit card</string>
-    <!-- Sheet summary when giving a gift -->
-    <string name="GatewaySelectorBottomSheet__send_a_gift_badge">Magpadala ng gift badge</string>
+    <!-- Sheet summary when giving donating for a friend -->
+    <string name="GatewaySelectorBottomSheet__donate_for_a_friend">Mag-donate para sa kaibigan</string>
 
     <!-- StripePaymentInProgressFragment -->
     <string name="StripePaymentInProgressFragment__cancelling">Kina-cancel…</string>
@@ -5441,6 +5533,7 @@
     <string name="GroupStoryEducationSheet__all_group_chat_members">Pwedeng makita ng lahat ng group chat members ang story replies.</string>
     <!-- Button label to dismiss sheet -->
     <string name="GroupStoryEducationSheet__next">Susunod</string>
+    <string name="Registration_country_code_entry_hint">+0</string>
 
     <!-- EOF -->
 
@@ -5448,4 +5541,34 @@
     <string name="PaypalCompleteOrderBottomSheet__donate">Mag-donate</string>
     <string name="PaypalCompleteOrderBottomSheet__payment">Payment</string>
 
+    <!-- ChatFilter -->
+    <!-- Displayed in a pill at the top of the chat list when it is filtered by unread messages -->
+    <string name="ChatFilter__filtered_by_unread">Unread messages lang ang pinapakita</string>
+    <!-- Displayed underneath the filter circle at the top of the chat list when the user pulls at a very low velocity -->
+    <string name="ChatFilter__pull_to_filter">I-drag pababa para mag-filter</string>
+    <!-- Displayed in the "clear filter" item in the chat feed if the user opened the filter from the overflow menu -->
+    <string name="ChatFilter__tip_pull_down">Tip: I-drag pababa ang chat list para mag-filter</string>
+
+    <!-- Title for screen describing that sms support is going to be removed soon -->
+    <string name="SmsRemoval_title_going_away">Mawawala na ang SMS support</string>
+    <!-- Bullet point message shown on describing screen as first bullet why sms is being removed -->
+    <string name="SmsRemoval_info_bullet_1">Hindi na susuportahan sa hinaharap ang SMS messaging sa Signal app.</string>
+    <!-- Bullet point message shown on describing screen as second bullet why sms is being removed -->
+    <string name="SmsRemoval_info_bullet_2">Iba sa Signal messages ang SMS messages. <b>Hindi nito maaapektuhan ang encrypted Signal messaging na patuloy na gagana.</b></string>
+    <!-- Bullet point message shown on describing screen as third bullet why sms is being removed -->
+    <string name="SmsRemoval_info_bullet_3">Pwede mong i-export ang iyong SMS messages at pumili ng bagong SMS app.</string>
+    <!-- Bullet point message shown on describing screen as first bullet variant why sms is being removed when user is locked out of sms -->
+    <string name="SmsRemoval_info_bullet_1_phase_3">Tinanggal na ng Signal ang pagsuporta sa pag-send ng SMS messages.</string>
+    <!-- Button label on sms removal info/megaphone to start the export SMS flow -->
+    <string name="SmsRemoval_export_sms">I-export ang SMS</string>
+
+    <!-- Text Formatting -->
+    <!-- Popup menu label for applying bold style -->
+    <string name="TextFormatting_bold">Bold</string>
+    <!-- Popup menu label for applying italic style -->
+    <string name="TextFormatting_italic">Italic</string>
+    <!-- Popup menu label for applying strikethrough style -->
+    <string name="TextFormatting_strikethrough">Strikethrough</string>
+    <!-- Popup menu label for applying monospace font style -->
+    <string name="TextFormatting_monospace">Monospace</string>
 </resources>

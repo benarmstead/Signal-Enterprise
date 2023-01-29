@@ -224,6 +224,8 @@
     <string name="ContactsCursorLoader_recent_chats">अलीकडील चॅट</string>
     <string name="ContactsCursorLoader_contacts">संपर्क</string>
     <string name="ContactsCursorLoader_groups">गट</string>
+    <!-- Contact search header for individuals who the user has not started a conversation with but is in a group with -->
+    <string name="ContactsCursorLoader_group_members">गट सदस्य</string>
     <string name="ContactsCursorLoader_phone_number_search">फोन नंबर शोध</string>
     <!-- Header for username search -->
     <string name="ContactsCursorLoader_find_by_username">वापरकर्ता नावाने शोधा</string>
@@ -231,6 +233,10 @@
     <string name="ContactsCursorLoader_my_stories">माझ्या स्टोरीज</string>
     <!-- Text for a button that brings up a bottom sheet to create a new story. -->
     <string name="ContactsCursorLoader_new">नवीन</string>
+    <!-- Header for conversation search section labeled "Chats" -->
+    <string name="ContactsCursorLoader__chats">चॅट</string>
+    <!-- Header for conversation search section labeled "Messages" -->
+    <string name="ContactsCursorLoader__messages">संदेश</string>
 
     <!-- ContactsDatabase -->
     <string name="ContactsDatabase_message_s">संदेश %1$s</string>
@@ -593,6 +599,8 @@
     <string name="BackupsPreferenceFragment__create_backup">बॅकअप तयार करा</string>
     <string name="BackupsPreferenceFragment__last_backup">शेवटचा बॅकअप:%1$s</string>
     <string name="BackupsPreferenceFragment__backup_folder">बॅकअप फोल्डर</string>
+    <!-- Title for a preference item allowing the user to selected the hour of the day when their chats are backed up. -->
+    <string name="BackupsPreferenceFragment__backup_time">Backup time</string>
     <string name="BackupsPreferenceFragment__verify_backup_passphrase">बॅकअप वाक्यांश सत्यापित करा</string>
     <string name="BackupsPreferenceFragment__test_your_backup_passphrase">आपल्या बॅकअप सांकेतिक वाक्यांशाची चाचणी घ्या आणि ते जुळत असल्याचे सत्यापित करा</string>
     <string name="BackupsPreferenceFragment__turn_on">चालू करा</string>
@@ -622,6 +630,50 @@
     <string name="DateUtils_minutes_ago">%1$d मि</string>
     <string name="DateUtils_today">आज</string>
     <string name="DateUtils_yesterday">काल</string>
+    <!-- When scheduling a message, %1$s replaced with either today, tonight, or tomorrow. %2$s replaced with the time. e.g. Tonight at 9:00pm -->
+    <string name="DateUtils_schedule_at">%2$s ला %1$s</string>
+    <!-- Used when getting a time in the future. For example, Tomorrow at 9:00pm -->
+    <string name="DateUtils_tomorrow">Tomorrow</string>
+    <!-- Used in the context: Tonight at 9:00pm for example. Specifically this is after 7pm -->
+    <string name="DateUtils_tonight">Tonight</string>
+
+    <!-- Scheduled Messages -->
+    <!-- Title for dialog that shows all the users scheduled messages for a chat -->
+    <string name="ScheduledMessagesBottomSheet__schedules_messages">Scheduled messages</string>
+    <!-- Option when scheduling a message to select a specific date and time to send a message -->
+    <string name="ScheduledMessages_pick_time">Pick Date &amp; Time</string>
+    <!-- Title for dialog explaining to users how the scheduled messages work -->
+    <string name="ScheduleMessageFTUXBottomSheet__title">Scheduled messages</string>
+    <!-- Disclaimer text for scheduled messages explaining to users that the scheduled messages will only send if connected to the internet -->
+    <string name="ScheduleMessageFTUXBottomSheet__disclaimer">When you send a scheduled message, make sure your device will be on and connected to the internet at the time of sending. If not, your message will send when your device reconnects.</string>
+    <!-- Confirmation button text acknowledging the user understands the disclaimer -->
+    <string name="ScheduleMessageFTUXBottomSheet__okay">ठीक आहे</string>
+    <!-- Title for section asking users to allow alarm permissions for scheduled messages -->
+    <string name="ScheduleMessageFTUXBottomSheet_enable_title">To enable message scheduling:</string>
+    <!-- Title for dialog asking users to allow alarm permissions for scheduled messages -->
+    <string name="ReenableScheduleMessagesDialogFragment_reenable_title">To re-enable message scheduling:</string>
+    <!-- Title of dialog with a calendar to select the date the user wants to schedule a message. -->
+    <string name="ScheduleMessageTimePickerBottomSheet__select_date_title">Select date</string>
+    <!-- Title of dialog with a clock to select the time at which the user wants to schedule a message. -->
+    <string name="ScheduleMessageTimePickerBottomSheet__select_time_title">Select time</string>
+    <!-- Title of dialog that allows user to set the time and day that their message will be sent -->
+    <string name="ScheduleMessageTimePickerBottomSheet__dialog_title">Schedule message</string>
+    <!-- Text for confirmation button when scheduling messages that allows the user to confirm and schedule the sending time -->
+    <string name="ScheduleMessageTimePickerBottomSheet__schedule_send">Schedule send</string>
+
+    <!-- Disclaimer in message scheduling dialog. %1$s replaced with a GMT offset (e.g. GMT-05:00), and %2$s is replaced with the time zone name (e.g. Eastern Standard Time) -->
+    <string name="ScheduleMessageTimePickerBottomSheet__timezone_disclaimer">All times in (%1$s) %2$s</string>
+
+    <!-- Context menu option to send a scheduled message now -->
+    <string name="ScheduledMessagesBottomSheet_menu_send_now">Send now</string>
+    <!-- Context menu option to reschedule a selected message -->
+    <string name="ScheduledMessagesBottomSheet_menu_reschedule">Reschedule</string>
+    <!-- Button in dialog asking user if they are sure they want to delete the selected scheduled message -->
+    <string name="ScheduledMessagesBottomSheet_delete_dialog_action">काढून टाका</string>
+    <!-- Button in dialog asking user if they are sure they want to delete the selected scheduled message -->
+    <string name="ScheduledMessagesBottomSheet_delete_dialog_message">Delete selected scheduled message?</string>
+    <!-- Progress message shown while deleting selected scheduled message -->
+    <string name="ScheduledMessagesBottomSheet_deleting_progress_message">Deleting scheduled message…</string>
 
     <!-- DecryptionFailedDialog -->
     <string name="DecryptionFailedDialog_chat_session_refreshed">चॅट सत्र रिफ्रेश झाले</string>
@@ -1152,11 +1204,29 @@
     <string name="MessageRecord_left_group">आपण गट सोडला आहे.</string>
     <string name="MessageRecord_you_updated_group">आपण गट अद्ययावत केले.</string>
     <string name="MessageRecord_the_group_was_updated">गट अद्यतनित केला गेला.</string>
-    <string name="MessageRecord_you_called_date">आपण कॉल केला . %1$s</string>
-    <string name="MessageRecord_missed_audio_call_date">सुटलेला ऑडिओ कॉल · %1$s</string>
-    <string name="MessageRecord_missed_video_call_date">सुटलेला व्हिडिओ कॉल · %1$s</string>
+    <!-- Update message shown when placing an outgoing 1:1 voice/audio call and it\'s answered by the other party -->
+    <string name="MessageRecord_outgoing_voice_call">बाहेर जाणारा व्हाईस कॉल</string>
+    <!-- Update message shown when placing an outgoing 1:1 video call and it\'s answered by the other party -->
+    <string name="MessageRecord_outgoing_video_call">बाहेर जाणारा व्हिडिओ कॉल</string>
+    <!-- Update message shown when placing an outgoing 1:1 voice/audio call and it\'s not answered by the other party -->
+    <string name="MessageRecord_unanswered_voice_call">अनुत्तरित व्हॉईस कॉल</string>
+    <!-- Update message shown when placing an outgoing 1:1 video call and it\'s not answered by the other party -->
+    <string name="MessageRecord_unanswered_video_call">अनुत्तरित व्हिडिओ कॉल</string>
+    <!-- Update message shown when receiving an incoming 1:1 voice/audio call and it\'s answered -->
+    <string name="MessageRecord_incoming_voice_call">येणारा व्हाईस कॉल</string>
+    <!-- Update message shown when receiving an incoming 1:1 video call and answered -->
+    <string name="MessageRecord_incoming_video_call">येणारा व्हिडिओ कॉल</string>
+    <!-- Update message shown when receiving an incoming 1:1 voice/audio call and not answered -->
+    <string name="MessageRecord_missed_voice_call">चूकवलेला व्हाईस कॉल</string>
+    <!-- Update message shown when receiving an incoming 1:1 video call and not answered -->
+    <string name="MessageRecord_missed_video_call">चूकवलेला व्हिडिओ कॉल</string>
+    <!-- Update message shown when receiving an incoming 1:1 voice/audio call and explicitly declined -->
+    <string name="MessageRecord_you_declined_a_voice_call">आपण व्हाईस कॉलला नकार दिला</string>
+    <!-- Update message shown when receiving an incoming 1:1 video call and explicitly declined -->
+    <string name="MessageRecord_you_declined_a_video_call">आपण व्हिडिओ कॉलला नकार दिला</string>
+    <!-- Call update formatter string to place the update message next to a time stamp. e.g., \'Incoming voice call · 11:11am\' -->
+    <string name="MessageRecord_call_message_with_date">%1$s · %2$s</string>
     <string name="MessageRecord_s_updated_group">%1$s ने गट अद्ययावत केले.</string>
-    <string name="MessageRecord_s_called_you_date">%1$s ने आपल्याला कॉल केला · %2$s</string>
     <string name="MessageRecord_s_joined_signal">%1$s Signal वर आहे!</string>
     <string name="MessageRecord_you_disabled_disappearing_messages">आपण नाहीसे होणारे संदेश अक्षम केले.</string>
     <string name="MessageRecord_s_disabled_disappearing_messages">%1$s ने हरवणारे संदेश अक्षम केले.</string>
@@ -1344,10 +1414,12 @@
     <string name="MessageRecord_s_changed_their_phone_number">%1$s यांनी त्यांचा फोन नंबर बदलला.</string>
     <!-- Update item message shown in the release channel when someone is already a sustainer so we ask them if they want to boost. -->
     <string name="MessageRecord_like_this_new_feature_help_support_signal_with_a_one_time_donation">हे नवीन वैशिष्ट्य आवडले? एक-वेळ देणगी देऊन Signal ला समर्थन करण्यास मदत करा.</string>
-    <!-- Update item message shown when we merge two threads together -->
+    <!-- Update item message shown when we merge two threads together. First placeholder is a name, second placeholder is a phone number. -->
     <string name="MessageRecord_your_message_history_with_s_and_their_number_s_has_been_merged">आपला %1$s यांच्यासह असलेला संदेश इतिहास आणि त्यांचा नंबर %2$s एकत्रित करण्यात आला आहे.</string>
-    <!-- Update item message shown when we merge two threads together and we don\'t know the phone number of the other thread -->
+    <!-- Update item message shown when we merge two threads together and we don\'t know the phone number of the other thread. The placeholder is a person\'s name. -->
     <string name="MessageRecord_your_message_history_with_s_and_another_chat_has_been_merged">आपला %1$s यांच्यासह संदेश इतिहास आणि त्यांच्याशी संबंधित असलेले अन्य चॅट एकत्रित करण्यात आले आहेत.</string>
+    <!-- Update item message shown when you find out a phone number belongs to a person you had a conversation with. First placeholder is a phone number, second placeholder is a name. -->
+    <string name="MessageRecord_s_belongs_to_s">%1$s हा %2$s च्या मालकीचा आहे</string>
     <!-- Message to notify sender that activate payments request has been sent to the recipient -->
     <string name="MessageRecord_you_sent_request">आपण %1$s ना पेमेंट्स सक्रिय करण्याची विनंती पाठवली आहे</string>
     <!-- Request message from recipient to activate payments -->
@@ -1676,8 +1748,7 @@
     <string name="RegistrationActivity_select_your_country">आपला देश निवडा</string>
     <string name="RegistrationActivity_you_must_specify_your_country_code">आपण आपला देश कोड निर्दिष्ट करायला हवा
     </string>
-    <string name="RegistrationActivity_you_must_specify_your_phone_number">आपण आपला फोन नंबर निर्दिष्ट करायला हवा
-    </string>
+    <string name="RegistrationActivity_please_enter_a_valid_phone_number_to_register">नोंदणी करण्यासाठी कृपया एक वैध फोन नंबर प्रविष्ट करा.</string>
     <string name="RegistrationActivity_invalid_number">अवैध नंबर</string>
     <string name="RegistrationActivity_the_number_you_specified_s_is_invalid">आपण निर्दिष्ट केलेला नंबर (%1$s) अवैध आहे.
     </string>
@@ -1707,7 +1778,6 @@
     <string name="RegistrationActivity_next">पुढे</string>
     <string name="RegistrationActivity_continue">सुरू ठेवा</string>
     <string name="RegistrationActivity_take_privacy_with_you_be_yourself_in_every_message">गोपनीयता आपल्यासोबत न्या.\nप्रत्येक संदेशात आपण स्वतः रहा.</string>
-    <string name="RegistrationActivity_enter_your_phone_number_to_get_started">सुरूवात करण्यासाठी आपला फोन नंबर प्रविष्ट करा</string>
     <string name="RegistrationActivity_enter_your_phone_number">आपला फोन नंबर प्रविष्ट करा</string>
     <string name="RegistrationActivity_you_will_receive_a_verification_code">आपल्याला एक सत्यापन कोड प्राप्त होईल. वाहक रेट लागू होऊ शकतात.</string>
     <string name="RegistrationActivity_enter_the_code_we_sent_to_s">%1$s वर पाठवलेला कोड प्रविष्ट करा</string>
@@ -1715,7 +1785,10 @@
 
     <string name="RegistrationActivity_phone_number_description">फोन नंबर</string>
     <string name="RegistrationActivity_country_code_description">देश कोड</string>
+    <string name="RegistrationActivity_country_code_hint">देश</string>
     <string name="RegistrationActivity_call">कॉल करा</string>
+    <string name="RegistrationActivity_verification_code">सत्यापन कोड</string>
+    <string name="RegistrationActivity_resend_code">कोड पुन्हा पाठवा</string>
 
     <!-- RegistrationLockV2Dialog -->
     <string name="RegistrationLockV2Dialog_turn_on_registration_lock">नोंदणी लॉक चालू करायचे?</string>
@@ -1837,10 +1910,6 @@
     <string name="ThreadRecord_left_the_group">गट सोडले</string>
     <string name="ThreadRecord_secure_session_reset">सुरक्षित सत्र रीसेट.</string>
     <string name="ThreadRecord_draft">मसुदा:</string>
-    <string name="ThreadRecord_called">आपण कॉल केलेला</string>
-    <string name="ThreadRecord_called_you">आपल्याला कॉल केला होता</string>
-    <string name="ThreadRecord_missed_audio_call">सुटलेला ऑडिओ कॉल</string>
-    <string name="ThreadRecord_missed_video_call">सुटलेला व्हिडिओ कॉल</string>
     <string name="ThreadRecord_media_message">मिडिया संदेश</string>
     <string name="ThreadRecord_sticker">स्टिकर</string>
     <string name="ThreadRecord_view_once_photo">एकदा-बघा फोटो</string>
@@ -1873,11 +1942,11 @@
     <string name="ThreadRecord_video">व्हिडिओ</string>
     <string name="ThreadRecord_chat_session_refreshed">चॅट सत्र ताजेतवाने झाले</string>
     <!-- Displayed in the notification when the user is sent a gift -->
-    <string name="ThreadRecord__you_received_a_gift">आपल्याला एक भेट मिळाली</string>
+    <string name="ThreadRecord__s_donated_for_you">%1$s नी आपल्यासाठी देणगी दिली</string>
     <!-- Displayed in the notification when the user sends a gift -->
-    <string name="ThreadRecord__you_sent_a_gift">आपण एक भेट पाठवली</string>
+    <string name="ThreadRecord__you_donated_for_s">आपण %1$s साठी देणगी दिली</string>
     <!-- Displayed in the notification when the user has opened a received gift -->
-    <string name="ThreadRecord__you_redeemed_a_gift_badge">आपण एक भेट बॅज रिडीम केला</string>
+    <string name="ThreadRecord__you_redeemed_a_badge">आपण एक बॅज रिडिम केला</string>
     <!-- Displayed in the conversation list when someone reacted to your story -->
     <string name="ThreadRecord__reacted_s_to_your_story">आपल्या स्टोरी वर %1$s प्रतिक्रिया दिली</string>
     <!-- Displayed in the conversation list when you reacted to someone\'s story -->
@@ -1984,13 +2053,15 @@
     <string name="MediaPreviewActivity_s_to_you">%1$s कडून आपणाला</string>
     <string name="MediaPreviewActivity_media_no_longer_available">मिडिया आता उपलब्ध नाही.</string>
     <!-- Notifying the user that the device has encountered a technical issue and is unable to render a video. -->
-    <string name="MediaPreviewActivity_unable_to_play_media">Unable to play media.</string>
+    <string name="MediaPreviewActivity_unable_to_play_media">मिडीया प्ले करण्यास असमर्थ.</string>
     <string name="MediaPreviewActivity_error_finding_message">संदेश शोधण्यात त्रुटी.</string>
     <string name="MediaPreviewActivity_cant_find_an_app_able_to_share_this_media">हे मिडिया शेअर करण्यासाठी सक्षम असे अॅप सापडू शकले नाही.</string>
     <string name="MediaPreviewActivity_dismiss_due_to_error">बंद करा</string>
     <string name="MediaPreviewFragment_edit_media_error">मिडिया त्रुटी</string>
     <!-- This is displayed as a toast notification when we encounter an error deleting a message, including potentially on other people\'s devices -->
     <string name="MediaPreviewFragment_media_delete_error">संदेश हटवण्यात त्रुटी, संदेश अद्याप अस्तित्वात असू शकतो</string>
+    <!-- A suffix to be attached to truncated captions that the user may tap onto to view the entire text caption -->
+    <string name="MediaPreviewFragment_see_more">%1$s… <b>Read More</b></string>
 
     <!-- MessageNotifier -->
     <string name="MessageNotifier_d_new_messages_in_d_conversations">%2$d संभाषणांमध्ये %1$d नवीन संदेश</string>
@@ -2055,6 +2126,8 @@
 
     <!-- SearchToolbar -->
     <string name="SearchToolbar_search">शोध</string>
+    <!-- Hint when searching filtered chat content -->
+    <string name="SearchToolbar_search_unread_chats">न वाचलेले चॅटस् शोधा</string>
     <string name="SearchToolbar_search_for_conversations_contacts_and_messages">संभाषण, संपर्क, आणि संदेशांसाठी शोधा</string>
 
     <!-- Material3 Search Toolbar -->
@@ -2085,6 +2158,9 @@
     <!-- UnauthorizedReminder -->
     <string name="UnauthorizedReminder_device_no_longer_registered">डिव्हाईस आता नोंदवलेला नाही</string>
     <string name="UnauthorizedReminder_this_is_likely_because_you_registered_your_phone_number_with_Signal_on_a_different_device">हे असे असू शकते कारण आपण आपला Signal सोबतचा फोन नंबर वेगळ्या डिव्हाईस वरून नोंदवला आहे. पुन्हा नोंदणी करण्यासाठी टॅप करा.</string>
+
+    <!-- Push notification when the app is forcibly logged out by the server. -->
+    <string name="LoggedOutNotification_you_have_been_logged_out">आपण या डिव्हाइसवर Signal मधून लॉग आऊट झालेला आहात.</string>
 
     <!-- EnclaveFailureReminder -->
     <!-- Banner message to update app to use payments -->
@@ -2176,6 +2252,8 @@
     <string name="conversation_activity__type_message_push">Signal संदेश</string>
     <string name="conversation_activity__type_message_sms_insecure">असुरक्षित SMS</string>
     <string name="conversation_activity__type_message_mms_insecure">असुरक्षित MMS</string>
+    <!-- Option in send button context menu to schedule the message instead of sending it directly -->
+    <string name="conversation_activity__option_schedule_message">Schedule message</string>
     <string name="conversation_activity__from_sim_name">%1$s याकडून</string>
     <string name="conversation_activity__sim_n">SIM %1$d</string>
     <string name="conversation_activity__send">पाठवा</string>
@@ -2248,7 +2326,7 @@
     <!-- Label indicating that the story being replied to no longer exists -->
     <string name="QuoteView_no_longer_available">आता उपलब्ध नाही</string>
     <!-- Label for quoted gift -->
-    <string name="QuoteView__gift">भेट</string>
+    <string name="QuoteView__donation_for_a_friend">एका मित्रासाठी देणगी</string>
 
     <!-- conversation_fragment -->
     <string name="conversation_fragment__scroll_to_the_bottom_content_description">खालपर्यंत स्क्रोल करा</string>
@@ -3064,6 +3142,16 @@
     <!-- conversation_callable_insecure -->
     <string name="conversation_add_to_contacts__menu_add_to_contacts">संपर्कात जोडा</string>
 
+    <!-- conversation scheduled messages bar -->
+
+    <!-- Label for button in a banner to show all messages currently scheduled -->
+    <string name="conversation_scheduled_messages_bar__see_all">सर्व पहा</string>
+    <!-- Body text for banner to show all scheduled messages for the chat that tells the user how many scheduled messages there are -->
+    <plurals name="conversation_scheduled_messages_bar__number_of_messages">
+        <item quantity="one">%1$d message scheduled</item>
+        <item quantity="other">%1$d messages scheduled</item>
+    </plurals>
+
     <!-- conversation_group_options -->
     <string name="convesation_group_options__recipients_list">प्राप्तकर्ते यादी</string>
     <string name="conversation_group_options__delivery">पोचवणी</string>
@@ -3156,11 +3244,13 @@
     <string name="CreateKbsPinFragment__create_a_new_pin">एक नवीन PIN तयार करा</string>
     <string name="CreateKbsPinFragment__you_can_choose_a_new_pin_as_long_as_this_device_is_registered">जोपर्यंत हा डिव्हाईस नोंदणीकृत आहे आपण आपला PIN बदलू शकता.</string>
     <string name="CreateKbsPinFragment__create_your_pin">आपला PIN तयार करा</string>
-    <string name="CreateKbsPinFragment__pins_keep_information_stored_with_signal_encrypted">Signal सोबत संचयित केलेली माहिती PIN एन्क्रिप्टेड ठेवतात जेणेकरून ती फक्त आपण अॅक्सेस करू शकता. आपण पुन्हा स्थापन केल्यावर आपली प्रोफाईल, सेटिंग, आणि संपर्क पुनर्स्थित होईल. आपल्याला अॅप उघडण्यासाठी PIN ची गरज लागणार नाही.</string>
+    <string name="CreateKbsPinFragment__pins_can_help_you_restore_your_account">PINs can help you restore your account and keep your info encrypted with Signal. </string>
     <string name="CreateKbsPinFragment__choose_a_stronger_pin">एक शक्तिशाली PIN निवडा</string>
 
     <!-- ConfirmKbsPinFragment -->
     <string name="ConfirmKbsPinFragment__pins_dont_match">PIN जुळत नाहीत. पुन्हा प्रयत्न करा.</string>
+    <!-- Prompt for the user to repeat entering the PIN in order to help them remember it correctly.   -->
+    <string name="ConfirmKbsPinFragment__re_enter_the_pin_you_just_created">Re-enter the PIN you just created.</string>
     <string name="ConfirmKbsPinFragment__confirm_your_pin">आपल्या PIN ची पुष्टी करा.</string>
     <string name="ConfirmKbsPinFragment__pin_creation_failed">PIN तयार करणे अयशस्वी</string>
     <string name="ConfirmKbsPinFragment__your_pin_was_not_saved">आपला PIN जतन केला गेला नाही. आम्ही नंतर आपल्याला PIN तयार करण्यासाठी सूचित करू.</string>
@@ -3300,7 +3390,7 @@
     <!-- Error message shown if a very large attachment is encountered during the backup creation and causes the backup to fail -->
     <string name="LocalBackupJobApi29_your_backup_contains_a_very_large_file">आपल्या बॅकअपमध्ये एक अतिशय मोठी फाईल आहे जिचा बॅकअप घेतला जाऊ शकत नाही. कृपया ती हटवा किंवा नवीन तयार करा.</string>
     <string name="LocalBackupJobApi29_tap_to_manage_backups">बॅकअप व्यवस्थापित करण्यासाठी टॅप करा.</string>
-    <string name="RegistrationActivity_wrong_number">चुकीचा नंबर</string>
+    <string name="RegistrationActivity_wrong_number">चुकीचा नंबर?</string>
     <string name="RegistrationActivity_call_me_instead_available_in">नाहीतर मला कॉल करा \n (%1$02d:%2$02d मध्ये उपलब्ध)</string>
     <string name="RegistrationActivity_contact_signal_support">Signal समर्थनाशी संपर्क साधा</string>
     <string name="RegistrationActivity_code_support_subject">Signal नोंदणी - Android करिता सत्यापन कोड</string>
@@ -4271,7 +4361,8 @@
     <string name="SelectFeaturedBadgeFragment__you_must_select_a_badge">आपणाला एक बॅज निवडणे आवश्यक आहे</string>
     <string name="SelectFeaturedBadgeFragment__failed_to_update_profile">प्रोफाइल अद्यतनित करण्यात अयशस्वी</string>
 
-    <string name="ViewBadgeBottomSheetDialogFragment__become_a_sustainer">सस्टेनर बना</string>
+    <!-- Displayed on primary button in the bottom sheet as a call-to-action to launch into the donation flow -->
+    <string name="ViewBadgeBottomSheetDialogFragment__donate_now">आता देणगी द्या</string>
     <!-- Title of a page in the bottom sheet. Placeholder is a user\'s short-name -->
     <string name="ViewBadgeBottomSheetDialogFragment__s_supports_signal">%1$s Signal ला सपोर्ट करतात</string>
     <!-- Description of a page in the bottom sheet of a monthly badge. Placeholder is a user\'s short-name -->
@@ -4335,7 +4426,7 @@
     <!-- Preference heading for other ways to donate -->
     <string name="ManageDonationsFragment__other_ways_to_give">देणगी देण्याचे इतर मार्ग</string>
     <!-- Preference label to launch badge gifting -->
-    <string name="ManageDonationsFragment__gift_a_badge">एक बॅज भेट द्या</string>
+    <string name="ManageDonationsFragment__donate_for_a_friend">एका मित्रासाठी देणगी द्या</string>
 
     <string name="Boost__enter_custom_amount">सानुकूल रक्कम प्रविष्ट करा</string>
     <string name="Boost__one_time_contribution">एक वेळचे योगदान</string>
@@ -4391,10 +4482,10 @@
     <string name="DonationsErrors__failed_to_validate_badge">बॅज प्रमाणित करणे अयशस्वी झाले</string>
     <!-- Displayed when badge credential couldn\'t be verified -->
     <string name="DonationsErrors__could_not_validate">सर्व्हर प्रतिसाद प्रमाणित करू शकलो नाही. कृपया सपोर्टशी संपर्क साधा.</string>
-    <!-- Displayed as title when some generic error happens during gift badge sending -->
-    <string name="DonationsErrors__failed_to_send_gift_badge">भेट बॅज पाठवणे अयशस्वी झाले</string>
-    <!-- Displayed as message when some generic error happens during gift badge sending -->
-    <string name="DonationsErrors__could_not_send_gift_badge">भेट बॅज पाठवू शकलो नाही. कृपया सपोर्टशी संपर्क साधा.</string>
+    <!-- Displayed as title when some generic error happens during sending donation on behalf of another user -->
+    <string name="DonationsErrors__donation_failed">देणगी देणे अपयशी झाले</string>
+    <!-- Displayed as message when some generic error happens during sending donation on behalf of another user -->
+    <string name="DonationsErrors__your_payment_was_processed_but">आपल्या पेमेंट्स वर प्रक्रिया करण्यात आली होती मात्र Signal आपला देणगी संदेश पाठवू शकत नाही. कृपया सपोर्टला संपर्क साधा.</string>
     <string name="DonationsErrors__your_badge_could_not">आपला बॅज आपल्या खात्याला जोडला जाऊ शकत नाही, परंतु आपल्याकडून शुल्क आकारले गेले असल्यास, कृपया सपोर्टशी संपर्क साधा.</string>
     <string name="DonationsErrors__your_payment_is_still">आपली पेमेंट प्रक्रिया अजूनही चालू आहे. आपल्या कनेक्शन नुसार यास काही मिनिटे लागू शकतात.</string>
     <string name="DonationsErrors__failed_to_cancel_subscription">सदस्यत्व रद्द करणे अयशस्वी झाले</string>
@@ -4403,16 +4494,16 @@
     <string name="NetworkFailure__network_error_check_your_connection_and_try_again">नेटवर्क त्रुटी. आपले कनेक्शन तपासा आणि पुन्हा प्रयत्न करा.</string>
     <string name="NetworkFailure__retry">पुन्हा प्रयत्न करा</string>
     <!-- Displayed as a dialog title when the selected recipient for a gift doesn\'t support gifting -->
-    <string name="DonationsErrors__cant_send_gift">भेट पाठवू शकत नाही</string>
+    <string name="DonationsErrors__cannot_send_donation">देणगी पाठवू शकत नाही</string>
     <!-- Displayed as a dialog message when the selected recipient for a gift doesn\'t support gifting -->
-    <string name="DonationsErrors__target_does_not_support_gifting">हा प्राप्तकर्ता Signal ची अशी आवृत्ती वापरत आहे जी भेट बॅजेस प्राप्त करु शकत नाही. ते जेव्हा नवीनतम आवृत्तीला अपडेट करतील तेव्हा ते भेटी प्राप्त करु शकतील.</string>
-    <!-- Displayed as a dialog title when the user\'s profile could not be fetched, likely due to lack of internet -->
-    <string name="DonationsErrors__couldnt_send_gift">भेट पाठवू शकत नाही</string>
+    <string name="DonationsErrors__this_user_cant_receive_donations_until">ते Signal मध्ये श्रेणीसुधारणा करत नाहीत तोपर्यंत हा वापरकर्ता देणगी प्राप्त करु शकणार नाही.</string>
     <!-- Displayed as a dialog message when the user\'s profile could not be fetched, likely due to lack of internet -->
-    <string name="DonationsErrors__please_check_your_network_connection">नेटवर्क त्रुटीमुळे आपली भेट पाठविली जाऊ शकत नाही. आपले कनेक्शन तपासा आणि पुन्हा प्रयत्न करा.</string>
+    <string name="DonationsErrors__your_donation_could_not_be_sent">नेटवर्क त्रुटीमुळे आपली देणगी पाठवली जाऊ शकत नाही. आपले कनेक्शन तपासा आणि पुन्हा प्रयत्न करा.</string>
 
     <!-- Gift message view title -->
-    <string name="GiftMessageView__gift_badge">भेट बॅज</string>
+    <string name="GiftMessageView__donation_to_s">%1$s ला देणगी</string>
+    <!-- Gift message view title for incoming donations -->
+    <string name="GiftMessageView__s_donated_to_signal_on">%1$s ने आपल्यावतीने Signal ला देणगी दिली</string>
     <!-- Gift badge redeem action label -->
     <string name="GiftMessageView__redeem">रिडीम करा</string>
     <!-- Gift badge view action label -->
@@ -4623,7 +4714,7 @@
     <!-- Donation receipts one-time tab label -->
     <string name="DonationReceiptListFragment__one_time">एक-वेळ</string>
     <!-- Donation receipts gift tab label -->
-    <string name="DonationReceiptListFragment__gift">भेट</string>
+    <string name="DonationReceiptListFragment__donation_for_a_friend">एका मित्रासाठी देणगी</string>
     <!-- Donation receipts boost row label -->
     <!-- Donation receipts details title -->
     <!-- Donation receipts donation type heading -->
@@ -4973,22 +5064,23 @@
         <item quantity="one">%1$s · %2$d दिवसांचा कालावधी</item>
         <item quantity="other">%1$s · %2$d दिवसांचा कालावधी</item>
     </plurals>
-    <!-- Tagline for gift row items -->
-    <string name="GiftRowItem__send_a_gift_badge">एक भेट बॅज पाठवा</string>
     <!-- Headline text on start fragment for gifting a badge -->
-    <string name="GiftFlowStartFragment__gift_a_badge">एक बॅज भेट करा</string>
+    <string name="GiftFlowStartFragment__donate_for_a_friend">एका मित्रासाठी देणगी द्या</string>
     <!-- Description text on start fragment for gifting a badge -->
-    <string name="GiftFlowStartFragment__gift_someone_a_badge">आपण एखाद्याच्या नावाने Signal ला देणगी देऊन त्याला बॅज भेट द्या. त्यांना त्यांच्या प्रोफाइल फोटोवर प्रदर्शित करण्यासाठी एक बॅज मिळेल.</string>
+    <plurals name="GiftFlowStartFragment__support_signal_by">
+        <item quantity="one">Signal वापरणाऱ्या मित्रासाठी किंवा कौटुंब सदस्यासाठी देणगी देऊन Signal ला सपोर्ट करा. त्यांना %1$d दिवसासाठी त्यांच्या प्रोफाईलवर प्रदर्शित करण्यासाठी एक बॅज प्राप्त होईल</item>
+        <item quantity="other">Signal वापरणाऱ्या मित्रासाठी किंवा कौटुंब सदस्यांसाठी देणगी देऊन Signal ला सपोर्ट करा. त्यांना %1$d दिवसांसाठी त्यांच्या प्रोफाईलवर प्रदर्शित करण्यासाठी एक बॅज प्राप्त होईल</item>
+    </plurals>
     <!-- Action button label for start fragment for gifting a badge -->
     <string name="GiftFlowStartFragment__next">पुढे</string>
     <!-- Title text on choose recipient page for badge gifting -->
     <string name="GiftFlowRecipientSelectionFragment__choose_recipient">प्राप्तकर्ता निवडा</string>
     <!-- Title text on confirm gift page -->
-    <string name="GiftFlowConfirmationFragment__confirm_gift">भेट पुष्टी करा</string>
+    <string name="GiftFlowConfirmationFragment__confirm_donation">देणगीची पुष्टी करा</string>
     <!-- Heading text specifying who the gift will be sent to -->
     <string name="GiftFlowConfirmationFragment__send_to">यांना पाठवा</string>
     <!-- Text explaining that gift will be sent to the chosen recipient -->
-    <string name="GiftFlowConfirmationFragment__your_gift_will_be_sent_in">आपली भेट प्राप्तकर्त्याला १-१ संदेशात पाठवली जाईल. खाली आपला स्वतःचा संदेश जोडा.</string>
+    <string name="GiftFlowConfirmationFragment__the_recipient_will_be_notified">प्राप्तकर्त्याला 1 वर 1 संदेशामध्ये देणगीबद्दल अधिसूचित केले जाईल. आपला स्वतःचा संदेश खाली जोडा.</string>
     <!-- Text explaining that this gift is a one time donation -->
     <string name="GiftFlowConfirmationFragment__one_time_donation">एक-वेळ देणगी</string>
     <!-- Hint for add message input -->
@@ -4996,27 +5088,27 @@
     <!-- Displayed in the dialog while verifying the chosen recipient -->
     <string name="GiftFlowConfirmationFragment__verifying_recipient">प्राप्तकर्त्याची पडताळणी करत आहे…</string>
     <!-- Title for sheet shown when opening a redeemed gift -->
-    <string name="ViewReceivedGiftBottomSheet__s_sent_you_a_gift">%1$s ने एक भेट पाठवली</string>
+    <string name="ViewReceivedGiftBottomSheet__s_made_a_donation_for_you">%1$s नी आपल्यासाठी देणगी दिली</string>
     <!-- Title for sheet shown when opening a sent gift -->
     <string name="ViewSentGiftBottomSheet__thanks_for_your_support">आपल्या समर्थनासाठी धन्यवाद !</string>
     <!-- Description for sheet shown when opening a redeemed gift -->
-    <string name="ViewReceivedGiftBottomSheet__youve_received_a_gift_badge">%1$s कडून आपल्याला एक भेट बॅज मिळाला आहे! आपल्या प्रोफाइलवर हा बॅज प्रदर्शित करून जागरूकता निर्माण करण्यासाठी Signal ला मदत करा.</string>
+    <string name="ViewReceivedGiftBottomSheet__s_made_a_donation_to_signal">%1$s नी आपल्या वतीने Signal ला देणगी दिली! आपल्या प्रोफाईलवर Signal साठी सपोर्ट दाखवा.</string>
     <!-- Description for sheet shown when opening a sent gift -->
-    <string name="ViewSentGiftBottomSheet__youve_gifted_a_badge">आपण %1$s ला एक बॅज भेट दिला आहे. तो स्वीकारल्यावर, त्यांना त्यांचा बॅज दाखवण्याचा किंवा लपवण्याचा पर्याय दिला जाईल.</string>
+    <string name="ViewSentGiftBottomSheet__youve_made_a_donation_to_signal">आपण %1$s च्या वतीने Signal ला देणगी दिली आहे. त्यांना त्यांच्या प्रोफाईलवर त्यांचा सपोर्ट दाखवण्याचा पर्याय दिला जाईल.</string>
     <!-- Primary action for pending gift sheet to redeem badge now -->
     <string name="ViewReceivedGiftSheet__redeem">रिडीम करा</string>
     <!-- Primary action for pending gift sheet to redeem badge later -->
     <string name="ViewReceivedGiftSheet__not_now">आता नाही</string>
     <!-- Dialog text while redeeming a gift -->
-    <string name="ViewReceivedGiftSheet__redeeming_gift">भेट रिडीम करत आहे…</string>
+    <string name="ViewReceivedGiftSheet__redeeming_badge">बॅज रिडीम करत आहे…</string>
     <!-- Snackbar text when user presses "not now" on redemption sheet -->
     <string name="ConversationFragment__you_can_redeem_your_badge_later">आपण आपला बॅज नंतर रिडीम करू शकता.</string>
     <!-- Description text in gift thanks sheet -->
-    <string name="GiftThanksSheet__youve_gifted_a_badge_to_s">आपण %1$s ला एक बॅज भेट दिला आहे. तो स्वीकारल्यावर, त्यांना त्यांचा बॅज दाखवण्याचा किंवा लपवण्याचा पर्याय दिला जाईल.</string>
+    <string name="GiftThanksSheet__youve_made_a_donation">आपण %1$s च्या वतीने Signal ला देणगी दिली आहे. त्यांना त्यांच्या प्रोफाईलवर त्यांचा सपोर्ट दाखवण्याचा पर्याय दिला जाईल.</string>
     <!-- Expired gift sheet title -->
-    <string name="ExpiredGiftSheetConfiguration__your_gift_badge_has_expired">आपला भेट बॅज कालबाह्य झाला आहे</string>
+    <string name="ExpiredGiftSheetConfiguration__your_badge_has_expired">आपला बॅज कालबाह्य झाला आहे</string>
     <!-- Expired gift sheet top description text -->
-    <string name="ExpiredGiftSheetConfiguration__your_gift_badge_has_expired_and_is">आपला भेट बॅज कालबाह्य झाला, आणि तो यापुढे आपल्या प्रोफाइलवर इतरांना दिसणार नाही.</string>
+    <string name="ExpiredGiftSheetConfiguration__your_badge_has_expired_and_is">आपला बॅज कालबाह्य झाला आहे, आणि यापुढे आपल्या प्रोफाइलवर इतरांना दिसणार नाही.</string>
     <!-- Expired gift sheet bottom description text -->
     <string name="ExpiredGiftSheetConfiguration__to_continue">तुमच्यासाठी तयार केलेल्या तंत्रज्ञानाचे समर्थन करणे सुरू ठेवण्यासाठी, कृपया मासिक सस्टेनर बनण्याचा विचार करा.</string>
     <!-- Expired gift sheet make a monthly donation button -->
@@ -5070,12 +5162,12 @@
     <string name="ContactSearchMediator__delete_the_custom">सानुकूल स्टोरी \"%1$s\" हटवायची?</string>
     <!-- Dialog action item for deleting a custom story -->
     <string name="ContactSearchMediator__delete">हटवा</string>
-    <!-- Gift expiry days remaining -->
+    <!-- Donation for a friend expiry days remaining -->
     <plurals name="Gifts__d_days_remaining">
         <item quantity="one">%1$d दिवस शिल्लक</item>
         <item quantity="other">%1$d दिवस शिल्लक</item>
     </plurals>
-    <!-- Gift expiry hours remaining -->
+    <!-- Donation for a friend expiry hours remaining -->
     <plurals name="Gifts__d_hours_remaining">
         <item quantity="one">%1$d तास शिल्लक</item>
         <item quantity="other">%1$d तास शिल्लक</item>
@@ -5085,7 +5177,7 @@
         <item quantity="one">%1$d मिनिट शिल्लक</item>
         <item quantity="other">%1$d मिनिटे शिल्लक</item>
     </plurals>
-    <!-- Gift expiry expired -->
+    <!-- Donation for a friend expiry expired -->
     <string name="Gifts__expired">कालबाह्य झालेे</string>
 
     <!-- Label indicating that a user can tap to advance to the next post in a story -->
@@ -5329,9 +5421,9 @@
     <!-- Phase 1 Small megaphone title indicating sms is going away -->
     <string name="SmsExportMegaphone__sms_support_going_away">SMS समर्थन दूर जात आहे</string>
     <!-- Phase 1 small megaphone description indicating sms is going away -->
-    <string name="SmsExportMegaphone__sms_support_will_be_removed_soon_to_focus_on_encrypted_messaging">एन्क्रिप्टेड संदेशनावर लक्ष केंद्रित करण्यासाठी SMS समर्थन लवकरच हटवले जाईल.</string>
+    <string name="SmsExportMegaphone__dont_worry_encrypted_signal_messages_will_continue_to_work">काळजी करू नका, कूटबध्द केलेले Signal संदेश काम करणे पुढे सुरू राहिल.</string>
     <!-- Phase 1 small megaphone button that takes the user to the sms export flow -->
-    <string name="SmsExportMegaphone__export_sms">SMS एक्सपोर्ट करा</string>
+    <string name="SmsExportMegaphone__continue">सुरू ठेवा</string>
     <!-- Title for screen shown after sms export has completed -->
     <string name="ExportSmsCompleteFragment__export_complete">एक्सपोर्ट पूर्ण झाले</string>
     <!-- Button to continue to next screen -->
@@ -5388,8 +5480,8 @@
     </plurals>
     <!-- Button label for paying with a credit card -->
     <string name="GatewaySelectorBottomSheet__credit_or_debit_card">क्रेडिट किंवा डेबिट कार्ड</string>
-    <!-- Sheet summary when giving a gift -->
-    <string name="GatewaySelectorBottomSheet__send_a_gift_badge">एक भेट बॅज पाठवा</string>
+    <!-- Sheet summary when giving donating for a friend -->
+    <string name="GatewaySelectorBottomSheet__donate_for_a_friend">मित्रासाठी देणगी द्या</string>
 
     <!-- StripePaymentInProgressFragment -->
     <string name="StripePaymentInProgressFragment__cancelling">रद्द करत आहे…</string>
@@ -5441,6 +5533,7 @@
     <string name="GroupStoryEducationSheet__all_group_chat_members">सर्व ग्रुप चॅटस् सदस्य स्टोरीज ची उत्तरे पाहू शकतात.</string>
     <!-- Button label to dismiss sheet -->
     <string name="GroupStoryEducationSheet__next">पुढे</string>
+    <string name="Registration_country_code_entry_hint">+0</string>
 
     <!-- EOF -->
 
@@ -5448,4 +5541,34 @@
     <string name="PaypalCompleteOrderBottomSheet__donate">देणगी द्या</string>
     <string name="PaypalCompleteOrderBottomSheet__payment">पेमेंट</string>
 
+    <!-- ChatFilter -->
+    <!-- Displayed in a pill at the top of the chat list when it is filtered by unread messages -->
+    <string name="ChatFilter__filtered_by_unread">न वाचलेल्यानुसार फिल्टर केले</string>
+    <!-- Displayed underneath the filter circle at the top of the chat list when the user pulls at a very low velocity -->
+    <string name="ChatFilter__pull_to_filter">फिल्टर मध्ये ओढा</string>
+    <!-- Displayed in the "clear filter" item in the chat feed if the user opened the filter from the overflow menu -->
+    <string name="ChatFilter__tip_pull_down">टिप: फिल्टर करण्यासाठी चॅटस् यादी खाली ओढा</string>
+
+    <!-- Title for screen describing that sms support is going to be removed soon -->
+    <string name="SmsRemoval_title_going_away">SMS सपोर्ट आता बंद होत आहे</string>
+    <!-- Bullet point message shown on describing screen as first bullet why sms is being removed -->
+    <string name="SmsRemoval_info_bullet_1">Signal अ‍ॅप मध्ये SMS संदेशनला यापुढे लवकरच समर्थित केले जाणार नाही.</string>
+    <!-- Bullet point message shown on describing screen as second bullet why sms is being removed -->
+    <string name="SmsRemoval_info_bullet_2">SMS संदेश हे Signal संदेशांपेक्षा वेगळे असतात. <b>यामुळे काम करणे पुढे सुरु राहणार्‍या कूटबध्द केलेल्या Signal संदेशनावर परिणाम होणार नाही.</b></string>
+    <!-- Bullet point message shown on describing screen as third bullet why sms is being removed -->
+    <string name="SmsRemoval_info_bullet_3">आपण आपल्या SMS संदेशांना एक्सपोर्ट करु शकता आणि नवीन SMS अ‍ॅप निवडू शकता.</string>
+    <!-- Bullet point message shown on describing screen as first bullet variant why sms is being removed when user is locked out of sms -->
+    <string name="SmsRemoval_info_bullet_1_phase_3">SMS संदेश पाठवण्यासाठीचा सपोर्ट Signal ने काढून टाकला आहे.</string>
+    <!-- Button label on sms removal info/megaphone to start the export SMS flow -->
+    <string name="SmsRemoval_export_sms">SMS एक्सपोर्ट करा</string>
+
+    <!-- Text Formatting -->
+    <!-- Popup menu label for applying bold style -->
+    <string name="TextFormatting_bold">बोल्ड</string>
+    <!-- Popup menu label for applying italic style -->
+    <string name="TextFormatting_italic">Italic</string>
+    <!-- Popup menu label for applying strikethrough style -->
+    <string name="TextFormatting_strikethrough">Strikethrough</string>
+    <!-- Popup menu label for applying monospace font style -->
+    <string name="TextFormatting_monospace">Monospace</string>
 </resources>

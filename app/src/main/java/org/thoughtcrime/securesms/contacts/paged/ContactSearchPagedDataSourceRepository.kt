@@ -8,10 +8,10 @@ import org.thoughtcrime.securesms.contacts.ContactRepository
 import org.thoughtcrime.securesms.contacts.paged.collections.ContactSearchIterator
 import org.thoughtcrime.securesms.database.DistributionListTables
 import org.thoughtcrime.securesms.database.GroupTable
-import org.thoughtcrime.securesms.database.GroupTable.GroupRecord
 import org.thoughtcrime.securesms.database.SignalDatabase
 import org.thoughtcrime.securesms.database.ThreadTable
 import org.thoughtcrime.securesms.database.model.DistributionListPrivacyMode
+import org.thoughtcrime.securesms.database.model.GroupRecord
 import org.thoughtcrime.securesms.keyvalue.SignalStore
 import org.thoughtcrime.securesms.keyvalue.StorySend
 import org.thoughtcrime.securesms.recipients.Recipient
@@ -46,6 +46,10 @@ open class ContactSearchPagedDataSourceRepository(
 
   open fun queryNonGroupContacts(query: String?, includeSelf: Boolean): Cursor? {
     return contactRepository.queryNonGroupContacts(query ?: "", includeSelf)
+  }
+
+  open fun queryGroupMemberContacts(query: String?): Cursor? {
+    return contactRepository.queryGroupMemberContacts(query ?: "")
   }
 
   open fun getGroupSearchIterator(
@@ -95,6 +99,20 @@ open class ContactSearchPagedDataSourceRepository(
     return Recipient.resolved(RecipientId.from(CursorUtil.requireLong(cursor, ContactRepository.ID_COLUMN)))
   }
 
+  open fun getGroupsInCommon(recipient: Recipient): GroupsInCommon {
+    val groupsInCommon = SignalDatabase.groups.getPushGroupsContainingMember(recipient.id)
+    val groupRecipientIds = groupsInCommon.take(2).map { it.recipientId }
+    val names = Recipient.resolvedList(groupRecipientIds)
+      .map { it.getDisplayName(context) }
+      .sorted()
+
+    return GroupsInCommon(groupsInCommon.size, names)
+  }
+
+  open fun hasGroupsInCommon(recipient: Recipient): Boolean {
+    return SignalDatabase.groups.getPushGroupsContainingMember(recipient.id).isNotEmpty()
+  }
+
   open fun getRecipientFromGroupRecord(groupRecord: GroupRecord): Recipient {
     return Recipient.resolved(groupRecord.recipientId)
   }
@@ -104,7 +122,7 @@ open class ContactSearchPagedDataSourceRepository(
   }
 
   open fun getGroupStories(): Set<ContactSearchData.Story> {
-    return SignalDatabase.groups.groupsToDisplayAsStories.map {
+    return SignalDatabase.groups.getGroupsToDisplayAsStories().map {
       val recipient = Recipient.resolved(SignalDatabase.recipients.getOrInsertFromGroupId(it))
       ContactSearchData.Story(recipient, recipient.participantIds.size, DistributionListPrivacyMode.ALL)
     }.toSet()

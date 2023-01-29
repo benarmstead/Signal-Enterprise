@@ -224,6 +224,8 @@
     <string name="ContactsCursorLoader_recent_chats">ការសន្ទនាថ្មីៗ</string>
     <string name="ContactsCursorLoader_contacts">បញ្ជីទំនាក់ទំនង</string>
     <string name="ContactsCursorLoader_groups">ក្រុម</string>
+    <!-- Contact search header for individuals who the user has not started a conversation with but is in a group with -->
+    <string name="ContactsCursorLoader_group_members">សមាជិកក្រុម</string>
     <string name="ContactsCursorLoader_phone_number_search">ស្វែងរកលេខទូរស័ព្ទ</string>
     <!-- Header for username search -->
     <string name="ContactsCursorLoader_find_by_username">ស្វែងរកតាមឈ្មោះអ្នកប្រើ</string>
@@ -231,6 +233,10 @@
     <string name="ContactsCursorLoader_my_stories">រឿងរ៉ាវរបស់ខ្ញុំ</string>
     <!-- Text for a button that brings up a bottom sheet to create a new story. -->
     <string name="ContactsCursorLoader_new">ថ្មី</string>
+    <!-- Header for conversation search section labeled "Chats" -->
+    <string name="ContactsCursorLoader__chats">ការជជែក</string>
+    <!-- Header for conversation search section labeled "Messages" -->
+    <string name="ContactsCursorLoader__messages">សារ</string>
 
     <!-- ContactsDatabase -->
     <string name="ContactsDatabase_message_s">សារ %1$s</string>
@@ -573,6 +579,8 @@
     <string name="BackupsPreferenceFragment__create_backup">បង្កើតការបម្រុងទុក</string>
     <string name="BackupsPreferenceFragment__last_backup">ការបម្រុងទុកចុងក្រោយ៖ %1$s</string>
     <string name="BackupsPreferenceFragment__backup_folder">ថតឯកសារបម្រុងទុក</string>
+    <!-- Title for a preference item allowing the user to selected the hour of the day when their chats are backed up. -->
+    <string name="BackupsPreferenceFragment__backup_time">Backup time</string>
     <string name="BackupsPreferenceFragment__verify_backup_passphrase">ផ្ទៀងផ្ទាត់ឃ្លាសម្ងាត់បម្រុងទុក</string>
     <string name="BackupsPreferenceFragment__test_your_backup_passphrase">សាកល្បងឃ្លាសម្ងាត់បម្រុងទុករបស់អ្នក និងផ្ទៀងផ្ទាត់ថាវាត្រូវគ្នា</string>
     <string name="BackupsPreferenceFragment__turn_on">បើក</string>
@@ -602,6 +610,50 @@
     <string name="DateUtils_minutes_ago">%1$dនាទី</string>
     <string name="DateUtils_today">ថ្ងៃនេះ</string>
     <string name="DateUtils_yesterday">ម្សិលមិញ</string>
+    <!-- When scheduling a message, %1$s replaced with either today, tonight, or tomorrow. %2$s replaced with the time. e.g. Tonight at 9:00pm -->
+    <string name="DateUtils_schedule_at">%1$s នៅ %2$s</string>
+    <!-- Used when getting a time in the future. For example, Tomorrow at 9:00pm -->
+    <string name="DateUtils_tomorrow">Tomorrow</string>
+    <!-- Used in the context: Tonight at 9:00pm for example. Specifically this is after 7pm -->
+    <string name="DateUtils_tonight">Tonight</string>
+
+    <!-- Scheduled Messages -->
+    <!-- Title for dialog that shows all the users scheduled messages for a chat -->
+    <string name="ScheduledMessagesBottomSheet__schedules_messages">Scheduled messages</string>
+    <!-- Option when scheduling a message to select a specific date and time to send a message -->
+    <string name="ScheduledMessages_pick_time">Pick Date &amp; Time</string>
+    <!-- Title for dialog explaining to users how the scheduled messages work -->
+    <string name="ScheduleMessageFTUXBottomSheet__title">Scheduled messages</string>
+    <!-- Disclaimer text for scheduled messages explaining to users that the scheduled messages will only send if connected to the internet -->
+    <string name="ScheduleMessageFTUXBottomSheet__disclaimer">When you send a scheduled message, make sure your device will be on and connected to the internet at the time of sending. If not, your message will send when your device reconnects.</string>
+    <!-- Confirmation button text acknowledging the user understands the disclaimer -->
+    <string name="ScheduleMessageFTUXBottomSheet__okay">យល់ព្រម</string>
+    <!-- Title for section asking users to allow alarm permissions for scheduled messages -->
+    <string name="ScheduleMessageFTUXBottomSheet_enable_title">To enable message scheduling:</string>
+    <!-- Title for dialog asking users to allow alarm permissions for scheduled messages -->
+    <string name="ReenableScheduleMessagesDialogFragment_reenable_title">To re-enable message scheduling:</string>
+    <!-- Title of dialog with a calendar to select the date the user wants to schedule a message. -->
+    <string name="ScheduleMessageTimePickerBottomSheet__select_date_title">Select date</string>
+    <!-- Title of dialog with a clock to select the time at which the user wants to schedule a message. -->
+    <string name="ScheduleMessageTimePickerBottomSheet__select_time_title">Select time</string>
+    <!-- Title of dialog that allows user to set the time and day that their message will be sent -->
+    <string name="ScheduleMessageTimePickerBottomSheet__dialog_title">Schedule message</string>
+    <!-- Text for confirmation button when scheduling messages that allows the user to confirm and schedule the sending time -->
+    <string name="ScheduleMessageTimePickerBottomSheet__schedule_send">Schedule send</string>
+
+    <!-- Disclaimer in message scheduling dialog. %1$s replaced with a GMT offset (e.g. GMT-05:00), and %2$s is replaced with the time zone name (e.g. Eastern Standard Time) -->
+    <string name="ScheduleMessageTimePickerBottomSheet__timezone_disclaimer">All times in (%1$s) %2$s</string>
+
+    <!-- Context menu option to send a scheduled message now -->
+    <string name="ScheduledMessagesBottomSheet_menu_send_now">Send now</string>
+    <!-- Context menu option to reschedule a selected message -->
+    <string name="ScheduledMessagesBottomSheet_menu_reschedule">Reschedule</string>
+    <!-- Button in dialog asking user if they are sure they want to delete the selected scheduled message -->
+    <string name="ScheduledMessagesBottomSheet_delete_dialog_action">លុប</string>
+    <!-- Button in dialog asking user if they are sure they want to delete the selected scheduled message -->
+    <string name="ScheduledMessagesBottomSheet_delete_dialog_message">Delete selected scheduled message?</string>
+    <!-- Progress message shown while deleting selected scheduled message -->
+    <string name="ScheduledMessagesBottomSheet_deleting_progress_message">Deleting scheduled message…</string>
 
     <!-- DecryptionFailedDialog -->
     <string name="DecryptionFailedDialog_chat_session_refreshed">វគ្គឈែតត្រូវបានផ្ទុកឡើងវិញ</string>
@@ -1104,11 +1156,29 @@
     <string name="MessageRecord_left_group">អ្នកបានចាកចេញពីក្រុម។</string>
     <string name="MessageRecord_you_updated_group">អ្នកបានធ្វើបច្ចុប្បន្នភាពក្រុម។</string>
     <string name="MessageRecord_the_group_was_updated">ក្រុមនេះ ត្រូវបានធ្វើបច្ចុប្បន្នភាព។</string>
-    <string name="MessageRecord_you_called_date">អ្នកបានហៅ · %1$s</string>
-    <string name="MessageRecord_missed_audio_call_date">ខកខានការហៅជាសំឡេង · %1$s</string>
-    <string name="MessageRecord_missed_video_call_date">ខកខានការហៅជាវីដេអូ · %1$s</string>
+    <!-- Update message shown when placing an outgoing 1:1 voice/audio call and it\'s answered by the other party -->
+    <string name="MessageRecord_outgoing_voice_call">ការហៅចេញជាសំឡេង</string>
+    <!-- Update message shown when placing an outgoing 1:1 video call and it\'s answered by the other party -->
+    <string name="MessageRecord_outgoing_video_call">ការហៅចេញជាវីដេអូ</string>
+    <!-- Update message shown when placing an outgoing 1:1 voice/audio call and it\'s not answered by the other party -->
+    <string name="MessageRecord_unanswered_voice_call">ការហៅជាសំឡេងដែលមិនបានឆ្លើយតប</string>
+    <!-- Update message shown when placing an outgoing 1:1 video call and it\'s not answered by the other party -->
+    <string name="MessageRecord_unanswered_video_call">ការហៅជាវីដេអូដែលមិនបានឆ្លើយតប</string>
+    <!-- Update message shown when receiving an incoming 1:1 voice/audio call and it\'s answered -->
+    <string name="MessageRecord_incoming_voice_call">ការហៅចូលជាសំឡេង</string>
+    <!-- Update message shown when receiving an incoming 1:1 video call and answered -->
+    <string name="MessageRecord_incoming_video_call">ការហៅចូលជាវីដេអូ</string>
+    <!-- Update message shown when receiving an incoming 1:1 voice/audio call and not answered -->
+    <string name="MessageRecord_missed_voice_call">ការហៅជាសំឡេងខកមិនបានទទួល</string>
+    <!-- Update message shown when receiving an incoming 1:1 video call and not answered -->
+    <string name="MessageRecord_missed_video_call">ការហៅជាវីដេអូខកមិនបានទទួល</string>
+    <!-- Update message shown when receiving an incoming 1:1 voice/audio call and explicitly declined -->
+    <string name="MessageRecord_you_declined_a_voice_call">អ្នកមិនព្រមទទួលការហៅជាសំឡេង</string>
+    <!-- Update message shown when receiving an incoming 1:1 video call and explicitly declined -->
+    <string name="MessageRecord_you_declined_a_video_call">អ្នកមិនព្រមទទួលការហៅជាវីដេអូ</string>
+    <!-- Call update formatter string to place the update message next to a time stamp. e.g., \'Incoming voice call · 11:11am\' -->
+    <string name="MessageRecord_call_message_with_date">%1$s · %2$s</string>
     <string name="MessageRecord_s_updated_group">%1$s បានធ្វើបច្ចុប្បន្នភាពក្រុម។</string>
-    <string name="MessageRecord_s_called_you_date">%1$s បានហៅមកអ្នក · %2$s</string>
     <string name="MessageRecord_s_joined_signal">%1$s ប្រើSignal!</string>
     <string name="MessageRecord_you_disabled_disappearing_messages">អ្នកបានបិទសារបាត់ទៅវិញ។</string>
     <string name="MessageRecord_s_disabled_disappearing_messages">%1$s បានបិទសារបាត់ទៅវិញ។</string>
@@ -1288,10 +1358,12 @@
     <string name="MessageRecord_s_changed_their_phone_number">%1$s បានផ្លាស់ប្តូរលេខទូរស័ព្ទរបស់គេ។</string>
     <!-- Update item message shown in the release channel when someone is already a sustainer so we ask them if they want to boost. -->
     <string name="MessageRecord_like_this_new_feature_help_support_signal_with_a_one_time_donation">ចូលចិត្តមុខងារថ្មីនេះឬ? ជួយគាំទ្រ Signal តាមរយៈការបរិច្ចាគតែមួយដង។</string>
-    <!-- Update item message shown when we merge two threads together -->
+    <!-- Update item message shown when we merge two threads together. First placeholder is a name, second placeholder is a phone number. -->
     <string name="MessageRecord_your_message_history_with_s_and_their_number_s_has_been_merged">ប្រវត្តិសាររបស់អ្នកជាមួយ %1$s និងលេខ %2$s របស់គេត្រូវបានបញ្ចូលគ្នា។</string>
-    <!-- Update item message shown when we merge two threads together and we don\'t know the phone number of the other thread -->
+    <!-- Update item message shown when we merge two threads together and we don\'t know the phone number of the other thread. The placeholder is a person\'s name. -->
     <string name="MessageRecord_your_message_history_with_s_and_another_chat_has_been_merged">ប្រវត្តិសាររបស់អ្នកជាមួយ %1$s និងការជជែកមួយផ្សេងទៀតដែលមានគេនៅក្នុងនោះដែរត្រូវបានបញ្ចូលគ្នា។</string>
+    <!-- Update item message shown when you find out a phone number belongs to a person you had a conversation with. First placeholder is a phone number, second placeholder is a name. -->
+    <string name="MessageRecord_s_belongs_to_s">%1$s ជាលេខរបស់ %2$s</string>
     <!-- Message to notify sender that activate payments request has been sent to the recipient -->
     <string name="MessageRecord_you_sent_request">អ្នកបានផ្ញើសំណើទៅ %1$s ដើម្បីបើកដំណើរការការបង់ប្រាក់</string>
     <!-- Request message from recipient to activate payments -->
@@ -1606,8 +1678,7 @@
     <string name="RegistrationActivity_select_your_country">ជ្រើសរើសប្រទេសរបស់អ្នក</string>
     <string name="RegistrationActivity_you_must_specify_your_country_code">អ្នកត្រូវបញ្ជាក់ លេខកូដប្រទេសរបស់អ្នក
     </string>
-    <string name="RegistrationActivity_you_must_specify_your_phone_number">អ្នកត្រូវបញ្ជាក់ លេខទូរស័ព្ទរបស់អ្នក
-    </string>
+    <string name="RegistrationActivity_please_enter_a_valid_phone_number_to_register">សូមបញ្ចូលលេខទូរស័ព្ទត្រឹមត្រូវមួយ ដើម្បីចុះឈ្មោះ។</string>
     <string name="RegistrationActivity_invalid_number">លេខទូរសព្ទមិនត្រឹមត្រូវ</string>
     <string name="RegistrationActivity_the_number_you_specified_s_is_invalid">លេខរបស់អ្នក ដែលបានបញ្ជាក់(%1$s) មិនត្រឹមត្រូវ
     </string>
@@ -1636,7 +1707,6 @@
     <string name="RegistrationActivity_next">បន្ទាប់</string>
     <string name="RegistrationActivity_continue">បន្ត</string>
     <string name="RegistrationActivity_take_privacy_with_you_be_yourself_in_every_message">យកភាពឯកជនជាមួយអ្នក។ \\ n សូមធ្វើខ្លួនអ្នកនៅក្នុងគ្រប់សារទាំងអស់។</string>
-    <string name="RegistrationActivity_enter_your_phone_number_to_get_started">បញ្ចូលលេខទូរស័ព្ទរបស់អ្នកដើម្បីចាប់ផ្ដើម</string>
     <string name="RegistrationActivity_enter_your_phone_number">វាយបញ្ចូលលេខរបស់អ្នក</string>
     <string name="RegistrationActivity_you_will_receive_a_verification_code">អ្នកនឹងទទួលបានកូដផ្ទៀងផ្ទាត់។ អត្រាគិតប្រាក់ក្រុមហ៊ុនអាចនឹងត្រូវបានអនុវត្ត។</string>
     <string name="RegistrationActivity_enter_the_code_we_sent_to_s">បញ្ចូលលេខកូដដែលយើងបានផ្ញើទៅ%1$s</string>
@@ -1644,7 +1714,10 @@
 
     <string name="RegistrationActivity_phone_number_description">លេខទូរស័ព្ទ</string>
     <string name="RegistrationActivity_country_code_description">កូដប្រទេស</string>
+    <string name="RegistrationActivity_country_code_hint">ប្រទេស</string>
     <string name="RegistrationActivity_call">ហៅចេញ</string>
+    <string name="RegistrationActivity_verification_code">ផ្ទៀងផ្ទាត់កូដ</string>
+    <string name="RegistrationActivity_resend_code">ផ្ញើកូដម្តងទៀត</string>
 
     <!-- RegistrationLockV2Dialog -->
     <string name="RegistrationLockV2Dialog_turn_on_registration_lock">បើកការចាក់សោរចុះឈ្មោះ?</string>
@@ -1766,10 +1839,6 @@
     <string name="ThreadRecord_left_the_group">បានចាកចេញពីក្រុម</string>
     <string name="ThreadRecord_secure_session_reset">កំណត់ការចូលប្រើប្រាស់សុវត្ថិភាពឡើងវិញ</string>
     <string name="ThreadRecord_draft">ព្រាង៖</string>
-    <string name="ThreadRecord_called">អ្នកបានហៅ</string>
-    <string name="ThreadRecord_called_you">បានហៅមកអ្នក</string>
-    <string name="ThreadRecord_missed_audio_call">ខកខានការហៅជាសំឡេង</string>
-    <string name="ThreadRecord_missed_video_call">ខកខានការហៅជាវីដេអូ</string>
     <string name="ThreadRecord_media_message">សារក្នុងប្រព័ន្ធផ្សព្វផ្សាយ</string>
     <string name="ThreadRecord_sticker">ស្ទីកគ័រ</string>
     <string name="ThreadRecord_view_once_photo">បង្ហាញ-ម្តង រូបភាព</string>
@@ -1802,11 +1871,11 @@
     <string name="ThreadRecord_video">វីដេអូ</string>
     <string name="ThreadRecord_chat_session_refreshed">វគ្គជជែកត្រូវបានផ្ទុកឡើងវិញ</string>
     <!-- Displayed in the notification when the user is sent a gift -->
-    <string name="ThreadRecord__you_received_a_gift">អ្នកទទួលបានកាដូចំនួនមួយ</string>
+    <string name="ThreadRecord__s_donated_for_you">%1$s បានបរិច្ចាគសម្រាប់អ្នក</string>
     <!-- Displayed in the notification when the user sends a gift -->
-    <string name="ThreadRecord__you_sent_a_gift">អ្នកបានផ្ញើកាដូទៅមួយ</string>
+    <string name="ThreadRecord__you_donated_for_s">អ្នកបានបរិច្ចាគសម្រាប់ %1$s</string>
     <!-- Displayed in the notification when the user has opened a received gift -->
-    <string name="ThreadRecord__you_redeemed_a_gift_badge">អ្នកបានប្តូរយកស្លាកកាដូចំនួនមួយ</string>
+    <string name="ThreadRecord__you_redeemed_a_badge">អ្នកបានប្តូរយកស្លាកមួយ</string>
     <!-- Displayed in the conversation list when someone reacted to your story -->
     <string name="ThreadRecord__reacted_s_to_your_story">បានប្រតិកម្ម %1$s ទៅនឹងរឿងរ៉ាវរបស់អ្នក</string>
     <!-- Displayed in the conversation list when you reacted to someone\'s story -->
@@ -1912,13 +1981,15 @@
     <string name="MediaPreviewActivity_s_to_you">%1$s ទៅអ្នក</string>
     <string name="MediaPreviewActivity_media_no_longer_available">ឯកសារមេឌៀលែងមានទៀតហើយ។</string>
     <!-- Notifying the user that the device has encountered a technical issue and is unable to render a video. -->
-    <string name="MediaPreviewActivity_unable_to_play_media">Unable to play media.</string>
+    <string name="MediaPreviewActivity_unable_to_play_media">មិនអាចចាក់មេឌៀបានទេ។</string>
     <string name="MediaPreviewActivity_error_finding_message">មានបញ្ហាក្នុងការស្វែងរកសារ។</string>
     <string name="MediaPreviewActivity_cant_find_an_app_able_to_share_this_media">មិនអាចស្វែងរកកម្មវិធីដែលអាចចែករំលែកឯកសារមេឌៀនេះ។</string>
     <string name="MediaPreviewActivity_dismiss_due_to_error">បិទ</string>
     <string name="MediaPreviewFragment_edit_media_error">បញ្ហាមេឌៀ</string>
     <!-- This is displayed as a toast notification when we encounter an error deleting a message, including potentially on other people\'s devices -->
     <string name="MediaPreviewFragment_media_delete_error">មានបញ្ហាក្នុងការលុបសារ ហើយសារអាចនៅតែមាន</string>
+    <!-- A suffix to be attached to truncated captions that the user may tap onto to view the entire text caption -->
+    <string name="MediaPreviewFragment_see_more">%1$s… <b>Read More</b></string>
 
     <!-- MessageNotifier -->
     <string name="MessageNotifier_d_new_messages_in_d_conversations">%1$d សារថ្មីក្នុង %2$d ការសន្ទនា</string>
@@ -1983,6 +2054,8 @@
 
     <!-- SearchToolbar -->
     <string name="SearchToolbar_search">ស្វែងរក</string>
+    <!-- Hint when searching filtered chat content -->
+    <string name="SearchToolbar_search_unread_chats">ស្វែងរកការជជែកដែលមិនទាន់អាន</string>
     <string name="SearchToolbar_search_for_conversations_contacts_and_messages">ការស្វែងរកសម្រាប់ការសន្ទនា បញ្ជីទំនាក់ទំនង និងសារ</string>
 
     <!-- Material3 Search Toolbar -->
@@ -2012,6 +2085,9 @@
     <!-- UnauthorizedReminder -->
     <string name="UnauthorizedReminder_device_no_longer_registered">ឧបករណ៍នេះលែងបានចុះឈ្មោះហើយ!</string>
     <string name="UnauthorizedReminder_this_is_likely_because_you_registered_your_phone_number_with_Signal_on_a_different_device">នេះហាក់ដូចជាដោយសារអ្នកបានចុះឈ្មោះលេខទូរស័ព្ទជាមួយSignalនៅលើឧបករណ៍ផ្សេងទៀត។ ចុច ដើម្បីចុះឈ្មោះម្តងទៀត។</string>
+
+    <!-- Push notification when the app is forcibly logged out by the server. -->
+    <string name="LoggedOutNotification_you_have_been_logged_out">អ្នកបានចេញពី Signal នៅលើឧបករណ៍នេះ។</string>
 
     <!-- EnclaveFailureReminder -->
     <!-- Banner message to update app to use payments -->
@@ -2100,6 +2176,8 @@
     <string name="conversation_activity__type_message_push">សារ Signal</string>
     <string name="conversation_activity__type_message_sms_insecure">SMS គ្មានសុវត្ថិភាព</string>
     <string name="conversation_activity__type_message_mms_insecure">MMS គ្មានសុវត្ថិភាព</string>
+    <!-- Option in send button context menu to schedule the message instead of sending it directly -->
+    <string name="conversation_activity__option_schedule_message">Schedule message</string>
     <string name="conversation_activity__from_sim_name">មកពី %1$s</string>
     <string name="conversation_activity__sim_n">ស៊ីមកាត %1$d</string>
     <string name="conversation_activity__send">ផ្ញើ</string>
@@ -2172,7 +2250,7 @@
     <!-- Label indicating that the story being replied to no longer exists -->
     <string name="QuoteView_no_longer_available">លែងមានទៀតហើយ</string>
     <!-- Label for quoted gift -->
-    <string name="QuoteView__gift">កាដូ</string>
+    <string name="QuoteView__donation_for_a_friend">ការបរិច្ចាគសម្រាប់មិត្តភក្តិម្នាក់</string>
 
     <!-- conversation_fragment -->
     <string name="conversation_fragment__scroll_to_the_bottom_content_description">អូសចុះក្រោម</string>
@@ -2979,6 +3057,15 @@
     <!-- conversation_callable_insecure -->
     <string name="conversation_add_to_contacts__menu_add_to_contacts">បន្ថែមទៅបញ្ជីទំនាក់ទំនង</string>
 
+    <!-- conversation scheduled messages bar -->
+
+    <!-- Label for button in a banner to show all messages currently scheduled -->
+    <string name="conversation_scheduled_messages_bar__see_all">មើលទាំងអស់</string>
+    <!-- Body text for banner to show all scheduled messages for the chat that tells the user how many scheduled messages there are -->
+    <plurals name="conversation_scheduled_messages_bar__number_of_messages">
+        <item quantity="other">%1$d messages scheduled</item>
+    </plurals>
+
     <!-- conversation_group_options -->
     <string name="convesation_group_options__recipients_list">បញ្ជីអ្នកទទួល</string>
     <string name="conversation_group_options__delivery">ការបញ្ជូន</string>
@@ -3069,11 +3156,13 @@
     <string name="CreateKbsPinFragment__create_a_new_pin">បង្កើតលេខ PIN ថ្មី</string>
     <string name="CreateKbsPinFragment__you_can_choose_a_new_pin_as_long_as_this_device_is_registered">អ្នកអាចប្តូរលេខ PIN របស់អ្នក លុះត្រាឧបករណ៍នេះត្រូវបានចុះឈ្មោះ។</string>
     <string name="CreateKbsPinFragment__create_your_pin">បង្កើតលេខ PIN របស់អ្នក</string>
-    <string name="CreateKbsPinFragment__pins_keep_information_stored_with_signal_encrypted">លេខកូដ​ PINs រក្សាទុកព័ត៌មានជាមួយកូដនីយកម្ម Signal ដូចនេះមានតែអ្នកប៉ុណ្ណោះចូលប្រើប្រាស់វាបាន។ ប្រវត្តិរូប ការកំណត់ និងបញ្ជីទំនាក់ទំនងរបស់អ្នក នឹងស្តារឡើងវិញនៅពេលអ្នកដំឡើងវិញ។ អ្នកនឹងមិនត្រូវការលេខកូដ PIN ដើម្បីបើកកម្មវិធីទេ។</string>
+    <string name="CreateKbsPinFragment__pins_can_help_you_restore_your_account">PINs can help you restore your account and keep your info encrypted with Signal. </string>
     <string name="CreateKbsPinFragment__choose_a_stronger_pin">ជ្រើសរើសលេខ PIN ខ្លាំងជាងនេះ</string>
 
     <!-- ConfirmKbsPinFragment -->
     <string name="ConfirmKbsPinFragment__pins_dont_match">PINs មិនត្រូវគ្នា។ សាកល្បងម្តងទៀត។</string>
+    <!-- Prompt for the user to repeat entering the PIN in order to help them remember it correctly.   -->
+    <string name="ConfirmKbsPinFragment__re_enter_the_pin_you_just_created">Re-enter the PIN you just created.</string>
     <string name="ConfirmKbsPinFragment__confirm_your_pin">ផ្ទៀងផ្ទាត់លេខ PIN របស់អ្នក។</string>
     <string name="ConfirmKbsPinFragment__pin_creation_failed">ការបង្កើត PIN បរាជ័យ</string>
     <string name="ConfirmKbsPinFragment__your_pin_was_not_saved">លេខ PIN របស់អ្នកមិនបានរក្សាទុក។ យើងនឹងណែនាំអ្នកអោយបង្កើតកូដ PIN នៅពេលក្រោយ។</string>
@@ -3208,7 +3297,7 @@
     <!-- Error message shown if a very large attachment is encountered during the backup creation and causes the backup to fail -->
     <string name="LocalBackupJobApi29_your_backup_contains_a_very_large_file">ការបម្រុងទុករបស់អ្នកមានឯកសារមួយដែលមានទំហំធំខ្លាំងណាស់ដែលមិនអាចបម្រុងទុកបានទេ។ សូមលុបវា ហើយបង្កើតការបម្រុងទុកថ្មី។</string>
     <string name="LocalBackupJobApi29_tap_to_manage_backups">ចុច ដើម្បីគ្រប់គ្រងការបម្រុងទុក។</string>
-    <string name="RegistrationActivity_wrong_number">ខុសលេខ</string>
+    <string name="RegistrationActivity_wrong_number">ខុសលេខ?</string>
     <string name="RegistrationActivity_call_me_instead_available_in">ហៅមកខ្ញុំជំនួសវិញ \n (ទំនេរក្នុងរយៈពេល %1$02d:%2$02d)</string>
     <string name="RegistrationActivity_contact_signal_support">ទាក់ទងជំនួយ Signal</string>
     <string name="RegistrationActivity_code_support_subject">ការចុះឈ្មោះ Signal - ការផ្ទៀងផ្ទាត់កូដសម្រាប់ Android</string>
@@ -4169,7 +4258,8 @@
     <string name="SelectFeaturedBadgeFragment__you_must_select_a_badge">អ្នកត្រូវជ្រើសរើសស្លាកមួយ</string>
     <string name="SelectFeaturedBadgeFragment__failed_to_update_profile">បរាជ័យធ្វើបច្ចុប្បន្នភាពគណនី</string>
 
-    <string name="ViewBadgeBottomSheetDialogFragment__become_a_sustainer">ធ្វើជាអ្នកគាំទ្រ</string>
+    <!-- Displayed on primary button in the bottom sheet as a call-to-action to launch into the donation flow -->
+    <string name="ViewBadgeBottomSheetDialogFragment__donate_now">បរិច្ចាគឥឡូវនេះ</string>
     <!-- Title of a page in the bottom sheet. Placeholder is a user\'s short-name -->
     <string name="ViewBadgeBottomSheetDialogFragment__s_supports_signal">%1$s គាំទ្រ Signal</string>
     <!-- Description of a page in the bottom sheet of a monthly badge. Placeholder is a user\'s short-name -->
@@ -4233,7 +4323,7 @@
     <!-- Preference heading for other ways to donate -->
     <string name="ManageDonationsFragment__other_ways_to_give">វិធីផ្សេងទៀតក្នុងការផ្តល់ជូន</string>
     <!-- Preference label to launch badge gifting -->
-    <string name="ManageDonationsFragment__gift_a_badge">ផ្តល់ជូនស្លាកជាកាដូ</string>
+    <string name="ManageDonationsFragment__donate_for_a_friend">បរិច្ចាគសម្រាប់មិត្តភក្តិម្នាក់</string>
 
     <string name="Boost__enter_custom_amount">បញ្ចូលចំនួនទឹកប្រាក់កំណត់ផ្ទាល់ខ្លួន</string>
     <string name="Boost__one_time_contribution">ចូលរួមចំនែកតែមួយលើក</string>
@@ -4289,10 +4379,10 @@
     <string name="DonationsErrors__failed_to_validate_badge">មិនអាចបញ្ជាក់ស្លាកបាន</string>
     <!-- Displayed when badge credential couldn\'t be verified -->
     <string name="DonationsErrors__could_not_validate">មិន​អាច​បញ្ជាក់​ការ​ឆ្លើយតប​របស់​ម៉ាស៊ីន​មេ​បាន​ទេ។ សូមទាក់ទងផ្នែកជំនួយ។</string>
-    <!-- Displayed as title when some generic error happens during gift badge sending -->
-    <string name="DonationsErrors__failed_to_send_gift_badge">មិនអាចផ្ញើស្លាកកាដូបាន</string>
-    <!-- Displayed as message when some generic error happens during gift badge sending -->
-    <string name="DonationsErrors__could_not_send_gift_badge">មិនអាចផ្ញើស្លាកកាដូបានទេ។ សូមទាក់ទងផ្នែកជំនួយ។</string>
+    <!-- Displayed as title when some generic error happens during sending donation on behalf of another user -->
+    <string name="DonationsErrors__donation_failed">ការបរិច្ចាគមិនបានជោគជ័យទេ</string>
+    <!-- Displayed as message when some generic error happens during sending donation on behalf of another user -->
+    <string name="DonationsErrors__your_payment_was_processed_but">ការបង់ប្រាក់របស់អ្នកត្រូវបានដំណើរការ ប៉ុន្តែ Signal មិនអាចផ្ញើសារនៃការបរិច្ចាគរបស់អ្នកបានទេ។ សូមទាក់ទងទៅកាន់ផ្នែកជំនួយគាំទ្រ។</string>
     <string name="DonationsErrors__your_badge_could_not">ស្លាករបស់អ្នកមិនអាចដាក់ចូលគណនីរបស់អ្នកបានទេ ប៉ុន្តែអ្នកប្រហែលជាត្រូវបានគិតប្រាក់។ សូមទាក់ទងទៅផ្នែកជំនួយ។</string>
     <string name="DonationsErrors__your_payment_is_still">ការទូទាត់ប្រាក់របស់អ្នកកំពុងដំណើរការ ដែលអាចចំណាយពេលពីរបីនាទីអាស្រ័យលើល្បឿនអុីនធឺណិត</string>
     <string name="DonationsErrors__failed_to_cancel_subscription">មិនអាចបោះបង់ការជាវបាន</string>
@@ -4301,16 +4391,16 @@
     <string name="NetworkFailure__network_error_check_your_connection_and_try_again">បណ្ដាញមានបញ្ហា។ សូមពិនិត្យការភ្ជាប់របស់អ្នក ហើយសាកល្បងម្ដងទៀត</string>
     <string name="NetworkFailure__retry">ព្យាយាមម្តងទៀត</string>
     <!-- Displayed as a dialog title when the selected recipient for a gift doesn\'t support gifting -->
-    <string name="DonationsErrors__cant_send_gift">មិនអាចផ្ញើកាដូបាន</string>
+    <string name="DonationsErrors__cannot_send_donation">មិនអាចផ្ញើការបរិច្ចាគបានទេ</string>
     <!-- Displayed as a dialog message when the selected recipient for a gift doesn\'t support gifting -->
-    <string name="DonationsErrors__target_does_not_support_gifting">អ្នកទទួលនេះកំពុងប្រើកំណែ Signal ដែលមិនអាចទទួលស្លាកកាដូបាន។ គេនឹងអាចទទួលកាដូបាននៅពេលដែលគេដំឡើងទៅកំណែចុងក្រោយបំផុត។</string>
-    <!-- Displayed as a dialog title when the user\'s profile could not be fetched, likely due to lack of internet -->
-    <string name="DonationsErrors__couldnt_send_gift">មិនអាចផ្ញើកាដូបាន</string>
+    <string name="DonationsErrors__this_user_cant_receive_donations_until">អ្នកប្រើនេះមិនអាចទទួលការបរិច្ចាគបានទេ រហូតទាល់តែគេដំឡើងកំណែ Signal សិន។</string>
     <!-- Displayed as a dialog message when the user\'s profile could not be fetched, likely due to lack of internet -->
-    <string name="DonationsErrors__please_check_your_network_connection">កាដូរបស់អ្នកមិនអាចផ្ញើចេញបានទេ ដោយសារតែបញ្ហាបណ្តាញ។ សូមពិនិត្យមើលសេវាអ៊ីនធឺណិតរបស់អ្នក រួចព្យាយាមម្តងទៀត។</string>
+    <string name="DonationsErrors__your_donation_could_not_be_sent">ការបរិច្ចាគរបស់អ្នកមិនអាចផ្ញើបានទេ ដោយសារមានបញ្ហាបណ្តាញ។ សូមពិនិត្យមើលសេវាអ៊ីនធឺណិតរបស់អ្នក រួចព្យាយាមម្តងទៀត។</string>
 
     <!-- Gift message view title -->
-    <string name="GiftMessageView__gift_badge">ស្លាកកាដូ</string>
+    <string name="GiftMessageView__donation_to_s">ការបរិច្ចាគទៅ %1$s</string>
+    <!-- Gift message view title for incoming donations -->
+    <string name="GiftMessageView__s_donated_to_signal_on">%1$s បានបរិច្ចាគទៅ Signal ជំនួសឲ្យអ្នក</string>
     <!-- Gift badge redeem action label -->
     <string name="GiftMessageView__redeem">ប្តូរ</string>
     <!-- Gift badge view action label -->
@@ -4521,7 +4611,7 @@
     <!-- Donation receipts one-time tab label -->
     <string name="DonationReceiptListFragment__one_time">តែមួយដង</string>
     <!-- Donation receipts gift tab label -->
-    <string name="DonationReceiptListFragment__gift">កាដូ</string>
+    <string name="DonationReceiptListFragment__donation_for_a_friend">ការបរិច្ចាគសម្រាប់មិត្តភក្តិម្នាក់</string>
     <!-- Donation receipts boost row label -->
     <!-- Donation receipts details title -->
     <!-- Donation receipts donation type heading -->
@@ -4863,22 +4953,22 @@
     <plurals name="GiftRowItem_s_dot_d_day_duration">
         <item quantity="other">%1$s · រយៈពេល %2$d ថ្ងៃ</item>
     </plurals>
-    <!-- Tagline for gift row items -->
-    <string name="GiftRowItem__send_a_gift_badge">ផ្ញើស្លាកកាដូ</string>
     <!-- Headline text on start fragment for gifting a badge -->
-    <string name="GiftFlowStartFragment__gift_a_badge">ផ្តល់ជូនស្លាកជាកាដូ</string>
+    <string name="GiftFlowStartFragment__donate_for_a_friend">បរិច្ចាគសម្រាប់មិត្តភក្តិម្នាក់</string>
     <!-- Description text on start fragment for gifting a badge -->
-    <string name="GiftFlowStartFragment__gift_someone_a_badge">ផ្តល់ស្លាកជូននរណាម្នាក់ដោយធ្វើការបរិច្ចាគទៅ Signal ក្នុងនាមពួកគេ។ ពួកគេនឹងទទួលបានស្លាកមួយដើម្បីបង្ហាញនៅលើរូបថតប្រូហ្វាល់របស់ពួកគេ។</string>
+    <plurals name="GiftFlowStartFragment__support_signal_by">
+        <item quantity="other">គាំទ្រ Signal ដោយធ្វើការបរិច្ចាគសម្រាប់មិត្តភក្តិ ឬសមាជិកគ្រួសារដែលប្រើ Signal។ ពួកគេនឹងទទួលបានស្លាកមួយដើម្បីបង្ហាញនៅលើប្រូហ្វាល់របស់ពួកគេរយៈពេល %1$d ថ្ងៃ</item>
+    </plurals>
     <!-- Action button label for start fragment for gifting a badge -->
     <string name="GiftFlowStartFragment__next">បន្ទាប់</string>
     <!-- Title text on choose recipient page for badge gifting -->
     <string name="GiftFlowRecipientSelectionFragment__choose_recipient">ជ្រើសរើសអ្នកទទួល</string>
     <!-- Title text on confirm gift page -->
-    <string name="GiftFlowConfirmationFragment__confirm_gift">បញ្ជាក់កាដូ</string>
+    <string name="GiftFlowConfirmationFragment__confirm_donation">បញ្ជាក់ការបរិច្ចាគ</string>
     <!-- Heading text specifying who the gift will be sent to -->
     <string name="GiftFlowConfirmationFragment__send_to">ផ្ញើទៅ</string>
     <!-- Text explaining that gift will be sent to the chosen recipient -->
-    <string name="GiftFlowConfirmationFragment__your_gift_will_be_sent_in">កាដូរបស់អ្នកនឹងត្រូវបានផ្ញើនៅក្នុងសារមួយទល់នឹងមួយទៅកាន់អ្នកទទួល។ សូមបញ្ចូលសារផ្ទាល់ខ្លួនរបស់អ្នកនៅខាងក្រោម។</string>
+    <string name="GiftFlowConfirmationFragment__the_recipient_will_be_notified">អ្នកទទួលនឹងត្រូវបានជូនដំណឹងអំពីការបរិច្ចាគនៅក្នុងសារផ្ញើទៅគេដោយផ្ទាល់។ បញ្ចូលសាររបស់អ្នកផ្ទាល់នៅខាងក្រោម។</string>
     <!-- Text explaining that this gift is a one time donation -->
     <string name="GiftFlowConfirmationFragment__one_time_donation">ការបរិច្ចាគតែមួយដង</string>
     <!-- Hint for add message input -->
@@ -4886,27 +4976,27 @@
     <!-- Displayed in the dialog while verifying the chosen recipient -->
     <string name="GiftFlowConfirmationFragment__verifying_recipient">កំពុងផ្ទៀងផ្ទាត់អ្នកទទួល…</string>
     <!-- Title for sheet shown when opening a redeemed gift -->
-    <string name="ViewReceivedGiftBottomSheet__s_sent_you_a_gift">%1$s បានផ្តល់កាដូមួយឲ្យអ្នក</string>
+    <string name="ViewReceivedGiftBottomSheet__s_made_a_donation_for_you">%1$s បានធ្វើការបរិច្ចាគសម្រាប់អ្នក</string>
     <!-- Title for sheet shown when opening a sent gift -->
     <string name="ViewSentGiftBottomSheet__thanks_for_your_support">អរគុណសម្រាប់ការគាំទ្ររបស់អ្នក!</string>
     <!-- Description for sheet shown when opening a redeemed gift -->
-    <string name="ViewReceivedGiftBottomSheet__youve_received_a_gift_badge">អ្នកបានទទួលស្លាកកាដូមួយពី %1$s! ជួយ Signal ក្នុងការបំផុសការយល់ដឹងតាមរយៈការបង្ហាញស្លាកនេះនៅលើប្រូហ្វាល់របស់អ្នក។</string>
+    <string name="ViewReceivedGiftBottomSheet__s_made_a_donation_to_signal">%1$s បានធ្វើការបរិច្ចាគទៅ Signal ជំនួសឲ្យអ្នក! បង្ហាញការគាំទ្ររបស់អ្នកសម្រាប់ Signal នៅលើប្រូហ្វាល់របស់អ្នក។</string>
     <!-- Description for sheet shown when opening a sent gift -->
-    <string name="ViewSentGiftBottomSheet__youve_gifted_a_badge">អ្នកបានផ្តល់ស្លាកមួយទៅ %1$s។ នៅពេលពួកគេទទួលយក ពួកគេអាចសម្រេចបានថាតើគួរបង្ហាញ ឬលាក់ស្លាកនោះ។</string>
+    <string name="ViewSentGiftBottomSheet__youve_made_a_donation_to_signal">អ្នកបានធ្វើការបរិច្ចាគទៅ Signal ជំនួសឲ្យ %1$s។ គេនឹងត្រូវបានផ្តល់ជម្រើសដើម្បីបង្ហាញការគាំទ្ររបស់គេនៅលើប្រូហ្វាល់របស់គេ។</string>
     <!-- Primary action for pending gift sheet to redeem badge now -->
     <string name="ViewReceivedGiftSheet__redeem">ប្តូរ</string>
     <!-- Primary action for pending gift sheet to redeem badge later -->
     <string name="ViewReceivedGiftSheet__not_now">ពេលក្រោយ</string>
     <!-- Dialog text while redeeming a gift -->
-    <string name="ViewReceivedGiftSheet__redeeming_gift">កំពុងប្តូរយកកាដូ…</string>
+    <string name="ViewReceivedGiftSheet__redeeming_badge">កំពុងប្តូរយកស្លាក…</string>
     <!-- Snackbar text when user presses "not now" on redemption sheet -->
     <string name="ConversationFragment__you_can_redeem_your_badge_later">អ្នកអាចប្តូរយកស្លាករបស់អ្នកនៅពេលក្រោយ។</string>
     <!-- Description text in gift thanks sheet -->
-    <string name="GiftThanksSheet__youve_gifted_a_badge_to_s">អ្នកបានផ្តល់ស្លាកមួយទៅ %1$s។ នៅពេលពួកគេទទួលយក ពួកគេអាចសម្រេចបានថាតើគួរបង្ហាញ ឬលាក់ស្លាកនោះ។</string>
+    <string name="GiftThanksSheet__youve_made_a_donation">អ្នកបានបរិច្ចាគទៅ Signal ជំនួសឲ្យ %1$s។ គេនឹងត្រូវបានផ្តល់ជម្រើសដើម្បីបង្ហាញការគាំទ្ររបស់គេនៅលើប្រូហ្វាល់របស់គេ។</string>
     <!-- Expired gift sheet title -->
-    <string name="ExpiredGiftSheetConfiguration__your_gift_badge_has_expired">ស្លាកកាដូរបស់អ្នកបានផុតកំណត់ហើយ</string>
+    <string name="ExpiredGiftSheetConfiguration__your_badge_has_expired">ស្លាករបស់អ្នកបានផុតកំណត់ហើយ</string>
     <!-- Expired gift sheet top description text -->
-    <string name="ExpiredGiftSheetConfiguration__your_gift_badge_has_expired_and_is">ស្លាកកាដូរបស់អ្នកបានផុតកំណត់ ហើយអ្នកផ្សេងទៀតមិនអាចមើលវាឃើញនៅលើប្រូហ្វាល់របស់អ្នកទៀតឡើយ។</string>
+    <string name="ExpiredGiftSheetConfiguration__your_badge_has_expired_and_is">ស្លាករបស់អ្នកបានផុតកំណត់ ហើយអ្នកផ្សេងទៀតមើលវាលែងឃើញនៅលើប្រូហ្វាល់របស់អ្នកទៀតហើយ។</string>
     <!-- Expired gift sheet bottom description text -->
     <string name="ExpiredGiftSheetConfiguration__to_continue">ដើម្បីបន្តគាំទ្របច្ចេកវិទ្យាដែលត្រូវបានបង្កើតឡើងសម្រាប់អ្នក សូមពិចារណាក្នុងការក្លាយជា Sustainer​ ម្នាក់ប្រចាំខែរបស់យើង។</string>
     <!-- Expired gift sheet make a monthly donation button -->
@@ -4955,11 +5045,11 @@
     <string name="ContactSearchMediator__delete_the_custom">លុបរឿងរ៉ាវកំណត់ផ្ទាល់ខ្លួន \"%1$s\" ឬ?</string>
     <!-- Dialog action item for deleting a custom story -->
     <string name="ContactSearchMediator__delete">លុប</string>
-    <!-- Gift expiry days remaining -->
+    <!-- Donation for a friend expiry days remaining -->
     <plurals name="Gifts__d_days_remaining">
         <item quantity="other">នៅសល់ %1$d ថ្ងៃ</item>
     </plurals>
-    <!-- Gift expiry hours remaining -->
+    <!-- Donation for a friend expiry hours remaining -->
     <plurals name="Gifts__d_hours_remaining">
         <item quantity="other">នៅសល់ %1$d ម៉ោង</item>
     </plurals>
@@ -4967,7 +5057,7 @@
     <plurals name="Gifts__d_minutes_remaining">
         <item quantity="other">នៅសល់ %1$d នាទី</item>
     </plurals>
-    <!-- Gift expiry expired -->
+    <!-- Donation for a friend expiry expired -->
     <string name="Gifts__expired">បានផុតកំណត់</string>
 
     <!-- Label indicating that a user can tap to advance to the next post in a story -->
@@ -5209,9 +5299,9 @@
     <!-- Phase 1 Small megaphone title indicating sms is going away -->
     <string name="SmsExportMegaphone__sms_support_going_away">សារជាអក្សរនឹងលែងប្រើបានទៀតហើយ</string>
     <!-- Phase 1 small megaphone description indicating sms is going away -->
-    <string name="SmsExportMegaphone__sms_support_will_be_removed_soon_to_focus_on_encrypted_messaging">ការគាំទ្រចំពោះសារជាអក្សរនឹងត្រូវបានដកចេញក្នុងពេលឆាប់ៗនេះ ដើម្បីផ្តោតលើការផ្ញើសារដែលបានអ៊ីនគ្រីប។</string>
+    <string name="SmsExportMegaphone__dont_worry_encrypted_signal_messages_will_continue_to_work">កុំបារម្ភអី! សារ Signal ដែលបានអ៊ីនគ្រីបនឹងបន្តដំណើរការ។</string>
     <!-- Phase 1 small megaphone button that takes the user to the sms export flow -->
-    <string name="SmsExportMegaphone__export_sms">នាំចេញសារជាអក្សរ</string>
+    <string name="SmsExportMegaphone__continue">បន្ត</string>
     <!-- Title for screen shown after sms export has completed -->
     <string name="ExportSmsCompleteFragment__export_complete">ការនាំចេញបានបញ្ចប់</string>
     <!-- Button to continue to next screen -->
@@ -5266,8 +5356,8 @@
     </plurals>
     <!-- Button label for paying with a credit card -->
     <string name="GatewaySelectorBottomSheet__credit_or_debit_card">កាតឥណទាន ឬឥណពន្ធ</string>
-    <!-- Sheet summary when giving a gift -->
-    <string name="GatewaySelectorBottomSheet__send_a_gift_badge">ផ្ញើស្លាកកាដូ</string>
+    <!-- Sheet summary when giving donating for a friend -->
+    <string name="GatewaySelectorBottomSheet__donate_for_a_friend">បរិច្ចាគសម្រាប់មិត្តភក្តិម្នាក់</string>
 
     <!-- StripePaymentInProgressFragment -->
     <string name="StripePaymentInProgressFragment__cancelling">កំពុងបោះបង់…</string>
@@ -5318,6 +5408,7 @@
     <string name="GroupStoryEducationSheet__all_group_chat_members">សមាជិកជជែកជាក្រុមទាំងអស់អាចមើលការឆ្លើយតបរឿងរ៉ាវបាន។</string>
     <!-- Button label to dismiss sheet -->
     <string name="GroupStoryEducationSheet__next">បន្ទាប់</string>
+    <string name="Registration_country_code_entry_hint">+0</string>
 
     <!-- EOF -->
 
@@ -5325,4 +5416,34 @@
     <string name="PaypalCompleteOrderBottomSheet__donate">បរិច្ចាគ</string>
     <string name="PaypalCompleteOrderBottomSheet__payment">ការបង់ប្រាក់</string>
 
+    <!-- ChatFilter -->
+    <!-- Displayed in a pill at the top of the chat list when it is filtered by unread messages -->
+    <string name="ChatFilter__filtered_by_unread">ត្រងរកសារដែលមិនទាន់អាន</string>
+    <!-- Displayed underneath the filter circle at the top of the chat list when the user pulls at a very low velocity -->
+    <string name="ChatFilter__pull_to_filter">ទាញចុះដើម្បីត្រង</string>
+    <!-- Displayed in the "clear filter" item in the chat feed if the user opened the filter from the overflow menu -->
+    <string name="ChatFilter__tip_pull_down">គន្លឹះ៖ ទាញចុះក្រោមនៅលើបញ្ជីជជែកដើម្បីត្រង</string>
+
+    <!-- Title for screen describing that sms support is going to be removed soon -->
+    <string name="SmsRemoval_title_going_away">សារជាអក្សរនឹងលែងប្រើបានទៀតហើយ</string>
+    <!-- Bullet point message shown on describing screen as first bullet why sms is being removed -->
+    <string name="SmsRemoval_info_bullet_1">ការផ្ញើសារជាអក្សរក្នុងកម្មវិធី Signal នឹងលែងប្រើបានទៀតហើយក្នុងពេលឆាប់ៗនេះ។</string>
+    <!-- Bullet point message shown on describing screen as second bullet why sms is being removed -->
+    <string name="SmsRemoval_info_bullet_2">សារជាអក្សរគឺខុសពីសារ Signal។ <b>វាមិនប៉ះពាល់ដល់ការផ្ញើសារ Signal ដែលបានអ៊ីនគ្រីប ដែលនឹងបន្តដំណើរការទេ។</b></string>
+    <!-- Bullet point message shown on describing screen as third bullet why sms is being removed -->
+    <string name="SmsRemoval_info_bullet_3">អ្នកអាចនាំចេញសារជាអក្សររបស់អ្នក ហើយជ្រើសរើសកម្មវិធីសារជាអក្សរថ្មី។</string>
+    <!-- Bullet point message shown on describing screen as first bullet variant why sms is being removed when user is locked out of sms -->
+    <string name="SmsRemoval_info_bullet_1_phase_3">Signal បានដកការគាំទ្រសម្រាប់ការផ្ញើសារជាអក្សរ។</string>
+    <!-- Button label on sms removal info/megaphone to start the export SMS flow -->
+    <string name="SmsRemoval_export_sms">នាំចេញសារជាអក្សរ</string>
+
+    <!-- Text Formatting -->
+    <!-- Popup menu label for applying bold style -->
+    <string name="TextFormatting_bold">ដិត</string>
+    <!-- Popup menu label for applying italic style -->
+    <string name="TextFormatting_italic">Italic</string>
+    <!-- Popup menu label for applying strikethrough style -->
+    <string name="TextFormatting_strikethrough">Strikethrough</string>
+    <!-- Popup menu label for applying monospace font style -->
+    <string name="TextFormatting_monospace">Monospace</string>
 </resources>

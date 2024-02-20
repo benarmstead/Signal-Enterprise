@@ -512,8 +512,8 @@
     <string name="ConversationFragment__you_can_add_notes_for_yourself_in_this_conversation">Вы можете добавлять заметки для себя в этом чате. Если у вашей учётной записи есть привязанные устройства, то новые заметки будут синхронизированы.</string>
     <string name="ConversationFragment__d_group_members_have_the_same_name">%1$d участников группы имеют одинаковое имя.</string>
     <string name="ConversationFragment__tap_to_review">Нажмите, чтобы проверить</string>
-    <string name="ConversationFragment__review_requests_carefully">Внимательно проверяйте запросы</string>
-    <string name="ConversationFragment__signal_found_another_contact_with_the_same_name">Signal нашёл другой контакт с тем же именем.</string>
+    <!-- The body of a banner that can show up at the top of a chat, letting the user know that you have two contacts with the same name -->
+    <string name="ConversationFragment__review_banner_body">This person has the same name as another contact</string>
     <string name="ConversationFragment_contact_us">Связаться с нами</string>
     <string name="ConversationFragment_verify">Подтвердить</string>
     <string name="ConversationFragment_not_now">Не сейчас</string>
@@ -544,13 +544,13 @@
     <!-- Menu option to report spam in a conversation -->
     <string name="ConversationFragment_report_spam">Report spam</string>
     <!-- Menu option to block in a conversation -->
-    <string name="ConversationFragment_block">Block</string>
+    <string name="ConversationFragment_block">Заблокировать</string>
     <!-- Menu otpion to accept a message request in a conversation -->
-    <string name="ConversationFragment_accept">Accept</string>
+    <string name="ConversationFragment_accept">Принять</string>
     <!-- Menu option to delete an entire chat in a conversation -->
     <string name="ConversationFragment_delete_chat">Delete chat</string>
     <!-- Menu option to unblock in a conversation -->
-    <string name="ConversationFragment_unblock">Unblock</string>
+    <string name="ConversationFragment_unblock">Разблокировать</string>
     <!-- Menu option to report spam in a conversation -->
     <string name="ConversationFragment_reported_spam">Reported spam</string>
     <!-- Dialog message shown after reporting spam and tapping the conversation item -->
@@ -1133,6 +1133,8 @@
     <!-- ManageProfileFragment -->
     <!-- Explanation text about usernames etc displayed underneath buttons to view and edit username etc -->
     <string name="ManageProfileFragment__your_username">Ваше имя пользователя, QR-код и ссылка не видны в вашем профиле. Делитесь вашим именем пользователя только с теми, кому доверяете.</string>
+    <!-- Explanation text about usernames etc displayed underneath buttons to view and edit username etc, shown when you have no username -->
+    <string name="ManageProfileFragment__username_footer_no_username">Теперь люди могут писать вам сообщения, используя выбранное вами имя пользователя, поэтому вам не нужно делиться вашим номером телефона. </string>
     <string name="ManageProfileFragment_profile_name">Имя профиля</string>
     <string name="ManageProfileFragment_username">Имя пользователя</string>
     <string name="ManageProfileFragment_about">Обо мне</string>
@@ -2110,6 +2112,10 @@
     <!-- AboutSheet -->
     <!-- Displayed in a sheet row and allows user to open signal connection explanation on tap -->
     <string name="AboutSheet__signal_connection">Контакт Signal</string>
+    <!-- Displayed in a sheet row describing that the user has marked this contact as \'verified\' from within the app -->
+    <string name="AboutSheet__verified">Подтверждён</string>
+    <!-- Displayed in bottom sheet describing that the user has no direct messages with this person. The placeholder is a person\'s name. -->
+    <string name="AboutSheet__no_direct_message">No direct messages with %1$s</string>
     <!-- Explains that the given user (placeholder is short name) is in the users system contact -->
     <string name="AboutSheet__s_is_in_your_system_contacts">%1$s есть в ваших системных контактах</string>
     <!-- Notice in a row when user has no groups in common -->
@@ -2455,7 +2461,7 @@
     <string name="UsernameEditFragment_username_is_invalid">Имя пользователя недействительно.</string>
     <string name="UsernameEditFragment_usernames_must_be_between_a_and_b_characters">Имена пользователей должны содержать от %1$d до %2$d символов.</string>
     <!-- Explanation about what usernames provide -->
-    <string name="UsernameEditFragment__usernames_let_others_message">Имена пользователей позволяют другим пользователям отправлять вам сообщения без вашего номера телефона. Они соединены с набором цифр, чтобы сохранить ваш адрес в тайне.</string>
+    <string name="UsernameEditFragment__usernames_let_others_message">Usernames are always paired with a set of numbers.</string>
     <!-- Dialog title for explanation about numbers at the end of the username -->
     <string name="UsernameEditFragment__what_is_this_number">Что это за число?</string>
     <string name="UsernameEditFragment__these_digits_help_keep">Эти цифры помогают сохранить ваше имя пользователя в тайне и избежать нежелательных сообщений. Делитесь своим именем пользователя только с теми людьми и группами, с которыми вы хотели бы общаться. Если вы измените имя пользователя, вы получите новый набор цифр.</string>
@@ -2475,6 +2481,10 @@
     <string name="UsernameEditFragment__this_number_cant_start_with_00">Этот номер не может начинаться с 00. Введите цифру от 1 до 9</string>
     <!-- The body of an alert dialog asking the user to confirm that they want to recover their username -->
     <string name="UsernameEditFragment_recovery_dialog_confirmation">При восстановлении имени пользователя ваши существующие QR-код и ссылка будут сброшены. Вы уверены?</string>
+    <!-- The body of an alert dialog asking the user to confirm that they want to change their username, even if it resets their link -->
+    <string name="UsernameEditFragment_change_confirmation_message">При изменении имени пользователя ваши существующие QR-код и ссылка будут сброшены. Вы уверены?</string>
+    <!-- Text for a button in a dialog asking if the user would like to continue the operation of changing their username -->
+    <string name="UsernameEditFragment_continue">Продолжить</string>
 
     <plurals name="UserNotificationMigrationJob_d_contacts_are_on_signal">
         <item quantity="one">%1$d ваш контакт уже в Signal!</item>
@@ -2685,7 +2695,7 @@
     <!-- Button label for not right now -->
     <string name="NewWaysToConnectDialogFragment__not_now">Не сейчас</string>
     <!-- Button label for continue -->
-    <string name="NewWaysToConnectDialogFragment__set_up_your_username">Настройте своё имя пользователя</string>
+    <string name="NewWaysToConnectDialogFragment__set_up_your_username">Настройте имя пользователя</string>
 
     <!-- ThumbnailView -->
     <string name="ThumbnailView_Play_video_description">Воспроизвести видео</string>
@@ -4326,8 +4336,10 @@
     <string name="BlockedUsersActivity__s_has_been_unblocked">«%1$s» разблокирован(-а).</string>
 
     <!-- ReviewCardDialogFragment -->
-    <string name="ReviewCardDialogFragment__review_members">Проверьте участников</string>
-    <string name="ReviewCardDialogFragment__review_request">Проверьте запрос</string>
+    <!-- Title of a screen where the user will be prompted to review group members with the same name -->
+    <string name="ReviewCardDialogFragment__review_members">Review members</string>
+    <!-- Title of a screen where the user will be prompted to review a message request matching the name of someone they already know -->
+    <string name="ReviewCardDialogFragment__review_request">Review request</string>
     <string name="ReviewCardDialogFragment__d_group_members_have_the_same_name">%1$d участников группы имеют одинаковое имя. Просмотрите участников ниже и, если необходимо, примите меры.</string>
     <string name="ReviewCardDialogFragment__if_youre_not_sure">Если вы не уверены, от кого этот запрос, просмотрите участников ниже и примите меры.</string>
     <string name="ReviewCardDialogFragment__no_other_groups_in_common">Нет других общих групп.</string>
@@ -5379,7 +5391,7 @@
     <!-- Title of create notification profile screen -->
     <string name="EditNotificationProfileFragment__name_your_profile">Назовите свой профиль</string>
     <!-- Hint text for create/edit notification profile name -->
-    <string name="EditNotificationProfileFragment__profile_name">Название профиля</string>
+    <string name="EditNotificationProfileFragment__profile_name">Имя профиля</string>
     <!-- Name has a max length, this shows how many characters are used out of the max -->
     <string name="EditNotificationProfileFragment__count">%1$d/%2$d</string>
     <!-- Call to action button to continue to the next step -->
@@ -6443,11 +6455,20 @@
     <!-- Displayed as a title on a megaphone which prompts user to set up a username -->
     <string name="SetUpYourUsername__set_up_your_signal_username">Настройте своё имя пользователя Signal</string>
     <!-- Displayed as a description on a megaphone which prompts user to set up a username -->
-    <string name="SetUpYourUsername__introducing_phone_number_privacy">Представляем конфиденциальность телефонных номеров, дополнительные имена пользователя и ссылки.</string>
+    <string name="SetUpYourUsername__introducing_phone_number_privacy">Представляем конфиденциальность номеров телефона, дополнительные имена пользователя и ссылки.</string>
     <!-- Displayed as an action on a megaphone which prompts user to set up a username -->
     <string name="SetUpYourUsername__dismiss">Закрыть</string>
     <!-- Displayed as an action on a megaphone which prompts user to set up a username -->
     <string name="SetUpYourUsername__learn_more">Узнать больше</string>
+
+    <!-- Displayed as a title on a megaphone which prompts user to set up a username -->
+    <string name="PnpLaunchMegaphone_title">Новые способы связи</string>
+    <!-- Displayed as a description on a megaphone which prompts user to set up a username -->
+    <string name="PnpLaunchMegaphone_body">Представляем конфиденциальность телефонных номеров, дополнительные имена пользователя и ссылки.</string>
+    <!-- Displayed as an action on a megaphone which prompts user to set up a username. Clicking it will dismiss the megaphone. -->
+    <string name="PnpLaunchMegaphone_dismiss">Закрыть</string>
+    <!-- Displayed as an action on a megaphone which prompts user to set up a username. Clicking it will open a link. -->
+    <string name="PnpLaunchMegaphone_learn_more">Узнать больше</string>
 
     <!-- Text Formatting -->
     <!-- Popup menu label for applying bold style -->
@@ -6743,7 +6764,7 @@
     <!-- Body of a dialog that is displayed when we failed to read a username QR code. -->
     <string name="UsernameLinkSettings_qr_result_invalid">QR-код был недействителен.</string>
     <!-- Body of a dialog that is displayed when the username we looked up could not be found. -->
-    <string name="UsernameLinkSettings_qr_result_not_found">Пользователь с именем %1$s не найден.</string>
+    <string name="UsernameLinkSettings_qr_result_not_found">Пользователь с именем пользователя %1$s не найден.</string>
     <!-- Body of a dialog that is displayed when the username we looked up could not be found and we also could not parse the username. -->
     <string name="UsernameLinkSettings_qr_result_not_found_no_username">Этот пользователь не найден.</string>
     <!-- Body of a dialog that is displayed when we experienced a network error when looking up a username. -->
@@ -6752,6 +6773,10 @@
     <string name="UsernameLinkSettings_reset_link_result_network_unavailable">У вас нет доступа к сети. Ваша ссылка не была сброшена. Попробуйте ещё раз позже.</string>
     <!-- Body of a dialog that is displayed when we failed to reset your username link because of a transient network issue. -->
     <string name="UsernameLinkSettings_reset_link_result_network_error">Произошла ошибка сети при попытке сбросить ссылку. Попробуйте ещё раз позже.</string>
+    <!-- Body of a dialog that is displayed when we failed to reset your username link because of an unknown error. -->
+    <string name="UsernameLinkSettings_reset_link_result_unknown_error">An unexpected error occurred while trying to reset your link. Try again later.</string>
+    <!-- Body of a dialog that is displayed when we successfully reset you username link. -->
+    <string name="UsernameLinkSettings_reset_link_result_success">Ваш QR-код и ссылка были сброшены, и были созданы новый QR-код и ссылка.</string>
     <!-- Shown on the generated username qr code image to explain how to use it. -->
     <string name="UsernameLinkSettings_scan_this_qr_code">Просканируйте этот QR-код с помощью вашего телефона, чтобы начать чат со мной в Signal.</string>
 
@@ -6826,7 +6851,7 @@
     <!-- Entry placeholder for find by phone number -->
     <string name="FindByActivity__phone_number">Номер телефона</string>
     <!-- Help text under user entry for find by username -->
-    <string name="FindByActivity__enter_a_full_username">Введите полное имя пользователя с парой цифр.</string>
+    <string name="FindByActivity__enter_username_description">Enter a username followed by a dot and its set of numbers.</string>
     <!-- Content description for next action button -->
     <string name="FindByActivity__next">Далее</string>
     <!-- Placeholder text for search input for selecting country code -->

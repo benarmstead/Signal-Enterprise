@@ -512,8 +512,8 @@
     <string name="ConversationFragment__you_can_add_notes_for_yourself_in_this_conversation">Klepetu je mogoče dodajati opombe, ki so vidne samo vam. Če je vaš račun povezan z drugimi napravami, se bodo te opombe sinhronizirale.</string>
     <string name="ConversationFragment__d_group_members_have_the_same_name">%1$d članov_ic skupine ima enako ime.</string>
     <string name="ConversationFragment__tap_to_review">Tapnite za pregled</string>
-    <string name="ConversationFragment__review_requests_carefully">Pazljivo preglejte prošnje</string>
-    <string name="ConversationFragment__signal_found_another_contact_with_the_same_name">Signal je našel drug stik z enakim imenom.</string>
+    <!-- The body of a banner that can show up at the top of a chat, letting the user know that you have two contacts with the same name -->
+    <string name="ConversationFragment__review_banner_body">This person has the same name as another contact</string>
     <string name="ConversationFragment_contact_us">Kontaktirajte nas</string>
     <string name="ConversationFragment_verify">Potrdi</string>
     <string name="ConversationFragment_not_now">Ne zdaj</string>
@@ -544,13 +544,13 @@
     <!-- Menu option to report spam in a conversation -->
     <string name="ConversationFragment_report_spam">Report spam</string>
     <!-- Menu option to block in a conversation -->
-    <string name="ConversationFragment_block">Block</string>
+    <string name="ConversationFragment_block">Blokiraj</string>
     <!-- Menu otpion to accept a message request in a conversation -->
-    <string name="ConversationFragment_accept">Accept</string>
+    <string name="ConversationFragment_accept">Sprejmi</string>
     <!-- Menu option to delete an entire chat in a conversation -->
     <string name="ConversationFragment_delete_chat">Delete chat</string>
     <!-- Menu option to unblock in a conversation -->
-    <string name="ConversationFragment_unblock">Unblock</string>
+    <string name="ConversationFragment_unblock">Odblokiraj</string>
     <!-- Menu option to report spam in a conversation -->
     <string name="ConversationFragment_reported_spam">Reported spam</string>
     <!-- Dialog message shown after reporting spam and tapping the conversation item -->
@@ -1133,7 +1133,9 @@
     <!-- ManageProfileFragment -->
     <!-- Explanation text about usernames etc displayed underneath buttons to view and edit username etc -->
     <string name="ManageProfileFragment__your_username">Vaše uporabniško ime, QR koda in povezava niso vidni na vašem profilu. Svoje uporabniško ime delite samo z osebami, ki jim zaupate.</string>
-    <string name="ManageProfileFragment_profile_name">Naziv profila</string>
+    <!-- Explanation text about usernames etc displayed underneath buttons to view and edit username etc, shown when you have no username -->
+    <string name="ManageProfileFragment__username_footer_no_username">Ljudje vam lahko zdaj pošiljajo sporočila z uporabo vašega neobveznega uporabniškega imena, tako da vam ni treba izdati svoje telefonske številke. </string>
+    <string name="ManageProfileFragment_profile_name">Ime profila</string>
     <string name="ManageProfileFragment_username">Uporabniško ime</string>
     <string name="ManageProfileFragment_about">Več</string>
     <string name="ManageProfileFragment_failed_to_set_avatar">Nastavitev avatarja ni uspela</string>
@@ -2110,6 +2112,10 @@
     <!-- AboutSheet -->
     <!-- Displayed in a sheet row and allows user to open signal connection explanation on tap -->
     <string name="AboutSheet__signal_connection">Signal povezava</string>
+    <!-- Displayed in a sheet row describing that the user has marked this contact as \'verified\' from within the app -->
+    <string name="AboutSheet__verified">Potrjeno</string>
+    <!-- Displayed in bottom sheet describing that the user has no direct messages with this person. The placeholder is a person\'s name. -->
+    <string name="AboutSheet__no_direct_message">No direct messages with %1$s</string>
     <!-- Explains that the given user (placeholder is short name) is in the users system contact -->
     <string name="AboutSheet__s_is_in_your_system_contacts">%1$s je med vašimi sistemskimi stiki</string>
     <!-- Notice in a row when user has no groups in common -->
@@ -2455,7 +2461,7 @@
     <string name="UsernameEditFragment_username_is_invalid">Uporabniško ime je neveljavno.</string>
     <string name="UsernameEditFragment_usernames_must_be_between_a_and_b_characters">Uporabniška imena morajo vsebovati od %1$d in%2$d znakov.</string>
     <!-- Explanation about what usernames provide -->
-    <string name="UsernameEditFragment__usernames_let_others_message">S pomočjo uporabniških imen vam lahko drugi pošljejo sporočilo, brez da bi potrebovali vašo telefonsko številko. Seznanjeni so z nizom številk, ki pomagajo ohranjati zasebnost vašega naslova.</string>
+    <string name="UsernameEditFragment__usernames_let_others_message">Usernames are always paired with a set of numbers.</string>
     <!-- Dialog title for explanation about numbers at the end of the username -->
     <string name="UsernameEditFragment__what_is_this_number">Kaj je ta številka?</string>
     <string name="UsernameEditFragment__these_digits_help_keep">Te številke pomagajo ohranjati zasebnost vašega uporabniškega imena, da se lahko izognete neželenim sporočilom. Svoje uporabniško ime delite samo z osebami in skupinami, s katerimi želite klepetati. Če spremenite uporabniška imena, boste prejeli nov nabor številk.</string>
@@ -2475,6 +2481,10 @@
     <string name="UsernameEditFragment__this_number_cant_start_with_00">Ta številka se ne sme začeti z 00. Vnesite številko med 1 in 9</string>
     <!-- The body of an alert dialog asking the user to confirm that they want to recover their username -->
     <string name="UsernameEditFragment_recovery_dialog_confirmation">Obnovitev vašega uporabniškega imena bo ponastavila vašo obstoječo QR kodo in povezavo. Ste prepričani?</string>
+    <!-- The body of an alert dialog asking the user to confirm that they want to change their username, even if it resets their link -->
+    <string name="UsernameEditFragment_change_confirmation_message">Če spremenite svoje uporabniško ime, boste ponastavili obstoječo QR kodo in povezavo. Ste prepričani?</string>
+    <!-- Text for a button in a dialog asking if the user would like to continue the operation of changing their username -->
+    <string name="UsernameEditFragment_continue">Nadaljuj</string>
 
     <plurals name="UserNotificationMigrationJob_d_contacts_are_on_signal">
         <item quantity="one">%1$d stik je na Signalu!</item>
@@ -2685,7 +2695,7 @@
     <!-- Button label for not right now -->
     <string name="NewWaysToConnectDialogFragment__not_now">Ne zdaj</string>
     <!-- Button label for continue -->
-    <string name="NewWaysToConnectDialogFragment__set_up_your_username">Nastavite svoje uporabniško ime</string>
+    <string name="NewWaysToConnectDialogFragment__set_up_your_username">Nastavitev uporabniškega imena</string>
 
     <!-- ThumbnailView -->
     <string name="ThumbnailView_Play_video_description">Predvajaj video</string>
@@ -4083,9 +4093,9 @@
     <!-- Subtext below radio buttons when who can see my number is set to everybody -->
     <string name="PhoneNumberPrivacySettingsFragment_sharing_on_description">Vaša telefonska številka bo vidna uporabnikom_cam in skupinam, ki jim boste pošiljali sporočila.</string>
     <!-- Subtext below radio buttons when who can see my number is set to nobody and who can find me by number is set to everybody -->
-    <string name="PhoneNumberPrivacySettingsFragment_sharing_off_discovery_on_description">Your phone number will not be visible to anyone unless they have it saved in their phone\'s contacts.</string>
+    <string name="PhoneNumberPrivacySettingsFragment_sharing_off_discovery_on_description">Vaša telefonska številka ne bo vidna nikomur, razen če jo ima shranjeno v stikih svojega telefona.</string>
     <!-- Subtext below radio buttons when who can see my number is set to nobody and who can find me by number is set to nobody -->
-    <string name="PhoneNumberPrivacySettingsFragment_sharing_off_discovery_off_description">Your phone number will not be visible to anyone.</string>
+    <string name="PhoneNumberPrivacySettingsFragment_sharing_off_discovery_off_description">Vaša telefonska številka ne bo vidna nikomur.</string>
     <!-- Section title above two radio buttons for enabling and disabling whether users can find me by my phone number  -->
     <string name="PhoneNumberPrivacySettingsFragment_who_can_find_me_by_number_heading">Kdo me lahko najde preko telefonske številke</string>
     <!-- Subtext below radio buttons when who can find me by number is set to everyone -->
@@ -4123,7 +4133,7 @@
     <string name="prompt_passphrase_activity__tap_to_unlock">TAPNITE ZA ODKLEPANJE</string>
     <string name="Recipient_unknown">Neznano</string>
     <!-- Name to use for a user across the UI when they are unregistered and have no other name available -->
-    <string name="Recipient_deleted_account">Deleted account</string>
+    <string name="Recipient_deleted_account">Izbrisan račun</string>
 
     <!-- Option in settings that will take use to re-register if they are no longer registered -->
     <string name="preferences_account_reregister">Ponovno se prijavite</string>
@@ -4326,8 +4336,10 @@
     <string name="BlockedUsersActivity__s_has_been_unblocked">\"%1$s\" je bil_a odblokiran_a.</string>
 
     <!-- ReviewCardDialogFragment -->
-    <string name="ReviewCardDialogFragment__review_members">Pregled članov_ic</string>
-    <string name="ReviewCardDialogFragment__review_request">Pregled prošenj</string>
+    <!-- Title of a screen where the user will be prompted to review group members with the same name -->
+    <string name="ReviewCardDialogFragment__review_members">Review members</string>
+    <!-- Title of a screen where the user will be prompted to review a message request matching the name of someone they already know -->
+    <string name="ReviewCardDialogFragment__review_request">Review request</string>
     <string name="ReviewCardDialogFragment__d_group_members_have_the_same_name">%1$d članov_ic skupine ima enako ime. Preglejte člane_ice spodaj in ustrezno ukrepajte.</string>
     <string name="ReviewCardDialogFragment__if_youre_not_sure">Če niste prepričani, čigava je prošnja, preglejte stike spodaj in ustrezno ukrepajte.</string>
     <string name="ReviewCardDialogFragment__no_other_groups_in_common">Ni drugih skupnih skupin.</string>
@@ -4356,7 +4368,7 @@
     <string name="ReviewCard__block">Blokiraj</string>
     <string name="ReviewCard__delete">Izbriši</string>
     <!-- Displayed when a recent name change has occurred. First placeholder is new short name, second is previous name, third is new name. -->
-    <string name="ReviewCard__s_recently_changed">%1$s je pred kratkim spremenil_a svoje ime iz %2$s v %3$s</string>
+    <string name="ReviewCard__s_recently_changed">%1$s je pred kratkim spremenil_a svoje ime profila iz %2$s v %3$s</string>
     <!-- Displayed when a review user is in your system contacts. Placeholder is short name. -->
     <string name="ReviewCard__s_is_in_your_system_contacts">%1$s je med vašimi sistemskimi stiki</string>
 
@@ -5379,7 +5391,7 @@
     <!-- Title of create notification profile screen -->
     <string name="EditNotificationProfileFragment__name_your_profile">Poimenuj svoj profil</string>
     <!-- Hint text for create/edit notification profile name -->
-    <string name="EditNotificationProfileFragment__profile_name">Naziv profila</string>
+    <string name="EditNotificationProfileFragment__profile_name">Ime profila</string>
     <!-- Name has a max length, this shows how many characters are used out of the max -->
     <string name="EditNotificationProfileFragment__count">%1$d/%2$d</string>
     <!-- Call to action button to continue to the next step -->
@@ -5749,7 +5761,7 @@
     <!-- Signal connections sheet bullet point 2 -->
     <string name="SignalConnectionsBottomSheet__accepting_a_message_request">sprejeli njihovo prošnjo za pogovor</string>
     <!-- Signal connections sheet bullet point 3 -->
-    <string name="SignalConnectionsBottomSheet__having_them_in_your_system_contacts">jih imeli med svojimi stiki</string>
+    <string name="SignalConnectionsBottomSheet__having_them_in_your_system_contacts">jih imeli med svojimi sistemskimi stiki</string>
     <!-- Note at the bottom of the Signal connections sheet -->
     <string name="SignalConnectionsBottomSheet__your_connections_can_see_your_name">"Vaše povezave lahko vidijo vaše ime in fotografijo ter objave pod \"Moja zgodba\", razen če jih skrijete pred njimi."</string>
     <!-- Clickable option to add a viewer to a custom story -->
@@ -6329,9 +6341,9 @@
     <!-- Default label for bank selection -->
     <string name="IdealTransferDetailsFragment__choose_your_bank">Izberite svojo banko</string>
     <!-- Dialog title shown when using iDEAL payment for setting up a monthly donation -->
-    <string name="IdealTransferDetailsFragment__confirm_your_donation_with_s">Confirm your donation with %1$s</string>
+    <string name="IdealTransferDetailsFragment__confirm_your_donation_with_s">Potrdite svojo donacijo s plačilno metodo %1$s</string>
     <!-- Dialog warning shown when using iDEAL payment for setting up a monthly donation -->
-    <string name="IdealTransferDetailsFragment__monthly_ideal_warning">To setup your recurring donation tap continue to confirm a €0,01 charge with your bank. This will be automatically refunded and allows your €5/month donation to debited from your account.</string>
+    <string name="IdealTransferDetailsFragment__monthly_ideal_warning">Za nastavitev ponavljajoče se donacije tapnite Nadaljuj, da potrdite zaračunavanje 0,01 EUR v svoji banki. To se bo samodejno povrnilo in omogočilo, da se vaša donacija 5 €/mesec odšteje z vašega računa.</string>
     <!-- Dialog button shown when using iDEAL payment for setting up a monthly donation to continue with the donation -->
     <string name="IdealTransferDetailsFragment__continue">Nadaljuj</string>
 
@@ -6448,6 +6460,15 @@
     <string name="SetUpYourUsername__dismiss">Prekini</string>
     <!-- Displayed as an action on a megaphone which prompts user to set up a username -->
     <string name="SetUpYourUsername__learn_more">Preberite več</string>
+
+    <!-- Displayed as a title on a megaphone which prompts user to set up a username -->
+    <string name="PnpLaunchMegaphone_title">Novi načini povezovanja</string>
+    <!-- Displayed as a description on a megaphone which prompts user to set up a username -->
+    <string name="PnpLaunchMegaphone_body">Predstavljamo zasebnost telefonskih številk, neobvezna uporabniška imena in povezave.</string>
+    <!-- Displayed as an action on a megaphone which prompts user to set up a username. Clicking it will dismiss the megaphone. -->
+    <string name="PnpLaunchMegaphone_dismiss">Prekini</string>
+    <!-- Displayed as an action on a megaphone which prompts user to set up a username. Clicking it will open a link. -->
+    <string name="PnpLaunchMegaphone_learn_more">Preberite več</string>
 
     <!-- Text Formatting -->
     <!-- Popup menu label for applying bold style -->
@@ -6752,6 +6773,10 @@
     <string name="UsernameLinkSettings_reset_link_result_network_unavailable">Nimate dostopa do omrežja. Vaša povezava ni bila ponastavljena. Poskusite znova kasneje.</string>
     <!-- Body of a dialog that is displayed when we failed to reset your username link because of a transient network issue. -->
     <string name="UsernameLinkSettings_reset_link_result_network_error">Med poskusom ponastavitve povezave je prišlo do omrežne napake. Poskusite znova kasneje.</string>
+    <!-- Body of a dialog that is displayed when we failed to reset your username link because of an unknown error. -->
+    <string name="UsernameLinkSettings_reset_link_result_unknown_error">An unexpected error occurred while trying to reset your link. Try again later.</string>
+    <!-- Body of a dialog that is displayed when we successfully reset you username link. -->
+    <string name="UsernameLinkSettings_reset_link_result_success">Vaša QR koda in povezava sta bili ponastavljeni in ustvarjeni sta bili nova QR koda in povezava.</string>
     <!-- Shown on the generated username qr code image to explain how to use it. -->
     <string name="UsernameLinkSettings_scan_this_qr_code">S svojim telefonom skeniraj to QR kodo in klepetaj z mano na Signalu.</string>
 
@@ -6826,13 +6851,13 @@
     <!-- Entry placeholder for find by phone number -->
     <string name="FindByActivity__phone_number">Telefonska številka</string>
     <!-- Help text under user entry for find by username -->
-    <string name="FindByActivity__enter_a_full_username">Enter a full username with its pair of digits.</string>
+    <string name="FindByActivity__enter_username_description">Enter a username followed by a dot and its set of numbers.</string>
     <!-- Content description for next action button -->
     <string name="FindByActivity__next">Naprej</string>
     <!-- Placeholder text for search input for selecting country code -->
     <string name="FindByActivity__search">Iskanje</string>
     <!-- Dialog title for invalid username -->
-    <string name="FindByActivity__invalid_username">Invalid username</string>
+    <string name="FindByActivity__invalid_username">Neveljavno uporabniško ime</string>
     <!-- Dialog title for invalid phone number -->
     <string name="FindByActivity__invalid_phone_number">Neveljavna telefonska številka</string>
     <!-- Dialog title when phone number is not a registered signal user -->
@@ -6840,13 +6865,13 @@
     <!-- Dialog title when username is not found -->
     <string name="FindByActivity__username_not_found">Uporabniško ime ni bilo najdeno</string>
     <!-- Dialog body for invalid username. Placeholder is the entered username. -->
-    <string name="FindByActivity__s_is_not_a_valid_username">%1$s is not a valid username. Make sure you\'ve entered the complete username followed by its set of digits.</string>
+    <string name="FindByActivity__s_is_not_a_valid_username">%1$s ni veljavno uporabniško ime. Prepričajte se, da ste vnesli celotno uporabniško ime, ki mu sledi niz številk.</string>
     <!-- Dialog body for an invalid phone number. Placeholder is the entered phone number. -->
-    <string name="FindByActivity__s_is_not_a_valid_phone_number">%1$s is not valid phone number. Try again with a valid phone number</string>
+    <string name="FindByActivity__s_is_not_a_valid_phone_number">%1$s ni veljavna telefonska številka. Poskusite znova z veljavno telefonsko številko</string>
     <!-- Dialog body for not found username -->
     <string name="FindByActivity__s_is_not_a_signal_user">\"%1$s\" ni uporabnik_ca storitve Signal. Preverite uporabniško ime in poskusite znova.</string>
     <!-- Dialog body for not found phone number -->
-    <string name="FindByActivity__s_is_not_a_signal_user_would">%1$s is not a Signal user. Would you like to invite this number?</string>
+    <string name="FindByActivity__s_is_not_a_signal_user_would">%1$s ni uporabnik_ca Signala. Želite povabiti to številko?</string>
     <!-- Dialog action to invite the phone number to Signal -->
     <string name="FindByActivity__invite">Povabi</string>
 

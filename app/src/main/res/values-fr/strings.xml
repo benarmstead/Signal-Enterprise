@@ -46,7 +46,7 @@
     <string name="ApplicationPreferencesActivity_this_will_permanently_unlock_signal_and_message_notifications">Signal et les notifications de message seront déverrouillées en permanence.</string>
     <string name="ApplicationPreferencesActivity_disable">Désactiver</string>
     <string name="ApplicationPreferencesActivity_disable_signal_messages_and_calls">Désactiver les messages et appels Signal ?</string>
-    <string name="ApplicationPreferencesActivity_disable_signal_messages_and_calls_by_unregistering">Pour désactiver les messages et les appels Signal, désinscrivez-vous du serveur. Vous devrez réenregistrer votre numéro de mobile pour les réutiliser.</string>
+    <string name="ApplicationPreferencesActivity_disable_signal_messages_and_calls_by_unregistering">Pour désactiver les messages et les appels Signal, désinscrivez-vous du serveur. Vous devrez réenregistrer votre numéro de téléphone pour les réutiliser.</string>
     <string name="ApplicationPreferencesActivity_error_connecting_to_server">Erreur de connexion au serveur.</string>
     <string name="ApplicationPreferencesActivity_pins_are_required_for_registration_lock">Le blocage d’inscription nécessite l’utilisation d’un code PIN. Pour désactiver le code PIN, commencez par désactiver le blocage d’inscription.</string>
     <string name="ApplicationPreferencesActivity_pin_created">Code PIN créé.</string>
@@ -225,7 +225,7 @@
     <string name="CameraContacts_you_can_only_use_the_camera_button">Vous ne pouvez utiliser le bouton Appareil photo que pour envoyer des photos à des contacts Signal. </string>
     <string name="CameraContacts_cant_find_who_youre_looking_for">Éprouvez-vous des difficultés à trouver qui vous cherchiez ?</string>
     <string name="CameraContacts_invite_a_contact_to_join_signal">Inviter un contact à se joindre à Signal</string>
-    <string name="CameraContacts__menu_search">Chercher</string>
+    <string name="CameraContacts__menu_search">Rechercher</string>
 
     <!-- Censorship Circumvention Megaphone -->
     <!-- Title for an alert that shows at the bottom of the chat list letting people know that circumvention is no longer needed -->
@@ -404,8 +404,8 @@
     <string name="ConversationActivity_search_position">%1$d sur %2$d</string>
     <string name="ConversationActivity_no_results">Il n’y a aucun résultat</string>
 
-    <string name="ConversationActivity_sticker_pack_installed">Le paquet d’autocollants a été installé</string>
-    <string name="ConversationActivity_new_say_it_with_stickers">Nouveauté ! Dites-le avec des autocollants</string>
+    <string name="ConversationActivity_sticker_pack_installed">Pack de stickers installé</string>
+    <string name="ConversationActivity_new_say_it_with_stickers">Nouveauté : dites-le avec des stickers</string>
 
     <string name="ConversationActivity_cancel">Annuler</string>
     <string name="ConversationActivity_delete_conversation">Supprimer la conversation ?</string>
@@ -494,8 +494,8 @@
     <string name="ConversationFragment__you_can_add_notes_for_yourself_in_this_conversation">Cette conversation est dédiée à vos notes personnelles. Si des appareils sont associés à votre compte, les nouvelles notes que vous ajoutez ici sont synchronisées sur tous vos appareils.</string>
     <string name="ConversationFragment__d_group_members_have_the_same_name">%1$d membres du groupe portent le même nom.</string>
     <string name="ConversationFragment__tap_to_review">Toucher pour examiner</string>
-    <string name="ConversationFragment__review_requests_carefully">Examinez les demandes avec attention</string>
-    <string name="ConversationFragment__signal_found_another_contact_with_the_same_name">Signal a trouvé un autre contact avec le même nom.</string>
+    <!-- The body of a banner that can show up at the top of a chat, letting the user know that you have two contacts with the same name -->
+    <string name="ConversationFragment__review_banner_body">This person has the same name as another contact</string>
     <string name="ConversationFragment_contact_us">Nous contacter</string>
     <string name="ConversationFragment_verify">Confirmer</string>
     <string name="ConversationFragment_not_now">Pas maintenant</string>
@@ -526,13 +526,13 @@
     <!-- Menu option to report spam in a conversation -->
     <string name="ConversationFragment_report_spam">Report spam</string>
     <!-- Menu option to block in a conversation -->
-    <string name="ConversationFragment_block">Block</string>
+    <string name="ConversationFragment_block">Bloquer</string>
     <!-- Menu otpion to accept a message request in a conversation -->
-    <string name="ConversationFragment_accept">Accept</string>
+    <string name="ConversationFragment_accept">Accepter</string>
     <!-- Menu option to delete an entire chat in a conversation -->
     <string name="ConversationFragment_delete_chat">Delete chat</string>
     <!-- Menu option to unblock in a conversation -->
-    <string name="ConversationFragment_unblock">Unblock</string>
+    <string name="ConversationFragment_unblock">Débloquer</string>
     <!-- Menu option to report spam in a conversation -->
     <string name="ConversationFragment_reported_spam">Reported spam</string>
     <!-- Dialog message shown after reporting spam and tapping the conversation item -->
@@ -1063,6 +1063,8 @@
     <!-- ManageProfileFragment -->
     <!-- Explanation text about usernames etc displayed underneath buttons to view and edit username etc -->
     <string name="ManageProfileFragment__your_username">Votre nom d’utilisateur, votre code QR et votre lien ne s’affichent pas dans votre profil. Partagez votre nom d’utilisateur uniquement avec les personnes en qui vous avez confiance.</string>
+    <!-- Explanation text about usernames etc displayed underneath buttons to view and edit username etc, shown when you have no username -->
+    <string name="ManageProfileFragment__username_footer_no_username">Vous pouvez désormais être contacté grâce à votre nom d’utilisateur facultatif et ainsi éviter de partager votre numéro de téléphone. </string>
     <string name="ManageProfileFragment_profile_name">Nom de profil</string>
     <string name="ManageProfileFragment_username">Nom d’utilisateur</string>
     <string name="ManageProfileFragment_about">À propos</string>
@@ -1072,13 +1074,13 @@
     <string name="ManageProfileFragment_link_setting_text">Code QR ou lien</string>
     <string name="ManageProfileFragment__edit_photo">Modifier la photo</string>
     <!-- Title of a tooltip educating the user about a button on the screen that will take them to the username share screen -->
-    <string name="ManageProfileFragment__link_tooltip_title">Partagez votre pseudo</string>
+    <string name="ManageProfileFragment__link_tooltip_title">Partagez votre nom d’utilisateur</string>
     <!-- Body of a tooltip educating the user about a button on the screen that will take them to the username share screen -->
     <string name="ManageProfileFragment__link_tooltip_body">Proposez de converser avec d\'autres personnes en leur partageant votre code QR ou un lien unique.</string>
     <!-- Snackbar message after creating username -->
-    <string name="ManageProfileFragment__username_created">Pseudo créé</string>
+    <string name="ManageProfileFragment__username_created">Nom d’utilisateur créé</string>
     <!-- Snackbar message after copying username -->
-    <string name="ManageProfileFragment__username_copied">Pseudo copié</string>
+    <string name="ManageProfileFragment__username_copied">Nom d’utilisateur copié</string>
     <!-- Snackbar message after network failure while trying to delete username -->
     <string name="ManageProfileFragment__couldnt_delete_username">Impossible de supprimer le nom d’utilisateur. Réessayez plus tard.</string>
     <!-- Snackbar message after successful deletion of username -->
@@ -1961,9 +1963,13 @@
 
     <!-- AboutSheet -->
     <!-- Displayed in a sheet row and allows user to open signal connection explanation on tap -->
-    <string name="AboutSheet__signal_connection">Connexions Signal</string>
+    <string name="AboutSheet__signal_connection">Contact Signal</string>
+    <!-- Displayed in a sheet row describing that the user has marked this contact as \'verified\' from within the app -->
+    <string name="AboutSheet__verified">Confirmé</string>
+    <!-- Displayed in bottom sheet describing that the user has no direct messages with this person. The placeholder is a person\'s name. -->
+    <string name="AboutSheet__no_direct_message">No direct messages with %1$s</string>
     <!-- Explains that the given user (placeholder is short name) is in the users system contact -->
-    <string name="AboutSheet__s_is_in_your_system_contacts">%1$s se trouve dans vos contacts</string>
+    <string name="AboutSheet__s_is_in_your_system_contacts">%1$s se trouve dans vos contacts système</string>
     <!-- Notice in a row when user has no groups in common -->
     <string name="AboutSheet__you_have_no_groups_in_common">Aucun groupe en commun</string>
     <!-- Notice when a user is not a connection to review requests carefully -->
@@ -2148,7 +2154,7 @@
 
     <!-- Slide -->
     <string name="Slide_image">Image</string>
-    <string name="Slide_sticker">Autocollant</string>
+    <string name="Slide_sticker">Sticker</string>
     <string name="Slide_audio">Son</string>
     <string name="Slide_video">Vidéo</string>
 
@@ -2158,14 +2164,14 @@
     <string name="SmsMessageRecord_duplicate_message">Message en double.</string>
 
     <!-- StickerManagementActivity -->
-    <string name="StickerManagementActivity_stickers">Autocollants</string>
+    <string name="StickerManagementActivity_stickers">Stickers</string>
 
     <!-- StickerManagementAdapter -->
-    <string name="StickerManagementAdapter_installed_stickers">Autocollants installés</string>
-    <string name="StickerManagementAdapter_stickers_you_received">Autocollants que vous avez reçus</string>
+    <string name="StickerManagementAdapter_installed_stickers">Stickers installés</string>
+    <string name="StickerManagementAdapter_stickers_you_received">Stickers reçus</string>
     <string name="StickerManagementAdapter_signal_artist_series">Séries des artistes de Signal</string>
-    <string name="StickerManagementAdapter_no_stickers_installed">Aucun autocollant n’est installé</string>
-    <string name="StickerManagementAdapter_stickers_from_incoming_messages_will_appear_here">Les autocollants des messages entrants apparaîtront ici</string>
+    <string name="StickerManagementAdapter_no_stickers_installed">Aucun sticker n’est installé</string>
+    <string name="StickerManagementAdapter_stickers_from_incoming_messages_will_appear_here">Les stickers des messages reçus s’affichent ici</string>
     <string name="StickerManagementAdapter_untitled">Sans titre</string>
     <string name="StickerManagementAdapter_unknown">Inconnu</string>
 
@@ -2175,8 +2181,8 @@
     <string name="StickerPackPreviewActivity_install">Installer</string>
     <!-- Label for a button that, if pressed, will uninstall the sticker pack that is currently being previewed. -->
     <string name="StickerPackPreviewActivity_remove">Désinstaller</string>
-    <string name="StickerPackPreviewActivity_stickers">Autocollants</string>
-    <string name="StickerPackPreviewActivity_failed_to_load_sticker_pack">Échec de chargement du paquet d’autocollants</string>
+    <string name="StickerPackPreviewActivity_stickers">Stickers</string>
+    <string name="StickerPackPreviewActivity_failed_to_load_sticker_pack">Chargement du pack de stickers impossible</string>
 
     <!-- SubmitDebugLogActivity -->
     <string name="SubmitDebugLogActivity_edit">Modifier</string>
@@ -2211,7 +2217,7 @@
     <string name="ThreadRecord_secure_session_reset">La session sécurisée a été réinitialisée.</string>
     <string name="ThreadRecord_draft">Brouillon :</string>
     <string name="ThreadRecord_media_message">Message multimédia</string>
-    <string name="ThreadRecord_sticker">Autocollant</string>
+    <string name="ThreadRecord_sticker">Sticker</string>
     <string name="ThreadRecord_view_once_photo">Photo éphémère</string>
     <string name="ThreadRecord_view_once_video">Vidéo éphémère</string>
     <string name="ThreadRecord_view_once_media">Média éphémère</string>
@@ -2284,7 +2290,7 @@
     <!-- Toolbar title when entering from registration -->
     <string name="UsernameEditFragment__add_a_username">Ajouter un nom d\'utilisateur</string>
     <!-- Instructional text at the top of the username edit screen -->
-    <string name="UsernameEditFragment__choose_your_username">Choisissez votre pseudo</string>
+    <string name="UsernameEditFragment__choose_your_username">Choisissez votre nom d\'utilisatuer</string>
     <string name="UsernameEditFragment_username">Nom d’utilisateur</string>
     <string name="UsernameEditFragment_delete">Supprimer</string>
     <string name="UsernameEditFragment_successfully_removed_username">Le nom d’utilisateur a été effacé avec succès.</string>
@@ -2295,10 +2301,10 @@
     <string name="UsernameEditFragment_username_is_invalid">Le nom d’utilisateur est invalide.</string>
     <string name="UsernameEditFragment_usernames_must_be_between_a_and_b_characters">Les noms d’utilisateur doivent comporter entre %1$d et %2$d caractères.</string>
     <!-- Explanation about what usernames provide -->
-    <string name="UsernameEditFragment__usernames_let_others_message">Le nom d’utilisateur vous permet de recevoir des messages sans communiquer votre numéro de téléphone. Il est associé à une série de chiffres, afin de protéger la confidentialité de votre adresse.</string>
+    <string name="UsernameEditFragment__usernames_let_others_message">Usernames are always paired with a set of numbers.</string>
     <!-- Dialog title for explanation about numbers at the end of the username -->
     <string name="UsernameEditFragment__what_is_this_number">Qu\'est-ce que ce numéro ?</string>
-    <string name="UsernameEditFragment__these_digits_help_keep">Ces chiffres servent à préserver la confidentialité de votre identité correspondant au pseudo choisi et ainsi d\'éviter les messages indésirables. Ne partagez votre pseudo qu\'avec les personnes et les groupes avec lesquels vous souhaitez échanger. Si vous changez votre pseudo, un nouvel ensemble de chiffres vous sera attribué.</string>
+    <string name="UsernameEditFragment__these_digits_help_keep">Ces chiffres servent à préserver la confidentialité de votre identité correspondant au nom d\'utilisatuer choisi et ainsi d\'éviter les messages indésirables. Ne partagez votre nom d’utilisateur qu\'avec les personnes et les groupes avec lesquels vous souhaitez échanger. Si vous changez votre nom d’utilisateur, un nouvel ensemble de chiffres vous sera attribué.</string>
     <!-- Button to allow user to skip -->
     <string name="UsernameEditFragment__skip">Ignorer</string>
     <!-- Content description for done button -->
@@ -2315,6 +2321,10 @@
     <string name="UsernameEditFragment__this_number_cant_start_with_00">Ce chiffre ne peut pas commencer par 00. Il doit être compris entre 1 et 9.</string>
     <!-- The body of an alert dialog asking the user to confirm that they want to recover their username -->
     <string name="UsernameEditFragment_recovery_dialog_confirmation">Récupérer votre nom d’utilisateur entraîne la réinitialisation de votre lien et code QR existants. Êtes-vous sûr de vouloir continuer ?</string>
+    <!-- The body of an alert dialog asking the user to confirm that they want to change their username, even if it resets their link -->
+    <string name="UsernameEditFragment_change_confirmation_message">Modifier votre nom d’utilisateur entraîne la réinitialisation de votre lien et code QR existants. Êtes-vous sûr de vouloir continuer ?</string>
+    <!-- Text for a button in a dialog asking if the user would like to continue the operation of changing their username -->
+    <string name="UsernameEditFragment_continue">Poursuivre</string>
 
     <plurals name="UserNotificationMigrationJob_d_contacts_are_on_signal">
         <item quantity="one">%1$d contact est sur Signal !</item>
@@ -2432,7 +2442,7 @@
     <string name="MessageNotifier_reacted_s_to_your_view_once_media">A réagi par %1$s à votre média éphémère.</string>
     <!-- Body of notification shown to user when someone they sent a payment to reacts to it. Placeholder is the emoji used in the reaction. -->
     <string name="MessageNotifier_reacted_s_to_your_payment">A réagi par %1$s à votre paiement.</string>
-    <string name="MessageNotifier_reacted_s_to_your_sticker">A réagi par %1$s à votre autocollant.</string>
+    <string name="MessageNotifier_reacted_s_to_your_sticker">a réagi par %1$s à votre sticker.</string>
     <string name="MessageNotifier_this_message_was_deleted">Ce message a été supprimé.</string>
 
     <string name="TurnOffContactJoinedNotificationsActivity__turn_off_contact_joined_signal">Désactiver les notifications pour les contacts qui se sont joints à Signal ? Vous pouvez les réactiver dans Signal &gt; Paramètres &gt; Notifications</string>
@@ -2484,7 +2494,7 @@
     <string name="SearchToolbar_search">Recherche</string>
     <!-- Hint when searching filtered chat content -->
     <string name="SearchToolbar_search_unread_chats">Rechercher les conversations non lues</string>
-    <string name="SearchToolbar_search_for_conversations_contacts_and_messages">Chercher des conversations, contacts et messages</string>
+    <string name="SearchToolbar_search_for_conversations_contacts_and_messages">Rechercher des conversations, des contacts et des messages</string>
 
     <!-- Material3 Search Toolbar -->
     <string name="Material3SearchToolbar__close">Fermer</string>
@@ -2519,7 +2529,7 @@
     <!-- Button label for not right now -->
     <string name="NewWaysToConnectDialogFragment__not_now">Pas maintenant</string>
     <!-- Button label for continue -->
-    <string name="NewWaysToConnectDialogFragment__set_up_your_username">Choisissez votre nom d’utilisateur</string>
+    <string name="NewWaysToConnectDialogFragment__set_up_your_username">Configurer le nom d’utilisateur</string>
 
     <!-- ThumbnailView -->
     <string name="ThumbnailView_Play_video_description">Lire la vidéo</string>
@@ -2637,9 +2647,9 @@
         <item quantity="other">%1$d membres</item>
     </plurals>
     <!-- Text on row item to find user by phone number -->
-    <string name="ContactSelectionListFragment__find_by_phone_number">Trouver par numéro de téléphone</string>
+    <string name="ContactSelectionListFragment__find_by_phone_number">Rechercher par numéro de téléphone</string>
     <!-- Text on row item to find user by username -->
-    <string name="ContactSelectionListFragment__find_by_username">Trouver par nom d’utilisateur</string>
+    <string name="ContactSelectionListFragment__find_by_username">Rechercher par nom d’utilisateur</string>
 
     <!-- contact_selection_list_fragment -->
     <string name="contact_selection_list_fragment__signal_needs_access_to_your_contacts_in_order_to_display_them">Signal a besoin d’accéder à vos contacts afin de les afficher.</string>
@@ -2724,7 +2734,7 @@
     <string name="QuoteView_photo">Photo</string>
     <string name="QuoteView_gif">GIF</string>
     <string name="QuoteView_view_once_media">Média éphémère</string>
-    <string name="QuoteView_sticker">Autocollant</string>
+    <string name="QuoteView_sticker">Sticker</string>
     <string name="QuoteView_you">Vous</string>
     <string name="QuoteView_original_missing">Le message original est introuvable</string>
     <!-- Author formatting for group stories -->
@@ -2773,7 +2783,7 @@
 
     <!-- country_selection_fragment -->
     <string name="country_selection_fragment__loading_countries">Chargement des pays…</string>
-    <string name="country_selection_fragment__search">Chercher</string>
+    <string name="country_selection_fragment__search">Rechercher</string>
     <string name="country_selection_fragment__no_matching_countries">Aucun pays ne correspond</string>
 
     <!-- device_add_fragment -->
@@ -2844,7 +2854,7 @@
     </plurals>
 
     <!-- giphy_activity -->
-    <string name="giphy_activity_toolbar__search_gifs">Chercher des GIF</string>
+    <string name="giphy_activity_toolbar__search_gifs">Rechercher des GIF</string>
 
     <!-- giphy_fragment -->
     <string name="giphy_fragment__nothing_found">Aucun résultat</string>
@@ -2880,8 +2890,8 @@
 
     <!-- BadDecryptLearnMoreDialog -->
     <string name="BadDecryptLearnMoreDialog_delivery_issue">Problème de remise</string>
-    <string name="BadDecryptLearnMoreDialog_couldnt_be_delivered_individual">Un message, un autocollant, une réaction ou un accusé de lecture de %1$s n’a pas pu vous être remis. Cette personne pourrait avoir tenté de vous l’envoyer directement ou dans un groupe.</string>
-    <string name="BadDecryptLearnMoreDialog_couldnt_be_delivered_group">Un message, un autocollant, une réaction ou un accusé de lecture de %1$s n’a pas pu vous être remis.</string>
+    <string name="BadDecryptLearnMoreDialog_couldnt_be_delivered_individual">Impossible de distribuer du contenu de %1$s. Il peut s’agir d’un message, d’un sticker, d’une réaction ou d’une confirmation de lecture que ce contact vous a envoyés directement ou dans un groupe.</string>
+    <string name="BadDecryptLearnMoreDialog_couldnt_be_delivered_group">Impossible de distribuer du contenu de %1$s. Il peut s’agir d’un message, d’un sticker, d’une réaction ou d’une confirmation de lecture.</string>
 
     <!-- profile_create_activity -->
     <string name="CreateProfileActivity_first_name_required">Prénom (requis)</string>
@@ -3177,8 +3187,8 @@
     <string name="preferences__support_wifi_calling">Mode de compatibilité « Appels Wi-Fi »</string>
     <string name="preferences__enable_if_your_device_supports_sms_mms_delivery_over_wifi">Activer si votre appareil transmet les textos et les messages multimédias par Wi-Fi (n’activer que si les « Appels Wi-Fi » sont activés sur votre appareil)</string>
     <string name="preferences__incognito_keyboard">Clavier incognito</string>
-    <string name="preferences__read_receipts">Accusés de lecture</string>
-    <string name="preferences__if_read_receipts_are_disabled_you_wont_be_able_to_see_read_receipts">Si les accusés de lecture sont désactivés, vous ne pourrez pas voir les accusés de lecture d’autrui.</string>
+    <string name="preferences__read_receipts">Confirmations de lecture</string>
+    <string name="preferences__if_read_receipts_are_disabled_you_wont_be_able_to_see_read_receipts">Si vous désactivez les confirmations de lecture, vous ne recevrez pas de confirmations de lecture de la part de vos contacts.</string>
     <string name="preferences__typing_indicators">Indicateurs de saisie</string>
     <string name="preferences__if_typing_indicators_are_disabled_you_wont_be_able_to_see_typing_indicators">Si les indicateurs de saisie sont désactivés, vous ne serez pas en mesure de voir les indicateurs de saisie d’autrui.</string>
     <string name="preferences__request_keyboard_to_disable">Demander au clavier de désactiver l’apprentissage personnalisé.</string>
@@ -3573,7 +3583,7 @@
 
     <!-- conversation_list -->
     <string name="conversation_list_settings_shortcut">Raccourci des paramètres</string>
-    <string name="conversation_list_search_description">Chercher</string>
+    <string name="conversation_list_search_description">Rechercher</string>
     <string name="conversation_list__pinned">Épinglées</string>
     <string name="conversation_list__chats">Conversations</string>
     <!-- A warning shown in a toast that tells you that you can\'t pin any more chats. Pinning a chat means keeping the chat at the top of your chat list. The placeholder represents how many chats you\'re allowed to pin. -->
@@ -3871,11 +3881,11 @@
     <!-- Subtext below radio buttons when who can see my number is set to everybody -->
     <string name="PhoneNumberPrivacySettingsFragment_sharing_on_description">Seuls les contacts et les groupes avec lesquels vous échangez des messages pourront voir votre numéro de téléphone.</string>
     <!-- Subtext below radio buttons when who can see my number is set to nobody and who can find me by number is set to everybody -->
-    <string name="PhoneNumberPrivacySettingsFragment_sharing_off_discovery_on_description">Your phone number will not be visible to anyone unless they have it saved in their phone\'s contacts.</string>
+    <string name="PhoneNumberPrivacySettingsFragment_sharing_off_discovery_on_description">Personne n’aura accès à votre numéro, sauf les utilisateurs qui l’ont déjà enregistré dans les contacts de leur téléphone.</string>
     <!-- Subtext below radio buttons when who can see my number is set to nobody and who can find me by number is set to nobody -->
-    <string name="PhoneNumberPrivacySettingsFragment_sharing_off_discovery_off_description">Your phone number will not be visible to anyone.</string>
+    <string name="PhoneNumberPrivacySettingsFragment_sharing_off_discovery_off_description">Personne n’aura accès à votre numéro de téléphone.</string>
     <!-- Section title above two radio buttons for enabling and disabling whether users can find me by my phone number  -->
-    <string name="PhoneNumberPrivacySettingsFragment_who_can_find_me_by_number_heading">Qui peut me retrouver grâce à mon numéro de téléphone</string>
+    <string name="PhoneNumberPrivacySettingsFragment_who_can_find_me_by_number_heading">Qui peut me trouver grâce à mon numéro de téléphone</string>
     <!-- Subtext below radio buttons when who can find me by number is set to everyone -->
     <string name="PhoneNumberPrivacySettingsFragment_discovery_on_description">Toutes les personnes disposant de votre numéro de téléphone pourront voir que vous utilisez Signal et lancer une conversation avec vous.</string>
     <!-- Subtext below radio buttons when who can find me by number is set to nobody -->
@@ -3911,7 +3921,7 @@
     <string name="prompt_passphrase_activity__tap_to_unlock">TOUCHEZ POUR DÉVERROUILLER</string>
     <string name="Recipient_unknown">Inconnu</string>
     <!-- Name to use for a user across the UI when they are unregistered and have no other name available -->
-    <string name="Recipient_deleted_account">Deleted account</string>
+    <string name="Recipient_deleted_account">Compte supprimé</string>
 
     <!-- Option in settings that will take use to re-register if they are no longer registered -->
     <string name="preferences_account_reregister">Réinscrire le compte</string>
@@ -4114,8 +4124,10 @@
     <string name="BlockedUsersActivity__s_has_been_unblocked">« %1$s » a été débloqué.</string>
 
     <!-- ReviewCardDialogFragment -->
-    <string name="ReviewCardDialogFragment__review_members">Examiner les membres</string>
-    <string name="ReviewCardDialogFragment__review_request">Examiner la demande</string>
+    <!-- Title of a screen where the user will be prompted to review group members with the same name -->
+    <string name="ReviewCardDialogFragment__review_members">Review members</string>
+    <!-- Title of a screen where the user will be prompted to review a message request matching the name of someone they already know -->
+    <string name="ReviewCardDialogFragment__review_request">Review request</string>
     <string name="ReviewCardDialogFragment__d_group_members_have_the_same_name">%1$d membres du groupe portent le même nom. Examinez-les ci-dessous et choisissez l’action appropriée.</string>
     <string name="ReviewCardDialogFragment__if_youre_not_sure">Si vous n’êtes pas certain de qui la demande provient, examinez les contacts ci-dessous et agissez en conséquence.</string>
     <string name="ReviewCardDialogFragment__no_other_groups_in_common">Aucun autre groupe en commun.</string>
@@ -4142,7 +4154,7 @@
     <!-- Displayed when a recent name change has occurred. First placeholder is new short name, second is previous name, third is new name. -->
     <string name="ReviewCard__s_recently_changed">%1$s a récemment changé son nom de profil de %2$s à %3$s</string>
     <!-- Displayed when a review user is in your system contacts. Placeholder is short name. -->
-    <string name="ReviewCard__s_is_in_your_system_contacts">%1$s se trouve dans vos contacts</string>
+    <string name="ReviewCard__s_is_in_your_system_contacts">%1$s se trouve dans vos contacts système</string>
 
     <!-- CallParticipantsListUpdatePopupWindow -->
     <string name="CallParticipantsListUpdatePopupWindow__s_joined">%1$s s’est joint</string>
@@ -4192,7 +4204,7 @@
     <string name="DeleteAccountFragment__there_was_a_problem">Il y a eu un problème lors de la suppression. Vérifiez votre connexion réseau et réessayez.</string>
 
     <!-- DeleteAccountCountryPickerFragment -->
-    <string name="DeleteAccountCountryPickerFragment__search_countries">Chercher les pays</string>
+    <string name="DeleteAccountCountryPickerFragment__search_countries">Rechercher des pays</string>
 
     <!-- CreateGroupActivity -->
     <string name="CreateGroupActivity__skip">Ignorer</string>
@@ -4644,18 +4656,18 @@
     <!-- KeyboardPagerFragment -->
     <string name="KeyboardPagerFragment_emoji">Émoji</string>
     <string name="KeyboardPagerFragment_open_emoji_search">Ouvrir la recherche d’émojis</string>
-    <string name="KeyboardPagerFragment_open_sticker_search">Ouvrir la recherche d’autocollants</string>
+    <string name="KeyboardPagerFragment_open_sticker_search">Rechercher des stickers</string>
     <string name="KeyboardPagerFragment_open_gif_search">Ouvrir la recherche de GIF</string>
-    <string name="KeyboardPagerFragment_stickers">Autocollants</string>
+    <string name="KeyboardPagerFragment_stickers">Stickers</string>
     <string name="KeyboardPagerFragment_backspace">Retour en arrière</string>
     <string name="KeyboardPagerFragment_gifs">GIF</string>
-    <string name="KeyboardPagerFragment_search_emoji">Chercher un émoji</string>
+    <string name="KeyboardPagerFragment_search_emoji">Rechercher un émoji</string>
     <string name="KeyboardPagerfragment_back_to_emoji">Retour aux émojis</string>
     <string name="KeyboardPagerfragment_clear_search_entry">Effacer l’historique de recherche</string>
-    <string name="KeyboardPagerFragment_search_giphy">Chercher dans GIPHY</string>
+    <string name="KeyboardPagerFragment_search_giphy">Rechercher dans GIPHY</string>
 
     <!-- StickerSearchDialogFragment -->
-    <string name="StickerSearchDialogFragment_search_stickers">Chercher des autocollants</string>
+    <string name="StickerSearchDialogFragment_search_stickers">Rechercher des stickers</string>
     <string name="StickerSearchDialogFragment_no_results_found">Aucun résultat trouvé</string>
     <string name="EmojiSearchFragment__no_results_found">Aucun résultat trouvé</string>
     <string name="NotificationsSettingsFragment__unknown_ringtone">Sonnerie inconnue</string>
@@ -4684,7 +4696,7 @@
     <!-- Button label with hyphenation. Translation can use soft hyphen - Unicode U+00AD -->
     <string name="ConversationSettingsFragment__muted">En sourdine</string>
     <!-- Button label with hyphenation. Translation can use soft hyphen - Unicode U+00AD -->
-    <string name="ConversationSettingsFragment__search">Chercher</string>
+    <string name="ConversationSettingsFragment__search">Rechercher</string>
     <string name="ConversationSettingsFragment__disappearing_messages">Messages éphémères</string>
     <string name="ConversationSettingsFragment__sounds_and_notifications">Sons et notifications</string>
   <!-- Removed by excludeNonTranslatables <string name="ConversationSettingsFragment__internal_details" translatable="false">Internal details</string> -->
@@ -4776,7 +4788,7 @@
     </plurals>
 
     <!-- ContactFilterView -->
-    <string name="ContactFilterView__search_name_or_number">Chercher un nom ou un numéro</string>
+    <string name="ContactFilterView__search_name_or_number">Rechercher un nom ou un numéro</string>
 
     <!-- VoiceNotePlayerView -->
     <string name="VoiceNotePlayerView__dot_s">· %1$s</string>
@@ -4861,7 +4873,7 @@
     <string name="ImageEditorHud__cancel">Annuler</string>
     <string name="ImageEditorHud__draw">Dessiner</string>
     <string name="ImageEditorHud__write_text">Écrire du texte</string>
-    <string name="ImageEditorHud__add_a_sticker">Ajouter un autocollant</string>
+    <string name="ImageEditorHud__add_a_sticker">Ajouter un sticker</string>
     <string name="ImageEditorHud__blur">Flouter</string>
     <string name="ImageEditorHud__done_editing">Fini de modifier</string>
     <string name="ImageEditorHud__clear_all">Tout enlever</string>
@@ -5466,7 +5478,7 @@
     <string name="MyStorySettingsFragment__who_can_view_this_story">Qui peut voir cette Story ?</string>
     <!-- Clickable option for selecting people to hide your story from -->
     <!-- Privacy setting title for sending stories to all your signal connections -->
-    <string name="MyStorySettingsFragment__all_signal_connections">Toutes les connexions Signal</string>
+    <string name="MyStorySettingsFragment__all_signal_connections">Tous les contacts Signal</string>
     <!-- Privacy setting description for sending stories to all your signal connections -->
     <!-- Privacy setting title for sending stories to all except the specified connections -->
     <string name="MyStorySettingsFragment__all_except">Tout sauf…</string>
@@ -5495,15 +5507,15 @@
     <!-- Summary for switchable option allowing replies and reactions on your story -->
     <string name="MyStorySettingsFragment__let_people_who_can_view_your_story_react_and_reply">Laisser les personnes qui peuvent voir votre Story réagir et y répondre</string>
     <!-- Signal connections bolded text in the Signal Connections sheet -->
-    <string name="SignalConnectionsBottomSheet___signal_connections">Connexions Signal</string>
+    <string name="SignalConnectionsBottomSheet___signal_connections">Contacts Signal</string>
     <!-- Displayed at the top of the signal connections sheet. Please remember to insert strong tag as required. -->
-    <string name="SignalConnectionsBottomSheet__signal_connections_are_people">Les connexions Signal correspondent aux contacts auxquels vous avez choisi de faire confiance, soit par :</string>
+    <string name="SignalConnectionsBottomSheet__signal_connections_are_people">Les contacts Signal correspondent aux contacts auxquels vous avez choisi de faire confiance, soit par :</string>
     <!-- Signal connections sheet bullet point 1 -->
     <string name="SignalConnectionsBottomSheet__starting_a_conversation">Commencer une conversation</string>
     <!-- Signal connections sheet bullet point 2 -->
     <string name="SignalConnectionsBottomSheet__accepting_a_message_request">Acceptant une demande d’échange de messages</string>
     <!-- Signal connections sheet bullet point 3 -->
-    <string name="SignalConnectionsBottomSheet__having_them_in_your_system_contacts">Les ayant comme contacts dans votre système</string>
+    <string name="SignalConnectionsBottomSheet__having_them_in_your_system_contacts">Les ayant comme contacts système</string>
     <!-- Note at the bottom of the Signal connections sheet -->
     <string name="SignalConnectionsBottomSheet__your_connections_can_see_your_name">"Vos connexions peuvent voir vos nom et photo ainsi que vos publications dans « Mes stories » à moins que vous ne cachiez ces publications pour elles."</string>
     <!-- Clickable option to add a viewer to a custom story -->
@@ -5539,7 +5551,7 @@
     <!-- Displayed prior to the user entering a URL for a text post -->
     <string name="TextStoryPostLinkEntryFragment__share_a_link_with_viewers_of_your_story">Partager un lien avec les personnes qui voient votre Story</string>
     <!-- Hint text for searching for a story text post recipient. -->
-    <string name="TextStoryPostSendFragment__search">Chercher</string>
+    <string name="TextStoryPostSendFragment__search">Rechercher</string>
     <!-- Toast shown when an unexpected error occurs while sending a text story -->
     <!-- Toast shown when a trying to add a link preview to a text story post and the link/url is not valid (e.g., missing .com at the end) -->
     <string name="TextStoryPostSendFragment__please_enter_a_valid_link">Veuillez saisir un lien valide.</string>
@@ -5831,7 +5843,7 @@
     <!-- Subtitle of initial My Story settings configuration shown when sending to My Story for the first time -->
     <string name="ChooseInitialMyStoryMembershipFragment__choose_who_can_see_posts_to_my_story_you_can_always_make_changes_in_settings">Choisissez les contacts autorisés à voir votre story. Vous pouvez modifier ces préférences à tout moment dans les paramètres.</string>
     <!-- All connections option for initial My Story settings configuration shown when sending to My Story for the first time -->
-    <string name="ChooseInitialMyStoryMembershipFragment__all_signal_connections">Toutes les relations Signal</string>
+    <string name="ChooseInitialMyStoryMembershipFragment__all_signal_connections">Tous les contacts Signal</string>
     <!-- All connections except option for initial My Story settings configuration shown when sending to My Story for the first time -->
     <string name="ChooseInitialMyStoryMembershipFragment__all_except">Tout sauf…</string>
     <!-- Only with selected connections option for initial My Story settings configuration shown when sending to My Story for the first time -->
@@ -6057,7 +6069,7 @@
     <!-- Dialog title shown when using iDEAL payment for setting up a monthly donation -->
     <string name="IdealTransferDetailsFragment__confirm_your_donation_with_s">Confirmez votre don %1$s</string>
     <!-- Dialog warning shown when using iDEAL payment for setting up a monthly donation -->
-    <string name="IdealTransferDetailsFragment__monthly_ideal_warning">To setup your recurring donation tap continue to confirm a €0,01 charge with your bank. This will be automatically refunded and allows your €5/month donation to debited from your account.</string>
+    <string name="IdealTransferDetailsFragment__monthly_ideal_warning">Pour configurer votre don mensuel, appuyez sur « Continuer ». Vous confirmez ainsi le prélèvement de 0,01 € auprès de votre banque. Cette somme sera automatiquement remboursée et permettra de confirmer le prélèvement de 5 €/mois sur votre compte.</string>
     <!-- Dialog button shown when using iDEAL payment for setting up a monthly donation to continue with the donation -->
     <string name="IdealTransferDetailsFragment__continue">Poursuivre</string>
 
@@ -6172,6 +6184,15 @@
     <string name="SetUpYourUsername__dismiss">Fermer</string>
     <!-- Displayed as an action on a megaphone which prompts user to set up a username -->
     <string name="SetUpYourUsername__learn_more">En savoir plus</string>
+
+    <!-- Displayed as a title on a megaphone which prompts user to set up a username -->
+    <string name="PnpLaunchMegaphone_title">De nouvelles façons de rester en contact</string>
+    <!-- Displayed as a description on a megaphone which prompts user to set up a username -->
+    <string name="PnpLaunchMegaphone_body">Protégez votre numéro de téléphone, choisissez un nom d’utilisateur facultatif et découvrez les liens de conversation.</string>
+    <!-- Displayed as an action on a megaphone which prompts user to set up a username. Clicking it will dismiss the megaphone. -->
+    <string name="PnpLaunchMegaphone_dismiss">Fermer</string>
+    <!-- Displayed as an action on a megaphone which prompts user to set up a username. Clicking it will open a link. -->
+    <string name="PnpLaunchMegaphone_learn_more">En savoir plus</string>
 
     <!-- Text Formatting -->
     <!-- Popup menu label for applying bold style -->
@@ -6433,7 +6454,7 @@
     <!-- Description text for QR code and links in the username link settings -->
     <string name="UsernameLinkSettings_qr_description">Partagez votre code QR et votre lien unique avec les personnes en qui vous avez confiance. Lorsque vous les partagez, les autres utilisateurs pourront voir votre nom d’utilisateur et démarrer une conversation avec vous.</string>
     <!-- Content of a toast that will show after the username is copied to the clipboard -->
-    <string name="UsernameLinkSettings_username_copied_toast">Pseudo copié</string>
+    <string name="UsernameLinkSettings_username_copied_toast">Nom d’utilisateur copié</string>
     <!-- Content of a toast that will show after the username link is copied to the clipboard -->
     <string name="UsernameLinkSettings_link_copied_toast">Le lien a été copié</string>
     <!-- Content of a text field that is shown when the user has not yet set a username link -->
@@ -6470,6 +6491,10 @@
     <string name="UsernameLinkSettings_reset_link_result_network_unavailable">Vous n’avez pas accès au réseau. Votre lien n’a pas été réinitialisé. Réessayez plus tard.</string>
     <!-- Body of a dialog that is displayed when we failed to reset your username link because of a transient network issue. -->
     <string name="UsernameLinkSettings_reset_link_result_network_error">Une erreur réseau s’est produite lors de la tentative de réinitialisation de votre lien. Réessayez plus tard.</string>
+    <!-- Body of a dialog that is displayed when we failed to reset your username link because of an unknown error. -->
+    <string name="UsernameLinkSettings_reset_link_result_unknown_error">An unexpected error occurred while trying to reset your link. Try again later.</string>
+    <!-- Body of a dialog that is displayed when we successfully reset you username link. -->
+    <string name="UsernameLinkSettings_reset_link_result_success">Nous avons réinitialisé votre lien et votre code QR, et en avons généré de nouveaux.</string>
     <!-- Shown on the generated username qr code image to explain how to use it. -->
     <string name="UsernameLinkSettings_scan_this_qr_code">Et si on discutait sur Signal ? Scannez ce code QR pour me contacter.</string>
 
@@ -6530,37 +6555,37 @@
 
     <!-- FindByActivity -->
     <!-- Title of activity when finding by username -->
-    <string name="FindByActivity__find_by_username">Trouver par nom d’utilisateur</string>
+    <string name="FindByActivity__find_by_username">Rechercher par nom d’utilisateur</string>
     <!-- Title of activity when finding by phone number -->
-    <string name="FindByActivity__find_by_phone_number">Trouver par numéro de téléphone</string>
+    <string name="FindByActivity__find_by_phone_number">Rechercher par numéro de téléphone</string>
     <!-- Title of screen to select a country code -->
-    <string name="FindByActivity__select_country_code">Sélectionner l’indicatif de pays</string>
+    <string name="FindByActivity__select_country_code">Sélectionner l’indicatif du pays</string>
     <!-- Entry placeholder for find by username -->
     <string name="FindByActivity__username">Nom d’utilisateur</string>
     <!-- Entry placeholder for find by phone number -->
     <string name="FindByActivity__phone_number">Numéro de téléphone</string>
     <!-- Help text under user entry for find by username -->
-    <string name="FindByActivity__enter_a_full_username">Enter a full username with its pair of digits.</string>
+    <string name="FindByActivity__enter_username_description">Enter a username followed by a dot and its set of numbers.</string>
     <!-- Content description for next action button -->
     <string name="FindByActivity__next">Suivant</string>
     <!-- Placeholder text for search input for selecting country code -->
-    <string name="FindByActivity__search">Chercher</string>
+    <string name="FindByActivity__search">Rechercher</string>
     <!-- Dialog title for invalid username -->
-    <string name="FindByActivity__invalid_username">Nom d’utilisateur invalide</string>
+    <string name="FindByActivity__invalid_username">Nom d’utilisateur incorrect</string>
     <!-- Dialog title for invalid phone number -->
-    <string name="FindByActivity__invalid_phone_number">Le numéro de téléphone est invalide</string>
+    <string name="FindByActivity__invalid_phone_number">Numéro de téléphone incorrect</string>
     <!-- Dialog title when phone number is not a registered signal user -->
-    <string name="FindByActivity__invite_to_signal">Inviter à Signal</string>
+    <string name="FindByActivity__invite_to_signal">Inviter sur Signal</string>
     <!-- Dialog title when username is not found -->
-    <string name="FindByActivity__username_not_found">Le nom d’utilisateur est introuvable</string>
+    <string name="FindByActivity__username_not_found">Nom d’utilisateur introuvable</string>
     <!-- Dialog body for invalid username. Placeholder is the entered username. -->
-    <string name="FindByActivity__s_is_not_a_valid_username">%1$s is not a valid username. Make sure you\'ve entered the complete username followed by its set of digits.</string>
+    <string name="FindByActivity__s_is_not_a_valid_username">%1$s n’est pas un nom d’utilisateur valide. Le nom d’utilisateur complet doit comporter un point suivi d’une série de chiffres associés.</string>
     <!-- Dialog body for an invalid phone number. Placeholder is the entered phone number. -->
-    <string name="FindByActivity__s_is_not_a_valid_phone_number">%1$s is not valid phone number. Try again with a valid phone number</string>
+    <string name="FindByActivity__s_is_not_a_valid_phone_number">Le numéro %1$s est incorrect. Veuillez réessayer avec un numéro de téléphone valide.</string>
     <!-- Dialog body for not found username -->
-    <string name="FindByActivity__s_is_not_a_signal_user">« %1$s » n’est pas un utilisateur de Signal. Veuillez confirmer le nom d’utilisateur et réessayer.</string>
+    <string name="FindByActivity__s_is_not_a_signal_user">« %1$s » ne correspond à aucun utilisateur Signal. Veuillez vérifier le nom d’utilisateur et réessayer.</string>
     <!-- Dialog body for not found phone number -->
-    <string name="FindByActivity__s_is_not_a_signal_user_would">%1$s n’utilise pas Signal. Souhaitez-vous inviter ce numéro ?</string>
+    <string name="FindByActivity__s_is_not_a_signal_user_would">%1$s n’utilise pas Signal. Voulez-vous inviter ce numéro ?</string>
     <!-- Dialog action to invite the phone number to Signal -->
     <string name="FindByActivity__invite">Inviter</string>
 

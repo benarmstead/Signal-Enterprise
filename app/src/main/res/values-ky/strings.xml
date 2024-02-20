@@ -485,8 +485,8 @@
     <string name="ConversationFragment__you_can_add_notes_for_yourself_in_this_conversation">Бул маекте өзүңүзгө бир нерселерди белгилеп жазып алсаңыз болот. Аккаунтуңузга байланган түзмөктөр бар болсо, жазып алган нерселериңиз алардын баарында көрүнөт.</string>
     <string name="ConversationFragment__d_group_members_have_the_same_name">Топтун %1$d катышуучусунун ысымдары бирдей.</string>
     <string name="ConversationFragment__tap_to_review">Басып карап көрүңүз</string>
-    <string name="ConversationFragment__review_requests_carefully">Сурамдарды этияттап караңыз</string>
-    <string name="ConversationFragment__signal_found_another_contact_with_the_same_name">Signal ысымы окшош дагы бир байланышты тапты.</string>
+    <!-- The body of a banner that can show up at the top of a chat, letting the user know that you have two contacts with the same name -->
+    <string name="ConversationFragment__review_banner_body">This person has the same name as another contact</string>
     <string name="ConversationFragment_contact_us">Биз менен байланышыңыз</string>
     <string name="ConversationFragment_verify">Ооба</string>
     <string name="ConversationFragment_not_now">Азыр эмес</string>
@@ -517,13 +517,13 @@
     <!-- Menu option to report spam in a conversation -->
     <string name="ConversationFragment_report_spam">Report spam</string>
     <!-- Menu option to block in a conversation -->
-    <string name="ConversationFragment_block">Block</string>
+    <string name="ConversationFragment_block">Бөгөттөө</string>
     <!-- Menu otpion to accept a message request in a conversation -->
-    <string name="ConversationFragment_accept">Accept</string>
+    <string name="ConversationFragment_accept">Кабыл алуу</string>
     <!-- Menu option to delete an entire chat in a conversation -->
     <string name="ConversationFragment_delete_chat">Delete chat</string>
     <!-- Menu option to unblock in a conversation -->
-    <string name="ConversationFragment_unblock">Unblock</string>
+    <string name="ConversationFragment_unblock">Бөгөттөн чыгаруу</string>
     <!-- Menu option to report spam in a conversation -->
     <string name="ConversationFragment_reported_spam">Reported spam</string>
     <!-- Dialog message shown after reporting spam and tapping the conversation item -->
@@ -1028,6 +1028,8 @@
     <!-- ManageProfileFragment -->
     <!-- Explanation text about usernames etc displayed underneath buttons to view and edit username etc -->
     <string name="ManageProfileFragment__your_username">Профилиңизде колдонуучу атыңыз, QR кодуңуз жана шилтемеңиз көрүнбөйт. Колдонуучу атыңызды ишенген адамдарыңыз менен гана бөлүшө аласыз.</string>
+    <!-- Explanation text about usernames etc displayed underneath buttons to view and edit username etc, shown when you have no username -->
+    <string name="ManageProfileFragment__username_footer_no_username">Башкалар менен сүйлөшүүдө өзүңүз каалагандай колдонуучу атты колдонуп, телефон номериңизди жашырып койсоңуз болот. </string>
     <string name="ManageProfileFragment_profile_name">Профилдин аталышы</string>
     <string name="ManageProfileFragment_username">Колдонуучунун аты</string>
     <string name="ManageProfileFragment_about">Учкай маалымат</string>
@@ -1888,6 +1890,10 @@
     <!-- AboutSheet -->
     <!-- Displayed in a sheet row and allows user to open signal connection explanation on tap -->
     <string name="AboutSheet__signal_connection">Signal байланышы</string>
+    <!-- Displayed in a sheet row describing that the user has marked this contact as \'verified\' from within the app -->
+    <string name="AboutSheet__verified">Ырасталды</string>
+    <!-- Displayed in bottom sheet describing that the user has no direct messages with this person. The placeholder is a person\'s name. -->
+    <string name="AboutSheet__no_direct_message">No direct messages with %1$s</string>
     <!-- Explains that the given user (placeholder is short name) is in the users system contact -->
     <string name="AboutSheet__s_is_in_your_system_contacts">%1$s системаңыздагы байланыштардын бири</string>
     <!-- Notice in a row when user has no groups in common -->
@@ -2215,7 +2221,7 @@
     <string name="UsernameEditFragment_username_is_invalid">Колдонуучунун аты туура эмес.</string>
     <string name="UsernameEditFragment_usernames_must_be_between_a_and_b_characters">Колдонуучунун аты %1$d баштап %2$d чейин белгиден турушу керек.</string>
     <!-- Explanation about what usernames provide -->
-    <string name="UsernameEditFragment__usernames_let_others_message">Адамдар сиз менен телефон номериңиз эмес, колдонуучу атыңыз аркылуу жазыша алышат. Дарегиңизди купуя сактоо үчүн колдонуучу атыңызга бир нече сан кошулат.</string>
+    <string name="UsernameEditFragment__usernames_let_others_message">Usernames are always paired with a set of numbers.</string>
     <!-- Dialog title for explanation about numbers at the end of the username -->
     <string name="UsernameEditFragment__what_is_this_number">Бул эмне деген сан?</string>
     <string name="UsernameEditFragment__these_digits_help_keep">Бул сандар колдонуучу атыңызды купуя кылып, сизди кереги жок билдирүүлөрдөн сактайт. Колдонуучу атыңызды сүйлөшкүңүз келген адамдарга жана топторго бериңиз. Колдонуучу атыңызды өзгөртсөңүз, бул сандар да өзгөрөт.</string>
@@ -2235,6 +2241,10 @@
     <string name="UsernameEditFragment__this_number_cant_start_with_00">Бул номер 00 деп башталбашы керек. 1-9 чейин сан киргизиңиз</string>
     <!-- The body of an alert dialog asking the user to confirm that they want to recover their username -->
     <string name="UsernameEditFragment_recovery_dialog_confirmation">Колдонуучу атыңызды калыбына келтирсеңиз, учурдагы QR кодуңуз жана шилтемеңиз кайра коюлат. Чын элеби?</string>
+    <!-- The body of an alert dialog asking the user to confirm that they want to change their username, even if it resets their link -->
+    <string name="UsernameEditFragment_change_confirmation_message">Колдонуучу атыңызды өзгөртсөңүз, учурдагы QR кодуңуз менен шилтемеңиз да өзгөрүлөт. Чын элеби?</string>
+    <!-- Text for a button in a dialog asking if the user would like to continue the operation of changing their username -->
+    <string name="UsernameEditFragment_continue">Улантуу</string>
 
     <plurals name="UserNotificationMigrationJob_d_contacts_are_on_signal">
         <item quantity="other">Signal\'да %1$dбайланышыңыз бар!</item>
@@ -2436,7 +2446,7 @@
     <!-- Button label for not right now -->
     <string name="NewWaysToConnectDialogFragment__not_now">Азыр эмес</string>
     <!-- Button label for continue -->
-    <string name="NewWaysToConnectDialogFragment__set_up_your_username">Колдонуучу атыңызды коюңуз</string>
+    <string name="NewWaysToConnectDialogFragment__set_up_your_username">Колдонуучу атын коюңуз</string>
 
     <!-- ThumbnailView -->
     <string name="ThumbnailView_Play_video_description">Видеону ойнотуу</string>
@@ -3765,9 +3775,9 @@
     <!-- Subtext below radio buttons when who can see my number is set to everybody -->
     <string name="PhoneNumberPrivacySettingsFragment_sharing_on_description">Телефон номериңиз ким менен жазышсаңыз ошолорго көрүнөт.</string>
     <!-- Subtext below radio buttons when who can see my number is set to nobody and who can find me by number is set to everybody -->
-    <string name="PhoneNumberPrivacySettingsFragment_sharing_off_discovery_on_description">Your phone number will not be visible to anyone unless they have it saved in their phone\'s contacts.</string>
+    <string name="PhoneNumberPrivacySettingsFragment_sharing_off_discovery_on_description">Телефон номериңизди байланыштар тизмесине сактабаса, ал эч кимге көрүнбөйт.</string>
     <!-- Subtext below radio buttons when who can see my number is set to nobody and who can find me by number is set to nobody -->
-    <string name="PhoneNumberPrivacySettingsFragment_sharing_off_discovery_off_description">Your phone number will not be visible to anyone.</string>
+    <string name="PhoneNumberPrivacySettingsFragment_sharing_off_discovery_off_description">Телефон номериңиз эч кимге көрүнбөйт.</string>
     <!-- Section title above two radio buttons for enabling and disabling whether users can find me by my phone number  -->
     <string name="PhoneNumberPrivacySettingsFragment_who_can_find_me_by_number_heading">Номерим аркылуу мени ким таба алат</string>
     <!-- Subtext below radio buttons when who can find me by number is set to everyone -->
@@ -3805,7 +3815,7 @@
     <string name="prompt_passphrase_activity__tap_to_unlock">КУЛПУНУ АЧУУ ҮЧҮН БАСЫҢЫЗ</string>
     <string name="Recipient_unknown">Белгисиз</string>
     <!-- Name to use for a user across the UI when they are unregistered and have no other name available -->
-    <string name="Recipient_deleted_account">Deleted account</string>
+    <string name="Recipient_deleted_account">Өчүрүлгөн аккаунт</string>
 
     <!-- Option in settings that will take use to re-register if they are no longer registered -->
     <string name="preferences_account_reregister">Аккаунтту кайра каттоо</string>
@@ -4008,8 +4018,10 @@
     <string name="BlockedUsersActivity__s_has_been_unblocked">\"%1$s\" бөгөттөн чыгарылды.</string>
 
     <!-- ReviewCardDialogFragment -->
-    <string name="ReviewCardDialogFragment__review_members">Мүчөлөрдү карап чыгуу</string>
-    <string name="ReviewCardDialogFragment__review_request">Өтүнүчтү карап чыгуу</string>
+    <!-- Title of a screen where the user will be prompted to review group members with the same name -->
+    <string name="ReviewCardDialogFragment__review_members">Review members</string>
+    <!-- Title of a screen where the user will be prompted to review a message request matching the name of someone they already know -->
+    <string name="ReviewCardDialogFragment__review_request">Review request</string>
     <string name="ReviewCardDialogFragment__d_group_members_have_the_same_name">%1$d топ мүчөсүнүн аты бирдей, төмөндөгү мүчөлөрдү карап чыгып, чара көрүүнү тандаңыз.</string>
     <string name="ReviewCardDialogFragment__if_youre_not_sure">Эгер бул өтүнүч кимден экенин билбесеңиз, төмөнкү мүчөлөрдү карап чыгып, чара көрүңүз.</string>
     <string name="ReviewCardDialogFragment__no_other_groups_in_common">Башка орток топтор жок.</string>
@@ -5918,9 +5930,9 @@
     <!-- Default label for bank selection -->
     <string name="IdealTransferDetailsFragment__choose_your_bank">Банкыңызды тандаңыз</string>
     <!-- Dialog title shown when using iDEAL payment for setting up a monthly donation -->
-    <string name="IdealTransferDetailsFragment__confirm_your_donation_with_s">Confirm your donation with %1$s</string>
+    <string name="IdealTransferDetailsFragment__confirm_your_donation_with_s">Салымыңызды %1$s менен ырастаңыз</string>
     <!-- Dialog warning shown when using iDEAL payment for setting up a monthly donation -->
-    <string name="IdealTransferDetailsFragment__monthly_ideal_warning">To setup your recurring donation tap continue to confirm a €0,01 charge with your bank. This will be automatically refunded and allows your €5/month donation to debited from your account.</string>
+    <string name="IdealTransferDetailsFragment__monthly_ideal_warning">Салымыңыз ай сайын алынып турушу үчүн банк эсебиңизден €0,01 төлөңүз. Автоматтык түрдө кайтарылып, эсебиңизден айында €5 алынып турат.</string>
     <!-- Dialog button shown when using iDEAL payment for setting up a monthly donation to continue with the donation -->
     <string name="IdealTransferDetailsFragment__continue">Улантуу</string>
 
@@ -6034,6 +6046,15 @@
     <string name="SetUpYourUsername__dismiss">Жок</string>
     <!-- Displayed as an action on a megaphone which prompts user to set up a username -->
     <string name="SetUpYourUsername__learn_more">Кененирээк маалымат</string>
+
+    <!-- Displayed as a title on a megaphone which prompts user to set up a username -->
+    <string name="PnpLaunchMegaphone_title">Байланышуунун жаңы жолдору</string>
+    <!-- Displayed as a description on a megaphone which prompts user to set up a username -->
+    <string name="PnpLaunchMegaphone_body">Телефон номериңиз корголуп, каалагандай колдонуучу аттар менен шилтемелерди колдоносуз.</string>
+    <!-- Displayed as an action on a megaphone which prompts user to set up a username. Clicking it will dismiss the megaphone. -->
+    <string name="PnpLaunchMegaphone_dismiss">Жок</string>
+    <!-- Displayed as an action on a megaphone which prompts user to set up a username. Clicking it will open a link. -->
+    <string name="PnpLaunchMegaphone_learn_more">Кененирээк маалымат</string>
 
     <!-- Text Formatting -->
     <!-- Popup menu label for applying bold style -->
@@ -6329,6 +6350,10 @@
     <string name="UsernameLinkSettings_reset_link_result_network_unavailable">Интернет жок. Шилтемеңиз кайра коюлган жок. Бир аздан соң кайталаңыз.</string>
     <!-- Body of a dialog that is displayed when we failed to reset your username link because of a transient network issue. -->
     <string name="UsernameLinkSettings_reset_link_result_network_error">Шилтемеңизди кайра коюп жатканда тармакта ката кетти. Бир аздан соң кайталаңыз.</string>
+    <!-- Body of a dialog that is displayed when we failed to reset your username link because of an unknown error. -->
+    <string name="UsernameLinkSettings_reset_link_result_unknown_error">An unexpected error occurred while trying to reset your link. Try again later.</string>
+    <!-- Body of a dialog that is displayed when we successfully reset you username link. -->
+    <string name="UsernameLinkSettings_reset_link_result_success">QR кодуңуз менен шилтеме кайра коюлуп, жаңы QR код жана шилтеме түзүлдү.</string>
     <!-- Shown on the generated username qr code image to explain how to use it. -->
     <string name="UsernameLinkSettings_scan_this_qr_code">Signal\'дан мени менен сүйлөшкүңүз келсе, телефонуңуздагы QR кодду скандаңыз.</string>
 
@@ -6391,33 +6416,33 @@
     <!-- Title of activity when finding by phone number -->
     <string name="FindByActivity__find_by_phone_number">Телефон номери боюнча издөө</string>
     <!-- Title of screen to select a country code -->
-    <string name="FindByActivity__select_country_code">Select country code</string>
+    <string name="FindByActivity__select_country_code">Өлкөнүн кодун көрсөтүңүз</string>
     <!-- Entry placeholder for find by username -->
     <string name="FindByActivity__username">Колдонуучунун аты</string>
     <!-- Entry placeholder for find by phone number -->
     <string name="FindByActivity__phone_number">Телефон номериңиз</string>
     <!-- Help text under user entry for find by username -->
-    <string name="FindByActivity__enter_a_full_username">Enter a full username with its pair of digits.</string>
+    <string name="FindByActivity__enter_username_description">Enter a username followed by a dot and its set of numbers.</string>
     <!-- Content description for next action button -->
     <string name="FindByActivity__next">Кийинки</string>
     <!-- Placeholder text for search input for selecting country code -->
     <string name="FindByActivity__search">Издөө</string>
     <!-- Dialog title for invalid username -->
-    <string name="FindByActivity__invalid_username">Invalid username</string>
+    <string name="FindByActivity__invalid_username">Колдонуучунун аты жараксыз</string>
     <!-- Dialog title for invalid phone number -->
-    <string name="FindByActivity__invalid_phone_number">Invalid phone number</string>
+    <string name="FindByActivity__invalid_phone_number">Телефон номери жараксыз</string>
     <!-- Dialog title when phone number is not a registered signal user -->
     <string name="FindByActivity__invite_to_signal">Signal\'га чакыруу</string>
     <!-- Dialog title when username is not found -->
     <string name="FindByActivity__username_not_found">Колдонуучунун аты табылган жок</string>
     <!-- Dialog body for invalid username. Placeholder is the entered username. -->
-    <string name="FindByActivity__s_is_not_a_valid_username">%1$s is not a valid username. Make sure you\'ve entered the complete username followed by its set of digits.</string>
+    <string name="FindByActivity__s_is_not_a_valid_username">%1$s жараксыз колдонуучунун аты. Колдонуучунун аты эки сан менен аякташы керек.</string>
     <!-- Dialog body for an invalid phone number. Placeholder is the entered phone number. -->
-    <string name="FindByActivity__s_is_not_a_valid_phone_number">%1$s is not valid phone number. Try again with a valid phone number</string>
+    <string name="FindByActivity__s_is_not_a_valid_phone_number">%1$s телефон номери жараксыз. Телефон номерин туура киргизип, кайталап көрүңүз</string>
     <!-- Dialog body for not found username -->
     <string name="FindByActivity__s_is_not_a_signal_user">\"%1$s\" Signal колдонуучусу эмес. Колдонуучу атын текшерип, кайталап көрүңүз.</string>
     <!-- Dialog body for not found phone number -->
-    <string name="FindByActivity__s_is_not_a_signal_user_would">%1$s is not a Signal user. Would you like to invite this number?</string>
+    <string name="FindByActivity__s_is_not_a_signal_user_would">%1$s Signal колдонуучусу эмес. Ушул номерди чакырасызбы?</string>
     <!-- Dialog action to invite the phone number to Signal -->
     <string name="FindByActivity__invite">Чакыруу</string>
 

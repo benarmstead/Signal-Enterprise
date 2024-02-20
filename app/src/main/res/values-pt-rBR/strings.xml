@@ -48,12 +48,12 @@
     <string name="ApplicationPreferencesActivity_disable_signal_messages_and_calls">Desabilitar mensagens e chamadas do Signal?</string>
     <string name="ApplicationPreferencesActivity_disable_signal_messages_and_calls_by_unregistering">Desabilitar mensagens e chamadas do Signal descadastrando-o do servidor. Você precisará recadastrar seu número de telefone para usar o Signal novamente no futuro.</string>
     <string name="ApplicationPreferencesActivity_error_connecting_to_server">Erro ao conectar-se com o servidor!</string>
-    <string name="ApplicationPreferencesActivity_pins_are_required_for_registration_lock">Um PIN é necessário para o desbloqueio de registro. Para desabilitar o PIN, por favor, primeiro desabilite o desbloqueio de registro.</string>
+    <string name="ApplicationPreferencesActivity_pins_are_required_for_registration_lock">Um PIN é necessário para o desbloqueio de registro. Para desabilitar o PIN, primeiro desabilite o desbloqueio de registro.</string>
     <string name="ApplicationPreferencesActivity_pin_created">PIN criado.</string>
     <string name="ApplicationPreferencesActivity_pin_disabled">PIN desativado.</string>
     <string name="ApplicationPreferencesActivity_record_payments_recovery_phrase">Gravar a senha de recuperação de pagamentos</string>
     <string name="ApplicationPreferencesActivity_record_phrase">Gravar senha</string>
-    <string name="ApplicationPreferencesActivity_before_you_can_disable_your_pin">Antes de desabilitar seu PIN, você deve gravar a sua senha de recuperação de pagamentos para garantir que você possa recuperar a sua conta de pagamentos.</string>
+    <string name="ApplicationPreferencesActivity_before_you_can_disable_your_pin">Antes de desabilitar seu PIN, você precisa gravar a sua senha de recuperação de pagamentos para garantir que possa recuperar a sua conta de pagamentos.</string>
 
     <!-- NumericKeyboardView -->
   <!-- Removed by excludeNonTranslatables <string name="NumericKeyboardView__1" translatable="false">1</string> -->
@@ -82,15 +82,15 @@
     <string name="AttachmentKeyboard_file">Arquivo</string>
     <string name="AttachmentKeyboard_contact">Contato</string>
     <string name="AttachmentKeyboard_location">Localização</string>
-    <string name="AttachmentKeyboard_Signal_needs_permission_to_show_your_photos_and_videos">Signal precisa de permissão para mostrar suas fotos e vídeos.</string>
+    <string name="AttachmentKeyboard_Signal_needs_permission_to_show_your_photos_and_videos">O Signal precisa de permissão para mostrar suas fotos e vídeos.</string>
     <string name="AttachmentKeyboard_give_access">Permitir acesso</string>
     <string name="AttachmentKeyboard_payment">Pagamento</string>
 
     <!-- AttachmentManager -->
     <string name="AttachmentManager_cant_open_media_selection">Não foi possível encontrar um aplicativo para selecionar arquivos.</string>
-    <string name="AttachmentManager_signal_requires_the_external_storage_permission_in_order_to_attach_photos_videos_or_audio">O Signal precisa da permissão Armazenamento para anexar fotos, vídeos ou áudio, mas ela foi permanentemente negada. Favor ir no menu de configurações de aplicativos, selecionar \"Permissões\", e habilitar \"Armazenamento\".</string>
-    <string name="AttachmentManager_signal_requires_contacts_permission_in_order_to_attach_contact_information">O Signal precisa da permissão Contatos para anexar informações de contato, mas ela foi permanentemente negada. Favor ir no menu de configurações de aplicativos, selecionar \"Permissões\", e habilitar \"Contatos\".</string>
-    <string name="AttachmentManager_signal_requires_location_information_in_order_to_attach_a_location">O Signal precisa da permissão Localização para anexar uma localização, mas ela foi permanentemente negada. Favor ir no menu de configurações de aplicativos, selecionar \"Permissões\", e habilitar \"Localização\".</string>
+    <string name="AttachmentManager_signal_requires_the_external_storage_permission_in_order_to_attach_photos_videos_or_audio">O Signal precisa da permissão Armazenamento para anexar fotos, vídeos ou áudio, mas ela foi permanentemente negada. Vá até o menu de configurações de aplicativos, selecione \"Permissões\" e habilite \"Armazenamento\".</string>
+    <string name="AttachmentManager_signal_requires_contacts_permission_in_order_to_attach_contact_information">O Signal precisa da permissão Contatos para anexar informações de contato, mas ela foi permanentemente negada. Vá até o menu de configurações de aplicativos, selecione \"Permissões\" e habilite \"Contatos\".</string>
+    <string name="AttachmentManager_signal_requires_location_information_in_order_to_attach_a_location">O Signal precisa da permissão Localização para anexar uma localização, mas ela foi permanentemente negada. Vá até o menu de configurações de aplicativos, selecione \"Permissões\" e habilite \"Localização\".</string>
     <!-- Alert dialog title to show the recipient has not activated payments -->
     <string name="AttachmentManager__not_activated_payments">%1$s não ativou Pagamentos </string>
     <!-- Alert dialog description to send the recipient a request to activate payments -->
@@ -491,11 +491,11 @@
     <string name="ConversationFragment_you_can_swipe_to_the_left_reply">Você pode deslizar para a esquerda em qualquer mensagem para responder rapidamente</string>
     <string name="ConversationFragment_view_once_media_is_deleted_after_sending">Mídias de visualização única são excluídas após o envio</string>
     <string name="ConversationFragment_you_already_viewed_this_message">Você já visualizou esta mensagem</string>
-    <string name="ConversationFragment__you_can_add_notes_for_yourself_in_this_conversation">Você pode adicionar anotações para si mesma/o nesse chat. Se sua conta estiver vinculada à algum dispositivo, as novas anotações serão sincronizadas.</string>
+    <string name="ConversationFragment__you_can_add_notes_for_yourself_in_this_conversation">Você pode adicionar anotações para si mesmo/a nesse chat. Se sua conta estiver vinculada à algum dispositivo, as novas anotações serão sincronizadas.</string>
     <string name="ConversationFragment__d_group_members_have_the_same_name">%1$d membros do grupo têm o mesmo nome.</string>
     <string name="ConversationFragment__tap_to_review">Toque para revisar</string>
-    <string name="ConversationFragment__review_requests_carefully">Analise os pedidos com atenção</string>
-    <string name="ConversationFragment__signal_found_another_contact_with_the_same_name">O Signal encontrou outro contato com o mesmo nome.</string>
+    <!-- The body of a banner that can show up at the top of a chat, letting the user know that you have two contacts with the same name -->
+    <string name="ConversationFragment__review_banner_body">This person has the same name as another contact</string>
     <string name="ConversationFragment_contact_us">Entre em contato</string>
     <string name="ConversationFragment_verify">Verificar</string>
     <string name="ConversationFragment_not_now">Agora não</string>
@@ -526,13 +526,13 @@
     <!-- Menu option to report spam in a conversation -->
     <string name="ConversationFragment_report_spam">Report spam</string>
     <!-- Menu option to block in a conversation -->
-    <string name="ConversationFragment_block">Block</string>
+    <string name="ConversationFragment_block">Bloquear</string>
     <!-- Menu otpion to accept a message request in a conversation -->
-    <string name="ConversationFragment_accept">Accept</string>
+    <string name="ConversationFragment_accept">Aceitar</string>
     <!-- Menu option to delete an entire chat in a conversation -->
     <string name="ConversationFragment_delete_chat">Delete chat</string>
     <!-- Menu option to unblock in a conversation -->
-    <string name="ConversationFragment_unblock">Unblock</string>
+    <string name="ConversationFragment_unblock">Desbloquear</string>
     <!-- Menu option to report spam in a conversation -->
     <string name="ConversationFragment_reported_spam">Reported spam</string>
     <!-- Dialog message shown after reporting spam and tapping the conversation item -->
@@ -1063,7 +1063,9 @@
     <!-- ManageProfileFragment -->
     <!-- Explanation text about usernames etc displayed underneath buttons to view and edit username etc -->
     <string name="ManageProfileFragment__your_username">Seu nome de usuário, QR code e link não estão visíveis em seu perfil. Compartilhe seu nome de usuário somente com pessoas em quem você confia.</string>
-    <string name="ManageProfileFragment_profile_name">Nome do perfil</string>
+    <!-- Explanation text about usernames etc displayed underneath buttons to view and edit username etc, shown when you have no username -->
+    <string name="ManageProfileFragment__username_footer_no_username">As pessoas agora podem enviar mensagens para você usando seu nome de usuário opcional. Você não precisa mais informar seu número de telefone. </string>
+    <string name="ManageProfileFragment_profile_name">Nome de perfil</string>
     <string name="ManageProfileFragment_username">Nome de usuário</string>
     <string name="ManageProfileFragment_about">Sobre mim</string>
     <string name="ManageProfileFragment_failed_to_set_avatar">Falha ao salvar foto de perfil</string>
@@ -1962,8 +1964,12 @@
     <!-- AboutSheet -->
     <!-- Displayed in a sheet row and allows user to open signal connection explanation on tap -->
     <string name="AboutSheet__signal_connection">Contatos do Signal</string>
+    <!-- Displayed in a sheet row describing that the user has marked this contact as \'verified\' from within the app -->
+    <string name="AboutSheet__verified">Verificado</string>
+    <!-- Displayed in bottom sheet describing that the user has no direct messages with this person. The placeholder is a person\'s name. -->
+    <string name="AboutSheet__no_direct_message">No direct messages with %1$s</string>
     <!-- Explains that the given user (placeholder is short name) is in the users system contact -->
-    <string name="AboutSheet__s_is_in_your_system_contacts">%1$s está nos seus contatos do sistema</string>
+    <string name="AboutSheet__s_is_in_your_system_contacts">%1$s está nos contatos do seu telefone</string>
     <!-- Notice in a row when user has no groups in common -->
     <string name="AboutSheet__you_have_no_groups_in_common">Você não tem grupos em comum</string>
     <!-- Notice when a user is not a connection to review requests carefully -->
@@ -2291,11 +2297,11 @@
     <string name="UsernameEditFragment_encountered_a_network_error">Foi encontrado um erro de rede.</string>
     <string name="UsernameEditFragment_this_username_is_taken">Este nome de usuário já está sendo utilizado.</string>
     <string name="UsernameEditFragment_usernames_can_only_include">Os nomes de usuário só podem incluir a–Z, 0–9, e sublinhado.</string>
-    <string name="UsernameEditFragment_usernames_cannot_begin_with_a_number">Nomes de usuários não podem começar com um número.</string>
+    <string name="UsernameEditFragment_usernames_cannot_begin_with_a_number">Os nomes de usuários não podem começar com um número.</string>
     <string name="UsernameEditFragment_username_is_invalid">Nome de usuário inválido.</string>
-    <string name="UsernameEditFragment_usernames_must_be_between_a_and_b_characters">Nomes de usuário devem conter no mínimo %1$d e no máximo %2$d caracteres.</string>
+    <string name="UsernameEditFragment_usernames_must_be_between_a_and_b_characters">Os nomes de usuário devem conter no mínimo %1$d e no máximo %2$d caracteres.</string>
     <!-- Explanation about what usernames provide -->
-    <string name="UsernameEditFragment__usernames_let_others_message">Os nomes de usuário permitem que outras pessoas enviem mensagens para você sem precisar do seu número de telefone. Eles são pareados com um conjunto de dígitos para ajudar a manter seu endereço privado.</string>
+    <string name="UsernameEditFragment__usernames_let_others_message">Usernames are always paired with a set of numbers.</string>
     <!-- Dialog title for explanation about numbers at the end of the username -->
     <string name="UsernameEditFragment__what_is_this_number">O que é esse número?</string>
     <string name="UsernameEditFragment__these_digits_help_keep">Esses dígitos ajudam a manter seu nome de usuário privado para evitar mensagens indesejadas. Compartilhe seu nome de usuário apenas com as pessoas e grupos com os quais gostaria de conversar. Se mudar seu nome de usuário, você receberá um novo conjunto de dígitos.</string>
@@ -2315,6 +2321,10 @@
     <string name="UsernameEditFragment__this_number_cant_start_with_00">Este número não pode iniciar com 00. Insira um dígito entre 1-9</string>
     <!-- The body of an alert dialog asking the user to confirm that they want to recover their username -->
     <string name="UsernameEditFragment_recovery_dialog_confirmation">Se você recuperar seu nome de usuário, o QR code e o link existentes também serão alterados. Tem certeza?</string>
+    <!-- The body of an alert dialog asking the user to confirm that they want to change their username, even if it resets their link -->
+    <string name="UsernameEditFragment_change_confirmation_message">Se você mudar seu nome de usuário, o QR code e o link existentes também serão alterados. Tem certeza?</string>
+    <!-- Text for a button in a dialog asking if the user would like to continue the operation of changing their username -->
+    <string name="UsernameEditFragment_continue">Continuar</string>
 
     <plurals name="UserNotificationMigrationJob_d_contacts_are_on_signal">
         <item quantity="one">%1$d contato está no Signal!</item>
@@ -2519,7 +2529,7 @@
     <!-- Button label for not right now -->
     <string name="NewWaysToConnectDialogFragment__not_now">Agora não</string>
     <!-- Button label for continue -->
-    <string name="NewWaysToConnectDialogFragment__set_up_your_username">Configurar seu nome de usuário</string>
+    <string name="NewWaysToConnectDialogFragment__set_up_your_username">Configurar nome de usuário</string>
 
     <!-- ThumbnailView -->
     <string name="ThumbnailView_Play_video_description">Reproduzir vídeo</string>
@@ -3865,7 +3875,7 @@
     <!-- Phone number heading displayed as a screen title -->
     <string name="preferences_app_protection__phone_number">Número de telefone</string>
     <!-- Subtext below option to launch into phone number privacy settings screen -->
-    <string name="preferences_app_protection__choose_who_can_see">Decida quem pode encontrar seu número e quem pode entrar em contato com você pelo Signal usando seu número.</string>
+    <string name="preferences_app_protection__choose_who_can_see">Defina quem pode encontrar seu número de telefone e quem pode entrar em contato com você pelo Signal usando seu número.</string>
     <!-- Section title above two radio buttons for enabling and disabling phone number display -->
     <string name="PhoneNumberPrivacySettingsFragment_who_can_see_my_number_heading">Quem pode ver meu número?</string>
     <!-- Subtext below radio buttons when who can see my number is set to everybody -->
@@ -4114,8 +4124,10 @@
     <string name="BlockedUsersActivity__s_has_been_unblocked">Você desbloqueou \"%1$s\".</string>
 
     <!-- ReviewCardDialogFragment -->
-    <string name="ReviewCardDialogFragment__review_members">Revisar os membros</string>
-    <string name="ReviewCardDialogFragment__review_request">Analisar o pedido</string>
+    <!-- Title of a screen where the user will be prompted to review group members with the same name -->
+    <string name="ReviewCardDialogFragment__review_members">Review members</string>
+    <!-- Title of a screen where the user will be prompted to review a message request matching the name of someone they already know -->
+    <string name="ReviewCardDialogFragment__review_request">Review request</string>
     <string name="ReviewCardDialogFragment__d_group_members_have_the_same_name">%1$d membros do grupo têm o mesmo nome. Revise os membros abaixo e decida o que fazer.</string>
     <string name="ReviewCardDialogFragment__if_youre_not_sure">Se você não tiver certeza de quem é o pedido, revise os contatos abaixo e tome as providências.</string>
     <string name="ReviewCardDialogFragment__no_other_groups_in_common">Nenhum outro grupo em comum.</string>
@@ -4142,7 +4154,7 @@
     <!-- Displayed when a recent name change has occurred. First placeholder is new short name, second is previous name, third is new name. -->
     <string name="ReviewCard__s_recently_changed">%1$s mudou seu nome de perfil recentemente de %2$s para %3$s</string>
     <!-- Displayed when a review user is in your system contacts. Placeholder is short name. -->
-    <string name="ReviewCard__s_is_in_your_system_contacts">%1$s está nos seus contatos do sistema</string>
+    <string name="ReviewCard__s_is_in_your_system_contacts">%1$s está nos contatos do seu telefone</string>
 
     <!-- CallParticipantsListUpdatePopupWindow -->
     <string name="CallParticipantsListUpdatePopupWindow__s_joined">%1$s entrou</string>
@@ -5145,7 +5157,7 @@
     <!-- Title of create notification profile screen -->
     <string name="EditNotificationProfileFragment__name_your_profile">Nomeie este perfil de notificações</string>
     <!-- Hint text for create/edit notification profile name -->
-    <string name="EditNotificationProfileFragment__profile_name">Nome do perfil</string>
+    <string name="EditNotificationProfileFragment__profile_name">Nome de perfil</string>
     <!-- Name has a max length, this shows how many characters are used out of the max -->
     <string name="EditNotificationProfileFragment__count">%1$d/%2$d</string>
     <!-- Call to action button to continue to the next step -->
@@ -5503,7 +5515,7 @@
     <!-- Signal connections sheet bullet point 2 -->
     <string name="SignalConnectionsBottomSheet__accepting_a_message_request">Aceitar uma solicitação de conversa</string>
     <!-- Signal connections sheet bullet point 3 -->
-    <string name="SignalConnectionsBottomSheet__having_them_in_your_system_contacts">Tê-los em seus contatos do sistema</string>
+    <string name="SignalConnectionsBottomSheet__having_them_in_your_system_contacts">A pessoa está nos contatos do seu telefone</string>
     <!-- Note at the bottom of the Signal connections sheet -->
     <string name="SignalConnectionsBottomSheet__your_connections_can_see_your_name">"Seus contatos conseguem ver: seu nome, foto e conteúdos publicados no seu Story, a menos que você oculte seu Story dessas pessoas."</string>
     <!-- Clickable option to add a viewer to a custom story -->
@@ -6173,6 +6185,15 @@
     <!-- Displayed as an action on a megaphone which prompts user to set up a username -->
     <string name="SetUpYourUsername__learn_more">Saiba mais</string>
 
+    <!-- Displayed as a title on a megaphone which prompts user to set up a username -->
+    <string name="PnpLaunchMegaphone_title">Outras formas de se conectar</string>
+    <!-- Displayed as a description on a megaphone which prompts user to set up a username -->
+    <string name="PnpLaunchMegaphone_body">Apresentando a privacidade do número de telefone, nomes de usuário e links opcionais.</string>
+    <!-- Displayed as an action on a megaphone which prompts user to set up a username. Clicking it will dismiss the megaphone. -->
+    <string name="PnpLaunchMegaphone_dismiss">Ignorar</string>
+    <!-- Displayed as an action on a megaphone which prompts user to set up a username. Clicking it will open a link. -->
+    <string name="PnpLaunchMegaphone_learn_more">Saiba mais</string>
+
     <!-- Text Formatting -->
     <!-- Popup menu label for applying bold style -->
     <string name="TextFormatting_bold">Negrito</string>
@@ -6470,6 +6491,10 @@
     <string name="UsernameLinkSettings_reset_link_result_network_unavailable">Você não tem acesso à rede. Seu link não foi redefinido. Tente novamente mais tarde.</string>
     <!-- Body of a dialog that is displayed when we failed to reset your username link because of a transient network issue. -->
     <string name="UsernameLinkSettings_reset_link_result_network_error">Ocorreu um erro de rede ao tentar redefinir seu link. Tente novamente mais tarde.</string>
+    <!-- Body of a dialog that is displayed when we failed to reset your username link because of an unknown error. -->
+    <string name="UsernameLinkSettings_reset_link_result_unknown_error">An unexpected error occurred while trying to reset your link. Try again later.</string>
+    <!-- Body of a dialog that is displayed when we successfully reset you username link. -->
+    <string name="UsernameLinkSettings_reset_link_result_success">Seu QR code e link foram redefinidos, e um novo código QR e link foram criados.</string>
     <!-- Shown on the generated username qr code image to explain how to use it. -->
     <string name="UsernameLinkSettings_scan_this_qr_code">Escaneie o QR Code com o seu telefone para conversar comigo no Signal.</string>
 
@@ -6540,7 +6565,7 @@
     <!-- Entry placeholder for find by phone number -->
     <string name="FindByActivity__phone_number">Número de telefone</string>
     <!-- Help text under user entry for find by username -->
-    <string name="FindByActivity__enter_a_full_username">Digite um nome de usuário completo com seu par de dígitos.</string>
+    <string name="FindByActivity__enter_username_description">Enter a username followed by a dot and its set of numbers.</string>
     <!-- Content description for next action button -->
     <string name="FindByActivity__next">Próximo</string>
     <!-- Placeholder text for search input for selecting country code -->
@@ -6552,7 +6577,7 @@
     <!-- Dialog title when phone number is not a registered signal user -->
     <string name="FindByActivity__invite_to_signal">Convidar para o Signal</string>
     <!-- Dialog title when username is not found -->
-    <string name="FindByActivity__username_not_found">Usuário não encontrado</string>
+    <string name="FindByActivity__username_not_found">Nome de usuário não encontrado</string>
     <!-- Dialog body for invalid username. Placeholder is the entered username. -->
     <string name="FindByActivity__s_is_not_a_valid_username">%1$s não é um nome de usuário válido. Certifique-se de que você digitou o nome de usuário completo, seguido pelo conjunto de dígitos.</string>
     <!-- Dialog body for an invalid phone number. Placeholder is the entered phone number. -->

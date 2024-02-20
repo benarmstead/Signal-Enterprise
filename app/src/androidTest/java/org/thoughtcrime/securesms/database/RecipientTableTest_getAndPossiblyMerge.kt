@@ -41,8 +41,6 @@ import org.thoughtcrime.securesms.mms.IncomingMessage
 import org.thoughtcrime.securesms.notifications.profiles.NotificationProfile
 import org.thoughtcrime.securesms.recipients.Recipient
 import org.thoughtcrime.securesms.recipients.RecipientId
-import org.thoughtcrime.securesms.util.FeatureFlags
-import org.thoughtcrime.securesms.util.FeatureFlagsAccessor
 import org.thoughtcrime.securesms.util.Util
 import org.whispersystems.signalservice.api.push.ServiceId.ACI
 import org.whispersystems.signalservice.api.push.ServiceId.PNI
@@ -58,7 +56,6 @@ class RecipientTableTest_getAndPossiblyMerge {
     SignalStore.account().setE164(E164_SELF)
     SignalStore.account().setAci(ACI_SELF)
     SignalStore.account().setPni(PNI_SELF)
-    FeatureFlagsAccessor.forceValue(FeatureFlags.PHONE_NUMBER_PRIVACY, true)
   }
 
   @Test
@@ -893,8 +890,8 @@ class RecipientTableTest_getAndPossiblyMerge {
 
     // Thread validation
     assertEquals(threadIdAci, retrievedThreadId)
-    Assert.assertNull(SignalDatabase.threads.getThreadIdFor(recipientIdE164))
-    Assert.assertNull(SignalDatabase.threads.getThreadRecord(threadIdE164))
+    assertNull(SignalDatabase.threads.getThreadIdFor(recipientIdE164))
+    assertNull(SignalDatabase.threads.getThreadRecord(threadIdE164))
 
     // SMS validation
     val sms1: MessageRecord = SignalDatabase.messages.getMessageRecord(smsId1)!!
@@ -938,10 +935,10 @@ class RecipientTableTest_getAndPossiblyMerge {
 
     // Identity validation
     assertEquals(identityKeyAci, SignalDatabase.identities.getIdentityStoreRecord(ACI_A.toString())!!.identityKey)
-    Assert.assertNull(SignalDatabase.identities.getIdentityStoreRecord(E164_A))
+    assertNull(SignalDatabase.identities.getIdentityStoreRecord(E164_A))
 
     // Session validation
-    Assert.assertNotNull(SignalDatabase.sessions.load(ACI_SELF, SignalProtocolAddress(ACI_A.toString(), 1)))
+    assertNotNull(SignalDatabase.sessions.load(ACI_SELF, SignalProtocolAddress(ACI_A.toString(), 1)))
 
     // Reaction validation
     val reactionsSms: List<ReactionRecord> = SignalDatabase.reactions.getReactions(MessageId(smsId1))

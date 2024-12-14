@@ -1,5 +1,6 @@
 package org.thoughtcrime.securesms.releasechannel
 
+import org.thoughtcrime.securesms.attachments.Cdn
 import org.thoughtcrime.securesms.attachments.PointerAttachment
 import org.thoughtcrime.securesms.database.MessageTable
 import org.thoughtcrime.securesms.database.MessageType
@@ -20,8 +21,6 @@ import java.util.UUID
  */
 object ReleaseChannel {
 
-  const val CDN_NUMBER = -1
-
   fun insertReleaseChannelMessage(
     recipientId: RecipientId,
     body: String,
@@ -30,30 +29,31 @@ object ReleaseChannel {
     mediaWidth: Int = 0,
     mediaHeight: Int = 0,
     mediaType: String = "image/webp",
-    serverUuid: String? = UUID.randomUUID().toString(),
+    mediaAttachmentUuid: UUID? = UUID.randomUUID(),
     messageRanges: BodyRangeList? = null,
     storyType: StoryType = StoryType.NONE
   ): MessageTable.InsertResult? {
     val attachments: Optional<List<SignalServiceAttachment>> = if (media != null) {
       val attachment = SignalServiceAttachmentPointer(
-        CDN_NUMBER,
-        SignalServiceAttachmentRemoteId.from(""),
-        mediaType,
-        null,
-        Optional.empty(),
-        Optional.empty(),
-        mediaWidth,
-        mediaHeight,
-        Optional.empty(),
-        Optional.empty(),
-        0,
-        Optional.of(media),
-        false,
-        false,
-        MediaUtil.isVideo(mediaType),
-        Optional.empty(),
-        Optional.empty(),
-        System.currentTimeMillis()
+        cdnNumber = Cdn.S3.cdnNumber,
+        remoteId = SignalServiceAttachmentRemoteId.S3,
+        contentType = mediaType,
+        key = null,
+        size = Optional.empty(),
+        preview = Optional.empty(),
+        width = mediaWidth,
+        height = mediaHeight,
+        digest = Optional.empty(),
+        incrementalDigest = Optional.empty(),
+        incrementalMacChunkSize = 0,
+        fileName = Optional.of(media),
+        voiceNote = false,
+        isBorderless = false,
+        isGif = MediaUtil.isVideo(mediaType),
+        caption = Optional.empty(),
+        blurHash = Optional.empty(),
+        uploadTimestamp = System.currentTimeMillis(),
+        uuid = mediaAttachmentUuid
       )
 
       Optional.of(listOf(attachment))
@@ -69,7 +69,7 @@ object ReleaseChannel {
       receivedTimeMillis = System.currentTimeMillis(),
       body = body,
       attachments = PointerAttachment.forPointers(attachments),
-      serverGuid = serverUuid,
+      serverGuid = UUID.randomUUID().toString(),
       messageRanges = messageRanges,
       storyType = storyType
     )

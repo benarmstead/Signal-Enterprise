@@ -15,7 +15,7 @@ import org.thoughtcrime.securesms.database.RecipientTable;
 import org.thoughtcrime.securesms.database.SignalDatabase;
 import org.thoughtcrime.securesms.database.ThreadTable;
 import org.thoughtcrime.securesms.database.model.GroupRecord;
-import org.thoughtcrime.securesms.dependencies.ApplicationDependencies;
+import org.thoughtcrime.securesms.dependencies.AppDependencies;
 import org.thoughtcrime.securesms.groups.GroupChangeException;
 import org.thoughtcrime.securesms.groups.GroupManager;
 import org.thoughtcrime.securesms.groups.ui.GroupChangeErrorCallback;
@@ -23,6 +23,7 @@ import org.thoughtcrime.securesms.groups.ui.GroupChangeFailureReason;
 import org.thoughtcrime.securesms.jobs.MultiDeviceMessageRequestResponseJob;
 import org.thoughtcrime.securesms.jobs.ReportSpamJob;
 import org.thoughtcrime.securesms.jobs.SendViewedReceiptJob;
+import org.thoughtcrime.securesms.keyvalue.SignalStore;
 import org.thoughtcrime.securesms.mms.MmsException;
 import org.thoughtcrime.securesms.mms.OutgoingMessage;
 import org.thoughtcrime.securesms.notifications.MarkReadReceiver;
@@ -67,7 +68,7 @@ public final class MessageRequestRepository {
       if (groupRecord.get().isV2Group()) {
         List<Recipient> recipients = Recipient.resolvedList(groupRecord.get().getMembers());
         for (Recipient recipient : recipients) {
-          if ((recipient.isProfileSharing() || recipient.hasGroupsInCommon()) && !recipient.isSelf()) {
+          if ((recipient.isProfileSharing() || recipient.getHasGroupsInCommon()) && !recipient.isSelf()) {
             groupHasExistingContacts = true;
             break;
           }
@@ -150,6 +151,10 @@ public final class MessageRequestRepository {
     }
   }
 
+  public boolean threadContainsSms(long threadId) {
+    return SignalDatabase.messages().threadContainsSms(threadId);
+  }
+
   private boolean reportedAsSpam(long threadId) {
     return SignalDatabase.messages().hasReportSpamMessage(threadId) ||
            SignalDatabase.messages().getOutgoingSecureMessageCount(threadId) > 0;
@@ -196,15 +201,15 @@ public final class MessageRequestRepository {
         MessageSender.sendProfileKey(threadId);
 
         List<MessageTable.MarkedMessageInfo> messageIds = SignalDatabase.threads().setEntireThreadRead(threadId);
-        ApplicationDependencies.getMessageNotifier().updateNotification(context);
+        AppDependencies.getMessageNotifier().updateNotification(context);
         MarkReadReceiver.process(messageIds);
 
         List<MessageTable.MarkedMessageInfo> viewedInfos = SignalDatabase.messages().getViewedIncomingMessages(threadId);
 
         SendViewedReceiptJob.enqueue(threadId, recipientId, viewedInfos);
 
-        if (TextSecurePreferences.isMultiDevice(context)) {
-          ApplicationDependencies.getJobManager().add(MultiDeviceMessageRequestResponseJob.forAccept(recipientId));
+        if (SignalStore.account().hasLinkedDevices()) {
+          AppDependencies.getJobManager().add(MultiDeviceMessageRequestResponseJob.forAccept(recipientId));
         }
 
         insertMessageRequestAccept(recipient, threadId);
@@ -265,12 +270,12 @@ public final class MessageRequestRepository {
         }
       }
 
-      if (TextSecurePreferences.isMultiDevice(context)) {
-        ApplicationDependencies.getJobManager().add(MultiDeviceMessageRequestResponseJob.forDelete(recipientId));
+      if (SignalStore.account().hasLinkedDevices()) {
+        AppDependencies.getJobManager().add(MultiDeviceMessageRequestResponseJob.forDelete(recipientId));
       }
 
       ThreadTable threadTable = SignalDatabase.threads();
-      threadTable.deleteConversation(threadId);
+      threadTable.deleteConversation(threadId, false);
 
       onMessageRequestDeleted.run();
     });
@@ -303,8 +308,8 @@ public final class MessageRequestRepository {
       }
       Recipient.live(recipientId).refresh();
 
-      if (TextSecurePreferences.isMultiDevice(context)) {
-        ApplicationDependencies.getJobManager().add(MultiDeviceMessageRequestResponseJob.forBlock(recipientId));
+      if (SignalStore.account().hasLinkedDevices()) {
+        AppDependencies.getJobManager().add(MultiDeviceMessageRequestResponseJob.forBlock(recipientId));
       }
 
       onMessageRequestBlocked.run();
@@ -361,10 +366,10 @@ public final class MessageRequestRepository {
 
       Recipient.live(recipientId).refresh();
 
-      ApplicationDependencies.getJobManager().add(new ReportSpamJob(threadId, System.currentTimeMillis()));
+      AppDependencies.getJobManager().add(new ReportSpamJob(threadId, System.currentTimeMillis()));
 
-      if (TextSecurePreferences.isMultiDevice(context)) {
-        ApplicationDependencies.getJobManager().add(MultiDeviceMessageRequestResponseJob.forBlockAndReportSpam(recipientId));
+      if (SignalStore.account().hasLinkedDevices()) {
+        AppDependencies.getJobManager().add(MultiDeviceMessageRequestResponseJob.forBlockAndReportSpam(recipientId));
       }
 
       onMessageRequestBlocked.run();
@@ -388,10 +393,10 @@ public final class MessageRequestRepository {
         Log.w(TAG, "Unable to insert report spam message", e);
       }
 
-      ApplicationDependencies.getJobManager().add(new ReportSpamJob(threadId, System.currentTimeMillis()));
+      AppDependencies.getJobManager().add(new ReportSpamJob(threadId, System.currentTimeMillis()));
 
-      if (TextSecurePreferences.isMultiDevice(context)) {
-        ApplicationDependencies.getJobManager().add(MultiDeviceMessageRequestResponseJob.forReportSpam(recipientId));
+      if (SignalStore.account().hasLinkedDevices()) {
+        AppDependencies.getJobManager().add(MultiDeviceMessageRequestResponseJob.forReportSpam(recipientId));
       }
 
       onReported.run();
@@ -415,8 +420,8 @@ public final class MessageRequestRepository {
 
       RecipientUtil.unblock(recipient);
 
-      if (TextSecurePreferences.isMultiDevice(context)) {
-        ApplicationDependencies.getJobManager().add(MultiDeviceMessageRequestResponseJob.forAccept(recipientId));
+      if (SignalStore.account().hasLinkedDevices()) {
+        AppDependencies.getJobManager().add(MultiDeviceMessageRequestResponseJob.forAccept(recipientId));
       }
 
       onMessageRequestUnblocked.run();

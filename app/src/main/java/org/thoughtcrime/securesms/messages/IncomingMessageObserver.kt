@@ -8,13 +8,12 @@ import android.os.IBinder
 import androidx.annotation.VisibleForTesting
 import androidx.core.app.NotificationCompat
 import kotlinx.collections.immutable.toImmutableSet
-import org.signal.core.util.ThreadUtil
 import org.signal.core.util.concurrent.SignalExecutors
 import org.signal.core.util.logging.Log
 import org.thoughtcrime.securesms.R
 import org.thoughtcrime.securesms.crypto.ReentrantSessionLock
 import org.thoughtcrime.securesms.database.SignalDatabase
-import org.thoughtcrime.securesms.dependencies.ApplicationDependencies
+import org.thoughtcrime.securesms.dependencies.AppDependencies
 import org.thoughtcrime.securesms.groups.GroupsV2ProcessingLock
 import org.thoughtcrime.securesms.jobmanager.impl.BackoffUtil
 import org.thoughtcrime.securesms.jobmanager.impl.NetworkConstraint
@@ -28,9 +27,14 @@ import org.thoughtcrime.securesms.messages.MessageDecryptor.FollowUpOperation
 import org.thoughtcrime.securesms.messages.protocol.BufferedProtocolStore
 import org.thoughtcrime.securesms.notifications.NotificationChannels
 import org.thoughtcrime.securesms.recipients.RecipientId
+import org.thoughtcrime.securesms.util.AlarmSleepTimer
 import org.thoughtcrime.securesms.util.AppForegroundObserver
 import org.thoughtcrime.securesms.util.SignalLocalMetrics
+import org.thoughtcrime.securesms.util.asChain
+import org.whispersystems.signalservice.api.SignalWebSocket
 import org.whispersystems.signalservice.api.push.ServiceId
+import org.whispersystems.signalservice.api.util.SleepTimer
+import org.whispersystems.signalservice.api.util.UptimeSleepTimer
 import org.whispersystems.signalservice.api.websocket.WebSocketConnectionState
 import org.whispersystems.signalservice.api.websocket.WebSocketUnavailableException
 import org.whispersystems.signalservice.internal.push.Envelope
@@ -51,7 +55,7 @@ import kotlin.time.Duration.Companion.seconds
  *
  * This class is responsible for opening/closing the websocket based on the app's state and observing new inbound messages received on the websocket.
  */
-class IncomingMessageObserver(private val context: Application) {
+class IncomingMessageObserver(private val context: Application, private val signalWebSocket: SignalWebSocket) {
 
   companion object {
     private val TAG = Log.tag(IncomingMessageObserver::class.java)
@@ -73,7 +77,7 @@ class IncomingMessageObserver(private val context: Application) {
     const val FOREGROUND_ID = 313399
 
     private val censored: Boolean
-      get() = ApplicationDependencies.getSignalServiceNetworkAccess().isCensored()
+      get() = AppDependencies.signalServiceNetworkAccess.isCensored()
   }
 
   private val decryptionDrainedListeners: MutableList<Runnable> = CopyOnWriteArrayList()
@@ -112,7 +116,7 @@ class IncomingMessageObserver(private val context: Application) {
 
     MessageRetrievalThread().start()
 
-    if (!SignalStore.account().fcmEnabled || SignalStore.internalValues().isWebsocketModeForced) {
+    if (!SignalStore.account.fcmEnabled || SignalStore.internal.isWebsocketModeForced) {
       try {
         ForegroundServiceUtil.start(context, Intent(context, ForegroundService::class.java))
       } catch (e: UnableToStartException) {
@@ -127,7 +131,7 @@ class IncomingMessageObserver(private val context: Application) {
       }
     }
 
-    ApplicationDependencies.getAppForegroundObserver().addListener(object : AppForegroundObserver.Listener {
+    AppForegroundObserver.addListener(object : AppForegroundObserver.Listener {
       override fun onForeground() {
         onAppForegrounded()
       }
@@ -192,11 +196,11 @@ class IncomingMessageObserver(private val context: Application) {
       }.toImmutableSet()
     }
 
-    val registered = SignalStore.account().isRegistered
-    val fcmEnabled = SignalStore.account().fcmEnabled
+    val registered = SignalStore.account.isRegistered
+    val fcmEnabled = SignalStore.account.fcmEnabled
     val hasNetwork = NetworkConstraint.isMet(context)
-    val hasProxy = SignalStore.proxy().isProxyEnabled
-    val forceWebsocket = SignalStore.internalValues().isWebsocketModeForced
+    val hasProxy = SignalStore.proxy.isProxyEnabled
+    val forceWebsocket = SignalStore.internal.isWebsocketModeForced
 
     val lastInteractionString = if (appVisibleSnapshot) "N/A" else timeIdle.toString() + " ms (" + (if (timeIdle < maxBackgroundTime) "within limit" else "over limit") + ")"
     val conclusion = registered &&
@@ -235,7 +239,7 @@ class IncomingMessageObserver(private val context: Application) {
   }
 
   private fun disconnect() {
-    ApplicationDependencies.getSignalWebSocket().disconnect()
+    signalWebSocket.disconnect()
   }
 
   @JvmOverloads
@@ -294,7 +298,7 @@ class IncomingMessageObserver(private val context: Application) {
       is MessageDecryptor.Result.Success -> {
         val job = PushProcessMessageJob.processOrDefer(messageContentProcessor, result, localReceiveMetric)
         if (job != null) {
-          return result.followUpOperations + FollowUpOperation { job }
+          return result.followUpOperations + FollowUpOperation { job.asChain() }
         }
       }
       is MessageDecryptor.Result.Error -> {
@@ -303,7 +307,7 @@ class IncomingMessageObserver(private val context: Application) {
             result.toMessageState(),
             result.errorMetadata.toExceptionMetadata(),
             result.envelope.timestamp!!
-          )
+          ).asChain()
         }
       }
       is MessageDecryptor.Result.Ignore -> {
@@ -352,9 +356,13 @@ class IncomingMessageObserver(private val context: Application) {
 
   private inner class MessageRetrievalThread : Thread("MessageRetrievalService"), Thread.UncaughtExceptionHandler {
 
+    private var sleepTimer: SleepTimer
+
     init {
       Log.i(TAG, "Initializing! (${this.hashCode()})")
       uncaughtExceptionHandler = this
+
+      sleepTimer = if (!SignalStore.account.fcmEnabled || SignalStore.internal.isWebsocketModeForced) AlarmSleepTimer(context) else UptimeSleepTimer()
     }
 
     override fun run() {
@@ -365,23 +373,28 @@ class IncomingMessageObserver(private val context: Application) {
         if (attempts > 1) {
           val backoff = BackoffUtil.exponentialBackoff(attempts, TimeUnit.SECONDS.toMillis(30))
           Log.w(TAG, "Too many failed connection attempts,  attempts: $attempts backing off: $backoff")
-          ThreadUtil.sleep(backoff)
+          sleepTimer.sleep(backoff)
         }
 
         waitForConnectionNecessary()
         Log.i(TAG, "Making websocket connection....")
 
-        val signalWebSocket = ApplicationDependencies.getSignalWebSocket()
         val webSocketDisposable = signalWebSocket.webSocketState.subscribe { state: WebSocketConnectionState ->
           Log.d(TAG, "WebSocket State: $state")
 
-          // Any state change at all means that we are not drained
-          decryptionDrained = false
+          // Any change to a non-connected state means that we are not drained
+          if (state != WebSocketConnectionState.CONNECTED) {
+            decryptionDrained = false
+          }
+
+          if (state == WebSocketConnectionState.CONNECTED) {
+            SignalStore.misc.lastWebSocketConnectTime = System.currentTimeMillis()
+          }
         }
 
         signalWebSocket.connect()
         try {
-          while (isConnectionNecessary()) {
+          while (!terminated && isConnectionNecessary()) {
             try {
               Log.d(TAG, "Reading message...")
 
@@ -404,7 +417,7 @@ class IncomingMessageObserver(private val context: Application) {
                       if (followUpOperations != null) {
                         Log.d(TAG, "Running ${followUpOperations.size} follow-up operations...")
                         val jobs = followUpOperations.mapNotNull { it.run() }
-                        ApplicationDependencies.getJobManager().addAll(jobs)
+                        AppDependencies.jobManager.addAllChains(jobs)
                       }
 
                       signalWebSocket.sendAck(response)

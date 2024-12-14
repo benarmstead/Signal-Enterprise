@@ -49,18 +49,17 @@ data class CallParticipantsState(
   val allRemoteParticipants: List<CallParticipant> = remoteParticipants.allParticipants
   val isFolded: Boolean = foldableState.isFolded
   val isLargeVideoGroup: Boolean = allRemoteParticipants.size > SMALL_GROUP_MAX && !isInPipMode && !isFolded
-  val isIncomingRing: Boolean = callState == WebRtcViewModel.State.CALL_INCOMING
+  val hideAvatar: Boolean = callState.isIncomingOrHandledElsewhere
 
   val raisedHands: List<GroupCallRaiseHandEvent>
     get() {
       val results = allRemoteParticipants.asSequence()
         .filter { it.isHandRaised }
-        .distinctBy { it.recipient }
-        .map { GroupCallRaiseHandEvent(it.recipient, it.handRaisedTimestamp) }
+        .map { GroupCallRaiseHandEvent(it, it.handRaisedTimestamp) }
         .sortedBy { it.timestamp }
         .toMutableList()
       if (localParticipant.isHandRaised) {
-        results.add(GroupCallRaiseHandEvent(localParticipant.recipient, localParticipant.handRaisedTimestamp))
+        results.add(GroupCallRaiseHandEvent(localParticipant, localParticipant.handRaisedTimestamp))
       }
       return results.toImmutableList()
     }
@@ -151,7 +150,7 @@ data class CallParticipantsState(
   fun getIncomingRingingGroupDescription(context: Context): String? {
     if (callState == WebRtcViewModel.State.CALL_INCOMING &&
       groupCallState == WebRtcViewModel.GroupCallState.RINGING &&
-      ringerRecipient.hasServiceId()
+      ringerRecipient.hasServiceId
     ) {
       val ringerName = ringerRecipient.getShortDisplayName(context)
       val membersWithoutYouOrRinger: List<GroupMemberEntry.FullMember> = groupMembers.filterNot { it.member.isSelf || ringerRecipient.requireServiceId() == it.member.serviceId.orElse(null) }
@@ -195,7 +194,7 @@ data class CallParticipantsState(
   }
 
   companion object {
-    private const val SMALL_GROUP_MAX = 6
+    const val SMALL_GROUP_MAX = 6
 
     @JvmField
     val MAX_OUTGOING_GROUP_RING_DURATION = TimeUnit.MINUTES.toMillis(1)
@@ -375,6 +374,7 @@ data class CallParticipantsState(
   }
 
   enum class SelectedPage {
-    GRID, FOCUSED
+    GRID,
+    FOCUSED
   }
 }

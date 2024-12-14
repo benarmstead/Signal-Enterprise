@@ -146,9 +146,9 @@ class ImageEditorHudV2 @JvmOverloads constructor(
     cropAspectLockButton.setOnClickListener {
       listener?.onCropAspectLock()
       if (listener?.isCropAspectLocked == true) {
-        cropAspectLockButton.setImageResource(R.drawable.ic_crop_lock_24)
+        cropAspectLockButton.setImageResource(R.drawable.symbol_crop_lock_24)
       } else {
-        cropAspectLockButton.setImageResource(R.drawable.ic_crop_unlock_24)
+        cropAspectLockButton.setImageResource(R.drawable.symbol_crop_unlock_24)
       }
     }
 
@@ -189,9 +189,9 @@ class ImageEditorHudV2 @JvmOverloads constructor(
         brushPreview.setThickness(getActiveBrushWidth())
 
         when (currentMode) {
-          Mode.DRAW -> SignalStore.imageEditorValues().setMarkerPercentage(progress)
-          Mode.BLUR -> SignalStore.imageEditorValues().setBlurPercentage(progress)
-          Mode.HIGHLIGHT -> SignalStore.imageEditorValues().setHighlighterPercentage(progress)
+          Mode.DRAW -> SignalStore.imageEditor.setMarkerPercentage(progress)
+          Mode.BLUR -> SignalStore.imageEditor.setBlurPercentage(progress)
+          Mode.HIGHLIGHT -> SignalStore.imageEditor.setHighlighterPercentage(progress)
           else -> Unit
         }
       }
@@ -355,8 +355,8 @@ class ImageEditorHudV2 @JvmOverloads constructor(
 
   private fun presentModeDraw() {
     drawButton.isSelected = true
-    brushToggle.setImageResource(R.drawable.ic_draw_white_24)
-    widthSeekBar.progress = SignalStore.imageEditorValues().getMarkerPercentage()
+    brushToggle.setImageResource(R.drawable.symbol_brush_pen_24)
+    widthSeekBar.progress = SignalStore.imageEditor.getMarkerPercentage()
     listener?.onColorChange(getActiveColor())
     updateColorIndicator()
     animateModeChange(
@@ -368,8 +368,8 @@ class ImageEditorHudV2 @JvmOverloads constructor(
 
   private fun presentModeHighlight() {
     drawButton.isSelected = true
-    brushToggle.setImageResource(R.drawable.ic_marker_24)
-    widthSeekBar.progress = SignalStore.imageEditorValues().getHighlighterPercentage()
+    brushToggle.setImageResource(R.drawable.symbol_brush_highlighter_24)
+    widthSeekBar.progress = SignalStore.imageEditor.getHighlighterPercentage()
     listener?.onColorChange(getActiveColor())
     updateColorIndicator()
     animateModeChange(
@@ -381,7 +381,7 @@ class ImageEditorHudV2 @JvmOverloads constructor(
 
   private fun presentModeBlur() {
     blurButton.isSelected = true
-    widthSeekBar.progress = SignalStore.imageEditorValues().getBlurPercentage()
+    widthSeekBar.progress = SignalStore.imageEditor.getBlurPercentage()
     listener?.onColorChange(getActiveColor())
     updateColorIndicator()
     animateModeChange(
@@ -521,9 +521,9 @@ class ImageEditorHudV2 @JvmOverloads constructor(
     private const val ANIMATION_DURATION = 250L
 
     private val DRAW_WIDTH_BOUNDARIES: Map<Mode, Pair<Float, Float>> = mapOf(
-      Mode.DRAW to SignalStore.imageEditorValues().getMarkerWidthRange(),
-      Mode.HIGHLIGHT to SignalStore.imageEditorValues().getHighlighterWidthRange(),
-      Mode.BLUR to SignalStore.imageEditorValues().getBlurWidthRange()
+      Mode.DRAW to SignalStore.imageEditor.getMarkerWidthRange(),
+      Mode.HIGHLIGHT to SignalStore.imageEditor.getHighlighterWidthRange(),
+      Mode.BLUR to SignalStore.imageEditor.getBlurWidthRange()
     )
 
     private fun withHighlighterAlpha(color: Int): Int {

@@ -7,9 +7,7 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.WorkerThread;
-import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.FragmentActivity;
-import androidx.fragment.app.FragmentManager;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.Transformations;
@@ -152,7 +150,7 @@ final class RecipientDialogViewModel extends ViewModel {
     } else {
       activity.startActivity(StoryViewerActivity.createIntent(
           activity,
-          new StoryViewerArgs.Builder(recipientDialogRepository.getRecipientId(), recipient.getValue().shouldHideStory())
+          new StoryViewerArgs.Builder(recipientDialogRepository.getRecipientId(), recipient.getValue().getShouldHideStory())
                              .isFromQuote(true)
                              .build()));
     }
@@ -162,16 +160,16 @@ final class RecipientDialogViewModel extends ViewModel {
     recipientDialogRepository.getRecipient(recipient -> CommunicationActions.startConversation(activity, recipient, null));
   }
 
-  void onSecureCallClicked(@NonNull FragmentActivity activity) {
-    recipientDialogRepository.getRecipient(recipient -> CommunicationActions.startVoiceCall(activity, recipient));
+  void onSecureCallClicked(@NonNull FragmentActivity activity, @NonNull CommunicationActions.OnUserAlreadyInAnotherCall onUserAlreadyInAnotherCall) {
+    recipientDialogRepository.getRecipient(recipient -> CommunicationActions.startVoiceCall(activity, recipient, onUserAlreadyInAnotherCall));
   }
 
   void onInsecureCallClicked(@NonNull FragmentActivity activity) {
     recipientDialogRepository.getRecipient(recipient -> CommunicationActions.startInsecureCall(activity, recipient));
   }
 
-  void onSecureVideoCallClicked(@NonNull FragmentActivity activity) {
-    recipientDialogRepository.getRecipient(recipient -> CommunicationActions.startVideoCall(activity, recipient));
+  void onSecureVideoCallClicked(@NonNull FragmentActivity activity, @NonNull CommunicationActions.OnUserAlreadyInAnotherCall onUserAlreadyInAnotherCall) {
+    recipientDialogRepository.getRecipient(recipient -> CommunicationActions.startVideoCall(activity, recipient, onUserAlreadyInAnotherCall));
   }
 
   void onBlockClicked(@NonNull FragmentActivity activity) {
@@ -192,7 +190,7 @@ final class RecipientDialogViewModel extends ViewModel {
     } else {
       activity.startActivity(StoryViewerActivity.createIntent(
           activity,
-          new StoryViewerArgs.Builder(recipientDialogRepository.getRecipientId(), recipient.getValue().shouldHideStory())
+          new StoryViewerArgs.Builder(recipientDialogRepository.getRecipientId(), recipient.getValue().getShouldHideStory())
                              .isFromQuote(true)
                              .build()));
     }

@@ -10,7 +10,6 @@ import org.signal.core.util.delete
 import org.signal.core.util.insertInto
 import org.signal.core.util.logging.Log
 import org.signal.core.util.readToList
-import org.signal.core.util.readToSet
 import org.signal.core.util.readToSingleInt
 import org.signal.core.util.readToSingleLong
 import org.signal.core.util.readToSingleObject
@@ -18,7 +17,6 @@ import org.signal.core.util.requireBlob
 import org.signal.core.util.requireBoolean
 import org.signal.core.util.requireInt
 import org.signal.core.util.requireLong
-import org.signal.core.util.requireNonNullBlob
 import org.signal.core.util.requireNonNullString
 import org.signal.core.util.select
 import org.signal.core.util.update
@@ -28,12 +26,13 @@ import org.signal.ringrtc.CallLinkState.Restrictions
 import org.thoughtcrime.securesms.calls.log.CallLogRow
 import org.thoughtcrime.securesms.conversation.colors.AvatarColor
 import org.thoughtcrime.securesms.conversation.colors.AvatarColorHash
-import org.thoughtcrime.securesms.dependencies.ApplicationDependencies
+import org.thoughtcrime.securesms.dependencies.AppDependencies
 import org.thoughtcrime.securesms.recipients.Recipient
 import org.thoughtcrime.securesms.recipients.RecipientId
 import org.thoughtcrime.securesms.service.webrtc.links.CallLinkCredentials
 import org.thoughtcrime.securesms.service.webrtc.links.CallLinkRoomId
 import org.thoughtcrime.securesms.service.webrtc.links.SignalCallLinkState
+import org.whispersystems.signalservice.api.storage.StorageId
 import java.time.Instant
 import java.time.temporal.ChronoUnit
 
@@ -55,6 +54,7 @@ class CallLinkTable(context: Context, databaseHelper: SignalDatabase) : Database
     const val REVOKED = "revoked"
     const val EXPIRATION = "expiration"
     const val RECIPIENT_ID = "recipient_id"
+    const val DELETION_TIMESTAMP = "deletion_timestamp"
 
     //language=sql
     const val CREATE_TABLE = """
@@ -67,7 +67,8 @@ class CallLinkTable(context: Context, databaseHelper: SignalDatabase) : Database
         $RESTRICTIONS INTEGER NOT NULL,
         $REVOKED INTEGER NOT NULL,
         $EXPIRATION INTEGER NOT NULL,
-        $RECIPIENT_ID INTEGER UNIQUE REFERENCES ${RecipientTable.TABLE_NAME} (${RecipientTable.ID}) ON DELETE CASCADE
+        $RECIPIENT_ID INTEGER UNIQUE REFERENCES ${RecipientTable.TABLE_NAME} (${RecipientTable.ID}) ON DELETE CASCADE,
+        $DELETION_TIMESTAMP INTEGER DEFAULT 0 NOT NULL
       )
     """
 
@@ -90,19 +91,32 @@ class CallLinkTable(context: Context, databaseHelper: SignalDatabase) : Database
   }
 
   fun insertCallLink(
-    callLink: CallLink
-  ) {
-    writableDatabase.withinTransaction { db ->
-      val recipientId = SignalDatabase.recipients.getOrInsertFromCallLinkRoomId(callLink.roomId)
+    callLink: CallLink,
+    deletionTimestamp: Long = 0L,
+    storageId: StorageId? = null
+  ): RecipientId {
+    val recipientId: RecipientId = writableDatabase.withinTransaction { db ->
+      val recipientId = SignalDatabase.recipients.getOrInsertFromCallLinkRoomId(callLink.roomId, storageId = storageId?.raw)
+
+      val contentValues = CallLinkSerializer.serialize(callLink.copy(recipientId = recipientId)).apply {
+        put(DELETION_TIMESTAMP, deletionTimestamp)
+        if (deletionTimestamp > 0) {
+          put(REVOKED, true)
+        }
+      }
 
       db
         .insertInto(TABLE_NAME)
-        .values(CallLinkSerializer.serialize(callLink.copy(recipientId = recipientId)))
+        .values(contentValues)
         .run()
+
+      recipientId
     }
 
-    ApplicationDependencies.getDatabaseObserver().notifyCallLinkObservers(callLink.roomId)
-    ApplicationDependencies.getDatabaseObserver().notifyCallUpdateObservers()
+    AppDependencies.databaseObserver.notifyCallLinkObservers(callLink.roomId)
+    AppDependencies.databaseObserver.notifyCallUpdateObservers()
+
+    return recipientId
   }
 
   fun updateCallLinkCredentials(
@@ -120,8 +134,8 @@ class CallLinkTable(context: Context, databaseHelper: SignalDatabase) : Database
       .where("$ROOM_ID = ?", roomId.serialize())
       .run()
 
-    ApplicationDependencies.getDatabaseObserver().notifyCallLinkObservers(roomId)
-    ApplicationDependencies.getDatabaseObserver().notifyCallUpdateObservers()
+    AppDependencies.databaseObserver.notifyCallLinkObservers(roomId)
+    AppDependencies.databaseObserver.notifyCallUpdateObservers()
   }
 
   fun updateCallLinkState(
@@ -147,8 +161,8 @@ class CallLinkTable(context: Context, databaseHelper: SignalDatabase) : Database
     }
 
     Recipient.live(recipientId).refresh()
-    ApplicationDependencies.getDatabaseObserver().notifyCallLinkObservers(roomId)
-    ApplicationDependencies.getDatabaseObserver().notifyCallUpdateObservers()
+    AppDependencies.databaseObserver.notifyCallLinkObservers(roomId)
+    AppDependencies.databaseObserver.notifyCallUpdateObservers()
   }
 
   fun callLinkExists(
@@ -186,7 +200,8 @@ class CallLinkTable(context: Context, databaseHelper: SignalDatabase) : Database
           linkKeyBytes = callLinkRootKey.keyBytes,
           adminPassBytes = null
         ),
-        state = SignalCallLinkState()
+        state = SignalCallLinkState(),
+        deletionTimestamp = 0L
       )
 
       insertCallLink(link)
@@ -194,6 +209,71 @@ class CallLinkTable(context: Context, databaseHelper: SignalDatabase) : Database
     } else {
       callLink
     }
+  }
+
+  fun insertOrUpdateCallLinkByRootKey(
+    callLinkRootKey: CallLinkRootKey,
+    adminPassKey: ByteArray?,
+    deletionTimestamp: Long = 0L,
+    storageId: StorageId? = null
+  ) {
+    val roomId = CallLinkRoomId.fromBytes(callLinkRootKey.deriveRoomId())
+
+    writableDatabase.withinTransaction {
+      val callLink = getCallLinkByRoomId(roomId)
+      if (callLink == null) {
+        val link = CallLink(
+          recipientId = RecipientId.UNKNOWN,
+          roomId = roomId,
+          credentials = CallLinkCredentials(
+            linkKeyBytes = callLinkRootKey.keyBytes,
+            adminPassBytes = adminPassKey
+          ),
+          state = SignalCallLinkState(),
+          deletionTimestamp = 0L
+        )
+
+        insertCallLink(link, deletionTimestamp, storageId)
+      } else {
+        if (storageId != null) {
+          SignalDatabase.recipients.updateStorageId(callLink.recipientId, storageId.raw)
+        }
+
+        if (deletionTimestamp != 0L) {
+          writableDatabase.update(TABLE_NAME)
+            .values(
+              DELETION_TIMESTAMP to deletionTimestamp,
+              ADMIN_KEY to null,
+              ROOT_KEY to callLinkRootKey.keyBytes,
+              REVOKED to true
+            )
+            .where("$ROOM_ID = ?", callLink.roomId.serialize())
+            .run()
+        } else {
+          writableDatabase.update(TABLE_NAME)
+            .values(
+              ADMIN_KEY to adminPassKey,
+              ROOT_KEY to callLinkRootKey.keyBytes
+            )
+            .where("$ROOM_ID = ?", callLink.roomId.serialize())
+            .run()
+        }
+      }
+    }
+  }
+
+  /**
+   * Returns a unix timestamp, or 0
+   */
+  fun getDeletedTimestampByRoomId(
+    roomId: CallLinkRoomId
+  ): Long {
+    return readableDatabase
+      .select(DELETION_TIMESTAMP)
+      .from(TABLE_NAME)
+      .where("$ROOM_ID = ?", roomId.serialize())
+      .run()
+      .readToSingleLong(defaultValue = 0)
   }
 
   fun getOrCreateCallLinkByRoomId(
@@ -205,7 +285,8 @@ class CallLinkTable(context: Context, databaseHelper: SignalDatabase) : Database
         recipientId = RecipientId.UNKNOWN,
         roomId = callLinkRoomId,
         credentials = null,
-        state = SignalCallLinkState()
+        state = SignalCallLinkState(),
+        deletionTimestamp = 0L
       )
       insertCallLink(link)
       return getCallLinkByRoomId(callLinkRoomId)!!
@@ -226,8 +307,43 @@ class CallLinkTable(context: Context, databaseHelper: SignalDatabase) : Database
         record = callLink,
         recipient = peer,
         searchQuery = query,
-        callLinkPeekInfo = ApplicationDependencies.getSignalCallManager().peekInfoSnapshot[peer.id]
+        callLinkPeekInfo = AppDependencies.signalCallManager.peekInfoSnapshot[peer.id]
       )
+    }
+  }
+
+  fun getAll(): List<CallLink> {
+    return readableDatabase.select()
+      .from(TABLE_NAME)
+      .run()
+      .readToList {
+        CallLinkDeserializer.deserialize(it)
+      }
+  }
+
+  /**
+   * Puts the call link into the "revoked" state which will hide it from the UI and
+   * delete it after a few days.
+   */
+  fun markRevoked(
+    roomId: CallLinkRoomId
+  ) {
+    writableDatabase.withinTransaction { db ->
+      db.update(TABLE_NAME)
+        .values(
+          REVOKED to true,
+          DELETION_TIMESTAMP to System.currentTimeMillis(),
+          ADMIN_KEY to null
+        )
+        .where("$ROOM_ID = ?", roomId.serialize())
+        .run()
+
+      SignalDatabase.calls.updateAdHocCallEventDeletionTimestamps()
+      val recipient = SignalDatabase.recipients.getByCallLinkRoomId(roomId)
+
+      if (recipient.isPresent) {
+        SignalDatabase.recipients.markNeedsSync(recipient.get())
+      }
     }
   }
 
@@ -244,7 +360,7 @@ class CallLinkTable(context: Context, databaseHelper: SignalDatabase) : Database
   fun deleteNonAdminCallLinksOnOrBefore(timestamp: Long) {
     writableDatabase.withinTransaction { db ->
       db.delete(TABLE_NAME)
-        .where("EXISTS (SELECT 1 FROM ${CallTable.TABLE_NAME} WHERE ${CallTable.TIMESTAMP} <= ? AND ${CallTable.PEER} = $RECIPIENT_ID)", timestamp)
+        .where("$ADMIN_KEY IS NULL AND EXISTS (SELECT 1 FROM ${CallTable.TABLE_NAME} WHERE ${CallTable.TIMESTAMP} <= ? AND ${CallTable.PEER} = $RECIPIENT_ID)", timestamp)
         .run()
 
       SignalDatabase.calls.updateAdHocCallEventDeletionTimestamps(skipSync = true)
@@ -299,18 +415,6 @@ class CallLinkTable(context: Context, databaseHelper: SignalDatabase) : Database
     }
   }
 
-  fun getAdminCallLinkCredentialsOnOrBefore(timestamp: Long): Set<CallLinkCredentials> {
-    val query = """
-      SELECT $ROOT_KEY, $ADMIN_KEY FROM $TABLE_NAME
-      INNER JOIN ${CallTable.TABLE_NAME} ON ${CallTable.TABLE_NAME}.${CallTable.PEER} = $TABLE_NAME.$RECIPIENT_ID
-      WHERE ${CallTable.TIMESTAMP} <= $timestamp AND $ADMIN_KEY IS NOT NULL AND $REVOKED = 0
-    """.trimIndent()
-
-    return readableDatabase.query(query).readToSet {
-      CallLinkCredentials(it.requireNonNullBlob(ROOT_KEY), it.requireNonNullBlob(ADMIN_KEY))
-    }
-  }
-
   private fun queryCallLinks(query: String?, offset: Int, limit: Int, asCount: Boolean): Cursor {
     //language=sql
     val noCallEvent = """
@@ -346,7 +450,7 @@ class CallLinkTable(context: Context, databaseHelper: SignalDatabase) : Database
     val statement = """
       SELECT $projection
       FROM $TABLE_NAME
-      WHERE $noCallEvent AND NOT $REVOKED ${searchFilter?.where ?: ""}
+      WHERE $noCallEvent AND NOT $REVOKED ${searchFilter?.where ?: ""} AND $ROOT_KEY IS NOT NULL AND $DELETION_TIMESTAMP = 0
       ORDER BY $ID DESC
       $limitOffset
     """.trimIndent()
@@ -371,7 +475,7 @@ class CallLinkTable(context: Context, databaseHelper: SignalDatabase) : Database
     }
   }
 
-  private object CallLinkDeserializer : Serializer<CallLink, Cursor> {
+  object CallLinkDeserializer : Serializer<CallLink, Cursor> {
     override fun serialize(data: CallLink): Cursor {
       throw UnsupportedOperationException()
     }
@@ -380,10 +484,12 @@ class CallLinkTable(context: Context, databaseHelper: SignalDatabase) : Database
       return CallLink(
         recipientId = data.requireLong(RECIPIENT_ID).let { if (it > 0) RecipientId.from(it) else RecipientId.UNKNOWN },
         roomId = CallLinkRoomId.DatabaseSerializer.deserialize(data.requireNonNullString(ROOM_ID)),
-        credentials = CallLinkCredentials(
-          linkKeyBytes = data.requireNonNullBlob(ROOT_KEY),
-          adminPassBytes = data.requireBlob(ADMIN_KEY)
-        ),
+        credentials = data.requireBlob(ROOT_KEY)?.let { linkKey ->
+          CallLinkCredentials(
+            linkKeyBytes = linkKey,
+            adminPassBytes = data.requireBlob(ADMIN_KEY)
+          )
+        },
         state = SignalCallLinkState(
           name = data.requireNonNullString(NAME),
           restrictions = data.requireInt(RESTRICTIONS).mapToRestrictions(),
@@ -395,7 +501,8 @@ class CallLinkTable(context: Context, databaseHelper: SignalDatabase) : Database
               Instant.ofEpochMilli(it).truncatedTo(ChronoUnit.DAYS)
             }
           }
-        )
+        ),
+        deletionTimestamp = data.requireLong(DELETION_TIMESTAMP)
       )
     }
 
@@ -412,13 +519,14 @@ class CallLinkTable(context: Context, databaseHelper: SignalDatabase) : Database
     val recipientId: RecipientId,
     val roomId: CallLinkRoomId,
     val credentials: CallLinkCredentials?,
-    val state: SignalCallLinkState
+    val state: SignalCallLinkState,
+    val deletionTimestamp: Long
   ) {
     val avatarColor: AvatarColor = credentials?.let { AvatarColorHash.forCallLink(it.linkKeyBytes) } ?: AvatarColor.UNKNOWN
   }
 
   override fun remapRecipient(fromId: RecipientId, toId: RecipientId) {
-    writableDatabase.update(TABLE_NAME)
+    val count = writableDatabase.update(TABLE_NAME)
       .values(
         contentValuesOf(
           RECIPIENT_ID to toId.toLong()
@@ -426,5 +534,7 @@ class CallLinkTable(context: Context, databaseHelper: SignalDatabase) : Database
       )
       .where("$RECIPIENT_ID = ?", fromId.toLong())
       .run()
+
+    Log.d(TAG, "Remapped $fromId to $toId. count: $count")
   }
 }

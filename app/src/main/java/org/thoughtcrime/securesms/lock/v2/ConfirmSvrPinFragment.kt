@@ -9,10 +9,10 @@ import androidx.core.view.ViewCompat
 import androidx.lifecycle.ViewModelProvider
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import org.thoughtcrime.securesms.R
-import org.thoughtcrime.securesms.dependencies.ApplicationDependencies
+import org.thoughtcrime.securesms.dependencies.AppDependencies
 import org.thoughtcrime.securesms.lock.v2.ConfirmSvrPinViewModel.SaveAnimation
 import org.thoughtcrime.securesms.megaphone.Megaphones
-import org.thoughtcrime.securesms.registration.RegistrationUtil
+import org.thoughtcrime.securesms.registration.util.RegistrationUtil
 import org.thoughtcrime.securesms.storage.StorageSyncHelper
 import org.thoughtcrime.securesms.util.SpanUtil
 
@@ -107,7 +107,7 @@ internal class ConfirmSvrPinFragment : BaseSvrPinFragment<ConfirmSvrPinViewModel
     MaterialAlertDialogBuilder(requireContext()).setTitle(R.string.ConfirmKbsPinFragment__pin_creation_failed)
       .setMessage(R.string.ConfirmKbsPinFragment__your_pin_was_not_saved)
       .setCancelable(false)
-      .setPositiveButton(R.string.ok) { d: DialogInterface, w: Int ->
+      .setPositiveButton(android.R.string.ok) { d: DialogInterface, w: Int ->
         d.dismiss()
         markMegaphoneSeenIfNecessary()
         requireActivity().setResult(Activity.RESULT_CANCELED)
@@ -117,6 +117,6 @@ internal class ConfirmSvrPinFragment : BaseSvrPinFragment<ConfirmSvrPinViewModel
   }
 
   private fun markMegaphoneSeenIfNecessary() {
-    ApplicationDependencies.getMegaphoneRepository().markSeen(Megaphones.Event.PINS_FOR_ALL)
+    AppDependencies.megaphoneRepository.markSeen(Megaphones.Event.PINS_FOR_ALL)
   }
 }

@@ -10,28 +10,26 @@ import android.view.MenuItem
 import android.view.View
 import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
-import androidx.annotation.IdRes
+import androidx.compose.ui.platform.ComposeView
 import androidx.core.app.ActivityOptionsCompat
 import androidx.core.app.SharedElementCallback
 import androidx.core.view.ViewCompat
 import androidx.fragment.app.viewModels
 import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView.AdapterDataObserver
 import androidx.transition.TransitionInflater
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.android.material.snackbar.Snackbar
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
 import io.reactivex.rxjava3.core.Single
 import io.reactivex.rxjava3.kotlin.subscribeBy
-import org.greenrobot.eventbus.EventBus
-import org.greenrobot.eventbus.Subscribe
-import org.greenrobot.eventbus.ThreadMode
 import org.signal.core.util.concurrent.LifecycleDisposable
+import org.thoughtcrime.securesms.MainActivity
 import org.thoughtcrime.securesms.R
+import org.thoughtcrime.securesms.banner.BannerManager
+import org.thoughtcrime.securesms.banner.banners.DeprecatedBuildBanner
+import org.thoughtcrime.securesms.banner.banners.UnauthorizedBanner
 import org.thoughtcrime.securesms.components.Material3SearchToolbar
-import org.thoughtcrime.securesms.components.reminder.ExpiredBuildReminder
-import org.thoughtcrime.securesms.components.reminder.Reminder
-import org.thoughtcrime.securesms.components.reminder.ReminderView
-import org.thoughtcrime.securesms.components.reminder.UnauthorizedReminder
 import org.thoughtcrime.securesms.components.settings.DSLConfiguration
 import org.thoughtcrime.securesms.components.settings.DSLSettingsFragment
 import org.thoughtcrime.securesms.components.settings.DSLSettingsText
@@ -41,13 +39,12 @@ import org.thoughtcrime.securesms.conversation.mutiselect.forward.MultiselectFor
 import org.thoughtcrime.securesms.conversation.mutiselect.forward.MultiselectForwardFragmentArgs
 import org.thoughtcrime.securesms.database.model.MmsMessageRecord
 import org.thoughtcrime.securesms.database.model.StoryViewState
-import org.thoughtcrime.securesms.dependencies.ApplicationDependencies
-import org.thoughtcrime.securesms.events.ReminderUpdateEvent
+import org.thoughtcrime.securesms.dependencies.AppDependencies
 import org.thoughtcrime.securesms.main.Material3OnScrollHelperBinder
 import org.thoughtcrime.securesms.main.SearchBinder
+import org.thoughtcrime.securesms.mediasend.camerax.CameraXUtil
 import org.thoughtcrime.securesms.mediasend.v2.MediaSelectionActivity
 import org.thoughtcrime.securesms.permissions.Permissions
-import org.thoughtcrime.securesms.registration.RegistrationNavigationActivity
 import org.thoughtcrime.securesms.safety.SafetyNumberBottomSheet
 import org.thoughtcrime.securesms.stories.StoryTextPostModel
 import org.thoughtcrime.securesms.stories.StoryViewerArgs
@@ -58,7 +55,6 @@ import org.thoughtcrime.securesms.stories.settings.StorySettingsActivity
 import org.thoughtcrime.securesms.stories.tabs.ConversationListTab
 import org.thoughtcrime.securesms.stories.tabs.ConversationListTabsViewModel
 import org.thoughtcrime.securesms.stories.viewer.StoryViewerActivity
-import org.thoughtcrime.securesms.util.PlayStoreUtil
 import org.thoughtcrime.securesms.util.ViewUtil
 import org.thoughtcrime.securesms.util.adapter.mapping.MappingAdapter
 import org.thoughtcrime.securesms.util.fragments.requireListener
@@ -78,7 +74,7 @@ class StoriesLandingFragment : DSLSettingsFragment(layoutId = R.layout.stories_l
   private lateinit var emptyNotice: View
   private lateinit var cameraFab: FloatingActionButton
 
-  private lateinit var reminderView: Stub<ReminderView>
+  private lateinit var bannerView: Stub<ComposeView>
 
   private val lifecycleDisposable = LifecycleDisposable()
 
@@ -108,14 +104,12 @@ class StoriesLandingFragment : DSLSettingsFragment(layoutId = R.layout.stories_l
     initializeSearchAction()
     viewModel.markStoriesRead()
 
-    ApplicationDependencies.getExpireStoriesManager().scheduleIfNecessary()
-    EventBus.getDefault().register(this)
+    AppDependencies.expireStoriesManager.scheduleIfNecessary()
   }
 
   override fun onPause() {
     super.onPause()
     requireListener<SearchBinder>().getSearchAction().setOnClickListener(null)
-    EventBus.getDefault().unregister(this)
   }
 
   private fun initializeSearchAction() {
@@ -140,53 +134,29 @@ class StoriesLandingFragment : DSLSettingsFragment(layoutId = R.layout.stories_l
   override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
     super.onViewCreated(view, savedInstanceState)
 
-    reminderView = ViewUtil.findStubById(view, R.id.reminder)
-    updateReminders()
+    bannerView = ViewUtil.findStubById(view, R.id.banner_stub)
+    initializeBanners()
   }
 
-  @Subscribe(threadMode = ThreadMode.MAIN)
-  fun onEvent(event: ReminderUpdateEvent?) {
-    updateReminders()
-  }
-
-  private fun updateReminders() {
-    if (ExpiredBuildReminder.isEligible()) {
-      showReminder(ExpiredBuildReminder(context))
-    } else if (UnauthorizedReminder.isEligible(context)) {
-      showReminder(UnauthorizedReminder())
-    } else {
-      hideReminders()
-    }
-  }
-
-  private fun showReminder(reminder: Reminder) {
-    if (!reminderView.resolved()) {
-      reminderView.get().addOnLayoutChangeListener { _, _, top, _, bottom, _, _, _, _ ->
-        recyclerView?.setPadding(0, bottom - top, 0, 0)
+  private fun initializeBanners() {
+    val bannerManager = BannerManager(
+      banners = listOf(
+        DeprecatedBuildBanner(),
+        UnauthorizedBanner(requireContext())
+      ),
+      onNewBannerShownListener = {
+        if (bannerView.resolved()) {
+          bannerView.get().addOnLayoutChangeListener { _, _, top, _, bottom, _, _, _, _ ->
+            recyclerView?.setPadding(0, bottom - top, 0, 0)
+          }
+          recyclerView?.clipToPadding = false
+        }
+      },
+      onNoBannerShownListener = {
+        recyclerView?.clipToPadding = true
       }
-      recyclerView?.clipToPadding = false
-    }
-    reminderView.get().showReminder(reminder)
-    reminderView.get().setOnActionClickListener { reminderActionId: Int -> this.handleReminderAction(reminderActionId) }
-  }
-
-  private fun hideReminders() {
-    if (reminderView.resolved()) {
-      reminderView.get().hide()
-      recyclerView?.clipToPadding = true
-    }
-  }
-
-  private fun handleReminderAction(@IdRes reminderActionId: Int) {
-    when (reminderActionId) {
-      R.id.reminder_action_update_now -> {
-        PlayStoreUtil.openPlayStoreOrOurApkDownloadPage(requireContext())
-      }
-
-      R.id.reminder_action_re_register -> {
-        startActivity(RegistrationNavigationActivity.newIntentForReRegistration(requireContext()))
-      }
-    }
+    )
+    bannerManager.updateContent(bannerView.get())
   }
 
   override fun bindAdapter(adapter: MappingAdapter) {
@@ -222,16 +192,18 @@ class StoriesLandingFragment : DSLSettingsFragment(layoutId = R.layout.stories_l
     })
 
     cameraFab.setOnClickListener {
-      Permissions.with(this)
-        .request(Manifest.permission.CAMERA)
-        .ifNecessary()
-        .withRationaleDialog(getString(R.string.ConversationActivity_to_capture_photos_and_video_allow_signal_access_to_the_camera), R.drawable.symbol_camera_24)
-        .withPermanentDenialDialog(getString(R.string.ConversationActivity_signal_needs_the_camera_permission_to_take_photos_or_video))
-        .onAllGranted {
-          startActivityIfAble(MediaSelectionActivity.camera(requireContext(), isStory = true))
-        }
-        .onAnyDenied { Toast.makeText(requireContext(), R.string.ConversationActivity_signal_needs_camera_permissions_to_take_photos_or_video, Toast.LENGTH_LONG).show() }
-        .execute()
+      if (CameraXUtil.isSupported()) {
+        startActivityIfAble(MediaSelectionActivity.camera(requireContext(), isStory = true))
+      } else {
+        Permissions.with(this)
+          .request(Manifest.permission.CAMERA)
+          .ifNecessary()
+          .onAllGranted { startActivityIfAble(MediaSelectionActivity.camera(requireContext(), isStory = true)) }
+          .withRationaleDialog(getString(R.string.CameraXFragment_allow_access_camera), getString(R.string.CameraXFragment_to_capture_photos_and_video_allow_camera), R.drawable.symbol_camera_24)
+          .withPermanentDenialDialog(getString(R.string.CameraXFragment_signal_needs_camera_access_capture_photos), null, R.string.CameraXFragment_allow_access_camera, R.string.CameraXFragment_to_capture_photos_videos, getParentFragmentManager())
+          .onAnyDenied { Toast.makeText(requireContext(), R.string.CameraXFragment_signal_needs_camera_access_capture_photos, Toast.LENGTH_LONG).show() }
+          .execute()
+      }
     }
 
     viewModel.state.observe(viewLifecycleOwner) {
@@ -262,6 +234,13 @@ class StoriesLandingFragment : DSLSettingsFragment(layoutId = R.layout.stories_l
           recyclerView?.scrollToPosition(0)
         }
       })
+
+    this.adapter.registerAdapterDataObserver(object : AdapterDataObserver() {
+      override fun onItemRangeInserted(positionStart: Int, itemCount: Int) {
+        (requireActivity() as? MainActivity)?.onFirstRender()
+        this@StoriesLandingFragment.adapter.unregisterAdapterDataObserver(this)
+      }
+    })
   }
 
   private fun getConfiguration(state: StoriesLandingState): DSLConfiguration {

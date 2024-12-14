@@ -17,23 +17,25 @@ object AttachmentCreator : Parcelable.Creator<Attachment> {
     DATABASE(DatabaseAttachment::class.java, "database"),
     POINTER(PointerAttachment::class.java, "pointer"),
     TOMBSTONE(TombstoneAttachment::class.java, "tombstone"),
-    URI(UriAttachment::class.java, "uri")
+    URI(UriAttachment::class.java, "uri"),
+    ARCHIVED(ArchivedAttachment::class.java, "archived")
   }
 
   @JvmStatic
   fun writeSubclass(dest: Parcel, instance: Attachment) {
-    val subclass = Subclass.values().firstOrNull { it.clazz == instance::class.java } ?: error("Unexpected subtype ${instance::class.java.simpleName}")
+    val subclass = Subclass.entries.firstOrNull { it.clazz == instance::class.java } ?: error("Unexpected subtype ${instance::class.java.simpleName}")
     dest.writeString(subclass.code)
   }
 
   override fun createFromParcel(source: Parcel): Attachment {
     val rawCode = source.readString()!!
 
-    return when (Subclass.values().first { rawCode == it.code }) {
+    return when (Subclass.entries.first { rawCode == it.code }) {
       Subclass.DATABASE -> DatabaseAttachment(source)
       Subclass.POINTER -> PointerAttachment(source)
       Subclass.TOMBSTONE -> TombstoneAttachment(source)
       Subclass.URI -> UriAttachment(source)
+      Subclass.ARCHIVED -> ArchivedAttachment(source)
     }
   }
 

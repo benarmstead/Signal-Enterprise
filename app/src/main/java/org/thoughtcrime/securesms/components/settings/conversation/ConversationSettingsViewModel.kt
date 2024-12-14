@@ -23,7 +23,7 @@ import org.thoughtcrime.securesms.components.settings.conversation.preferences.L
 import org.thoughtcrime.securesms.database.MediaTable
 import org.thoughtcrime.securesms.database.RecipientTable
 import org.thoughtcrime.securesms.database.model.StoryViewState
-import org.thoughtcrime.securesms.dependencies.ApplicationDependencies
+import org.thoughtcrime.securesms.dependencies.AppDependencies
 import org.thoughtcrime.securesms.groups.GroupId
 import org.thoughtcrime.securesms.groups.LiveGroup
 import org.thoughtcrime.securesms.groups.ui.GroupChangeFailureReason
@@ -50,7 +50,7 @@ sealed class ConversationSettingsViewModel(
   protected val store = Store(
     ConversationSettingsState(
       specificSettingsState = specificSettingsState,
-      isDeprecatedOrUnregistered = SignalStore.misc().isClientDeprecated || TextSecurePreferences.isUnauthorizedReceived(ApplicationDependencies.getApplication())
+      isDeprecatedOrUnregistered = SignalStore.misc.isClientDeprecated || TextSecurePreferences.isUnauthorizedReceived(AppDependencies.application)
     )
   )
   protected val internalEvents: Subject<ConversationSettingsEvent> = PublishSubject.create()
@@ -157,7 +157,7 @@ sealed class ConversationSettingsViewModel(
       }
 
       store.update(liveRecipient.liveData) { recipient, state ->
-        val isAudioAvailable = (recipient.isRegistered || SignalStore.misc().smsExportPhase.allowSmsFeatures()) &&
+        val isAudioAvailable = recipient.isRegistered &&
           !recipient.isGroup &&
           !recipient.isBlocked &&
           !recipient.isSelf &&
@@ -180,7 +180,7 @@ sealed class ConversationSettingsViewModel(
             contactLinkState = when {
               recipient.isSelf || recipient.isReleaseNotes || recipient.isBlocked -> ContactLinkState.NONE
               recipient.isSystemContact -> ContactLinkState.OPEN
-              recipient.hasE164() && recipient.shouldShowE164() -> ContactLinkState.ADD
+              recipient.hasE164 && recipient.shouldShowE164 -> ContactLinkState.ADD
               else -> ContactLinkState.NONE
             }
           )
@@ -296,7 +296,7 @@ sealed class ConversationSettingsViewModel(
             isMuted = recipient.isMuted,
             isMuteAvailable = true,
             isSearchAvailable = callMessageIds.isEmpty(),
-            isAddToStoryAvailable = recipient.isPushV2Group && !recipient.isBlocked && isActive && !SignalStore.storyValues().isFeatureDisabled
+            isAddToStoryAvailable = recipient.isPushV2Group && !recipient.isBlocked && isActive && !SignalStore.story.isFeatureDisabled
           ),
           canModifyBlockedState = RecipientUtil.isBlockable(recipient),
           specificSettingsState = state.requireGroupSettingsState().copy(

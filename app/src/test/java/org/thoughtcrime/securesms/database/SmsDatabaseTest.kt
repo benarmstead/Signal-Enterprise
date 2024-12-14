@@ -26,6 +26,9 @@ class SmsDatabaseTest {
   fun setup() {
     val sqlCipher = TestDatabaseUtil.inMemoryDatabase {
       execSQL(MessageTable.CREATE_TABLE)
+      MessageTable.CREATE_INDEXS.forEach {
+        execSQL(it)
+      }
     }
 
     db = sqlCipher.writableDatabase
@@ -78,7 +81,7 @@ class SmsDatabaseTest {
     TestSms.insert(db, type = MessageTypes.CHANGE_NUMBER_TYPE)
     assertFalse(messageTable.hasMeaningfulMessage(1))
 
-    TestSms.insert(db, type = MessageTypes.BOOST_REQUEST_TYPE)
+    TestSms.insert(db, type = MessageTypes.RELEASE_CHANNEL_DONATION_REQUEST_TYPE)
     assertFalse(messageTable.hasMeaningfulMessage(1))
 
     TestSms.insert(db, type = MessageTypes.SMS_EXPORT_TYPE)

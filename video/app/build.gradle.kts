@@ -48,7 +48,7 @@ android {
     compose = true
   }
   composeOptions {
-    kotlinCompilerExtensionVersion = "1.4.3"
+    kotlinCompilerExtensionVersion = "1.5.4"
   }
   packaging {
     resources {
@@ -65,7 +65,8 @@ dependencies {
   implementation(libs.bundles.media3)
   implementation(project(":video"))
   implementation(project(":core-util"))
-  implementation("androidx.work:work-runtime-ktx:2.9.0")
+  implementation("androidx.work:work-runtime-ktx:2.9.1")
+  implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.4")
   implementation(libs.androidx.compose.ui.tooling.core)
   implementation(libs.androidx.compose.ui.test.manifest)
   androidTestImplementation(testLibs.junit.junit)

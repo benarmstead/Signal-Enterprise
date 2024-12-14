@@ -120,7 +120,9 @@ class ConversationListSearchAdapter(
         Locale.getDefault(),
         emptySet(),
         ConversationSet(),
-        model.thread.query
+        model.thread.query,
+        true,
+        false
       )
     }
   }
@@ -195,7 +197,7 @@ class ConversationListSearchAdapter(
 
     companion object {
       fun fromCode(code: String): ChatFilterOptions {
-        return values().firstOrNull { it.code == code } ?: WITHOUT_TIP
+        return entries.firstOrNull { it.code == code } ?: WITHOUT_TIP
       }
     }
   }

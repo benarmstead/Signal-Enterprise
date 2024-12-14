@@ -24,6 +24,7 @@ import androidx.compose.ui.unit.dp
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlinx.coroutines.launch
 import org.signal.core.ui.Dividers
 import org.signal.core.ui.Rows
@@ -33,6 +34,7 @@ import org.signal.core.ui.theme.SignalTheme
 import org.thoughtcrime.securesms.R
 import org.thoughtcrime.securesms.compose.ComposeFragment
 import org.thoughtcrime.securesms.compose.StatusBarColorNestedScrollConnection
+import org.signal.core.ui.R as CoreUiR
 
 class PhoneNumberPrivacySettingsFragment : ComposeFragment() {
 
@@ -65,7 +67,7 @@ class PhoneNumberPrivacySettingsFragment : ComposeFragment() {
       onEveryoneCanFindMeByNumberClicked = viewModel::setEveryoneCanFindMeByMyNumber,
       onNobodyCanFindMeByNumberClicked = {
         if (!state.phoneNumberSharing) {
-          viewModel.setNobodyCanFindMeByMyNumber()
+          onNobodyCanFindMeByNumberClicked()
         } else {
           lifecycleScope.launch {
             snackbarHostState.showSnackbar(
@@ -76,6 +78,15 @@ class PhoneNumberPrivacySettingsFragment : ComposeFragment() {
         }
       }
     )
+  }
+
+  private fun onNobodyCanFindMeByNumberClicked() {
+    MaterialAlertDialogBuilder(requireContext())
+      .setTitle(R.string.PhoneNumberPrivacySettingsFragment__nobody_can_find_me_warning_title)
+      .setMessage(getString(R.string.PhoneNumberPrivacySettingsFragment__nobody_can_find_me_warning_message))
+      .setNegativeButton(getString(R.string.PhoneNumberPrivacySettingsFragment__cancel), null)
+      .setPositiveButton(android.R.string.ok) { _, _ -> viewModel.setNobodyCanFindMeByMyNumber() }
+      .show()
   }
 }
 
@@ -139,7 +150,7 @@ private fun Screen(
             ),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(horizontal = dimensionResource(id = R.dimen.core_ui__gutter), vertical = 16.dp)
+            modifier = Modifier.padding(horizontal = dimensionResource(id = CoreUiR.dimen.gutter), vertical = 16.dp)
           )
         }
 
@@ -179,7 +190,7 @@ private fun Screen(
             ),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(horizontal = dimensionResource(id = R.dimen.core_ui__gutter), vertical = 16.dp)
+            modifier = Modifier.padding(horizontal = dimensionResource(id = CoreUiR.dimen.gutter), vertical = 16.dp)
           )
         }
       }

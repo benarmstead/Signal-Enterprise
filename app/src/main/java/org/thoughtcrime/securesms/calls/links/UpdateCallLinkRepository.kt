@@ -9,11 +9,12 @@ import io.reactivex.rxjava3.core.Single
 import io.reactivex.rxjava3.schedulers.Schedulers
 import org.signal.ringrtc.CallLinkState
 import org.thoughtcrime.securesms.database.SignalDatabase
-import org.thoughtcrime.securesms.dependencies.ApplicationDependencies
+import org.thoughtcrime.securesms.dependencies.AppDependencies
 import org.thoughtcrime.securesms.jobs.CallLinkUpdateSendJob
 import org.thoughtcrime.securesms.service.webrtc.links.CallLinkCredentials
 import org.thoughtcrime.securesms.service.webrtc.links.SignalCallLinkManager
 import org.thoughtcrime.securesms.service.webrtc.links.UpdateCallLinkResult
+import org.thoughtcrime.securesms.storage.StorageSyncHelper
 
 /**
  * Repository for performing update operations on call links:
@@ -26,7 +27,7 @@ import org.thoughtcrime.securesms.service.webrtc.links.UpdateCallLinkResult
  * All of these will delegate to the [SignalCallLinkManager] but will additionally update the database state.
  */
 class UpdateCallLinkRepository(
-  private val callLinkManager: SignalCallLinkManager = ApplicationDependencies.getSignalCallManager().callLinkManager
+  private val callLinkManager: SignalCallLinkManager = AppDependencies.signalCallManager.callLinkManager
 ) {
   fun setCallName(credentials: CallLinkCredentials, name: String): Single<UpdateCallLinkResult> {
     return callLinkManager
@@ -48,18 +49,26 @@ class UpdateCallLinkRepository(
       .subscribeOn(Schedulers.io())
   }
 
-  fun revokeCallLink(credentials: CallLinkCredentials): Single<UpdateCallLinkResult> {
+  fun deleteCallLink(credentials: CallLinkCredentials): Single<UpdateCallLinkResult> {
     return callLinkManager
-      .updateCallLinkRevoked(credentials, true)
+      .deleteCallLink(credentials)
       .doOnSuccess(updateState(credentials))
       .subscribeOn(Schedulers.io())
   }
 
   private fun updateState(credentials: CallLinkCredentials): (UpdateCallLinkResult) -> Unit {
     return { result ->
-      if (result is UpdateCallLinkResult.Success) {
-        SignalDatabase.callLinks.updateCallLinkState(credentials.roomId, result.state)
-        ApplicationDependencies.getJobManager().add(CallLinkUpdateSendJob(credentials.roomId))
+      when (result) {
+        is UpdateCallLinkResult.Update -> {
+          SignalDatabase.callLinks.updateCallLinkState(credentials.roomId, result.state)
+          AppDependencies.jobManager.add(CallLinkUpdateSendJob(credentials.roomId))
+        }
+        is UpdateCallLinkResult.Delete -> {
+          SignalDatabase.callLinks.markRevoked(credentials.roomId)
+          AppDependencies.jobManager.add(CallLinkUpdateSendJob(credentials.roomId))
+          StorageSyncHelper.scheduleSyncForDataChange()
+        }
+        else -> {}
       }
     }
   }

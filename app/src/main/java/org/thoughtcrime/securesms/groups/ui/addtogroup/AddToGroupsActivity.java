@@ -17,6 +17,7 @@ import org.thoughtcrime.securesms.ContactSelectionActivity;
 import org.thoughtcrime.securesms.ContactSelectionListFragment;
 import org.thoughtcrime.securesms.R;
 import org.thoughtcrime.securesms.contacts.ContactSelectionDisplayMode;
+import org.thoughtcrime.securesms.contacts.paged.ChatType;
 import org.thoughtcrime.securesms.groups.ui.addtogroup.AddToGroupViewModel.Event;
 import org.thoughtcrime.securesms.recipients.RecipientId;
 
@@ -112,7 +113,7 @@ public final class AddToGroupsActivity extends ContactSelectionActivity {
   }
 
   @Override
-  public void onBeforeContactSelected(boolean isFromUnknownSearchKey, @NonNull Optional<RecipientId> recipientId, String number, @NonNull Consumer<Boolean> callback) {
+  public void onBeforeContactSelected(boolean isFromUnknownSearchKey, @NonNull Optional<RecipientId> recipientId, String number, @NonNull Optional<ChatType> chatType, @NonNull Consumer<Boolean> callback) {
     if (contactsFragment.isMulti()) {
       throw new UnsupportedOperationException("Not yet built to handle multi-select.");
 //      if (contactsFragment.hasQueryFilter()) {
@@ -132,7 +133,7 @@ public final class AddToGroupsActivity extends ContactSelectionActivity {
   }
 
   @Override
-  public void onContactDeselected(@NonNull Optional<RecipientId> recipientId, String number) {
+  public void onContactDeselected(@NonNull Optional<RecipientId> recipientId, String number, @NonNull Optional<ChatType> chatType) {
     if (contactsFragment.hasQueryFilter()) {
       getContactFilterView().clear();
     }

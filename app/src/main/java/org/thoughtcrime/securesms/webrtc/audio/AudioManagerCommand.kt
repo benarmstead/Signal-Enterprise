@@ -12,9 +12,8 @@ import org.thoughtcrime.securesms.util.ParcelUtil
  * Commands that can be issued to [SignalAudioManager] to perform various tasks.
  *
  * Additional context: The audio management is tied closely with the Android audio and thus benefits from being
- * tied to the [org.thoughtcrime.securesms.service.webrtc.WebRtcCallService] lifecycle. Because of this, all
- * calls have to go through an intent to the service and this allows one entry point for that but multiple
- * operations.
+ * tied to the [org.thoughtcrime.securesms.service.webrtc.ActiveCallManager] lifecycle. Because of this, all
+ * calls have to go through it and this allows one entry point for that but multiple operations.
  */
 sealed class AudioManagerCommand : Parcelable {
 
@@ -28,7 +27,7 @@ sealed class AudioManagerCommand : Parcelable {
     }
   }
 
-  class StartIncomingRinger(val ringtoneUri: Uri, val vibrate: Boolean) : AudioManagerCommand() {
+  class StartIncomingRinger(val ringtoneUri: Uri?, val vibrate: Boolean) : AudioManagerCommand() {
     override fun writeToParcel(parcel: Parcel, flags: Int) {
       parcel.writeParcelable(ringtoneUri, flags)
       ParcelUtil.writeBoolean(parcel, vibrate)
@@ -38,7 +37,7 @@ sealed class AudioManagerCommand : Parcelable {
       @JvmField
       val CREATOR: Parcelable.Creator<StartIncomingRinger> = ParcelCheat { parcel ->
         StartIncomingRinger(
-          ringtoneUri = parcel.readParcelableCompat(Uri::class.java)!!,
+          ringtoneUri = parcel.readParcelableCompat(Uri::class.java),
           vibrate = ParcelUtil.readBoolean(parcel)
         )
       }

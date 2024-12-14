@@ -12,6 +12,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.RequestManager;
 
+import org.thoughtcrime.securesms.BindableConversationItem;
 import org.thoughtcrime.securesms.R;
 import org.thoughtcrime.securesms.conversation.ConversationMessage;
 import org.thoughtcrime.securesms.conversation.colors.Colorizer;
@@ -37,7 +38,7 @@ final class MessageDetailsAdapter extends ListAdapter<MessageDetailsAdapter.Mess
   public @NonNull RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
     switch (viewType) {
       case MessageDetailsViewState.MESSAGE_HEADER:
-        return new MessageHeaderViewHolder(LayoutInflater.from(parent.getContext()).inflate(R.layout.message_details_header, parent, false), requestManager, colorizer);
+        return new MessageHeaderViewHolder(LayoutInflater.from(parent.getContext()).inflate(R.layout.message_details_header, parent, false), requestManager, colorizer, callbacks);
       case MessageDetailsViewState.RECIPIENT_HEADER:
         return new RecipientHeaderViewHolder(LayoutInflater.from(parent.getContext()).inflate(R.layout.message_details_recipient_header, parent, false));
       case MessageDetailsViewState.RECIPIENT:
@@ -127,8 +128,9 @@ final class MessageDetailsAdapter extends ListAdapter<MessageDetailsAdapter.Mess
     }
   }
 
-  interface Callbacks {
+  interface Callbacks extends BindableConversationItem.EventListener {
     void onErrorClicked(@NonNull MessageRecord messageRecord);
     void onViewEditHistoryClicked(MessageRecord record);
+    void onInternalDetailsClicked(MessageRecord record);
   }
 }

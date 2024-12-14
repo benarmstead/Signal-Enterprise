@@ -5,15 +5,18 @@
 
 package org.thoughtcrime.securesms.jobs
 
-import org.thoughtcrime.securesms.dependencies.ApplicationDependencies
+import androidx.annotation.WorkerThread
+import okio.ByteString.Companion.toByteString
+import org.thoughtcrime.securesms.database.CallTable
+import org.thoughtcrime.securesms.dependencies.AppDependencies
 import org.thoughtcrime.securesms.jobmanager.Job
 import org.thoughtcrime.securesms.jobmanager.impl.NetworkConstraint
 import org.thoughtcrime.securesms.jobs.protos.CallLogEventSendJobData
+import org.thoughtcrime.securesms.recipients.Recipient
 import org.whispersystems.signalservice.api.messages.multidevice.SignalServiceSyncMessage
 import org.whispersystems.signalservice.api.push.exceptions.PushNetworkException
 import org.whispersystems.signalservice.api.push.exceptions.ServerRejectedException
 import org.whispersystems.signalservice.internal.push.SyncMessage
-import java.util.Optional
 import java.util.concurrent.TimeUnit
 
 /**
@@ -27,8 +30,9 @@ class CallLogEventSendJob private constructor(
   companion object {
     const val KEY = "CallLogEventSendJob"
 
+    @WorkerThread
     fun forClearHistory(
-      timestamp: Long
+      call: CallTable.Call
     ) = CallLogEventSendJob(
       Parameters.Builder()
         .setQueue("CallLogEventSendJob")
@@ -37,8 +41,47 @@ class CallLogEventSendJob private constructor(
         .addConstraint(NetworkConstraint.KEY)
         .build(),
       SyncMessage.CallLogEvent(
-        timestamp = timestamp,
+        timestamp = call.timestamp,
+        callId = call.callId,
+        conversationId = Recipient.resolved(call.peer).requireCallConversationId().toByteString(),
         type = SyncMessage.CallLogEvent.Type.CLEAR
+      )
+    )
+
+    @WorkerThread
+    fun forMarkedAsRead(
+      call: CallTable.Call
+    ) = CallLogEventSendJob(
+      Parameters.Builder()
+        .setQueue("CallLogEventSendJob")
+        .setLifespan(TimeUnit.DAYS.toMillis(1))
+        .setMaxAttempts(Parameters.UNLIMITED)
+        .addConstraint(NetworkConstraint.KEY)
+        .build(),
+      SyncMessage.CallLogEvent(
+        timestamp = call.timestamp,
+        callId = call.callId,
+        conversationId = Recipient.resolved(call.peer).requireCallConversationId().toByteString(),
+        type = SyncMessage.CallLogEvent.Type.MARKED_AS_READ
+      )
+    )
+
+    @JvmStatic
+    @WorkerThread
+    fun forMarkedAsReadInConversation(
+      call: CallTable.Call
+    ) = CallLogEventSendJob(
+      Parameters.Builder()
+        .setQueue("CallLogEventSendJob")
+        .setLifespan(TimeUnit.DAYS.toMillis(1))
+        .setMaxAttempts(Parameters.UNLIMITED)
+        .addConstraint(NetworkConstraint.KEY)
+        .build(),
+      SyncMessage.CallLogEvent(
+        timestamp = call.timestamp,
+        callId = call.callId,
+        conversationId = Recipient.resolved(call.peer).requireCallConversationId().toByteString(),
+        type = SyncMessage.CallLogEvent.Type.MARKED_AS_READ_IN_CONVERSATION
       )
     )
   }
@@ -53,11 +96,8 @@ class CallLogEventSendJob private constructor(
   override fun onFailure() = Unit
 
   override fun onRun() {
-    ApplicationDependencies.getSignalServiceMessageSender()
-      .sendSyncMessage(
-        SignalServiceSyncMessage.forCallLogEvent(callLogEvent),
-        Optional.empty()
-      )
+    AppDependencies.signalServiceMessageSender
+      .sendSyncMessage(SignalServiceSyncMessage.forCallLogEvent(callLogEvent))
   }
 
   override fun onShouldRetry(e: Exception): Boolean {

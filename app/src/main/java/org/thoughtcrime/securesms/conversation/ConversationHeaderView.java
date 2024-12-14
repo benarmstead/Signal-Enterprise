@@ -21,10 +21,9 @@ import org.signal.core.util.DimensionUnit;
 import org.signal.core.util.concurrent.SignalExecutors;
 import org.thoughtcrime.securesms.R;
 import org.thoughtcrime.securesms.components.emoji.EmojiTextView;
-import org.thoughtcrime.securesms.contacts.avatars.FallbackContactPhoto;
-import org.thoughtcrime.securesms.contacts.avatars.ResourceContactPhoto;
 import org.thoughtcrime.securesms.database.SignalDatabase;
 import org.thoughtcrime.securesms.databinding.ConversationHeaderViewBinding;
+import org.thoughtcrime.securesms.fonts.SignalSymbols;
 import org.thoughtcrime.securesms.recipients.Recipient;
 import org.thoughtcrime.securesms.util.ContextUtil;
 import org.thoughtcrime.securesms.util.LongClickMovementMethod;
@@ -49,8 +48,6 @@ public class ConversationHeaderView extends ConstraintLayout {
     inflate(getContext(), R.layout.conversation_header_view, this);
 
     binding = ConversationHeaderViewBinding.bind(this);
-
-    binding.messageRequestAvatar.setFallbackPhotoProvider(new FallbackPhotoProvider());
   }
 
   public void setBadge(@Nullable Recipient recipient) {
@@ -64,7 +61,7 @@ public class ConversationHeaderView extends ConstraintLayout {
   public void setAvatar(@NonNull RequestManager requestManager, @Nullable Recipient recipient) {
     binding.messageRequestAvatar.setAvatar(requestManager, recipient, false);
 
-    if (recipient != null && recipient.shouldBlurAvatar() && recipient.getContactPhoto() != null) {
+    if (recipient != null && recipient.getShouldBlurAvatar() && recipient.getContactPhoto() != null) {
       binding.messageRequestAvatarTapToView.setVisibility(VISIBLE);
       binding.messageRequestAvatarTapToView.setOnClickListener(v -> {
         SignalExecutors.BOUNDED.execute(() -> SignalDatabase.recipients().manuallyShowAvatar(recipient.getId()));
@@ -75,11 +72,22 @@ public class ConversationHeaderView extends ConstraintLayout {
     }
   }
 
-  public String setTitle(@NonNull Recipient recipient) {
-    SpannableStringBuilder title = new SpannableStringBuilder(recipient.isSelf() ? getContext().getString(R.string.note_to_self) : recipient.getDisplayNameOrUsername(getContext()));
-    if (recipient.showVerified()) {
+  public String setTitle(@NonNull Recipient recipient, @NonNull Runnable onTitleClicked) {
+    SpannableStringBuilder title = new SpannableStringBuilder(recipient.isSelf() ? getContext().getString(R.string.note_to_self) : recipient.getDisplayName(getContext()));
+    if (recipient.getShowVerified()) {
       SpanUtil.appendCenteredImageSpan(title, ContextUtil.requireDrawable(getContext(), R.drawable.ic_official_28), 28, 28);
     }
+
+    if (recipient.isIndividual() && !recipient.isSelf()) {
+      CharSequence chevronRight = SignalSymbols.getSpannedString(getContext(), SignalSymbols.Weight.BOLD, SignalSymbols.Glyph.CHEVRON_RIGHT);
+      title.append(" ");
+      title.append(SpanUtil.ofSize(chevronRight, 24));
+
+      binding.messageRequestTitle.setOnClickListener(v -> onTitleClicked.run());
+    } else {
+      binding.messageRequestTitle.setOnClickListener(null);
+    }
+
     binding.messageRequestTitle.setText(title);
     return title.toString();
   }
@@ -177,29 +185,12 @@ public class ConversationHeaderView extends ConstraintLayout {
   private @NonNull CharSequence prependIcon(@NonNull CharSequence input, @DrawableRes int iconRes) {
     Drawable drawable = ContextCompat.getDrawable(getContext(), iconRes);
     Preconditions.checkNotNull(drawable);
-    drawable.setBounds(0, 0, (int) DimensionUnit.DP.toPixels(20), (int) DimensionUnit.DP.toPixels(20));
+    drawable.setBounds(0, 0, (int) DimensionUnit.SP.toPixels(20), (int) DimensionUnit.SP.toPixels(20));
     drawable.setColorFilter(ContextCompat.getColor(getContext(), R.color.signal_colorOnSurface), PorterDuff.Mode.SRC_ATOP);
 
     return new SpannableStringBuilder()
         .append(SpanUtil.buildCenteredImageSpan(drawable))
-        .append(SpanUtil.space(8, DimensionUnit.DP))
+        .append(SpanUtil.space(8, DimensionUnit.SP))
         .append(input);
-  }
-
-  private static final class FallbackPhotoProvider extends Recipient.FallbackPhotoProvider {
-    @Override
-    public @NonNull FallbackContactPhoto getPhotoForRecipientWithoutName() {
-      return new ResourceContactPhoto(R.drawable.ic_profile_64);
-    }
-
-    @Override
-    public @NonNull FallbackContactPhoto getPhotoForGroup() {
-      return new ResourceContactPhoto(R.drawable.ic_group_64);
-    }
-
-    @Override
-    public @NonNull FallbackContactPhoto getPhotoForLocalNumber() {
-      return new ResourceContactPhoto(R.drawable.ic_note_64);
-    }
   }
 }

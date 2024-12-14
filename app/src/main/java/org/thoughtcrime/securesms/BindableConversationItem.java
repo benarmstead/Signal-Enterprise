@@ -1,6 +1,7 @@
 package org.thoughtcrime.securesms;
 
 import android.net.Uri;
+import android.view.GestureDetector;
 import android.view.View;
 
 import androidx.annotation.NonNull;
@@ -58,6 +59,10 @@ public interface BindableConversationItem extends Unbindable, GiphyMp4Playable, 
 
   void setEventListener(@Nullable EventListener listener);
 
+  default void setGestureDetector(@Nullable GestureDetector gestureDetector) {
+    // Intentionally Blank.
+  }
+
   default void setParentScrolling(boolean isParentScrolling) {
     // Intentionally Blank.
   }
@@ -107,6 +112,7 @@ public interface BindableConversationItem extends Unbindable, GiphyMp4Playable, 
     void onInMemoryMessageClicked(@NonNull InMemoryMessageRecord messageRecord);
     void onViewGroupDescriptionChange(@Nullable GroupId groupId, @NonNull String description, boolean isMessageRequestAccepted);
     void onChangeNumberUpdateContact(@NonNull Recipient recipient);
+    void onChangeProfileNameUpdateContact(@NonNull Recipient recipient);
     void onCallToAction(@NonNull String action);
     void onDonateClicked();
     void onBlockJoinRequest(@NonNull Recipient recipient);
@@ -120,11 +126,14 @@ public interface BindableConversationItem extends Unbindable, GiphyMp4Playable, 
     void onViewGiftBadgeClicked(@NonNull MessageRecord messageRecord);
     void onGiftBadgeRevealed(@NonNull MessageRecord messageRecord);
     void goToMediaPreview(ConversationItem parent, View sharedElement, MediaIntentFactory.MediaPreviewArgs args);
-    void onEditedIndicatorClicked(@NonNull MessageRecord messageRecord);
+    void onEditedIndicatorClicked(@NonNull ConversationMessage conversationMessage);
     void onShowGroupDescriptionClicked(@NonNull String groupName, @NonNull String description, boolean shouldLinkifyWebLinks);
     void onJoinCallLink(@NonNull CallLinkRootKey callLinkRootKey);
     void onShowSafetyTips(boolean forGroup);
     void onReportSpamLearnMoreClicked();
     void onMessageRequestAcceptOptionsClicked();
+    void onItemDoubleClick(MultiselectPart multiselectPart);
+    void onPaymentTombstoneClicked();
+    void onDisplayMediaNoLongerAvailableSheet();
   }
 }

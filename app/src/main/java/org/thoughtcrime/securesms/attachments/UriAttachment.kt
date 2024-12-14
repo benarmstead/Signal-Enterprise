@@ -8,12 +8,13 @@ import org.thoughtcrime.securesms.blurhash.BlurHash
 import org.thoughtcrime.securesms.database.AttachmentTable.TransformProperties
 import org.thoughtcrime.securesms.stickers.StickerLocator
 import java.util.Objects
+import java.util.UUID
 
 class UriAttachment : Attachment {
 
   constructor(
     uri: Uri,
-    contentType: String,
+    contentType: String?,
     transferState: Int,
     size: Long,
     fileName: String?,
@@ -46,9 +47,10 @@ class UriAttachment : Attachment {
     transformProperties = transformProperties
   )
 
+  @JvmOverloads
   constructor(
     dataUri: Uri,
-    contentType: String,
+    contentType: String?,
     transferState: Int,
     size: Long,
     width: Int,
@@ -63,15 +65,17 @@ class UriAttachment : Attachment {
     stickerLocator: StickerLocator?,
     blurHash: BlurHash?,
     audioHash: AudioHash?,
-    transformProperties: TransformProperties?
+    transformProperties: TransformProperties?,
+    uuid: UUID? = UUID.randomUUID()
   ) : super(
     contentType = contentType,
     transferState = transferState,
     size = size,
     fileName = fileName,
-    cdnNumber = 0,
+    cdn = Cdn.CDN_0,
     remoteLocation = null,
     remoteKey = null,
+    remoteIv = null,
     remoteDigest = null,
     incrementalDigest = null,
     fastPreflightId = fastPreflightId,
@@ -87,7 +91,8 @@ class UriAttachment : Attachment {
     stickerLocator = stickerLocator,
     blurHash = blurHash,
     audioHash = audioHash,
-    transformProperties = transformProperties
+    transformProperties = transformProperties,
+    uuid = uuid
   ) {
     uri = Objects.requireNonNull(dataUri)
   }
@@ -98,6 +103,7 @@ class UriAttachment : Attachment {
 
   override val uri: Uri
   override val publicUri: Uri? = null
+  override val thumbnailUri: Uri? = null
 
   override fun writeToParcel(dest: Parcel, flags: Int) {
     super.writeToParcel(dest, flags)

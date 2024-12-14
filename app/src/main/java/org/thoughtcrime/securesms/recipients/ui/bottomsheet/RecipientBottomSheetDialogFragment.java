@@ -4,8 +4,6 @@ import android.app.Activity;
 import android.content.ActivityNotFoundException;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.graphics.drawable.Drawable;
-import android.graphics.drawable.InsetDrawable;
 import android.os.Bundle;
 import android.text.SpannableStringBuilder;
 import android.text.TextUtils;
@@ -16,33 +14,32 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.activity.result.ActivityResultLauncher;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.DialogFragment;
-import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment;
 
-import org.signal.core.util.DimensionUnit;
 import org.signal.core.util.logging.Log;
 import org.thoughtcrime.securesms.R;
 import org.thoughtcrime.securesms.avatar.view.AvatarView;
 import org.thoughtcrime.securesms.badges.BadgeImageView;
 import org.thoughtcrime.securesms.badges.view.ViewBadgeBottomSheetDialogFragment;
+import org.thoughtcrime.securesms.calls.YouAreAlreadyInACallSnackbar;
 import org.thoughtcrime.securesms.components.settings.DSLSettingsIcon;
 import org.thoughtcrime.securesms.components.settings.conversation.preferences.ButtonStripPreference;
-import org.thoughtcrime.securesms.contacts.avatars.FallbackContactPhoto;
-import org.thoughtcrime.securesms.contacts.avatars.FallbackPhoto80dp;
+import org.thoughtcrime.securesms.fonts.SignalSymbols;
 import org.thoughtcrime.securesms.groups.GroupId;
-import org.thoughtcrime.securesms.keyvalue.SignalStore;
+import org.thoughtcrime.securesms.nicknames.NicknameActivity;
 import org.thoughtcrime.securesms.recipients.Recipient;
 import org.thoughtcrime.securesms.recipients.RecipientExporter;
 import org.thoughtcrime.securesms.recipients.RecipientId;
 import org.thoughtcrime.securesms.recipients.RecipientUtil;
 import org.thoughtcrime.securesms.recipients.ui.about.AboutSheet;
-import org.thoughtcrime.securesms.recipients.ui.about.AboutSheetKt;
 import org.thoughtcrime.securesms.util.BottomSheetUtil;
 import org.thoughtcrime.securesms.util.ContextUtil;
 import org.thoughtcrime.securesms.util.SpanUtil;
@@ -73,6 +70,7 @@ public final class RecipientBottomSheetDialogFragment extends BottomSheetDialogF
   private AvatarView               avatar;
   private TextView                 fullName;
   private TextView                 about;
+  private TextView                 nickname;
   private TextView                 blockButton;
   private TextView                 unblockButton;
   private TextView                 addContactButton;
@@ -90,6 +88,8 @@ public final class RecipientBottomSheetDialogFragment extends BottomSheetDialogF
   private Callback                 callback;
 
   private ButtonStripPreference.ViewHolder buttonStripViewHolder;
+
+  private ActivityResultLauncher<NicknameActivity.Args> nicknameLauncher;
 
   public static void show(FragmentManager fragmentManager, @NonNull RecipientId recipientId, @Nullable GroupId groupId) {
     Recipient recipient = Recipient.resolved(recipientId);
@@ -126,6 +126,7 @@ public final class RecipientBottomSheetDialogFragment extends BottomSheetDialogF
     avatar                 = view.findViewById(R.id.rbs_recipient_avatar);
     fullName               = view.findViewById(R.id.rbs_full_name);
     about                  = view.findViewById(R.id.rbs_about);
+    nickname               = view.findViewById(R.id.rbs_nickname_button);
     blockButton            = view.findViewById(R.id.rbs_block_button);
     unblockButton          = view.findViewById(R.id.rbs_unblock_button);
     addContactButton       = view.findViewById(R.id.rbs_add_contact_button);
@@ -149,6 +150,8 @@ public final class RecipientBottomSheetDialogFragment extends BottomSheetDialogF
   public void onViewCreated(@NonNull View fragmentView, @Nullable Bundle savedInstanceState) {
     super.onViewCreated(fragmentView, savedInstanceState);
 
+    nicknameLauncher = registerForActivityResult(new NicknameActivity.Contract(), (b) -> {});
+
     Bundle      arguments   = requireArguments();
     RecipientId recipientId = RecipientId.from(Objects.requireNonNull(arguments.getString(ARGS_RECIPIENT_ID)));
     GroupId     groupId     = GroupId.parseNullableOrThrow(arguments.getString(ARGS_GROUP_ID));
@@ -163,13 +166,6 @@ public final class RecipientBottomSheetDialogFragment extends BottomSheetDialogF
 
     viewModel.getRecipient().observe(getViewLifecycleOwner(), recipient -> {
       interactionsContainer.setVisibility(recipient.isSelf() ? View.GONE : View.VISIBLE);
-
-      avatar.setFallbackPhotoProvider(new Recipient.FallbackPhotoProvider() {
-        @Override
-        public @NonNull FallbackContactPhoto getPhotoForLocalNumber() {
-          return new FallbackPhoto80dp(R.drawable.ic_note_80, recipient.getAvatarColor());
-        }
-      });
       avatar.displayChatAvatar(recipient);
 
       if (!recipient.isSelf()) {
@@ -187,22 +183,39 @@ public final class RecipientBottomSheetDialogFragment extends BottomSheetDialogF
                                        : recipient.getDisplayName(requireContext());
       fullName.setVisibility(TextUtils.isEmpty(name) ? View.GONE : View.VISIBLE);
       SpannableStringBuilder nameBuilder = new SpannableStringBuilder(name);
-      if (recipient.showVerified()) {
-        SpanUtil.appendCenteredImageSpan(nameBuilder, ContextUtil.requireDrawable(requireContext(), R.drawable.ic_official_28), 28, 28);
+      if (recipient.getShowVerified()) {
+        SpanUtil.appendSpacer(nameBuilder, 8);
+        SpanUtil.appendCenteredImageSpanWithoutSpace(nameBuilder, ContextUtil.requireDrawable(requireContext(), R.drawable.ic_official_28), 28, 28);
+      } else if (recipient.isSystemContact()) {
+        CharSequence systemContactGlyph = SignalSymbols.getSpannedString(requireContext(),
+                                                                         SignalSymbols.Weight.BOLD,
+                                                                         SignalSymbols.Glyph.PERSON_CIRCLE);
+
+        nameBuilder.append(" ");
+        nameBuilder.append(SpanUtil.ofSize(systemContactGlyph, 20));
       }
 
       if (!recipient.isSelf() && recipient.isIndividual()) {
-        Drawable drawable = ContextUtil.requireDrawable(requireContext(), R.drawable.symbol_chevron_right_24_color_on_secondary_container);
-        drawable.setBounds(0, 0, (int) DimensionUnit.DP.toPixels(24), (int) DimensionUnit.DP.toPixels(24));
+        CharSequence chevronGlyph = SignalSymbols.getSpannedString(requireContext(),
+                                                                   SignalSymbols.Weight.BOLD,
+                                                                   SignalSymbols.Glyph.CHEVRON_RIGHT);
 
-        Drawable insetDrawable = new InsetDrawable(drawable, 0, 0, 0, (int) DimensionUnit.DP.toPixels(4));
-
-        SpanUtil.appendBottomImageSpan(nameBuilder, insetDrawable, 24, 28);
+        nameBuilder.append(" ");
+        nameBuilder.append(SpanUtil.color(ContextCompat.getColor(requireContext(), R.color.signal_colorOutline),
+                                          SpanUtil.ofSize(chevronGlyph, 24)));
 
         fullName.setText(nameBuilder);
         fullName.setOnClickListener(v -> {
           dismiss();
           AboutSheet.create(recipient).show(getParentFragmentManager(), null);
+        });
+
+        nickname.setVisibility(View.VISIBLE);
+        nickname.setOnClickListener(v -> {
+          nicknameLauncher.launch(new NicknameActivity.Args(
+              recipientId,
+              false
+          ));
         });
       }
 
@@ -230,7 +243,7 @@ public final class RecipientBottomSheetDialogFragment extends BottomSheetDialogF
         unblockButton.setVisibility(View.GONE);
       }
 
-      boolean isAudioAvailable = (recipient.isRegistered() || SignalStore.misc().getSmsExportPhase().allowSmsFeatures()) &&
+      boolean isAudioAvailable = recipient.isRegistered() &&
                                  !recipient.isGroup() &&
                                  !recipient.isBlocked() &&
                                  !recipient.isSelf() &&
@@ -258,12 +271,12 @@ public final class RecipientBottomSheetDialogFragment extends BottomSheetDialogF
             return Unit.INSTANCE;
           },
           () -> {
-            viewModel.onSecureVideoCallClicked(requireActivity());
+            viewModel.onSecureVideoCallClicked(requireActivity(), () -> YouAreAlreadyInACallSnackbar.show(requireView()));
             return Unit.INSTANCE;
           },
           () -> {
             if (buttonStripState.isAudioSecure()) {
-              viewModel.onSecureCallClicked(requireActivity());
+              viewModel.onSecureCallClicked(requireActivity(), () -> YouAreAlreadyInACallSnackbar.show(requireView()));
             } else {
               viewModel.onInsecureCallClicked(requireActivity());
             }
@@ -279,7 +292,7 @@ public final class RecipientBottomSheetDialogFragment extends BottomSheetDialogF
         buttonStrip.setVisibility(View.GONE);
       }
 
-      if (recipient.isSystemContact() || recipient.isGroup() || recipient.isSelf() || recipient.isBlocked() || recipient.isReleaseNotes() || !recipient.hasE164() || !recipient.shouldShowE164()) {
+      if (recipient.isSystemContact() || recipient.isGroup() || recipient.isSelf() || recipient.isBlocked() || recipient.isReleaseNotes() || !recipient.getHasE164() || !recipient.getShouldShowE164()) {
         addContactButton.setVisibility(View.GONE);
       } else {
         addContactButton.setVisibility(View.VISIBLE);

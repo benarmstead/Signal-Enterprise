@@ -41,6 +41,8 @@ class TransferControlView @JvmOverloads constructor(context: Context, attrs: Att
   private var state = TransferControlViewState()
   private val progressUpdateDebouncer: ThrottledDebouncer = ThrottledDebouncer(100)
 
+  private var mode: Mode = Mode.GONE
+
   init {
     tag = uuid
     binding = TransferControlsViewBinding.inflate(LayoutInflater.from(context), this)
@@ -70,6 +72,10 @@ class TransferControlView @JvmOverloads constructor(context: Context, attrs: Att
     state = newState
   }
 
+  fun isGone(): Boolean {
+    return mode == Mode.GONE
+  }
+
   private fun applyState(currentState: TransferControlViewState) {
     val mode = deriveMode(currentState)
     verboseLog("New state applying, mode = $mode")
@@ -92,6 +98,7 @@ class TransferControlView @JvmOverloads constructor(context: Context, attrs: Att
       Mode.RETRY_UPLOADING -> displayRetry(currentState, true)
       Mode.GONE -> displayChildrenAsGone()
     }
+    this.mode = mode
   }
 
   private fun deriveMode(currentState: TransferControlViewState): Mode {
@@ -522,6 +529,8 @@ class TransferControlView @JvmOverloads constructor(context: Context, attrs: Att
         val existingEvent = mutableMap[attachment]
         if (existingEvent == null || updateEvent.completed > existingEvent.completed) {
           mutableMap[attachment] = updateEvent
+        } else if (updateEvent.completed < 0) {
+          mutableMap.remove(attachment)
         }
         verboseLog("onEventAsync compression update")
         return@updateState it.copy(compressionProgress = mutableMap.toMap())
@@ -531,6 +540,8 @@ class TransferControlView @JvmOverloads constructor(context: Context, attrs: Att
         val existingEvent = mutableMap[attachment]
         if (existingEvent == null || updateEvent.completed > existingEvent.completed) {
           mutableMap[attachment] = updateEvent
+        } else if (updateEvent.completed < 0) {
+          mutableMap.remove(attachment)
         }
         verboseLog("onEventAsync network update")
         return@updateState it.copy(networkProgress = mutableMap.toMap())
@@ -687,7 +698,7 @@ class TransferControlView @JvmOverloads constructor(context: Context, attrs: Att
       }
 
       Mode.DOWNLOADING_GALLERY, Mode.DOWNLOADING_SINGLE_ITEM, Mode.DOWNLOADING_VIDEO_PLAYABLE, Mode.UPLOADING_GALLERY, Mode.UPLOADING_SINGLE_ITEM -> {
-        if (currentState.networkProgress.sumCompleted() == 0L || isCompressing(currentState)) {
+        if (currentState.isUpload && (currentState.networkProgress.sumCompleted() == 0L || isCompressing(currentState))) {
           binding.secondaryDetailsText.updateLayoutParams {
             width = ViewGroup.LayoutParams.WRAP_CONTENT
           }

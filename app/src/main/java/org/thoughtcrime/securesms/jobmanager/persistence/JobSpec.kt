@@ -14,7 +14,8 @@ data class JobSpec(
   val serializedInputData: ByteArray?,
   val isRunning: Boolean,
   val isMemoryOnly: Boolean,
-  val priority: Int
+  val globalPriority: Int,
+  val queuePriority: Int
 ) {
 
   fun withNextBackoffInterval(updated: Long): JobSpec {
@@ -26,7 +27,7 @@ data class JobSpec(
   }
 
   override fun toString(): String {
-    return "id: JOB::$id | factoryKey: $factoryKey | queueKey: $queueKey | createTime: $createTime | lastRunAttemptTime: $lastRunAttemptTime | nextBackoffInterval: $nextBackoffInterval | runAttempt: $runAttempt | maxAttempts: $maxAttempts | lifespan: $lifespan | isRunning: $isRunning | memoryOnly: $isMemoryOnly"
+    return "id: JOB::$id | factoryKey: $factoryKey | queueKey: $queueKey | createTime: $createTime | lastRunAttemptTime: $lastRunAttemptTime | nextBackoffInterval: $nextBackoffInterval | runAttempt: $runAttempt | maxAttempts: $maxAttempts | lifespan: $lifespan | isRunning: $isRunning | memoryOnly: $isMemoryOnly | globalPriority: $globalPriority | queuePriorty: $queuePriority"
   }
 
   override fun equals(other: Any?): Boolean {
@@ -47,11 +48,15 @@ data class JobSpec(
     if (serializedData != null) {
       if (other.serializedData == null) return false
       if (!serializedData.contentEquals(other.serializedData)) return false
-    } else if (other.serializedData != null) return false
+    } else if (other.serializedData != null) {
+      return false
+    }
     if (serializedInputData != null) {
       if (other.serializedInputData == null) return false
       if (!serializedInputData.contentEquals(other.serializedInputData)) return false
-    } else if (other.serializedInputData != null) return false
+    } else if (other.serializedInputData != null) {
+      return false
+    }
     if (isRunning != other.isRunning) return false
     if (isMemoryOnly != other.isMemoryOnly) return false
 

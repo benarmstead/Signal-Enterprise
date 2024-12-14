@@ -325,8 +325,10 @@ public class QuoteView extends ConstraintLayout implements RecipientForeverObser
 
     // Given that most types have images, we specifically check images last
     if (viewOnceSlide != null) {
+      mediaDescriptionText.setPadding(0, mediaDescriptionText.getPaddingTop(), 0, (int) DimensionUnit.DP.toPixels(8));
       mediaDescriptionText.setText(R.string.QuoteView_view_once_media);
     } else if (audioSlide != null) {
+      mediaDescriptionText.setPadding(0, mediaDescriptionText.getPaddingTop(), 0, (int) DimensionUnit.DP.toPixels(8));
       mediaDescriptionText.setText(R.string.QuoteView_audio);
     } else if (documentSlide != null) {
       mediaDescriptionText.setVisibility(GONE);
@@ -350,6 +352,13 @@ public class QuoteView extends ConstraintLayout implements RecipientForeverObser
   private void setQuoteAttachment(@NonNull RequestManager requestManager, @NonNull CharSequence body, @NonNull SlideDeck slideDeck, boolean originalMissing) {
     boolean outgoing = messageType != MessageType.INCOMING && messageType != MessageType.STORY_REPLY_INCOMING;
     boolean preview  = messageType == MessageType.PREVIEW || messageType == MessageType.STORY_REPLY_PREVIEW;
+
+    if (isStoryReply() && originalMissing) {
+      thumbnailView.setVisibility(GONE);
+      attachmentVideoOVerlayStub.setVisibility(GONE);
+      attachmentNameViewStub.setVisibility(GONE);
+      return;
+    }
 
     // TODO [alex] -- do we need this? mainView.setMinimumHeight(isStoryReply() && originalMissing ? 0 : thumbHeight);
     thumbnailView.setPadding(0, 0, 0, 0);

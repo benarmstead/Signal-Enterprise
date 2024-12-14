@@ -23,10 +23,11 @@ import androidx.appcompat.widget.Toolbar;
 import com.google.android.material.button.MaterialButton;
 
 import org.thoughtcrime.securesms.LoggingFragment;
+import org.thoughtcrime.securesms.PassphraseRequiredActivity;
 import org.thoughtcrime.securesms.R;
 import org.thoughtcrime.securesms.keyvalue.SignalStore;
 import org.thoughtcrime.securesms.pin.PinOptOutDialog;
-import org.thoughtcrime.securesms.registration.RegistrationUtil;
+import org.thoughtcrime.securesms.registration.util.RegistrationUtil;
 import org.thoughtcrime.securesms.util.CommunicationActions;
 import org.thoughtcrime.securesms.util.text.AfterTextChanged;
 import org.thoughtcrime.securesms.util.views.CircularProgressMaterialButton;
@@ -100,7 +101,7 @@ public abstract class BaseSvrPinFragment<ViewModel extends BaseSvrPinViewModel> 
   @Override
   public void onPrepareOptionsMenu(@NonNull Menu menu) {
     if (SignalStore.svr().isRegistrationLockEnabled() ||
-        SignalStore.svr().hasPin() ||
+        SignalStore.svr().hasOptedInWithAccess() ||
         SignalStore.svr().hasOptedOut())
     {
       menu.clear();
@@ -151,8 +152,11 @@ public abstract class BaseSvrPinFragment<ViewModel extends BaseSvrPinViewModel> 
 
   protected void closeNavGraphBranch() {
     Intent activityIntent = requireActivity().getIntent();
-    if (activityIntent != null && activityIntent.hasExtra("next_intent")) {
-      startActivity(activityIntent.getParcelableExtra("next_intent"));
+    if (activityIntent != null && activityIntent.hasExtra(PassphraseRequiredActivity.NEXT_INTENT_EXTRA)) {
+      final Intent nextIntent = activityIntent.getParcelableExtra(PassphraseRequiredActivity.NEXT_INTENT_EXTRA);
+      if (nextIntent != null) {
+        startActivity(nextIntent);
+      }
     }
 
     requireActivity().finish();

@@ -141,7 +141,7 @@ public class UsernameEditFragment extends LoggingFragment {
   }
 
   private void promptOrSubmitUsername() {
-    if (args.getMode() == UsernameEditMode.RECOVERY) {
+    if (viewModel.isSameUsernameRecovery()) {
       new MaterialAlertDialogBuilder(requireContext())
           .setMessage(R.string.UsernameEditFragment_recovery_dialog_confirmation)
           .setPositiveButton(android.R.string.ok, ((dialog, which) -> {
@@ -182,7 +182,7 @@ public class UsernameEditFragment extends LoggingFragment {
       case DISCRIMINATOR_TOO_LONG -> getString(R.string.UsernameEditFragment__invalid_username_enter_a_maximum_of_d_digits, UsernameUtil.MAX_DISCRIMINATOR_LENGTH);
       case DISCRIMINATOR_TOO_SHORT -> getString(R.string.UsernameEditFragment__invalid_username_enter_a_minimum_of_d_digits, UsernameUtil.MIN_DISCRIMINATOR_LENGTH);
       case DISCRIMINATOR_CANNOT_BE_00 -> getString(R.string.UsernameEditFragment__this_number_cant_be_00);
-      case DISCRIMINATOR_CANNOT_START_WITH_00 -> getString(R.string.UsernameEditFragment__this_number_cant_start_with_00);
+      case DISCRIMINATOR_CANNOT_START_WITH_0 -> getString(R.string.UsernameEditFragment__this_number_cant_start_with_0);
     };
 
     int colorRes = error != null ? R.color.signal_colorError : R.color.signal_colorPrimary;
@@ -316,6 +316,9 @@ public class UsernameEditFragment extends LoggingFragment {
         break;
       case NETWORK_FAILURE:
         Toast.makeText(requireContext(), R.string.UsernameEditFragment_encountered_a_network_error, Toast.LENGTH_SHORT).show();
+        break;
+      case RATE_LIMIT_EXCEEDED:
+        Toast.makeText(requireContext(), R.string.UsernameEditFragment_rate_limit_exceeded_error, Toast.LENGTH_SHORT).show();
         break;
       case SKIPPED:
         closeScreen();

@@ -144,11 +144,32 @@ public class ApplicationMigrations {
     static final int SVR2_ENCLAVE_UPDATE           = 100;
     static final int STORAGE_LOCAL_UNKNOWNS_FIX    = 101;
     static final int PNP_LAUNCH                    = 102;
+    static final int EMOJI_VERSION_10              = 103;
+    static final int ATTACHMENT_HASH_BACKFILL      = 104;
+    static final int SUBSCRIBER_ID                 = 105;
+    static final int CONTACT_LINK_REBUILD          = 106;
+    static final int DELETE_SYNC_CAPABILITY        = 107;
+    static final int REBUILD_MESSAGE_FTS_INDEX_5   = 108;
+    static final int EXPIRE_TIMER_CAPABILITY       = 109;
+    static final int REBUILD_MESSAGE_FTS_INDEX_6   = 110;
+    static final int EXPIRE_TIMER_CAPABILITY_2     = 111;
+//    static final int BACKFILL_DIGESTS              = 112;
+    static final int BACKFILL_DIGESTS_V2           = 113;
+    static final int CALL_LINK_STORAGE_SYNC        = 114;
+    static final int WALLPAPER_MIGRATION           = 115;
+    static final int BACKFILL_DIGESTS_V3           = 116;
+    static final int SVR2_ENCLAVE_UPDATE_2         = 117;
+    static final int WALLPAPER_MIGRATION_CLEANUP   = 118;
+    static final int AEP_INTRODUCTION              = 119;
+    static final int GROUP_EXTRAS_DB_FIX           = 120;
+    static final int EMOJI_SEARCH_INDEX_CHECK_2    = 121;
+    static final int QUOTE_AUTHOR_FIX              = 122;
+    static final int BAD_E164_FIX                  = 123;
   }
 
-  public static final int CURRENT_VERSION = 102;
+  public static final int CURRENT_VERSION = 123;
 
-  /**
+ /**
    * This *must* be called after the {@link JobManager} has been instantiated, but *before* the call
    * to {@link JobManager#beginJobLoop()}. Otherwise, other non-migration jobs may have started
    * executing before we add the migration jobs.
@@ -164,8 +185,8 @@ public class ApplicationMigrations {
       VersionTracker.updateLastSeenVersion(context);
       return;
     } else {
-      Log.d(TAG, "About to update. Clearing deprecation flag.");
-      SignalStore.misc().clearClientDeprecated();
+      Log.d(TAG, "About to update. Clearing deprecation flag.", true);
+      SignalStore.misc().setClientDeprecated(false);
     }
 
     final int lastSeenVersion = TextSecurePreferences.getAppMigrationVersion(context);
@@ -655,6 +676,86 @@ public class ApplicationMigrations {
 
     if (lastSeenVersion < Version.PNP_LAUNCH) {
       jobs.put(Version.PNP_LAUNCH, new PnpLaunchMigrationJob());
+    }
+
+    if (lastSeenVersion < Version.EMOJI_VERSION_10) {
+      jobs.put(Version.EMOJI_VERSION_10, new EmojiDownloadMigrationJob());
+    }
+
+    if (lastSeenVersion < Version.ATTACHMENT_HASH_BACKFILL) {
+      jobs.put(Version.ATTACHMENT_HASH_BACKFILL, new AttachmentHashBackfillMigrationJob());
+    }
+
+    if (lastSeenVersion < Version.SUBSCRIBER_ID) {
+      jobs.put(Version.SUBSCRIBER_ID, new SubscriberIdMigrationJob());
+    }
+
+    if (lastSeenVersion < Version.CONTACT_LINK_REBUILD) {
+      jobs.put(Version.CONTACT_LINK_REBUILD, new ContactLinkRebuildMigrationJob());
+    }
+
+    if (lastSeenVersion < Version.DELETE_SYNC_CAPABILITY) {
+      jobs.put(Version.DELETE_SYNC_CAPABILITY, new AttributesMigrationJob());
+    }
+
+    if (lastSeenVersion < Version.REBUILD_MESSAGE_FTS_INDEX_5) {
+      jobs.put(Version.REBUILD_MESSAGE_FTS_INDEX_5, new RebuildMessageSearchIndexMigrationJob());
+    }
+
+    if (lastSeenVersion < Version.EXPIRE_TIMER_CAPABILITY) {
+      jobs.put(Version.EXPIRE_TIMER_CAPABILITY, new AttributesMigrationJob());
+    }
+
+    if (lastSeenVersion < Version.REBUILD_MESSAGE_FTS_INDEX_6) {
+      jobs.put(Version.REBUILD_MESSAGE_FTS_INDEX_6, new RebuildMessageSearchIndexMigrationJob());
+    }
+
+    if (lastSeenVersion < Version.EXPIRE_TIMER_CAPABILITY_2) {
+      jobs.put(Version.EXPIRE_TIMER_CAPABILITY_2, new AttributesMigrationJob());
+    }
+
+    if (lastSeenVersion < Version.BACKFILL_DIGESTS_V2) {
+      jobs.put(Version.BACKFILL_DIGESTS_V2, new BackfillDigestsMigrationJob());
+    }
+
+    if (lastSeenVersion < Version.CALL_LINK_STORAGE_SYNC) {
+      jobs.put(Version.CALL_LINK_STORAGE_SYNC, new SyncCallLinksMigrationJob());
+    }
+
+    if (lastSeenVersion < Version.WALLPAPER_MIGRATION) {
+      jobs.put(Version.WALLPAPER_MIGRATION, new WallpaperStorageMigrationJob());
+    }
+
+    if (lastSeenVersion < Version.BACKFILL_DIGESTS_V3) {
+      jobs.put(Version.BACKFILL_DIGESTS_V3, new BackfillDigestsForDuplicatesMigrationJob());
+    }
+
+    if (lastSeenVersion < Version.SVR2_ENCLAVE_UPDATE_2) {
+      jobs.put(Version.SVR2_ENCLAVE_UPDATE_2,  new Svr2MirrorMigrationJob());
+    }
+
+    if (lastSeenVersion < Version.WALLPAPER_MIGRATION_CLEANUP) {
+      jobs.put(Version.WALLPAPER_MIGRATION_CLEANUP, new WallpaperCleanupMigrationJob());
+    }
+
+    if (lastSeenVersion < Version.AEP_INTRODUCTION) {
+      jobs.put(Version.AEP_INTRODUCTION, new AepMigrationJob());
+    }
+
+    if (lastSeenVersion < Version.GROUP_EXTRAS_DB_FIX) {
+      jobs.put(Version.GROUP_EXTRAS_DB_FIX, new DatabaseMigrationJob());
+    }
+
+    if (lastSeenVersion < Version.EMOJI_SEARCH_INDEX_CHECK_2) {
+      jobs.put(Version.EMOJI_SEARCH_INDEX_CHECK_2, new EmojiSearchIndexCheckMigrationJob());
+    }
+
+    if (lastSeenVersion < Version.QUOTE_AUTHOR_FIX) {
+      jobs.put(Version.QUOTE_AUTHOR_FIX, new DatabaseMigrationJob());
+    }
+
+    if (lastSeenVersion < Version.BAD_E164_FIX) {
+      jobs.put(Version.BAD_E164_FIX, new BadE164MigrationJob());
     }
 
     return jobs;

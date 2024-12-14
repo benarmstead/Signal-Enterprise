@@ -1,42 +1,39 @@
 /**
  * Copyright (C) 2014-2016 Open Whisper Systems
- *
+ * <p>
  * Licensed according to the LICENSE file in this repository.
  */
 
 package org.whispersystems.signalservice.api.messages.multidevice;
 
 import org.signal.libsignal.zkgroup.profiles.ProfileKey;
-import org.whispersystems.signalservice.api.messages.SignalServiceAttachmentStream;
-import org.whispersystems.signalservice.api.push.ServiceId;
 import org.whispersystems.signalservice.api.push.ServiceId.ACI;
-import org.whispersystems.signalservice.api.push.SignalServiceAddress;
 
 import java.util.Optional;
 
 public class DeviceContact {
 
-  private final Optional<ACI>                           aci;
-  private final Optional<String>                        e164;
-  private final Optional<String>                        name;
-  private final Optional<SignalServiceAttachmentStream> avatar;
-  private final Optional<String>                        color;
-  private final Optional<VerifiedMessage>               verified;
-  private final Optional<ProfileKey>                    profileKey;
-  private final boolean                                 blocked;
-  private final Optional<Integer>                       expirationTimer;
-  private final Optional<Integer>                       inboxPosition;
-  private final boolean                                 archived;
+  private final Optional<ACI>                 aci;
+  private final Optional<String>              e164;
+  private final Optional<String>              name;
+  private final Optional<DeviceContactAvatar> avatar;
+  private final Optional<String>              color;
+  private final Optional<VerifiedMessage>     verified;
+  private final Optional<ProfileKey>          profileKey;
+  private final Optional<Integer>             expirationTimer;
+  private final Optional<Integer>             expirationTimerVersion;
+  private final Optional<Integer>             inboxPosition;
+  private final boolean                       archived;
 
   public DeviceContact(Optional<ACI> aci,
                        Optional<String> e164,
                        Optional<String> name,
-                       Optional<SignalServiceAttachmentStream> avatar,
+                       Optional<DeviceContactAvatar> avatar,
                        Optional<String> color,
                        Optional<VerifiedMessage> verified,
                        Optional<ProfileKey> profileKey,
-                       boolean blocked,
                        Optional<Integer> expirationTimer,
+                       Optional<Integer> expirationTimerVersion,
                        Optional<Integer> inboxPosition,
                        boolean archived)
   {
@@ -44,20 +41,20 @@ public class DeviceContact {
       throw new IllegalArgumentException("Must have either ACI or E164");
     }
 
-    this.aci             = aci;
-    this.e164            = e164;
-    this.name            = name;
-    this.avatar          = avatar;
-    this.color           = color;
-    this.verified        = verified;
-    this.profileKey      = profileKey;
-    this.blocked         = blocked;
-    this.expirationTimer = expirationTimer;
-    this.inboxPosition   = inboxPosition;
-    this.archived        = archived;
+    this.aci                    = aci;
+    this.e164                   = e164;
+    this.name                   = name;
+    this.avatar                 = avatar;
+    this.color                  = color;
+    this.verified               = verified;
+    this.profileKey             = profileKey;
+    this.expirationTimer        = expirationTimer;
+    this.expirationTimerVersion = expirationTimerVersion;
+    this.inboxPosition          = inboxPosition;
+    this.archived               = archived;
   }
 
-  public Optional<SignalServiceAttachmentStream> getAvatar() {
+  public Optional<DeviceContactAvatar> getAvatar() {
     return avatar;
   }
 
@@ -85,12 +82,12 @@ public class DeviceContact {
     return profileKey;
   }
 
-  public boolean isBlocked() {
-    return blocked;
-  }
-
   public Optional<Integer> getExpirationTimer() {
     return expirationTimer;
+  }
+
+  public Optional<Integer> getExpirationTimerVersion() {
+    return expirationTimerVersion;
   }
 
   public Optional<Integer> getInboxPosition() {

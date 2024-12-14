@@ -74,7 +74,7 @@ public final class LiveRecipientCache {
       live = recipients.get(id);
 
       if (live == null) {
-        live = new LiveRecipient(context, new Recipient(id));
+        live = new LiveRecipient(context, RecipientCreator.forId(id));
         recipients.put(id, live);
         needsResolve = true;
       } else {
@@ -232,7 +232,7 @@ public final class LiveRecipientCache {
 
       stopwatch.split("thread");
 
-      if (SignalStore.registrationValues().isRegistrationComplete() && SignalStore.account().getAci() != null) {
+      if (SignalStore.registration().isRegistrationComplete() && SignalStore.account().getAci() != null) {
         try (Cursor cursor = SignalDatabase.recipients().getNonGroupContacts(false)) {
           int count = 0;
           while (cursor != null && cursor.moveToNext() && count < CONTACT_CACHE_WARM_MAX) {
@@ -266,6 +266,6 @@ public final class LiveRecipientCache {
   }
 
   private boolean isValidForCache(@NonNull Recipient recipient) {
-    return !recipient.getId().isUnknown() && (recipient.hasServiceId() || recipient.getGroupId().isPresent() || recipient.hasSmsAddress());
+    return !recipient.getId().isUnknown() && (recipient.getHasServiceId() || recipient.getGroupId().isPresent() || recipient.getHasSmsAddress());
   }
 }

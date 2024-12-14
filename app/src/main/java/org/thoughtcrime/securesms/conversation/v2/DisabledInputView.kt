@@ -80,7 +80,7 @@ class DisabledInputView @JvmOverloads constructor(
       create = { MessageRequestsBottomView(context) },
       bind = {
         setMessageRequestData(recipient, messageRequestState)
-        setWallpaperEnabled(recipient.hasWallpaper())
+        setWallpaperEnabled(recipient.hasWallpaper)
 
         setAcceptOnClickListener { listener?.onAcceptMessageRequestClicked() }
         setDeleteOnClickListener { listener?.onDeleteClicked() }
@@ -127,15 +127,17 @@ class DisabledInputView @JvmOverloads constructor(
     )
   }
 
-  fun showAsInviteToSignal(context: Context, recipient: Recipient) {
+  fun showAsInviteToSignal(context: Context, recipient: Recipient, threadContainsSms: Boolean) {
     inviteToSignal = show(
       existingView = inviteToSignal,
       create = { inflater.inflate(R.layout.conversation_activity_sms_export_stub, this, false) },
       bind = {
         findViewById<TextView>(R.id.export_sms_message).text = if (recipient.isMmsGroup) {
           context.getString(R.string.ConversationActivity__sms_messaging_is_no_longer_supported)
-        } else {
+        } else if (threadContainsSms) {
           context.getString(R.string.ConversationActivity__sms_messaging_is_no_longer_supported_in_signal_invite_s_to_to_signal_to_keep_the_conversation_here, recipient.getDisplayName(context))
+        } else {
+          context.getString(R.string.ConversationActivity__this_person_is_no_longer_using_signal)
         }
 
         findViewById<MaterialButton>(R.id.export_sms_button).apply {

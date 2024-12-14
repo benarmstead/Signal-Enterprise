@@ -62,11 +62,15 @@ object MessageConstraintsUtil {
     } else {
       targetMessage
     }
+
+    val isNoteToSelf = targetMessage.toRecipient.isSelf && targetMessage.fromRecipient.isSelf
+
     return isValidRemoteDeleteSend(originalMessage, currentTime) &&
-      targetMessage.revisionNumber < MAX_EDIT_COUNT &&
+      (isNoteToSelf || targetMessage.revisionNumber < MAX_EDIT_COUNT) &&
       !targetMessage.isViewOnceMessage() &&
       !targetMessage.hasAudio() &&
-      !targetMessage.hasSharedContact()
+      !targetMessage.hasSharedContact() &&
+      !targetMessage.hasSticker()
   }
 
   /**
@@ -85,10 +89,11 @@ object MessageConstraintsUtil {
       !message.isRemoteDelete &&
       !message.hasGiftBadge() &&
       !message.isPaymentNotification &&
+      !message.isPaymentTombstone &&
       (currentTime - message.dateSent < SEND_THRESHOLD || message.toRecipient.isSelf)
   }
 
   private fun isSelf(recipientId: RecipientId): Boolean {
-    return Recipient.isSelfSet() && Recipient.self().id == recipientId
+    return Recipient.isSelfSet && Recipient.self().id == recipientId
   }
 }

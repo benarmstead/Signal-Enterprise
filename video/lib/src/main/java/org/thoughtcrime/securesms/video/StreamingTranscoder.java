@@ -6,6 +6,7 @@ import android.media.MediaMetadataRetriever;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
+import androidx.annotation.VisibleForTesting;
 
 import com.google.common.io.CountingOutputStream;
 
@@ -13,9 +14,8 @@ import org.signal.core.util.logging.Log;
 import org.thoughtcrime.securesms.video.exceptions.VideoSizeException;
 import org.thoughtcrime.securesms.video.exceptions.VideoSourceException;
 import org.thoughtcrime.securesms.video.interfaces.TranscoderCancelationSignal;
-import org.thoughtcrime.securesms.video.videoconverter.exceptions.EncodingException;
 import org.thoughtcrime.securesms.video.videoconverter.MediaConverter;
-import org.thoughtcrime.securesms.video.videoconverter.utils.VideoConstants;
+import org.thoughtcrime.securesms.video.videoconverter.exceptions.EncodingException;
 import org.thoughtcrime.securesms.video.videoconverter.mediadatasource.MediaDataSourceMediaInput;
 
 import java.io.FilterOutputStream;
@@ -46,6 +46,7 @@ public final class StreamingTranscoder {
    */
   public StreamingTranscoder(@NonNull MediaDataSource dataSource,
                              @Nullable TranscoderOptions options,
+                             @NonNull TranscodingPreset preset,
                              long upperSizeLimit,
                              boolean allowAudioRemux)
       throws IOException, VideoSourceException
@@ -69,8 +70,8 @@ public final class StreamingTranscoder {
     }
 
     this.inSize         = dataSource.getSize();
-    this.inputBitRate   = VideoBitRateCalculator.bitRate(inSize, duration);
-    this.targetQuality  = new VideoBitRateCalculator(upperSizeLimit).getTargetQuality(duration, inputBitRate);
+    this.inputBitRate   = TranscodingQuality.bitRate(inSize, duration);
+    this.targetQuality  = TranscodingQuality.createFromPreset(preset, duration);
     this.upperSizeLimit = upperSizeLimit;
 
     this.transcodeRequired = inputBitRate >= targetQuality.getTargetTotalBitRate() * 1.2 || inSize > upperSizeLimit || containsLocation(mediaMetadataRetriever) || options != null;
@@ -78,12 +79,14 @@ public final class StreamingTranscoder {
       Log.i(TAG, "Video is within 20% of target bitrate, below the size limit, contained no location metadata or custom options.");
     }
 
-    this.fileSizeEstimate   = targetQuality.getFileSizeEstimate();
+    this.fileSizeEstimate   = targetQuality.getByteCountEstimate();
   }
 
-  public StreamingTranscoder(@NonNull MediaDataSource dataSource,
+  private StreamingTranscoder(@NonNull MediaDataSource dataSource,
                              @Nullable TranscoderOptions options,
+                             String codec,
                              int videoBitrate,
+                             int audioBitrate,
                              int shortEdge,
                              boolean allowAudioRemux)
       throws IOException, VideoSourceException
@@ -102,13 +105,26 @@ public final class StreamingTranscoder {
 
     this.inSize         = dataSource.getSize();
     this.duration       = getDuration(mediaMetadataRetriever);
-    this.inputBitRate   = VideoBitRateCalculator.bitRate(inSize, duration);
-    this.targetQuality  = new TranscodingQuality(videoBitrate, VideoConstants.AUDIO_BIT_RATE, 1.0, duration, shortEdge);
+    this.inputBitRate   = TranscodingQuality.bitRate(inSize, duration);
+    this.targetQuality  = TranscodingQuality.createManuallyForTesting(codec, shortEdge, videoBitrate, audioBitrate, duration);
     this.upperSizeLimit = 0L;
 
     this.transcodeRequired = true;
 
-    this.fileSizeEstimate   = targetQuality.getFileSizeEstimate();
+    this.fileSizeEstimate   = targetQuality.getByteCountEstimate();
+  }
+
+  @VisibleForTesting
+  public static StreamingTranscoder createManuallyForTesting(@NonNull MediaDataSource dataSource,
+                                                             @Nullable TranscoderOptions options,
+                                                             @NonNull @MediaConverter.VideoCodec String codec,
+                                                             int videoBitrate,
+                                                             int audioBitrate,
+                                                             int shortEdge,
+                                                             boolean allowAudioRemux)
+      throws VideoSourceException, IOException
+  {
+    return new StreamingTranscoder(dataSource, options, codec, videoBitrate, audioBitrate, shortEdge, allowAudioRemux);
   }
 
   public void transcode(@NonNull Progress progress,
@@ -157,6 +173,7 @@ public final class StreamingTranscoder {
       outStream = new CountingOutputStream(stream);
     }
     converter.setOutput(outStream);
+    converter.setVideoCodec(targetQuality.getCodec());
     converter.setVideoResolution(targetQuality.getOutputResolution());
     converter.setVideoBitrate(targetQuality.getTargetVideoBitRate());
     converter.setAudioBitrate(targetQuality.getTargetAudioBitRate());
@@ -193,7 +210,7 @@ public final class StreamingTranscoder {
                              numberFormat.format(outSize / 1024),
                              (outSize * 100d) / inSize,
                              (outSize * 100d) / fileSizeEstimate,
-                             numberFormat.format(VideoBitRateCalculator.bitRate(outSize, duration))));
+                             numberFormat.format(TranscodingQuality.bitRate(outSize, duration))));
 
     if (sizeLimitEnabled && outSize > upperSizeLimit) {
       throw new VideoSizeException("Size constraints could not be met!");

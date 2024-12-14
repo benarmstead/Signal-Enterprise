@@ -2,10 +2,11 @@ package org.thoughtcrime.securesms.database.helpers
 
 import android.app.Application
 import android.content.Context
+import android.database.sqlite.SQLiteException
 import net.zetetic.database.sqlcipher.SQLiteDatabase
 import org.signal.core.util.areForeignKeyConstraintsEnabled
 import org.signal.core.util.logging.Log
-import org.signal.core.util.withinTransaction
+import org.thoughtcrime.securesms.database.SignalDatabase
 import org.thoughtcrime.securesms.database.helpers.migration.SignalDatabaseMigration
 import org.thoughtcrime.securesms.database.helpers.migration.V149_LegacyMigrations
 import org.thoughtcrime.securesms.database.helpers.migration.V150_UrgentMslFlagMigration
@@ -77,6 +78,45 @@ import org.thoughtcrime.securesms.database.helpers.migration.V216_PhoneNumberDis
 import org.thoughtcrime.securesms.database.helpers.migration.V217_MessageTableExtrasColumn
 import org.thoughtcrime.securesms.database.helpers.migration.V218_RecipientPniSignatureVerified
 import org.thoughtcrime.securesms.database.helpers.migration.V219_PniPreKeyStores
+import org.thoughtcrime.securesms.database.helpers.migration.V220_PreKeyConstraints
+import org.thoughtcrime.securesms.database.helpers.migration.V221_AddReadColumnToCallEventsTable
+import org.thoughtcrime.securesms.database.helpers.migration.V222_DataHashRefactor
+import org.thoughtcrime.securesms.database.helpers.migration.V223_AddNicknameAndNoteFieldsToRecipientTable
+import org.thoughtcrime.securesms.database.helpers.migration.V224_AddAttachmentArchiveColumns
+import org.thoughtcrime.securesms.database.helpers.migration.V225_AddLocalUserJoinedStateAndGroupCallActiveState
+import org.thoughtcrime.securesms.database.helpers.migration.V226_AddAttachmentMediaIdIndex
+import org.thoughtcrime.securesms.database.helpers.migration.V227_AddAttachmentArchiveTransferState
+import org.thoughtcrime.securesms.database.helpers.migration.V228_AddNameCollisionTables
+import org.thoughtcrime.securesms.database.helpers.migration.V229_MarkMissedCallEventsNotified
+import org.thoughtcrime.securesms.database.helpers.migration.V230_UnreadCountIndices
+import org.thoughtcrime.securesms.database.helpers.migration.V231_ArchiveThumbnailColumns
+import org.thoughtcrime.securesms.database.helpers.migration.V232_CreateInAppPaymentTable
+import org.thoughtcrime.securesms.database.helpers.migration.V233_FixInAppPaymentTableDefaultNotifiedValue
+import org.thoughtcrime.securesms.database.helpers.migration.V234_ThumbnailRestoreStateColumn
+import org.thoughtcrime.securesms.database.helpers.migration.V235_AttachmentUuidColumn
+import org.thoughtcrime.securesms.database.helpers.migration.V236_FixInAppSubscriberCurrencyIfAble
+import org.thoughtcrime.securesms.database.helpers.migration.V237_ResetGroupForceUpdateTimestamps
+import org.thoughtcrime.securesms.database.helpers.migration.V238_AddGroupSendEndorsementsColumns
+import org.thoughtcrime.securesms.database.helpers.migration.V239_MessageFullTextSearchEmojiSupport
+import org.thoughtcrime.securesms.database.helpers.migration.V240_MessageFullTextSearchSecureDelete
+import org.thoughtcrime.securesms.database.helpers.migration.V241_ExpireTimerVersion
+import org.thoughtcrime.securesms.database.helpers.migration.V242_MessageFullTextSearchEmojiSupportV2
+import org.thoughtcrime.securesms.database.helpers.migration.V243_MessageFullTextSearchDisableSecureDelete
+import org.thoughtcrime.securesms.database.helpers.migration.V244_AttachmentRemoteIv
+import org.thoughtcrime.securesms.database.helpers.migration.V245_DeletionTimestampOnCallLinks
+import org.thoughtcrime.securesms.database.helpers.migration.V246_DropThumbnailCdnFromAttachments
+import org.thoughtcrime.securesms.database.helpers.migration.V247_ClearUploadTimestamp
+import org.thoughtcrime.securesms.database.helpers.migration.V250_ClearUploadTimestampV2
+import org.thoughtcrime.securesms.database.helpers.migration.V251_ArchiveTransferStateIndex
+import org.thoughtcrime.securesms.database.helpers.migration.V252_AttachmentOffloadRestoredAtColumn
+import org.thoughtcrime.securesms.database.helpers.migration.V253_CreateChatFolderTables
+import org.thoughtcrime.securesms.database.helpers.migration.V254_AddChatFolderConstraint
+import org.thoughtcrime.securesms.database.helpers.migration.V255_AddCallTableLogIndex
+import org.thoughtcrime.securesms.database.helpers.migration.V256_FixIncrementalDigestColumns
+import org.thoughtcrime.securesms.database.helpers.migration.V257_CreateBackupMediaSyncTable
+import org.thoughtcrime.securesms.database.helpers.migration.V258_FixGroupRevokedInviteeUpdate
+import org.thoughtcrime.securesms.database.helpers.migration.V259_AdjustNotificationProfileMidnightEndTimes
+import org.thoughtcrime.securesms.database.helpers.migration.V260_RemapQuoteAuthors
 
 /**
  * Contains all of the database migrations for [SignalDatabase]. Broken into a separate file for cleanliness.
@@ -156,10 +196,50 @@ object SignalDatabaseMigrations {
     216 to V216_PhoneNumberDiscoverable,
     217 to V217_MessageTableExtrasColumn,
     218 to V218_RecipientPniSignatureVerified,
-    219 to V219_PniPreKeyStores
+    219 to V219_PniPreKeyStores,
+    220 to V220_PreKeyConstraints,
+    221 to V221_AddReadColumnToCallEventsTable,
+    222 to V222_DataHashRefactor,
+    223 to V223_AddNicknameAndNoteFieldsToRecipientTable,
+    224 to V224_AddAttachmentArchiveColumns,
+    225 to V225_AddLocalUserJoinedStateAndGroupCallActiveState,
+    226 to V226_AddAttachmentMediaIdIndex,
+    227 to V227_AddAttachmentArchiveTransferState,
+    228 to V228_AddNameCollisionTables,
+    229 to V229_MarkMissedCallEventsNotified,
+    230 to V230_UnreadCountIndices,
+    231 to V231_ArchiveThumbnailColumns,
+    232 to V232_CreateInAppPaymentTable,
+    233 to V233_FixInAppPaymentTableDefaultNotifiedValue,
+    234 to V234_ThumbnailRestoreStateColumn,
+    235 to V235_AttachmentUuidColumn,
+    236 to V236_FixInAppSubscriberCurrencyIfAble,
+    237 to V237_ResetGroupForceUpdateTimestamps,
+    238 to V238_AddGroupSendEndorsementsColumns,
+    239 to V239_MessageFullTextSearchEmojiSupport,
+    240 to V240_MessageFullTextSearchSecureDelete,
+    241 to V241_ExpireTimerVersion,
+    242 to V242_MessageFullTextSearchEmojiSupportV2,
+    243 to V243_MessageFullTextSearchDisableSecureDelete,
+    244 to V244_AttachmentRemoteIv,
+    245 to V245_DeletionTimestampOnCallLinks,
+    246 to V246_DropThumbnailCdnFromAttachments,
+    247 to V247_ClearUploadTimestamp,
+    // 248 and 249 were originally in 7.18.0, but are now skipped because we needed to hotfix 7.17.6 after 7.18.0 was already released.
+    250 to V250_ClearUploadTimestampV2,
+    251 to V251_ArchiveTransferStateIndex,
+    252 to V252_AttachmentOffloadRestoredAtColumn,
+    253 to V253_CreateChatFolderTables,
+    254 to V254_AddChatFolderConstraint,
+    255 to V255_AddCallTableLogIndex,
+    256 to V256_FixIncrementalDigestColumns,
+    257 to V257_CreateBackupMediaSyncTable,
+    258 to V258_FixGroupRevokedInviteeUpdate,
+    259 to V259_AdjustNotificationProfileMidnightEndTimes,
+    260 to V260_RemapQuoteAuthors
   )
 
-  const val DATABASE_VERSION = 219
+  const val DATABASE_VERSION = 260
 
   @JvmStatic
   fun migrate(context: Application, db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
@@ -172,10 +252,28 @@ object SignalDatabaseMigrations {
         Log.i(TAG, "Running migration for version $version: ${migration.javaClass.simpleName}. Foreign keys: ${migration.enableForeignKeys}")
         val startTime = System.currentTimeMillis()
 
+        var ftsException: SQLiteException? = null
+
         db.setForeignKeyConstraintsEnabled(migration.enableForeignKeys)
-        db.withinTransaction {
+        db.beginTransaction()
+        try {
           migration.migrate(context, db, oldVersion, newVersion)
           db.version = version
+          db.setTransactionSuccessful()
+        } catch (e: SQLiteException) {
+          if (e.message?.contains("invalid fts5 file format") == true || e.message?.contains("vtable constructor failed") == true) {
+            ftsException = e
+          } else {
+            throw e
+          }
+        } finally {
+          db.endTransaction()
+        }
+
+        if (ftsException != null) {
+          Log.w(TAG, "Encountered FTS format issue! Attempting to repair.", ftsException)
+          SignalDatabase.messageSearch.fullyResetTables(db)
+          throw ftsException
         }
 
         Log.i(TAG, "Successfully completed migration for version $version in ${System.currentTimeMillis() - startTime} ms")

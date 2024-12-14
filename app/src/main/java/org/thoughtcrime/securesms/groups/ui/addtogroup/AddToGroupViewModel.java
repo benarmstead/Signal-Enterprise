@@ -8,7 +8,7 @@ import androidx.lifecycle.ViewModelProvider;
 
 import org.signal.core.util.concurrent.SignalExecutors;
 import org.thoughtcrime.securesms.R;
-import org.thoughtcrime.securesms.dependencies.ApplicationDependencies;
+import org.thoughtcrime.securesms.dependencies.AppDependencies;
 import org.thoughtcrime.securesms.groups.ui.GroupChangeFailureReason;
 import org.thoughtcrime.securesms.groups.ui.GroupErrors;
 import org.thoughtcrime.securesms.groups.v2.GroupAddMembersResult;
@@ -21,8 +21,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
-import kotlin.Unit;
-
 public final class AddToGroupViewModel extends ViewModel {
 
   private final Application               context;
@@ -31,7 +29,7 @@ public final class AddToGroupViewModel extends ViewModel {
   private final SingleLiveEvent<Event> events      = new SingleLiveEvent<>();
 
   private AddToGroupViewModel(@NonNull RecipientId recipientId) {
-    this.context     = ApplicationDependencies.getApplication();
+    this.context     = AppDependencies.getApplication();
     this.recipientId = recipientId;
     this.repository  = new GroupManagementRepository();
   }
@@ -47,10 +45,10 @@ public final class AddToGroupViewModel extends ViewModel {
       SignalExecutors.BOUNDED.execute(() -> {
         Recipient recipient      = Recipient.resolved(recipientId);
         Recipient groupRecipient = Recipient.resolved(groupRecipientIds.get(0));
-        String    recipientName  = recipient.getDisplayNameOrUsername(context);
+        String    recipientName  = recipient.getDisplayName(context);
         String    groupName      = groupRecipient.getDisplayName(context);
 
-        if (groupRecipient.getGroupId().get().isV1() && !recipient.hasE164()) {
+        if (groupRecipient.getGroupId().get().isV1() && !recipient.getHasE164()) {
           events.postValue(new Event.LegacyGroupDenialEvent());
         } else {
           events.postValue(new Event.AddToSingleGroupConfirmationEvent(context.getResources().getString(R.string.AddToGroupActivity_add_member),

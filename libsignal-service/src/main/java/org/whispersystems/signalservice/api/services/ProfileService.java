@@ -12,12 +12,14 @@ import org.signal.libsignal.zkgroup.profiles.ProfileKeyCredentialRequestContext;
 import org.signal.libsignal.zkgroup.profiles.ProfileKeyVersion;
 import org.whispersystems.signalservice.api.SignalServiceMessageReceiver;
 import org.whispersystems.signalservice.api.SignalWebSocket;
+import org.whispersystems.signalservice.api.crypto.SealedSenderAccess;
 import org.whispersystems.signalservice.api.crypto.UnidentifiedAccess;
 import org.whispersystems.signalservice.api.profiles.ProfileAndCredential;
 import org.whispersystems.signalservice.api.profiles.SignalServiceProfile;
 import org.whispersystems.signalservice.api.push.ServiceId;
 import org.whispersystems.signalservice.api.push.ServiceId.ACI;
 import org.whispersystems.signalservice.api.push.SignalServiceAddress;
+import org.whispersystems.signalservice.api.push.exceptions.AuthorizationFailedException;
 import org.whispersystems.signalservice.api.push.exceptions.MalformedResponseException;
 import org.whispersystems.signalservice.internal.ServiceResponse;
 import org.whispersystems.signalservice.internal.ServiceResponseProcessor;
@@ -37,11 +39,13 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 import io.reactivex.rxjava3.annotations.NonNull;
 import io.reactivex.rxjava3.core.Single;
@@ -70,7 +74,7 @@ public final class ProfileService {
 
   public Single<ServiceResponse<ProfileAndCredential>> getProfile(@Nonnull SignalServiceAddress address,
                                                                   @Nonnull Optional<ProfileKey> profileKey,
-                                                                  @Nonnull Optional<UnidentifiedAccess> unidentifiedAccess,
+                                                                  @Nullable SealedSenderAccess sealedSenderAccess,
                                                                   @Nonnull SignalServiceProfile.RequestType requestType,
                                                                   @Nonnull Locale locale)
   {
@@ -114,9 +118,9 @@ public final class ProfileService {
                                                                                .withResponseMapper(new ProfileResponseMapper(requestType, requestContext))
                                                                                .build();
 
-    return signalWebSocket.request(requestMessage, unidentifiedAccess)
+    return signalWebSocket.request(requestMessage, sealedSenderAccess)
                           .map(responseMapper::map)
-                          .onErrorResumeNext(t -> getProfileRestFallback(address, profileKey, unidentifiedAccess, requestType, locale))
+                          .onErrorResumeNext(t -> getProfileRestFallback(address, profileKey, sealedSenderAccess, requestType, locale))
                           .onErrorReturn(ServiceResponse::forUnknownError);
   }
 
@@ -137,28 +141,53 @@ public final class ProfileService {
 
     ResponseMapper<IdentityCheckResponse> responseMapper = DefaultResponseMapper.getDefault(IdentityCheckResponse.class);
 
-    return signalWebSocket.request(builder.build(), Optional.empty())
+    return signalWebSocket.request(builder.build(), SealedSenderAccess.NONE)
                           .map(responseMapper::map)
-                          .onErrorResumeNext(t -> performIdentityCheckRestFallback(request, Optional.empty(), responseMapper))
+                          .onErrorResumeNext(t -> performIdentityCheckRestFallback(request, responseMapper))
                           .onErrorReturn(ServiceResponse::forUnknownError);
   }
 
   private Single<ServiceResponse<ProfileAndCredential>> getProfileRestFallback(@Nonnull SignalServiceAddress address,
                                                                                @Nonnull Optional<ProfileKey> profileKey,
-                                                                               @Nonnull Optional<UnidentifiedAccess> unidentifiedAccess,
+                                                                               @Nullable SealedSenderAccess sealedSenderAccess,
                                                                                @Nonnull SignalServiceProfile.RequestType requestType,
                                                                                @Nonnull Locale locale)
   {
-    return Single.fromFuture(receiver.retrieveProfile(address, profileKey, unidentifiedAccess, requestType, locale), 10, TimeUnit.SECONDS)
-                 .onErrorResumeNext(t -> Single.fromFuture(receiver.retrieveProfile(address, profileKey, Optional.empty(), requestType, locale), 10, TimeUnit.SECONDS))
+    return Single.fromFuture(receiver.retrieveProfile(address, profileKey, sealedSenderAccess, requestType, locale), 10, TimeUnit.SECONDS)
+                 .onErrorResumeNext(t -> {
+                   Throwable error;
+                   if (t instanceof ExecutionException && t.getCause() != null) {
+                     error = t.getCause();
+                   } else {
+                     error = t;
+                   }
+
+                   if (error instanceof AuthorizationFailedException) {
+                     return Single.fromFuture(receiver.retrieveProfile(address, profileKey, null, requestType, locale), 10, TimeUnit.SECONDS);
+                   } else {
+                     return Single.error(t);
+                   }
+                 })
                  .map(p -> ServiceResponse.forResult(p, 0, null));
   }
 
   private @NonNull Single<ServiceResponse<IdentityCheckResponse>> performIdentityCheckRestFallback(@Nonnull IdentityCheckRequest request,
-                                                                                                   @Nonnull Optional<UnidentifiedAccess> unidentifiedAccess,
                                                                                                    @Nonnull ResponseMapper<IdentityCheckResponse> responseMapper) {
-    return receiver.performIdentityCheck(request, unidentifiedAccess, responseMapper)
-                   .onErrorResumeNext(t -> receiver.performIdentityCheck(request, Optional.empty(), responseMapper));
+    return receiver.performIdentityCheck(request, responseMapper)
+                   .onErrorResumeNext(t -> {
+                     Throwable error;
+                     if (t instanceof ExecutionException && t.getCause() != null) {
+                       error = t.getCause();
+                     } else {
+                       error = t;
+                     }
+
+                     if (error instanceof AuthorizationFailedException) {
+                       return receiver.performIdentityCheck(request, responseMapper);
+                     } else {
+                       return Single.error(t);
+                     }
+                   });
   }
 
   /**

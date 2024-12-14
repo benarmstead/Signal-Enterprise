@@ -6,7 +6,7 @@
 package org.thoughtcrime.securesms.database
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import junit.framework.Assert.assertEquals
+import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -86,7 +86,8 @@ class CallLinkTableTest {
           linkKeyBytes = roomId,
           adminPassBytes = null
         ),
-        state = SignalCallLinkState()
+        state = SignalCallLinkState(),
+        deletionTimestamp = 0L
       )
     )
 

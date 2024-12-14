@@ -3,6 +3,7 @@ package org.thoughtcrime.securesms.service.webrtc;
 import android.app.Application;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.ResultReceiver;
 
@@ -34,13 +35,14 @@ import org.signal.ringrtc.PeekInfo;
 import org.signal.ringrtc.Remote;
 import org.signal.storageservice.protos.groups.GroupExternalCredential;
 import org.thoughtcrime.securesms.WebRtcCallActivity;
-import org.thoughtcrime.securesms.crypto.UnidentifiedAccessUtil;
+import org.thoughtcrime.securesms.components.webrtc.v2.CallIntent;
+import org.thoughtcrime.securesms.crypto.SealedSenderAccessUtil;
 import org.thoughtcrime.securesms.database.CallLinkTable;
 import org.thoughtcrime.securesms.database.CallTable;
 import org.thoughtcrime.securesms.database.GroupTable;
 import org.thoughtcrime.securesms.database.SignalDatabase;
 import org.thoughtcrime.securesms.database.model.GroupRecord;
-import org.thoughtcrime.securesms.dependencies.ApplicationDependencies;
+import org.thoughtcrime.securesms.dependencies.AppDependencies;
 import org.thoughtcrime.securesms.events.CallParticipant;
 import org.thoughtcrime.securesms.events.GroupCallPeekEvent;
 import org.thoughtcrime.securesms.events.WebRtcViewModel;
@@ -53,6 +55,7 @@ import org.thoughtcrime.securesms.jobs.RetrieveProfileJob;
 import org.thoughtcrime.securesms.keyvalue.SignalStore;
 import org.thoughtcrime.securesms.messages.GroupSendUtil;
 import org.thoughtcrime.securesms.notifications.v2.ConversationId;
+import org.thoughtcrime.securesms.ratelimit.ProofRequiredExceptionHandler;
 import org.thoughtcrime.securesms.recipients.Recipient;
 import org.thoughtcrime.securesms.recipients.RecipientId;
 import org.thoughtcrime.securesms.recipients.RecipientUtil;
@@ -64,7 +67,6 @@ import org.thoughtcrime.securesms.service.webrtc.links.SignalCallLinkManager;
 import org.thoughtcrime.securesms.service.webrtc.state.WebRtcEphemeralState;
 import org.thoughtcrime.securesms.service.webrtc.state.WebRtcServiceState;
 import org.thoughtcrime.securesms.util.AppForegroundObserver;
-import org.thoughtcrime.securesms.util.FeatureFlags;
 import org.thoughtcrime.securesms.util.RecipientAccessList;
 import org.thoughtcrime.securesms.util.TextSecurePreferences;
 import org.thoughtcrime.securesms.util.Util;
@@ -73,6 +75,7 @@ import org.thoughtcrime.securesms.webrtc.CallNotificationBuilder;
 import org.thoughtcrime.securesms.webrtc.audio.SignalAudioManager;
 import org.thoughtcrime.securesms.webrtc.locks.LockManager;
 import org.webrtc.PeerConnection;
+import org.whispersystems.signalservice.api.crypto.SealedSenderAccess;
 import org.whispersystems.signalservice.api.crypto.UntrustedIdentityException;
 import org.whispersystems.signalservice.api.messages.SendMessageResult;
 import org.whispersystems.signalservice.api.messages.calls.CallingResponse;
@@ -82,14 +85,16 @@ import org.whispersystems.signalservice.api.messages.calls.SignalServiceCallMess
 import org.whispersystems.signalservice.api.messages.calls.TurnServerInfo;
 import org.whispersystems.signalservice.api.messages.multidevice.SignalServiceSyncMessage;
 import org.whispersystems.signalservice.api.push.ServiceId.ACI;
+import org.whispersystems.signalservice.api.push.exceptions.ProofRequiredException;
 import org.whispersystems.signalservice.api.push.exceptions.UnregisteredUserException;
 import org.whispersystems.signalservice.internal.push.SyncMessage;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.LinkedList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -99,6 +104,7 @@ import java.util.UUID;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import io.reactivex.rxjava3.core.Flowable;
@@ -125,14 +131,14 @@ public final class SignalCallManager implements CallManager.Observer, GroupCall.
 
   @Nullable private final CallManager callManager;
 
-  private final Context                     context;
-  private final ExecutorService             serviceExecutor;
-  private final Executor                    networkExecutor;
-  private final LockManager                 lockManager;
+  private final Context         context;
+  private final ExecutorService serviceExecutor;
+  private final Executor        networkExecutor;
+  private final LockManager     lockManager;
 
   private WebRtcServiceState            serviceState;
   private RxStore<WebRtcEphemeralState> ephemeralStateStore;
-  private boolean                       needsToSetSelfUuid  = true;
+  private boolean                       needsToSetSelfUuid = true;
 
   private RxStore<Map<RecipientId, CallLinkPeekInfo>> linkPeekInfoStore;
 
@@ -182,8 +188,8 @@ public final class SignalCallManager implements CallManager.Observer, GroupCall.
   }
 
   private void process(@NonNull ProcessAction action) {
-    Throwable t = new Throwable();
-    String caller = t.getStackTrace().length > 1 ? t.getStackTrace()[1].getMethodName() : "unknown";
+    Throwable t      = new Throwable();
+    String    caller = t.getStackTrace().length > 1 ? t.getStackTrace()[1].getMethodName() : "unknown";
 
     if (callManager == null) {
       Log.w(TAG, "Unable to process action, call manager is not initialized");
@@ -386,11 +392,6 @@ public final class SignalCallManager implements CallManager.Observer, GroupCall.
       return;
     }
 
-    if (!FeatureFlags.adHocCalling()) {
-      Log.i(TAG, "Ad Hoc Calling is disabled. Ignoring request to peek.");
-      return;
-    }
-
     networkExecutor.execute(() -> {
       try {
         Recipient              callLinkRecipient = Recipient.resolved(id);
@@ -403,29 +404,33 @@ public final class SignalCallManager implements CallManager.Observer, GroupCall.
         }
 
         CallLinkRootKey           callLinkRootKey           = new CallLinkRootKey(callLink.getCredentials().getLinkKeyBytes());
-        GenericServerPublicParams genericServerPublicParams = new GenericServerPublicParams(ApplicationDependencies.getSignalServiceNetworkAccess()
-                                                                                                                   .getConfiguration()
-                                                                                                                   .getGenericServerPublicParams());
+        GenericServerPublicParams genericServerPublicParams = new GenericServerPublicParams(AppDependencies.getSignalServiceNetworkAccess()
+                                                                                                           .getConfiguration()
+                                                                                                           .getGenericServerPublicParams());
 
 
-        CallLinkAuthCredentialPresentation callLinkAuthCredentialPresentation = ApplicationDependencies.getGroupsV2Authorization()
-                                                                                                       .getCallLinkAuthorizationForToday(
-                                                                                                           genericServerPublicParams,
-                                                                                                           CallLinkSecretParams.deriveFromRootKey(callLinkRootKey.getKeyBytes())
-                                                                                                       );
+        CallLinkAuthCredentialPresentation callLinkAuthCredentialPresentation = AppDependencies.getGroupsV2Authorization()
+                                                                                               .getCallLinkAuthorizationForToday(
+                                                                                                   genericServerPublicParams,
+                                                                                                   CallLinkSecretParams.deriveFromRootKey(callLinkRootKey.getKeyBytes())
+                                                                                               );
 
-        callManager.peekCallLinkCall(SignalStore.internalValues().groupCallingServer(), callLinkAuthCredentialPresentation.serialize(), callLinkRootKey, peekInfo -> {
+        callManager.peekCallLinkCall(SignalStore.internal().getGroupCallingServer(), callLinkAuthCredentialPresentation.serialize(), callLinkRootKey, peekInfo -> {
           PeekInfo info = peekInfo.getValue();
           if (info == null) {
             Log.w(TAG, "Failed to get peek info: " + peekInfo.getStatus());
             return;
           }
 
-          linkPeekInfoStore.update(store -> {
-            Map<RecipientId, CallLinkPeekInfo> newHashMap = new HashMap<>(store);
-            newHashMap.put(id, CallLinkPeekInfo.fromPeekInfo(info));
-            return newHashMap;
-          });
+          String eraId = info.getEraId();
+          if (eraId != null && !info.getJoinedMembers().isEmpty()) {
+            if (SignalDatabase.calls().insertAdHocCallFromLocalObserveEvent(callLinkRecipient, System.currentTimeMillis(), eraId)) {
+              AppDependencies.getJobManager()
+                             .add(CallSyncEventJob.createForObserved(callLinkRecipient.getId(), CallId.fromEra(eraId).longValue()));
+            }
+          }
+
+          emitCallLinkPeekInfoUpdate(id, info);
         });
       } catch (CallException | VerificationFailedException | InvalidInputException | IOException e) {
         Log.i(TAG, "error peeking call link", e);
@@ -433,7 +438,19 @@ public final class SignalCallManager implements CallManager.Observer, GroupCall.
     });
   }
 
+  public void emitCallLinkPeekInfoUpdate(@NonNull RecipientId recipientId, @NonNull PeekInfo peekInfo) {
+    linkPeekInfoStore.update(store -> {
+      Map<RecipientId, CallLinkPeekInfo> newHashMap = new HashMap<>(store);
+      newHashMap.put(recipientId, CallLinkPeekInfo.fromPeekInfo(peekInfo));
+      return newHashMap;
+    });
+  }
+
   public void peekGroupCall(@NonNull RecipientId id) {
+    peekGroupCall(id, null);
+  }
+
+  public void peekGroupCall(@NonNull RecipientId id, @Nullable Consumer<PeekInfo> onWillUpdateCallFromPeek) {
     if (callManager == null) {
       Log.i(TAG, "Unable to peekGroupCall, call manager is null");
       return;
@@ -448,17 +465,21 @@ public final class SignalCallManager implements CallManager.Observer, GroupCall.
         List<GroupCall.GroupMemberInfo> members = Stream.of(GroupManager.getUuidCipherTexts(context, groupId))
                                                         .map(entry -> new GroupCall.GroupMemberInfo(entry.getKey(), entry.getValue().serialize()))
                                                         .toList();
-        callManager.peekGroupCall(SignalStore.internalValues().groupCallingServer(), credential.token.getBytes(Charsets.UTF_8), members, peekInfo -> {
+        callManager.peekGroupCall(SignalStore.internal().getGroupCallingServer(), credential.token.getBytes(Charsets.UTF_8), members, peekInfo -> {
           Long threadId = SignalDatabase.threads().getThreadIdFor(group.getId());
 
           if (threadId != null) {
+            if (onWillUpdateCallFromPeek != null) {
+              onWillUpdateCallFromPeek.accept(peekInfo);
+            }
+
             SignalDatabase.calls()
                           .updateGroupCallFromPeek(threadId,
                                                    peekInfo.getEraId(),
                                                    peekInfo.getJoinedMembers(),
                                                    WebRtcUtil.isCallFull(peekInfo));
 
-            ApplicationDependencies.getMessageNotifier().updateNotification(context, ConversationId.forConversation(threadId));
+            AppDependencies.getMessageNotifier().updateNotification(context, ConversationId.forConversation(threadId));
 
             EventBus.getDefault().postSticky(new GroupCallPeekEvent(id, peekInfo.getEraId(), peekInfo.getDeviceCount(), peekInfo.getMaxDevices()));
           }
@@ -487,7 +508,7 @@ public final class SignalCallManager implements CallManager.Observer, GroupCall.
                                                               .map(entry -> new GroupCall.GroupMemberInfo(entry.getKey(), entry.getValue().serialize()))
                                                               .collect(Collectors.toList());
 
-        callManager.peekGroupCall(SignalStore.internalValues().groupCallingServer(),
+        callManager.peekGroupCall(SignalStore.internal().getGroupCallingServer(),
                                   credential.token.getBytes(Charsets.UTF_8),
                                   members,
                                   peekInfo -> receivedGroupCallPeekForRingingCheck(info, peekInfo));
@@ -595,6 +616,12 @@ public final class SignalCallManager implements CallManager.Observer, GroupCall.
         case LOCAL_CONNECTED:
         case REMOTE_CONNECTED:
           return p.handleCallConnected(s, remotePeer);
+        case REMOTE_AUDIO_ENABLE:
+          // TODO: Implement handling when the remote enables audio.
+          break;
+        case REMOTE_AUDIO_DISABLE:
+          // TODO: Implement handling when the remote disables audio.
+          break;
         case REMOTE_VIDEO_ENABLE:
           return p.handleRemoteVideoEnable(s, true);
         case REMOTE_VIDEO_DISABLE:
@@ -755,10 +782,10 @@ public final class SignalCallManager implements CallManager.Observer, GroupCall.
   }
 
   @Override
-  public void onSendCallMessage(@NonNull UUID aciUuid, @NonNull byte[] bytes, @NonNull CallManager.CallMessageUrgency urgency) {
+  public void onSendCallMessage(@NonNull UUID aciUuid, @NonNull byte[] message, @NonNull CallManager.CallMessageUrgency urgency) {
     Log.i(TAG, "onSendCallMessage():");
 
-    OpaqueMessage            opaqueMessage = new OpaqueMessage(bytes, getUrgencyFromCallUrgency(urgency));
+    OpaqueMessage            opaqueMessage = new OpaqueMessage(message, getUrgencyFromCallUrgency(urgency));
     SignalServiceCallMessage callMessage   = SignalServiceCallMessage.forOpaque(opaqueMessage, null);
 
     networkExecutor.execute(() -> {
@@ -767,32 +794,46 @@ public final class SignalCallManager implements CallManager.Observer, GroupCall.
         return;
       }
       try {
-        ApplicationDependencies.getSignalServiceMessageSender()
-                               .sendCallMessage(RecipientUtil.toSignalServiceAddress(context, recipient),
-                                                recipient.isSelf() ? Optional.empty() : UnidentifiedAccessUtil.getAccessFor(context, recipient),
-                                                callMessage);
+        AppDependencies.getSignalServiceMessageSender()
+                       .sendCallMessage(RecipientUtil.toSignalServiceAddress(context, recipient),
+                                        recipient.isSelf() ? SealedSenderAccess.NONE : SealedSenderAccessUtil.getSealedSenderAccessFor(recipient),
+                                        callMessage);
       } catch (UntrustedIdentityException e) {
-        Log.i(TAG, "sendOpaqueCallMessage onFailure: ", e);
+        Log.i(TAG, "onSendCallMessage onFailure: ", e);
         RetrieveProfileJob.enqueue(recipient.getId());
         process((s, p) -> p.handleGroupMessageSentError(s, Collections.singletonList(recipient.getId()), UNTRUSTED_IDENTITY));
+      } catch (ProofRequiredException e) {
+        Log.i(TAG, "onSendCallMessage onFailure: ", e);
+        ProofRequiredExceptionHandler.handle(context, e, recipient, -1L, -1L);
+        process((s, p) -> p.handleResendMediaKeys(s));
+        process((s, p) -> p.handleGroupMessageSentError(s, Collections.singletonList(recipient.getId()), NETWORK_FAILURE));
       } catch (IOException e) {
-        Log.i(TAG, "sendOpaqueCallMessage onFailure: ", e);
+        Log.i(TAG, "onSendCallMessage onFailure: ", e);
         process((s, p) -> p.handleGroupMessageSentError(s, Collections.singletonList(recipient.getId()), NETWORK_FAILURE));
       }
     });
   }
 
   @Override
-  public void onSendCallMessageToGroup(@NonNull byte[] groupIdBytes, @NonNull byte[] message, @NonNull CallManager.CallMessageUrgency urgency) {
+  public void onSendCallMessageToGroup(@NonNull byte[] groupIdBytes, @NonNull byte[] message, @NonNull CallManager.CallMessageUrgency urgency, @NonNull List<UUID> overrideRecipients) {
     Log.i(TAG, "onSendCallMessageToGroup():");
 
     networkExecutor.execute(() -> {
       try {
         GroupId         groupId    = GroupId.v2(new GroupIdentifier(groupIdBytes));
         List<Recipient> recipients = SignalDatabase.groups().getGroupMembers(groupId, GroupTable.MemberSet.FULL_MEMBERS_EXCLUDING_SELF);
+        Set<UUID>       toInclude  = new HashSet<>(overrideRecipients.size());
+
+        toInclude.addAll(overrideRecipients);
 
         recipients = RecipientUtil.getEligibleForSending((recipients.stream()
                                                                     .map(Recipient::resolve)
+                                                                    .filter(r -> {
+                                                                      if (toInclude.isEmpty()) {
+                                                                        return true;
+                                                                      }
+                                                                      return r.getHasServiceId() && toInclude.contains(r.requireServiceId().getRawUuid());
+                                                                    })
                                                                     .collect(Collectors.toList())));
 
         OpaqueMessage            opaqueMessage = new OpaqueMessage(message, getUrgencyFromCallUrgency(urgency));
@@ -838,8 +879,8 @@ public final class SignalCallManager implements CallManager.Observer, GroupCall.
         headerPairs = Collections.emptyList();
       }
 
-      CallingResponse response = ApplicationDependencies.getSignalServiceMessageSender()
-                                                        .makeCallingRequest(requestId, url, httpMethod.name(), headerPairs, body);
+      CallingResponse response = AppDependencies.getSignalServiceMessageSender()
+                                                .makeCallingRequest(requestId, url, httpMethod.name(), headerPairs, body);
 
       try {
         if (response instanceof CallingResponse.Success) {
@@ -905,16 +946,12 @@ public final class SignalCallManager implements CallManager.Observer, GroupCall.
 
   @Override
   public void onReactions(@NonNull GroupCall groupCall, List<Reaction> reactions) {
-    if (FeatureFlags.groupCallReactions()) {
-      processStateless(s -> serviceState.getActionProcessor().handleGroupCallReaction(serviceState, s, reactions));
-    }
+    processStateless(s -> serviceState.getActionProcessor().handleGroupCallReaction(serviceState, s, reactions));
   }
 
   @Override
   public void onRaisedHands(@NonNull GroupCall groupCall, List<Long> raisedHands) {
-    if (FeatureFlags.groupCallRaiseHand()) {
-      process((s, p) -> p.handleGroupCallRaisedHand(s, raisedHands));
-    }
+    process((s, p) -> p.handleGroupCallRaisedHand(s, raisedHands));
   }
 
   @Override
@@ -930,6 +967,11 @@ public final class SignalCallManager implements CallManager.Observer, GroupCall.
   @Override
   public void onEnded(@NonNull GroupCall groupCall, @NonNull GroupCall.GroupCallEndReason groupCallEndReason) {
     process((s, p) -> p.handleGroupCallEnded(s, groupCall.hashCode(), groupCallEndReason));
+  }
+
+  @Override
+  public void onSpeakingNotification(@NonNull GroupCall groupCall, @NonNull GroupCall.SpeechEvent speechEvent) {
+
   }
 
   @Override
@@ -958,7 +1000,7 @@ public final class SignalCallManager implements CallManager.Observer, GroupCall.
         Log.i(TAG, "Starting call activity from foreground listener");
         startCallCardActivityIfPossible();
       }
-      ApplicationDependencies.getAppForegroundObserver().removeListener(this);
+      AppForegroundObserver.removeListener(this);
       return s;
     });
   }
@@ -990,20 +1032,8 @@ public final class SignalCallManager implements CallManager.Observer, GroupCall.
   public void retrieveTurnServers(@NonNull RemotePeer remotePeer) {
     networkExecutor.execute(() -> {
       try {
-        TurnServerInfo turnServerInfo = ApplicationDependencies.getSignalServiceAccountManager().getTurnServerInfo();
-
-        List<PeerConnection.IceServer> iceServers = new LinkedList<>();
-        for (String url : turnServerInfo.getUrls()) {
-          if (url.startsWith("turn")) {
-            iceServers.add(PeerConnection.IceServer.builder(url)
-                                                   .setUsername(turnServerInfo.getUsername())
-                                                   .setPassword(turnServerInfo.getPassword())
-                                                   .createIceServer());
-          } else {
-            iceServers.add(PeerConnection.IceServer.builder(url).createIceServer());
-          }
-        }
-
+        List<TurnServerInfo> turnServerInfos = AppDependencies.getSignalServiceAccountManager().getTurnServerInfo();
+        List<PeerConnection.IceServer> iceServers = mapToIceServers(turnServerInfos);
         process((s, p) -> {
           RemotePeer activePeer = s.getCallInfoState().getActivePeer();
           if (activePeer != null && activePeer.getCallId().equals(remotePeer.getCallId())) {
@@ -1020,17 +1050,70 @@ public final class SignalCallManager implements CallManager.Observer, GroupCall.
     });
   }
 
+  private static List<PeerConnection.IceServer> mapToIceServers(@NonNull List<TurnServerInfo> turnServerInfos) {
+    List<PeerConnection.IceServer> iceServers = new ArrayList<>();
+
+    for (TurnServerInfo turnServerInfo: turnServerInfos) {
+      if (turnServerInfo.getUrlsWithIps() != null) {
+        iceServers.addAll(
+            turnServerInfo.getUrlsWithIps()
+                          .stream()
+                          .map(url ->
+                                   PeerConnection.IceServer.builder(url)
+                                                           .setUsername(turnServerInfo.getUsername())
+                                                           .setPassword(turnServerInfo.getPassword())
+                                                           .setHostname(turnServerInfo.getHostname())
+                                                           .createIceServer()
+                          ).collect(Collectors.toList()));
+      }
+
+      if (turnServerInfo.getUrls() != null) {
+        iceServers.addAll(
+            turnServerInfo.getUrls()
+                          .stream()
+                          .map(url ->
+                                   PeerConnection.IceServer.builder(url)
+                                                           .setUsername(turnServerInfo.getUsername())
+                                                           .setPassword(turnServerInfo.getPassword())
+                                                           .createIceServer()
+                          ).collect(Collectors.toList()));
+      }
+    }
+
+    return iceServers;
+  }
+
   public void sendGroupCallUpdateMessage(@NonNull Recipient recipient, @Nullable String groupCallEraId, final @Nullable CallId callId, boolean isIncoming, boolean isJoinEvent) {
     Log.i(TAG, "sendGroupCallUpdateMessage id: " + recipient.getId() + " era: " + groupCallEraId + " isIncoming: " + isIncoming + " isJoinEvent: " + isJoinEvent);
 
     if (recipient.isCallLink()) {
-      Log.i(TAG, "sendGroupCallUpdateMessage -- ignoring for call link");
+      if (isJoinEvent) {
+        SignalExecutors.BOUNDED.execute(() -> {
+          CallId callIdLocal = callId;
+
+          if (callIdLocal == null && groupCallEraId != null) {
+            callIdLocal = CallId.fromEra(groupCallEraId);
+          }
+
+          if (callIdLocal != null) {
+            AppDependencies.getJobManager().add(
+                CallSyncEventJob.createForJoin(
+                    recipient.getId(),
+                    callIdLocal.longValue(),
+                    isIncoming
+                )
+            );
+          }
+        });
+      } else {
+        Log.i(TAG, "sendGroupCallUpdateMessage -- ignoring non-join event for call link");
+      }
       return;
     }
 
     SignalExecutors.BOUNDED.execute(() -> {
       GroupCallUpdateSendJob updateSendJob = GroupCallUpdateSendJob.create(recipient.getId(), groupCallEraId);
-      JobManager.Chain       chain         = ApplicationDependencies.getJobManager().startChain(updateSendJob);
+      JobManager.Chain       chain         = AppDependencies.getJobManager().startChain(updateSendJob);
       CallId                 callIdLocal   = callId;
 
       if (callIdLocal == null && groupCallEraId != null) {
@@ -1068,6 +1151,10 @@ public final class SignalCallManager implements CallManager.Observer, GroupCall.
                                                                                                        isCallFull));
   }
 
+  public void resendMediaKeys() {
+    process((s, p) -> p.handleResendMediaKeys(s));
+  }
+
   public void sendCallMessage(@NonNull final RemotePeer remotePeer,
                               @NonNull final SignalServiceCallMessage callMessage)
   {
@@ -1078,10 +1165,10 @@ public final class SignalCallManager implements CallManager.Observer, GroupCall.
       }
 
       try {
-        ApplicationDependencies.getSignalServiceMessageSender()
-                               .sendCallMessage(RecipientUtil.toSignalServiceAddress(context, recipient),
-                                                UnidentifiedAccessUtil.getAccessFor(context, recipient),
-                                                callMessage);
+        AppDependencies.getSignalServiceMessageSender()
+                       .sendCallMessage(RecipientUtil.toSignalServiceAddress(context, recipient),
+                                        SealedSenderAccessUtil.getSealedSenderAccessFor(recipient),
+                                        callMessage);
         process((s, p) -> p.handleMessageSentSuccess(s, remotePeer.getCallId()));
       } catch (UntrustedIdentityException e) {
         RetrieveProfileJob.enqueue(remotePeer.getId());
@@ -1091,6 +1178,11 @@ public final class SignalCallManager implements CallManager.Observer, GroupCall.
                                                                                         UNTRUSTED_IDENTITY,
                                                                                         Optional.ofNullable(e.getIdentityKey())));
       } catch (IOException e) {
+        if (e instanceof ProofRequiredException) {
+          ProofRequiredExceptionHandler.handle(context, (ProofRequiredException) e, null, -1L, -1L);
+          process((s, p) -> p.handleResendMediaKeys(s));
+        }
+
         processSendMessageFailureWithChangeDetection(remotePeer,
                                                      (s, p) -> p.handleMessageSentError(s,
                                                                                         remotePeer.getCallId(),
@@ -1105,11 +1197,11 @@ public final class SignalCallManager implements CallManager.Observer, GroupCall.
         .calls()
         .updateOneToOneCall(remotePeer.getCallId().longValue(), CallTable.Event.ACCEPTED);
 
-    if (TextSecurePreferences.isMultiDevice(context)) {
+    if (SignalStore.account().hasLinkedDevices()) {
       networkExecutor.execute(() -> {
         try {
           SyncMessage.CallEvent callEvent = CallEventSyncMessageUtil.createAcceptedSyncMessage(remotePeer, System.currentTimeMillis(), isOutgoing, isVideoCall);
-          ApplicationDependencies.getSignalServiceMessageSender().sendSyncMessage(SignalServiceSyncMessage.forCallEvent(callEvent), Optional.empty());
+          AppDependencies.getSignalServiceMessageSender().sendSyncMessage(SignalServiceSyncMessage.forCallEvent(callEvent));
         } catch (IOException | UntrustedIdentityException e) {
           Log.w(TAG, "Unable to send call event sync message for " + remotePeer.getCallId().longValue(), e);
         }
@@ -1122,11 +1214,11 @@ public final class SignalCallManager implements CallManager.Observer, GroupCall.
         .calls()
         .updateOneToOneCall(remotePeer.getCallId().longValue(), CallTable.Event.NOT_ACCEPTED);
 
-    if (TextSecurePreferences.isMultiDevice(context)) {
+    if (SignalStore.account().hasLinkedDevices()) {
       networkExecutor.execute(() -> {
         try {
           SyncMessage.CallEvent callEvent = CallEventSyncMessageUtil.createNotAcceptedSyncMessage(remotePeer, System.currentTimeMillis(), isOutgoing, isVideoCall);
-          ApplicationDependencies.getSignalServiceMessageSender().sendSyncMessage(SignalServiceSyncMessage.forCallEvent(callEvent), Optional.empty());
+          AppDependencies.getSignalServiceMessageSender().sendSyncMessage(SignalServiceSyncMessage.forCallEvent(callEvent));
         } catch (IOException | UntrustedIdentityException e) {
           Log.w(TAG, "Unable to send call event sync message for " + remotePeer.getCallId().longValue(), e);
         }
@@ -1135,11 +1227,11 @@ public final class SignalCallManager implements CallManager.Observer, GroupCall.
   }
 
   public void sendGroupCallNotAcceptedCallEventSyncMessage(@NonNull RemotePeer remotePeer, boolean isOutgoing) {
-    if (TextSecurePreferences.isMultiDevice(context)) {
+    if (SignalStore.account().hasLinkedDevices()) {
       networkExecutor.execute(() -> {
         try {
           SyncMessage.CallEvent callEvent = CallEventSyncMessageUtil.createNotAcceptedSyncMessage(remotePeer, System.currentTimeMillis(), isOutgoing, true);
-          ApplicationDependencies.getSignalServiceMessageSender().sendSyncMessage(SignalServiceSyncMessage.forCallEvent(callEvent), Optional.empty());
+          AppDependencies.getSignalServiceMessageSender().sendSyncMessage(SignalServiceSyncMessage.forCallEvent(callEvent));
         } catch (IOException | UntrustedIdentityException e) {
           Log.w(TAG, "Unable to send call event sync message for " + remotePeer.getCallId().longValue(), e);
         }
@@ -1149,6 +1241,10 @@ public final class SignalCallManager implements CallManager.Observer, GroupCall.
 
   public @NonNull SignalCallLinkManager getCallLinkManager() {
     return new SignalCallLinkManager(Objects.requireNonNull(callManager));
+  }
+
+  public void relaunchPipOnForeground() {
+    AppForegroundObserver.addListener(new RelaunchListener(AppForegroundObserver.isForegrounded()));
   }
 
   private void processSendMessageFailureWithChangeDetection(@NonNull RemotePeer remotePeer,
@@ -1167,6 +1263,46 @@ public final class SignalCallManager implements CallManager.Observer, GroupCall.
         return failureProcessAction.process(s, p);
       }
     });
+  }
+
+  private class RelaunchListener implements AppForegroundObserver.Listener {
+    private boolean canRelaunch;
+
+    public RelaunchListener(boolean isForegrounded) {
+      canRelaunch = !isForegrounded;
+    }
+
+    @Override
+    public void onForeground() {
+      if (canRelaunch) {
+        if (isSystemPipEnabledAndAvailable()) {
+          process((s, p) -> {
+            WebRtcViewModel.State callState = s.getCallInfoState().getCallState();
+
+            if (callState.getInOngoingCall()) {
+              context.startActivity(
+                  new CallIntent.Builder(context)
+                      .withIntentFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                      .withLaunchInPip(true)
+                      .build()
+              );
+            }
+
+            return s;
+          });
+        }
+        AppForegroundObserver.removeListener(this);
+      }
+    }
+
+    @Override
+    public void onBackground() {
+      canRelaunch = true;
+    }
+
+    private boolean isSystemPipEnabledAndAvailable() {
+      return Build.VERSION.SDK_INT >= 26 && context.getPackageManager().hasSystemFeature(PackageManager.FEATURE_PICTURE_IN_PICTURE);
+    }
   }
 
   interface ProcessAction {

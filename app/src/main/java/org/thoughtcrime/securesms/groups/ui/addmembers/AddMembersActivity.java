@@ -8,25 +8,29 @@ import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
 import org.signal.core.util.DimensionUnit;
+import org.signal.core.util.concurrent.SimpleTask;
 import org.thoughtcrime.securesms.ContactSelectionActivity;
 import org.thoughtcrime.securesms.ContactSelectionListFragment;
 import org.thoughtcrime.securesms.PushContactSelectionActivity;
 import org.thoughtcrime.securesms.R;
+import org.thoughtcrime.securesms.contacts.paged.ChatType;
 import org.thoughtcrime.securesms.groups.GroupId;
 import org.thoughtcrime.securesms.groups.SelectionLimits;
 import org.thoughtcrime.securesms.recipients.Recipient;
 import org.thoughtcrime.securesms.recipients.RecipientId;
+import org.thoughtcrime.securesms.recipients.RecipientRepository;
 import org.thoughtcrime.securesms.recipients.ui.findby.FindByActivity;
 import org.thoughtcrime.securesms.recipients.ui.findby.FindByMode;
 import org.thoughtcrime.securesms.util.Util;
+import org.thoughtcrime.securesms.util.views.SimpleProgressDialog;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
@@ -93,8 +97,8 @@ public class AddMembersActivity extends PushContactSelectionActivity implements 
   }
 
   @Override
-  public void onBeforeContactSelected(boolean isFromUnknownSearchKey, @NonNull Optional<RecipientId> recipientId, String number, @NonNull Consumer<Boolean> callback) {
-    if (getGroupId().isV1() && recipientId.isPresent() && !Recipient.resolved(recipientId.get()).hasE164()) {
+  public void onBeforeContactSelected(boolean isFromUnknownSearchKey, @NonNull Optional<RecipientId> recipientId, String number, @NonNull Optional<ChatType> chatType, @NonNull Consumer<Boolean> callback) {
+    if (getGroupId().isV1() && recipientId.isPresent() && !Recipient.resolved(recipientId.get()).getHasE164()) {
       Toast.makeText(this, R.string.AddMembersActivity__this_person_cant_be_added_to_legacy_groups, Toast.LENGTH_SHORT).show();
       callback.accept(false);
       return;
@@ -104,13 +108,38 @@ public class AddMembersActivity extends PushContactSelectionActivity implements 
       getContactFilterView().clear();
     }
 
-    enableDone();
+    if (recipientId.isPresent()) {
+      callback.accept(true);
+      enableDone();
+      return;
+    }
 
-    callback.accept(true);
+    AlertDialog progress = SimpleProgressDialog.show(this);
+
+    SimpleTask.run(getLifecycle(), () -> RecipientRepository.lookupNewE164(this, number), result -> {
+      progress.dismiss();
+
+      if (result instanceof RecipientRepository.LookupResult.Success) {
+        enableDone();
+        callback.accept(true);
+      } else if (result instanceof RecipientRepository.LookupResult.NotFound || result instanceof RecipientRepository.LookupResult.InvalidEntry) {
+        new MaterialAlertDialogBuilder(this)
+            .setMessage(getString(R.string.NewConversationActivity__s_is_not_a_signal_user, number))
+            .setPositiveButton(android.R.string.ok, null)
+            .show();
+        callback.accept(false);
+      } else {
+        new MaterialAlertDialogBuilder(this)
+            .setMessage(R.string.NetworkFailure__network_error_check_your_connection_and_try_again)
+            .setPositiveButton(android.R.string.ok, null)
+            .show();
+        callback.accept(false);
+      }
+    });
   }
 
   @Override
-  public void onContactDeselected(@NonNull Optional<RecipientId> recipientId, String number) {
+  public void onContactDeselected(@NonNull Optional<RecipientId> recipientId, String number, @NonNull Optional<ChatType> chatType) {
     if (contactsFragment.hasQueryFilter()) {
       getContactFilterView().clear();
     }
@@ -162,7 +191,7 @@ public class AddMembersActivity extends PushContactSelectionActivity implements 
     Recipient recipient = Util.firstNonNull(state.getRecipient(), Recipient.UNKNOWN);
 
     String message = getResources().getQuantityString(R.plurals.AddMembersActivity__add_d_members_to_s, state.getSelectionCount(),
-                                                      recipient.getDisplayNameOrUsername(this), state.getGroupTitle(), state.getSelectionCount());
+                                                      recipient.getDisplayName(this), state.getGroupTitle(), state.getSelectionCount());
 
     new MaterialAlertDialogBuilder(this)
                    .setMessage(message)

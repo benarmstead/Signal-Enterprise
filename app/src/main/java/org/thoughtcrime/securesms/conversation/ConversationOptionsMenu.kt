@@ -138,7 +138,7 @@ internal object ConversationOptionsMenu {
 
       if (recipient.isMuted) menuInflater.inflate(R.menu.conversation_muted, menu) else menuInflater.inflate(R.menu.conversation_unmuted, menu)
 
-      if (!recipient.isGroup && recipient.contactUri == null && !recipient.isReleaseNotes && !recipient.isSelf && recipient.hasE164() && recipient.shouldShowE164()) {
+      if (!recipient.isGroup && recipient.contactUri == null && !recipient.isReleaseNotes && !recipient.isSelf && recipient.hasE164 && recipient.shouldShowE164) {
         menuInflater.inflate(R.menu.conversation_add_to_contacts, menu)
       }
 
@@ -215,7 +215,7 @@ internal object ConversationOptionsMenu {
         R.id.menu_conversation_settings -> callback.handleConversationSettings()
         R.id.menu_expiring_messages_off, R.id.menu_expiring_messages -> callback.handleSelectMessageExpiration()
         R.id.menu_create_bubble -> callback.handleCreateBubble()
-        R.id.home -> callback.handleGoHome()
+        androidx.appcompat.R.id.home -> callback.handleGoHome()
         R.id.menu_block -> callback.handleBlock()
         R.id.menu_unblock -> callback.handleUnblock()
         R.id.menu_report_spam -> callback.handleReportSpam()

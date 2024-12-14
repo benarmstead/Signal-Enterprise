@@ -1,5 +1,6 @@
 package org.whispersystems.signalservice.api.messages
 
+import okio.ByteString
 import org.signal.libsignal.protocol.message.DecryptionErrorMessage
 import org.signal.libsignal.protocol.message.SenderKeyDistributionMessage
 import org.signal.libsignal.zkgroup.InvalidInputException
@@ -7,12 +8,14 @@ import org.signal.libsignal.zkgroup.groups.GroupMasterKey
 import org.signal.libsignal.zkgroup.receipts.ReceiptCredentialPresentation
 import org.whispersystems.signalservice.api.push.ServiceId
 import org.whispersystems.signalservice.api.push.ServiceId.ACI
+import org.whispersystems.signalservice.api.push.ServiceId.PNI
 import org.whispersystems.signalservice.internal.push.AttachmentPointer
 import org.whispersystems.signalservice.internal.push.Content
 import org.whispersystems.signalservice.internal.push.DataMessage
 import org.whispersystems.signalservice.internal.push.EditMessage
 import org.whispersystems.signalservice.internal.push.Envelope
 import org.whispersystems.signalservice.internal.push.GroupContextV2
+import org.whispersystems.signalservice.internal.push.PniSignatureMessage
 import org.whispersystems.signalservice.internal.push.ReceiptMessage
 import org.whispersystems.signalservice.internal.push.StoryMessage
 import org.whispersystems.signalservice.internal.push.SyncMessage
@@ -26,7 +29,7 @@ import org.whispersystems.signalservice.internal.push.TypingMessage
  */
 object EnvelopeContentValidator {
 
-  fun validate(envelope: Envelope, content: Content): Result {
+  fun validate(envelope: Envelope, content: Content, localAci: ACI): Result {
     if (envelope.type == Envelope.Type.PLAINTEXT_CONTENT) {
       val result: Result? = createPlaintextResultIfInvalid(content)
 
@@ -43,12 +46,16 @@ object EnvelopeContentValidator {
       validateSenderKeyDistributionMessage(content.senderKeyDistributionMessage.toByteArray())?.let { return it }
     }
 
+    if (content.pniSignatureMessage != null) {
+      validatePniSignatureMessage(content.pniSignatureMessage)?.let { return it }
+    }
+
     // Reminder: envelope.destinationServiceId was already validated since we need that for decryption
 
     return when {
       envelope.story == true && !content.meetsStoryFlagCriteria() -> Result.Invalid("Envelope was flagged as a story, but it did not have any story-related content!")
       content.dataMessage != null -> validateDataMessage(envelope, content.dataMessage)
-      content.syncMessage != null -> validateSyncMessage(envelope, content.syncMessage)
+      content.syncMessage != null -> validateSyncMessage(envelope, content.syncMessage, localAci)
       content.callMessage != null -> Result.Valid
       content.nullMessage != null -> Result.Valid
       content.receiptMessage != null -> validateReceiptMessage(content.receiptMessage)
@@ -139,7 +146,14 @@ object EnvelopeContentValidator {
     return Result.Valid
   }
 
-  private fun validateSyncMessage(envelope: Envelope, syncMessage: SyncMessage): Result {
+  private fun validateSyncMessage(envelope: Envelope, syncMessage: SyncMessage, localAci: ACI): Result {
+    // Source serviceId was already determined to be a valid serviceId in general
+    val sourceServiceId = ServiceId.parseOrThrow(envelope.sourceServiceId!!)
+
+    if (sourceServiceId != localAci) {
+      return Result.Invalid("[SyncMessage] Source was not our own account!")
+    }
+
     if (syncMessage.sent != null) {
       val validAddress = syncMessage.sent.destinationServiceId.isValidServiceId()
       val hasDataGroup = syncMessage.sent.message?.groupV2 != null
@@ -255,6 +269,18 @@ object EnvelopeContentValidator {
     }
   }
 
+  private fun validatePniSignatureMessage(pniSignatureMessage: PniSignatureMessage): Result? {
+    if (pniSignatureMessage.pni.isNullOrInvalidPni()) {
+      return Result.Invalid("[PniSignatureMessage] Invalid PNI")
+    }
+
+    if (pniSignatureMessage.signature == null) {
+      return Result.Invalid("[PniSignatureMessage] Signature is null")
+    }
+
+    return null
+  }
+
   private fun validateStoryMessage(storyMessage: StoryMessage): Result {
     if (storyMessage.group != null) {
       validateGroupContextV2(storyMessage.group, "[StoryMessage]")?.let { return it }
@@ -325,6 +351,11 @@ object EnvelopeContentValidator {
 
   private fun String?.isNullOrInvalidAci(): Boolean {
     val parsed = ACI.parseOrNull(this)
+    return parsed == null || parsed.isUnknown
+  }
+
+  private fun ByteString?.isNullOrInvalidPni(): Boolean {
+    val parsed = ServiceId.PNI.parseOrNull(this?.toByteArray())
     return parsed == null || parsed.isUnknown
   }
 

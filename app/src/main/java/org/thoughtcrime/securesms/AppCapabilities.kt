@@ -8,16 +8,12 @@ object AppCapabilities {
    * asking if the user has set a Signal PIN or not.
    */
   @JvmStatic
-  fun getCapabilities(storageCapable: Boolean): AccountAttributes.Capabilities {
+  fun getCapabilities(storageCapable: Boolean, storageServiceEncryptionV2: Boolean): AccountAttributes.Capabilities {
     return AccountAttributes.Capabilities(
       storage = storageCapable,
-      senderKey = true,
-      announcementGroup = true,
-      changeNumber = true,
-      stories = true,
-      giftBadges = true,
-      pni = true,
-      paymentActivation = true
+      deleteSync = true,
+      versionedExpirationTimer = true,
+      storageServiceEncryptionV2 = storageServiceEncryptionV2
     )
   }
 }

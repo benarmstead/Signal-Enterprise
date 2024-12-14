@@ -27,8 +27,6 @@ android {
 
   defaultConfig {
     minSdk = signalMinSdkVersion
-    targetSdk = signalTargetSdkVersion
-    multiDexEnabled = true
   }
 
   compileOptions {
@@ -58,14 +56,12 @@ dependencies {
   implementation(libs.rxjava3.rxandroid)
   implementation(libs.rxjava3.rxjava)
   implementation(libs.rxjava3.rxkotlin)
-  implementation(libs.androidx.multidex)
   implementation(libs.kotlin.stdlib.jdk8)
 
   ktlintRuleset(libs.ktlint.twitter.compose)
 
   testImplementation(testLibs.junit.junit)
   testImplementation(testLibs.mockito.core)
-  testImplementation(testLibs.mockito.android)
   testImplementation(testLibs.mockito.kotlin)
   testImplementation(testLibs.robolectric.robolectric)
   testImplementation(testLibs.androidx.test.core)

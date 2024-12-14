@@ -9,8 +9,9 @@ import org.thoughtcrime.securesms.database.model.Mention
 import org.thoughtcrime.securesms.database.model.ParentStoryId
 import org.thoughtcrime.securesms.database.model.StoryType
 import org.thoughtcrime.securesms.database.model.databaseprotos.BodyRangeList
-import org.thoughtcrime.securesms.database.model.databaseprotos.DecryptedGroupV2Context
+import org.thoughtcrime.securesms.database.model.databaseprotos.GV2UpdateDescription
 import org.thoughtcrime.securesms.database.model.databaseprotos.GiftBadge
+import org.thoughtcrime.securesms.database.model.databaseprotos.MessageExtras
 import org.thoughtcrime.securesms.linkpreview.LinkPreview
 import org.thoughtcrime.securesms.recipients.Recipient
 import org.thoughtcrime.securesms.sms.GroupV2UpdateMessageUtil
@@ -24,6 +25,7 @@ data class OutgoingMessage(
   val body: String = "",
   val distributionType: Int = ThreadTable.DistributionTypes.DEFAULT,
   val expiresIn: Long = 0L,
+  val expireTimerVersion: Int = threadRecipient.expireTimerVersion,
   val isViewOnce: Boolean = false,
   val outgoingQuote: QuoteModel? = null,
   val storyType: StoryType = StoryType.NONE,
@@ -52,7 +54,8 @@ data class OutgoingMessage(
   val scheduledDate: Long = -1,
   val messageToEdit: Long = 0,
   val isReportSpam: Boolean = false,
-  val isMessageRequestAccept: Boolean = false
+  val isMessageRequestAccept: Boolean = false,
+  val messageExtras: MessageExtras? = null
 ) {
 
   val isV2Group: Boolean = messageGroupContext != null && GroupV2UpdateMessageUtil.isGroupV2(messageGroupContext)
@@ -68,6 +71,7 @@ data class OutgoingMessage(
     attachments: List<Attachment> = emptyList(),
     timestamp: Long,
     expiresIn: Long = 0L,
+    expireTimerVersion: Int = 1,
     viewOnce: Boolean = false,
     distributionType: Int = ThreadTable.DistributionTypes.DEFAULT,
     storyType: StoryType = StoryType.NONE,
@@ -90,6 +94,7 @@ data class OutgoingMessage(
     attachments = attachments,
     sentTimeMillis = timestamp,
     expiresIn = expiresIn,
+    expireTimerVersion = expireTimerVersion,
     isViewOnce = viewOnce,
     distributionType = distributionType,
     storyType = storyType,
@@ -117,6 +122,7 @@ data class OutgoingMessage(
     body: String? = "",
     timestamp: Long,
     expiresIn: Long = 0L,
+    expiresTimerVersion: Int = 1,
     viewOnce: Boolean = false,
     storyType: StoryType = StoryType.NONE,
     linkPreviews: List<LinkPreview> = emptyList(),
@@ -130,6 +136,7 @@ data class OutgoingMessage(
     attachments = slideDeck.asAttachments(),
     sentTimeMillis = timestamp,
     expiresIn = expiresIn,
+    expireTimerVersion = expiresTimerVersion,
     isViewOnce = viewOnce,
     storyType = storyType,
     linkPreviews = linkPreviews,
@@ -141,8 +148,8 @@ data class OutgoingMessage(
 
   val subscriptionId = -1
 
-  fun withExpiry(expiresIn: Long): OutgoingMessage {
-    return copy(expiresIn = expiresIn)
+  fun withExpiry(expiresIn: Long, expireTimerVersion: Int): OutgoingMessage {
+    return copy(expiresIn = expiresIn, expireTimerVersion = expireTimerVersion)
   }
 
   fun stripAttachments(): OutgoingMessage {
@@ -228,17 +235,18 @@ data class OutgoingMessage(
      * Helper for creating a group update message when a state change occurs and needs to be sent to others.
      */
     @JvmStatic
-    fun groupUpdateMessage(threadRecipient: Recipient, group: DecryptedGroupV2Context, sentTimeMillis: Long): OutgoingMessage {
-      val groupContext = MessageGroupContext(group)
+    fun groupUpdateMessage(threadRecipient: Recipient, update: GV2UpdateDescription, sentTimeMillis: Long): OutgoingMessage {
+      val messageExtras = MessageExtras(gv2UpdateDescription = update)
+      val groupContext = MessageGroupContext(update.gv2ChangeDescription!!)
 
       return OutgoingMessage(
         threadRecipient = threadRecipient,
-        body = groupContext.encodedGroupContext,
         sentTimeMillis = sentTimeMillis,
         messageGroupContext = groupContext,
         isGroup = true,
         isGroupUpdate = true,
-        isSecure = true
+        isSecure = true,
+        messageExtras = messageExtras
       )
     }
 
@@ -260,7 +268,6 @@ data class OutgoingMessage(
     ): OutgoingMessage {
       return OutgoingMessage(
         threadRecipient = threadRecipient,
-        body = groupContext.encodedGroupContext,
         isGroup = true,
         isGroupUpdate = true,
         messageGroupContext = groupContext,
@@ -349,12 +356,13 @@ data class OutgoingMessage(
      * Helper for creating expiration update messages.
      */
     @JvmStatic
-    fun expirationUpdateMessage(threadRecipient: Recipient, sentTimeMillis: Long, expiresIn: Long): OutgoingMessage {
+    fun expirationUpdateMessage(threadRecipient: Recipient, sentTimeMillis: Long, expiresIn: Long, expireTimerVersion: Int): OutgoingMessage {
       return OutgoingMessage(
         threadRecipient = threadRecipient,
         sentTimeMillis = sentTimeMillis,
         expiresIn = expiresIn,
         isExpirationUpdate = true,
+        expireTimerVersion = expireTimerVersion,
         isUrgent = false,
         isSecure = true
       )

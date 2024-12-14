@@ -2,16 +2,20 @@ package org.thoughtcrime.securesms.testing
 
 import okio.ByteString
 import okio.ByteString.Companion.toByteString
+import org.signal.core.util.Base64
+import org.thoughtcrime.securesms.database.AttachmentTable
 import org.thoughtcrime.securesms.groups.GroupId
 import org.thoughtcrime.securesms.messages.SignalServiceProtoUtil.buildWith
 import org.thoughtcrime.securesms.messages.TestMessage
 import org.thoughtcrime.securesms.recipients.Recipient
 import org.thoughtcrime.securesms.recipients.RecipientId
 import org.whispersystems.signalservice.api.crypto.EnvelopeMetadata
+import org.whispersystems.signalservice.api.util.UuidUtil
 import org.whispersystems.signalservice.internal.push.AttachmentPointer
 import org.whispersystems.signalservice.internal.push.BodyRange
 import org.whispersystems.signalservice.internal.push.Content
 import org.whispersystems.signalservice.internal.push.DataMessage
+import org.whispersystems.signalservice.internal.push.EditMessage
 import org.whispersystems.signalservice.internal.push.Envelope
 import org.whispersystems.signalservice.internal.push.GroupContextV2
 import org.whispersystems.signalservice.internal.push.SyncMessage
@@ -33,22 +37,22 @@ object MessageContentFuzzer {
   /**
    * Create an [Envelope].
    */
-  fun envelope(timestamp: Long): Envelope {
+  fun envelope(timestamp: Long, serverGuid: UUID = UUID.randomUUID()): Envelope {
     return Envelope.Builder()
       .timestamp(timestamp)
       .serverTimestamp(timestamp + 5)
-      .serverGuid(UUID.randomUUID().toString())
+      .serverGuid(serverGuid.toString())
       .build()
   }
 
   /**
    * Create metadata to match an [Envelope].
    */
-  fun envelopeMetadata(source: RecipientId, destination: RecipientId, groupId: GroupId.V2? = null): EnvelopeMetadata {
+  fun envelopeMetadata(source: RecipientId, destination: RecipientId, sourceDeviceId: Int = 1, groupId: GroupId.V2? = null): EnvelopeMetadata {
     return EnvelopeMetadata(
       sourceServiceId = Recipient.resolved(source).requireServiceId(),
       sourceE164 = null,
-      sourceDeviceId = 1,
+      sourceDeviceId = sourceDeviceId,
       sealedSender = true,
       groupId = groupId?.decodedId,
       destinationServiceId = Recipient.resolved(destination).requireServiceId()
@@ -60,12 +64,13 @@ object MessageContentFuzzer {
    * - An expire timer value
    * - Bold style body ranges
    */
-  fun fuzzTextMessage(groupContextV2: GroupContextV2? = null): Content {
+  fun fuzzTextMessage(sentTimestamp: Long? = null, groupContextV2: GroupContextV2? = null, allowExpireTimeChanges: Boolean = true): Content {
     return Content.Builder()
       .dataMessage(
         DataMessage.Builder().buildWith {
+          timestamp = sentTimestamp
           body = string()
-          if (random.nextBoolean()) {
+          if (allowExpireTimeChanges && random.nextBoolean()) {
             expireTimer = random.nextInt(0..28.days.inWholeSeconds.toInt())
           }
           if (random.nextBoolean()) {
@@ -82,6 +87,20 @@ object MessageContentFuzzer {
           if (groupContextV2 != null) {
             groupV2 = groupContextV2
           }
+        }
+      )
+      .build()
+  }
+
+  /**
+   * Create an edit message.
+   */
+  fun editTextMessage(targetTimestamp: Long, editedDataMessage: DataMessage): Content {
+    return Content.Builder()
+      .editMessage(
+        EditMessage.Builder().buildWith {
+          targetSentTimestamp = targetTimestamp
+          dataMessage = editedDataMessage
         }
       )
       .build()
@@ -113,6 +132,139 @@ object MessageContentFuzzer {
             )
           }
         }
+      ).build()
+  }
+
+  /**
+   * Create a sync reads message for the given [RecipientId] and message timestamp pairings.
+   */
+  fun syncReadsMessage(timestamps: List<Pair<RecipientId, Long>>): Content {
+    return Content
+      .Builder()
+      .syncMessage(
+        SyncMessage.Builder().buildWith {
+          read = timestamps.map { (senderId, timestamp) ->
+            SyncMessage.Read.Builder().buildWith {
+              this.senderAci = Recipient.resolved(senderId).requireAci().toString()
+              this.timestamp = timestamp
+            }
+          }
+        }
+      ).build()
+  }
+
+  fun syncDeleteForMeMessage(allDeletes: List<DeleteForMeSync>): Content {
+    return Content
+      .Builder()
+      .syncMessage(
+        SyncMessage(
+          deleteForMe = SyncMessage.DeleteForMe(
+            messageDeletes = allDeletes.map { (conversationId, conversationDeletes) ->
+              val conversation = Recipient.resolved(conversationId)
+              SyncMessage.DeleteForMe.MessageDeletes(
+                conversation = if (conversation.isGroup) {
+                  SyncMessage.DeleteForMe.ConversationIdentifier(threadGroupId = conversation.requireGroupId().decodedId.toByteString())
+                } else {
+                  SyncMessage.DeleteForMe.ConversationIdentifier(threadServiceId = conversation.requireAci().toString())
+                },
+
+                messages = conversationDeletes.map { (author, timestamp) ->
+                  SyncMessage.DeleteForMe.AddressableMessage(
+                    authorServiceId = Recipient.resolved(author).requireAci().toString(),
+                    sentTimestamp = timestamp
+                  )
+                }
+              )
+            }
+          )
+        )
+      ).build()
+  }
+
+  fun syncDeleteForMeConversation(allDeletes: List<DeleteForMeSync>): Content {
+    return Content
+      .Builder()
+      .syncMessage(
+        SyncMessage(
+          deleteForMe = SyncMessage.DeleteForMe(
+            conversationDeletes = allDeletes.map { delete ->
+              val conversation = Recipient.resolved(delete.conversationId)
+              SyncMessage.DeleteForMe.ConversationDelete(
+                conversation = if (conversation.isGroup) {
+                  SyncMessage.DeleteForMe.ConversationIdentifier(threadGroupId = conversation.requireGroupId().decodedId.toByteString())
+                } else {
+                  SyncMessage.DeleteForMe.ConversationIdentifier(threadServiceId = conversation.requireAci().toString())
+                },
+
+                mostRecentMessages = delete.messages.map { (author, timestamp) ->
+                  SyncMessage.DeleteForMe.AddressableMessage(
+                    authorServiceId = Recipient.resolved(author).requireAci().toString(),
+                    sentTimestamp = timestamp
+                  )
+                },
+
+                mostRecentNonExpiringMessages = delete.nonExpiringMessages.map { (author, timestamp) ->
+                  SyncMessage.DeleteForMe.AddressableMessage(
+                    authorServiceId = Recipient.resolved(author).requireAci().toString(),
+                    sentTimestamp = timestamp
+                  )
+                },
+
+                isFullDelete = delete.isFullDelete
+              )
+            }
+          )
+        )
+      ).build()
+  }
+
+  fun syncDeleteForMeLocalOnlyConversation(conversations: List<RecipientId>): Content {
+    return Content
+      .Builder()
+      .syncMessage(
+        SyncMessage(
+          deleteForMe = SyncMessage.DeleteForMe(
+            localOnlyConversationDeletes = conversations.map { conversationId ->
+              val conversation = Recipient.resolved(conversationId)
+              SyncMessage.DeleteForMe.LocalOnlyConversationDelete(
+                conversation = if (conversation.isGroup) {
+                  SyncMessage.DeleteForMe.ConversationIdentifier(threadGroupId = conversation.requireGroupId().decodedId.toByteString())
+                } else {
+                  SyncMessage.DeleteForMe.ConversationIdentifier(threadServiceId = conversation.requireAci().toString())
+                }
+              )
+            }
+          )
+        )
+      ).build()
+  }
+
+  fun syncDeleteForMeAttachment(conversationId: RecipientId, message: Pair<RecipientId, Long>, uuid: UUID?, digest: ByteArray?, plainTextHash: String?): Content {
+    val conversation = Recipient.resolved(conversationId)
+
+    return Content
+      .Builder()
+      .syncMessage(
+        SyncMessage(
+          deleteForMe = SyncMessage.DeleteForMe(
+            attachmentDeletes = listOf(
+              SyncMessage.DeleteForMe.AttachmentDelete(
+                conversation = if (conversation.isGroup) {
+                  SyncMessage.DeleteForMe.ConversationIdentifier(threadGroupId = conversation.requireGroupId().decodedId.toByteString())
+                } else {
+                  SyncMessage.DeleteForMe.ConversationIdentifier(threadServiceId = conversation.requireAci().toString())
+                },
+                targetMessage = SyncMessage.DeleteForMe.AddressableMessage(
+                  authorServiceId = Recipient.resolved(message.first).requireAci().toString(),
+                  sentTimestamp = message.second
+                ),
+                uuid = uuid?.let { UuidUtil.toByteString(it) },
+                fallbackDigest = digest?.toByteString(),
+                fallbackPlaintextHash = plainTextHash?.let { Base64.decodeOrNull(it)?.toByteString() }
+              )
+            )
+          )
+        )
       ).build()
   }
 
@@ -184,22 +336,21 @@ object MessageContentFuzzer {
   }
 
   /**
-   * Create a random media message that can never contain a text body. It may be:
-   * - A sticker
+   * Create a random media message that contains a sticker.
    */
-  fun fuzzMediaMessageNoText(previousMessages: List<TestMessage> = emptyList()): Content {
+  fun fuzzStickerMediaMessage(sentTimestamp: Long? = null, groupContextV2: GroupContextV2? = null): Content {
     return Content.Builder()
       .dataMessage(
         DataMessage.Builder().buildWith {
-          if (random.nextFloat() < 0.9) {
-            sticker = DataMessage.Sticker.Builder().buildWith {
-              packId = byteString(length = 24)
-              packKey = byteString(length = 128)
-              stickerId = random.nextInt()
-              data_ = attachmentPointer()
-              emoji = emojis.random(random)
-            }
+          timestamp = sentTimestamp
+          sticker = DataMessage.Sticker.Builder().buildWith {
+            packId = byteString(length = 24)
+            packKey = byteString(length = 128)
+            stickerId = random.nextInt()
+            data_ = attachmentPointer()
+            emoji = emojis.random(random)
           }
+          groupV2 = groupContextV2
         }
       ).build()
   }
@@ -245,7 +396,7 @@ object MessageContentFuzzer {
       caption = string(allowNullString = true)
       blurHash = string()
       uploadTimestamp = random.nextLong()
-      cdnNumber = 1
+      cdnNumber = 2
 
       build()
     }
@@ -256,5 +407,15 @@ object MessageContentFuzzer {
    */
   fun fuzzServerDeliveredTimestamp(envelopeTimestamp: Long): Long {
     return envelopeTimestamp + 10
+  }
+
+  data class DeleteForMeSync(
+    val conversationId: RecipientId,
+    val messages: List<Pair<RecipientId, Long>>,
+    val nonExpiringMessages: List<Pair<RecipientId, Long>> = emptyList(),
+    val isFullDelete: Boolean = true,
+    val attachments: List<Pair<Long, AttachmentTable.SyncAttachmentId>> = emptyList()
+  ) {
+    constructor(conversationId: RecipientId, vararg messages: Pair<RecipientId, Long>) : this(conversationId, messages.toList())
   }
 }

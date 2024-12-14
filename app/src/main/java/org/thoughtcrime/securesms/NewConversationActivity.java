@@ -39,27 +39,27 @@ import org.signal.core.util.DimensionUnit;
 import org.signal.core.util.concurrent.LifecycleDisposable;
 import org.signal.core.util.concurrent.SimpleTask;
 import org.signal.core.util.logging.Log;
+import org.thoughtcrime.securesms.calls.YouAreAlreadyInACallSnackbar;
 import org.thoughtcrime.securesms.components.menu.ActionItem;
 import org.thoughtcrime.securesms.components.menu.SignalContextMenu;
 import org.thoughtcrime.securesms.contacts.management.ContactsManagementRepository;
 import org.thoughtcrime.securesms.contacts.management.ContactsManagementViewModel;
+import org.thoughtcrime.securesms.contacts.paged.ChatType;
 import org.thoughtcrime.securesms.contacts.paged.ContactSearchKey;
-import org.thoughtcrime.securesms.contacts.sync.ContactDiscovery;
 import org.thoughtcrime.securesms.conversation.ConversationIntents;
 import org.thoughtcrime.securesms.groups.ui.creategroup.CreateGroupActivity;
 import org.thoughtcrime.securesms.keyvalue.SignalStore;
 import org.thoughtcrime.securesms.recipients.Recipient;
 import org.thoughtcrime.securesms.recipients.RecipientId;
+import org.thoughtcrime.securesms.recipients.RecipientRepository;
 import org.thoughtcrime.securesms.recipients.ui.findby.FindByActivity;
 import org.thoughtcrime.securesms.recipients.ui.findby.FindByMode;
 import org.thoughtcrime.securesms.util.CommunicationActions;
 import org.thoughtcrime.securesms.util.views.SimpleProgressDialog;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -119,9 +119,7 @@ public class NewConversationActivity extends ContactSelectionActivity
   }
 
   @Override
-  public void onBeforeContactSelected(boolean isFromUnknownSearchKey, @NonNull Optional<RecipientId> recipientId, String number, @NonNull Consumer<Boolean> callback) {
-    boolean smsSupported = SignalStore.misc().getSmsExportPhase().allowSmsFeatures();
-
+  public void onBeforeContactSelected(boolean isFromUnknownSearchKey, @NonNull Optional<RecipientId> recipientId, String number, @NonNull Optional<ChatType> chatType, @NonNull Consumer<Boolean> callback) {
     if (recipientId.isPresent()) {
       launch(Recipient.resolved(recipientId.get()));
     } else {
@@ -132,33 +130,19 @@ public class NewConversationActivity extends ContactSelectionActivity
 
         AlertDialog progress = SimpleProgressDialog.show(this);
 
-        SimpleTask.run(getLifecycle(), () -> {
-          Recipient resolved = Recipient.external(this, number);
-
-          if (!resolved.isRegistered() || !resolved.hasServiceId()) {
-            Log.i(TAG, "[onContactSelected] Not registered or no UUID. Doing a directory refresh.");
-            try {
-              ContactDiscovery.refresh(this, resolved, false, TimeUnit.SECONDS.toMillis(10));
-              resolved = Recipient.resolved(resolved.getId());
-            } catch (IOException e) {
-              Log.w(TAG, "[onContactSelected] Failed to refresh directory for new contact.");
-              return null;
-            }
-          }
-
-          return resolved;
-        }, resolved -> {
+        SimpleTask.run(getLifecycle(), () -> RecipientRepository.lookupNewE164(this, number), result -> {
           progress.dismiss();
 
-          if (resolved != null) {
-            if (smsSupported || resolved.isRegistered() && resolved.hasServiceId()) {
+          if (result instanceof RecipientRepository.LookupResult.Success) {
+            Recipient resolved = Recipient.resolved(((RecipientRepository.LookupResult.Success) result).getRecipientId());
+            if (resolved.isRegistered() && resolved.getHasServiceId()) {
               launch(resolved);
-            } else {
-              new MaterialAlertDialogBuilder(this)
-                  .setMessage(getString(R.string.NewConversationActivity__s_is_not_a_signal_user, resolved.getDisplayName(this)))
-                  .setPositiveButton(android.R.string.ok, null)
-                  .show();
             }
+          } else if (result instanceof RecipientRepository.LookupResult.NotFound || result instanceof RecipientRepository.LookupResult.InvalidEntry) {
+            new MaterialAlertDialogBuilder(this)
+                .setMessage(getString(R.string.NewConversationActivity__s_is_not_a_signal_user, number))
+                .setPositiveButton(android.R.string.ok, null)
+                .show();
           } else {
             new MaterialAlertDialogBuilder(this)
                 .setMessage(R.string.NetworkFailure__network_error_check_your_connection_and_try_again)
@@ -166,8 +150,6 @@ public class NewConversationActivity extends ContactSelectionActivity
                 .show();
           }
         });
-      } else if (smsSupported) {
-        launch(Recipient.external(this, number));
       }
     }
 
@@ -317,12 +299,14 @@ public class NewConversationActivity extends ContactSelectionActivity
       return null;
     }
 
-    if (recipient.isRegistered() || (SignalStore.misc().getSmsExportPhase().allowSmsFeatures())) {
+    if (recipient.isRegistered()) {
       return new ActionItem(
           R.drawable.ic_phone_right_24,
           getString(R.string.NewConversationActivity__audio_call),
           R.color.signal_colorOnSurface,
-          () -> CommunicationActions.startVoiceCall(this, recipient)
+          () -> CommunicationActions.startVoiceCall(this, recipient, () -> {
+            YouAreAlreadyInACallSnackbar.show(findViewById(android.R.id.content));
+          })
       );
     } else {
       return null;
@@ -338,7 +322,9 @@ public class NewConversationActivity extends ContactSelectionActivity
         R.drawable.ic_video_call_24,
         getString(R.string.NewConversationActivity__video_call),
         R.color.signal_colorOnSurface,
-        () -> CommunicationActions.startVideoCall(this, recipient)
+        () -> CommunicationActions.startVideoCall(this, recipient, () -> {
+          YouAreAlreadyInACallSnackbar.show(findViewById(android.R.id.content));
+        })
     );
   }
 
@@ -351,13 +337,7 @@ public class NewConversationActivity extends ContactSelectionActivity
         R.drawable.ic_minus_circle_20, // TODO [alex] -- correct asset
         getString(R.string.NewConversationActivity__remove),
         R.color.signal_colorOnSurface,
-        () -> {
-          if (recipient.isSystemContact()) {
-            displayIsInSystemContactsDialog(recipient);
-          } else {
-            displayRemovalDialog(recipient);
-          }
-        }
+        () -> displayRemovalDialog(recipient)
     );
   }
 

@@ -6,7 +6,6 @@ import androidx.lifecycle.ViewModel
 import io.reactivex.rxjava3.core.BackpressureStrategy
 import io.reactivex.rxjava3.core.Flowable
 import io.reactivex.rxjava3.core.Maybe
-import io.reactivex.rxjava3.core.Observable
 import io.reactivex.rxjava3.disposables.CompositeDisposable
 import io.reactivex.rxjava3.kotlin.plusAssign
 import io.reactivex.rxjava3.processors.BehaviorProcessor
@@ -15,16 +14,15 @@ import org.signal.paging.ObservablePagedData
 import org.signal.paging.PagedData
 import org.signal.paging.PagingConfig
 import org.signal.paging.ProxyPagingController
-import org.thoughtcrime.securesms.dependencies.ApplicationDependencies
-import org.thoughtcrime.securesms.util.FeatureFlags
+import org.thoughtcrime.securesms.dependencies.AppDependencies
 import org.thoughtcrime.securesms.util.rx.RxStore
-import java.util.concurrent.TimeUnit
 
 /**
  * ViewModel for call log management.
  */
 class CallLogViewModel(
-  private val callLogRepository: CallLogRepository = CallLogRepository()
+  val callLogPeekHelper: CallLogPeekHelper = CallLogPeekHelper(),
+  private val callLogRepository: CallLogRepository = CallLogRepository(callLogPeekHelper = callLogPeekHelper)
 ) : ViewModel() {
   private val callLogStore = RxStore(CallLogState())
 
@@ -44,7 +42,7 @@ class CallLogViewModel(
   val isEmpty: Boolean get() = _isEmpty.value ?: false
 
   val totalCount: Flowable<Int> = Flowable.combineLatest(distinctQueryFilterPairs, data) { a, _ -> a }
-    .map { (query, filter) -> callLogRepository.getCallsCount(query, filter) }
+    .map { (query, filter) -> callLogRepository.getCallsCount(query, filter) + callLogRepository.getCallLinksCount(query, filter) }
     .doOnNext { _isEmpty.onNext(it <= 0) }
 
   val selectionStateSnapshot: CallLogSelectionState
@@ -77,24 +75,20 @@ class CallLogViewModel(
     }
 
     disposables += callLogRepository.listenForChanges().subscribe {
+      callLogPeekHelper.onDataSetInvalidated()
       controller.onDataInvalidated()
     }
 
-    if (FeatureFlags.adHocCalling()) {
-      disposables += Observable
-        .interval(30, TimeUnit.SECONDS, Schedulers.computation())
-        .flatMapCompletable { callLogRepository.peekCallLinks() }
-        .subscribe()
-
-      disposables += ApplicationDependencies
-        .getSignalCallManager()
-        .peekInfoCache
-        .observeOn(Schedulers.computation())
-        .distinctUntilChanged()
-        .subscribe {
-          controller.onDataInvalidated()
-        }
-    }
+    disposables += AppDependencies
+      .signalCallManager
+      .peekInfoCache
+      .skipWhile { cache -> cache.isEmpty() || cache.values.all { it.isCompletelyInactive } }
+      .observeOn(Schedulers.computation())
+      .distinctUntilChanged()
+      .subscribe {
+        callLogPeekHelper.onDataSetInvalidated()
+        controller.onDataInvalidated()
+      }
   }
 
   override fun onCleared() {

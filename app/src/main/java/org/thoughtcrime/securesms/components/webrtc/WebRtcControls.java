@@ -6,9 +6,10 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.Px;
 import androidx.annotation.StringRes;
+import androidx.annotation.VisibleForTesting;
 
+import org.signal.core.util.logging.Log;
 import org.thoughtcrime.securesms.R;
-import org.thoughtcrime.securesms.util.FeatureFlags;
 import org.thoughtcrime.securesms.webrtc.audio.SignalAudioManager;
 
 import java.util.Set;
@@ -29,6 +30,7 @@ public final class WebRtcControls {
                                                                FoldableState.flat(),
                                                                SignalAudioManager.AudioDevice.NONE,
                                                                emptySet(),
+                                                               false,
                                                                false);
 
   private final boolean                             isRemoteVideoEnabled;
@@ -43,6 +45,7 @@ public final class WebRtcControls {
   private final SignalAudioManager.AudioDevice      activeDevice;
   private final Set<SignalAudioManager.AudioDevice> availableDevices;
   private final boolean                             isCallLink;
+  private final boolean                             hasParticipantOverflow;
 
   private WebRtcControls() {
     this(false,
@@ -56,10 +59,12 @@ public final class WebRtcControls {
          FoldableState.flat(),
          SignalAudioManager.AudioDevice.NONE,
          emptySet(),
+         false,
          false);
   }
 
-  WebRtcControls(boolean isLocalVideoEnabled,
+  @VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)
+  public WebRtcControls(boolean isLocalVideoEnabled,
                  boolean isRemoteVideoEnabled,
                  boolean isMoreThanOneCameraAvailable,
                  boolean isInPipMode,
@@ -70,7 +75,8 @@ public final class WebRtcControls {
                  @NonNull FoldableState foldableState,
                  @NonNull SignalAudioManager.AudioDevice activeDevice,
                  @NonNull Set<SignalAudioManager.AudioDevice> availableDevices,
-                 boolean isCallLink)
+                 boolean isCallLink,
+                 boolean hasParticipantOverflow)
   {
     this.isLocalVideoEnabled          = isLocalVideoEnabled;
     this.isRemoteVideoEnabled         = isRemoteVideoEnabled;
@@ -84,6 +90,7 @@ public final class WebRtcControls {
     this.activeDevice                 = activeDevice;
     this.availableDevices             = availableDevices;
     this.isCallLink                   = isCallLink;
+    this.hasParticipantOverflow       = hasParticipantOverflow;
   }
 
   public @NonNull WebRtcControls withFoldableState(FoldableState foldableState) {
@@ -98,14 +105,15 @@ public final class WebRtcControls {
                               foldableState,
                               activeDevice,
                               availableDevices,
-                              isCallLink);
+                              isCallLink,
+                              hasParticipantOverflow);
   }
 
   /**
    * This is only true at the very start of a call and will then never be true again
    */
   public boolean hideControlsSheetInitially() {
-    return displayIncomingCallButtons() || callState == CallState.NONE;
+    return displayIncomingCallButtons() || callState == CallState.NONE || isHandledElsewhere();
   }
 
   public boolean displayErrorControls() {
@@ -159,7 +167,7 @@ public final class WebRtcControls {
   }
 
   public boolean displayOverflow() {
-    return (FeatureFlags.groupCallReactions() || FeatureFlags.groupCallRaiseHand()) && isAtLeastOutgoing() && hasAtLeastOneRemote && isGroupCall();
+    return isAtLeastOutgoing() && hasAtLeastOneRemote && isGroupCall() && groupCallState == GroupCallState.CONNECTED;
   }
 
   public boolean displayMuteAudio() {
@@ -179,7 +187,7 @@ public final class WebRtcControls {
   }
 
   public boolean displayRemoteVideoRecycler() {
-    return isOngoing();
+    return isOngoing() && hasParticipantOverflow;
   }
 
   public boolean displayAnswerWithoutVideo() {
@@ -219,7 +227,11 @@ public final class WebRtcControls {
   }
 
   public boolean displayRaiseHand() {
-    return FeatureFlags.groupCallRaiseHand() && !isInPipMode;
+    return !isInPipMode;
+  }
+
+  public boolean displayWaitingToBeLetIn() {
+    return !isInPipMode && groupCallState == GroupCallState.PENDING;
   }
 
   public @NonNull WebRtcAudioOutput getAudioOutput() {
@@ -263,6 +275,10 @@ public final class WebRtcControls {
     return callState == CallState.INCOMING;
   }
 
+  private boolean isHandledElsewhere() {
+    return callState == CallState.HANDLED_ELSEWHERE;
+  }
+
   private boolean isAtLeastOutgoing() {
     return callState.isAtLeast(CallState.OUTGOING);
   }
@@ -273,7 +289,6 @@ public final class WebRtcControls {
 
   private int displayedButtonCount() {
     return (displayAudioToggle() ? 1 : 0) +
-           (displayCameraToggle() ? 1 : 0) +
            (displayVideoToggle() ? 1 : 0) +
            (displayMuteAudio() ? 1 : 0) +
            (displayRingToggle() ? 1 : 0) +
@@ -284,6 +299,7 @@ public final class WebRtcControls {
   public enum CallState {
     NONE,
     ERROR,
+    HANDLED_ELSEWHERE,
     PRE_JOIN,
     RECONNECTING,
     INCOMING,
@@ -302,6 +318,7 @@ public final class WebRtcControls {
     RECONNECTING,
     CONNECTING,
     FULL,
+    PENDING,
     CONNECTED;
 
     boolean isAtLeast(@SuppressWarnings("SameParameterValue") @NonNull GroupCallState other) {

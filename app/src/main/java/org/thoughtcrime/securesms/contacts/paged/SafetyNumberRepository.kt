@@ -7,7 +7,7 @@ import org.signal.core.util.concurrent.SignalExecutors
 import org.signal.core.util.concurrent.safeBlockingGet
 import org.signal.core.util.logging.Log
 import org.thoughtcrime.securesms.crypto.storage.SignalIdentityKeyStore
-import org.thoughtcrime.securesms.dependencies.ApplicationDependencies
+import org.thoughtcrime.securesms.dependencies.AppDependencies
 import org.thoughtcrime.securesms.recipients.Recipient
 import org.thoughtcrime.securesms.recipients.RecipientId
 import org.thoughtcrime.securesms.util.IdentityUtil
@@ -20,8 +20,8 @@ import java.util.concurrent.TimeUnit
  * Generic repository for interacting with safety numbers and fetch new ones.
  */
 class SafetyNumberRepository(
-  private val profileService: ProfileService = ApplicationDependencies.getProfileService(),
-  private val aciIdentityStore: SignalIdentityKeyStore = ApplicationDependencies.getProtocolStore().aci().identities()
+  private val profileService: ProfileService = AppDependencies.profileService,
+  private val aciIdentityStore: SignalIdentityKeyStore = AppDependencies.protocolStore.aci().identities()
 ) {
 
   private val recentlyFetched: MutableMap<RecipientId, Long> = HashMap()
@@ -45,7 +45,7 @@ class SafetyNumberRepository(
     stopwatch.split("recipient-ids")
 
     val recentIds = recentlyFetched.filter { (_, timestamp) -> (now - timestamp) < RECENT_TIME_WINDOW }.keys
-    val recipients = Recipient.resolvedList(recipientIds - recentIds).filter { it.hasServiceId() }
+    val recipients = Recipient.resolvedList(recipientIds - recentIds).filter { it.hasServiceId }
     stopwatch.split("recipient-resolve")
 
     if (recipients.isNotEmpty()) {

@@ -192,79 +192,23 @@ public class SignalServiceProfile {
     @JsonProperty
     private boolean storage;
 
-    @JsonProperty("gv1-migration")
-    private boolean gv1Migration;
-
-    @JsonProperty
-    private boolean senderKey;
-
-    @JsonProperty
-    private boolean announcementGroup;
-
-    @JsonProperty
-    private boolean changeNumber;
-
-    @JsonProperty
-    private boolean stories;
-
-    @JsonProperty
-    private boolean giftBadges;
-
-    @JsonProperty
-    private boolean pnp;
-
-    @JsonProperty
-    private boolean paymentActivation;
+    @JsonProperty("ssre2")
+    private boolean storageServiceEncryptionV2;
 
     @JsonCreator
     public Capabilities() {}
 
-    public Capabilities(boolean storage, boolean gv1Migration, boolean senderKey, boolean announcementGroup, boolean changeNumber, boolean stories, boolean giftBadges, boolean pnp, boolean paymentActivation) {
-      this.storage           = storage;
-      this.gv1Migration      = gv1Migration;
-      this.senderKey         = senderKey;
-      this.announcementGroup = announcementGroup;
-      this.changeNumber      = changeNumber;
-      this.stories           = stories;
-      this.giftBadges        = giftBadges;
-      this.pnp               = pnp;
-      this.paymentActivation = paymentActivation;
+    public Capabilities(boolean storage, boolean storageServiceEncryptionV2) {
+      this.storage                    = storage;
+      this.storageServiceEncryptionV2 = storageServiceEncryptionV2;
     }
 
     public boolean isStorage() {
       return storage;
     }
 
-    public boolean isGv1Migration() {
-      return gv1Migration;
-    }
-
-    public boolean isSenderKey() {
-      return senderKey;
-    }
-
-    public boolean isAnnouncementGroup() {
-      return announcementGroup;
-    }
-
-    public boolean isChangeNumber() {
-      return changeNumber;
-    }
-
-    public boolean isStories() {
-      return stories;
-    }
-
-    public boolean isGiftBadges() {
-      return giftBadges;
-    }
-
-    public boolean isPnp() {
-      return pnp;
-    }
-
-    public boolean isPaymentActivation() {
-      return paymentActivation;
+    public boolean isStorageServiceEncryptionV2() {
+      return storageServiceEncryptionV2;
     }
   }
 

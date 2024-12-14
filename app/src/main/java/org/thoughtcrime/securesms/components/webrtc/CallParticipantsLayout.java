@@ -34,7 +34,7 @@ public class CallParticipantsLayout extends FlexboxLayout {
   private CallParticipant       focusedParticipant = null;
   private boolean               shouldRenderInPip;
   private boolean               isPortrait;
-  private boolean               isIncomingRing;
+  private boolean               hideAvatar;
   private int                   navBarBottomInset;
   private LayoutStrategy        layoutStrategy;
 
@@ -50,19 +50,19 @@ public class CallParticipantsLayout extends FlexboxLayout {
     super(context, attrs, defStyleAttr);
   }
 
-  void update(@NonNull List<CallParticipant> callParticipants,
-              @NonNull CallParticipant focusedParticipant,
-              boolean shouldRenderInPip,
-              boolean isPortrait,
-              boolean isIncomingRing,
-              int navBarBottomInset,
-              @NonNull LayoutStrategy layoutStrategy)
+  public void update(@NonNull List<CallParticipant> callParticipants,
+                     @NonNull CallParticipant focusedParticipant,
+                     boolean shouldRenderInPip,
+                     boolean isPortrait,
+                     boolean hideAvatar,
+                     int navBarBottomInset,
+                     @NonNull LayoutStrategy layoutStrategy)
   {
     this.callParticipants   = callParticipants;
     this.focusedParticipant = focusedParticipant;
     this.shouldRenderInPip  = shouldRenderInPip;
     this.isPortrait         = isPortrait;
-    this.isIncomingRing     = isIncomingRing;
+    this.hideAvatar         = hideAvatar;
     this.navBarBottomInset  = navBarBottomInset;
     this.layoutStrategy     = layoutStrategy;
 
@@ -134,7 +134,7 @@ public class CallParticipantsLayout extends FlexboxLayout {
       callParticipantView.setBottomInset(navBarBottomInset);
     }
 
-    if (isIncomingRing) {
+    if (hideAvatar) {
       callParticipantView.hideAvatar();
     } else {
       callParticipantView.showAvatar();

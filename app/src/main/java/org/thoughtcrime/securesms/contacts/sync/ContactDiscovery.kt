@@ -12,7 +12,7 @@ import org.signal.core.util.StringUtil
 import org.signal.core.util.logging.Log
 import org.thoughtcrime.securesms.database.RecipientTable
 import org.thoughtcrime.securesms.database.SignalDatabase
-import org.thoughtcrime.securesms.dependencies.ApplicationDependencies
+import org.thoughtcrime.securesms.dependencies.AppDependencies
 import org.thoughtcrime.securesms.jobs.SyncSystemContactLinksJob
 import org.thoughtcrime.securesms.keyvalue.SignalStore
 import org.thoughtcrime.securesms.mms.IncomingMessage
@@ -23,10 +23,11 @@ import org.thoughtcrime.securesms.phonenumbers.PhoneNumberFormatter
 import org.thoughtcrime.securesms.profiles.ProfileName
 import org.thoughtcrime.securesms.recipients.Recipient
 import org.thoughtcrime.securesms.recipients.RecipientId
-import org.thoughtcrime.securesms.registration.RegistrationUtil
+import org.thoughtcrime.securesms.registration.util.RegistrationUtil
 import org.thoughtcrime.securesms.storage.StorageSyncHelper
 import org.thoughtcrime.securesms.util.TextSecurePreferences
 import org.thoughtcrime.securesms.util.Util
+import org.whispersystems.signalservice.api.push.ServiceId
 import org.whispersystems.signalservice.api.push.SignalServiceAddress
 import org.whispersystems.signalservice.api.util.UuidUtil
 import java.io.IOException
@@ -45,7 +46,7 @@ object ContactDiscovery {
   @Throws(IOException::class)
   @WorkerThread
   fun refreshAll(context: Context, notifyOfNewUsers: Boolean) {
-    if (TextUtils.isEmpty(SignalStore.account().e164)) {
+    if (TextUtils.isEmpty(SignalStore.account.e164)) {
       Log.w(TAG, "Have not yet set our own local number. Skipping.")
       return
     }
@@ -55,8 +56,8 @@ object ContactDiscovery {
       return
     }
 
-    if (!SignalStore.registrationValues().isRegistrationComplete) {
-      if (SignalStore.account().isRegistered && SignalStore.svr().lastPinCreateFailed()) {
+    if (!SignalStore.registration.isRegistrationComplete) {
+      if (SignalStore.account.isRegistered && SignalStore.svr.lastPinCreateFailed()) {
         Log.w(TAG, "Registration isn't complete, but only because PIN creation failed. Allowing CDS to continue.")
       } else {
         Log.w(TAG, "Registration is not yet complete. Skipping, but running a routine to possibly mark it complete.")
@@ -112,6 +113,19 @@ object ContactDiscovery {
     }
   }
 
+  /**
+   * Looks up the PNI/ACI for an E164. Only creates a recipient if the number is in the CDS directory.
+   * Use sparingly! This will always use up the user's CDS quota. Always prefer other syncing methods for bulk lookups.
+   *
+   * Returns a [LookupResult] if the E164 is in the CDS directory, or null if it is not.
+   * Important: Just because a user is not in the directory does not mean they are not registered. They could have discoverability off.
+   */
+  @Throws(IOException::class)
+  @WorkerThread
+  fun lookupE164(e164: String): LookupResult? {
+    return ContactDiscoveryRefreshV2.lookupE164(e164)
+  }
+
   @JvmStatic
   @WorkerThread
   fun syncRecipientInfoWithSystemContacts(context: Context) {
@@ -148,7 +162,7 @@ object ContactDiscovery {
     stopwatch.split("cds")
 
     if (hasContactsPermissions(context)) {
-      ApplicationDependencies.getJobManager().add(SyncSystemContactLinksJob())
+      AppDependencies.jobManager.add(SyncSystemContactLinksJob())
 
       val useFullSync = forceFullSystemContactSync || (removeSystemContactLinksIfMissing && result.registeredIds.size > FULL_SYSTEM_CONTACT_SYNC_THRESHOLD)
       syncRecipientsWithSystemContacts(
@@ -190,10 +204,10 @@ object ContactDiscovery {
   }
 
   private fun notifyNewUsers(context: Context, newUserIds: Collection<RecipientId>) {
-    if (!SignalStore.settings().isNotifyWhenContactJoinsSignal) return
+    if (!SignalStore.settings.isNotifyWhenContactJoinsSignal) return
 
     Recipient.resolvedList(newUserIds)
-      .filter { !it.isSelf && it.hasAUserSetDisplayName(context) && !hasSession(it.id) && it.hasE164() }
+      .filter { !it.isSelf && it.hasAUserSetDisplayName(context) && !hasSession(it.id) && it.hasE164 && !it.isBlocked }
       .map {
         Log.i(TAG, "Inserting 'contact joined' message for ${it.id}. E164: ${it.e164}")
         val message = IncomingMessage.contactJoined(it.id, System.currentTimeMillis())
@@ -204,7 +218,7 @@ object ContactDiscovery {
       .forEach { result ->
         val hour = Calendar.getInstance()[Calendar.HOUR_OF_DAY]
         if (hour in 9..22) {
-          ApplicationDependencies.getMessageNotifier().updateNotification(context, ConversationId.forConversation(result.threadId))
+          AppDependencies.messageNotifier.updateNotification(context, ConversationId.forConversation(result.threadId))
         } else {
           Log.i(TAG, "Not notifying of a new user due to the time of day. (Hour: $hour)")
         }
@@ -224,7 +238,7 @@ object ContactDiscovery {
     contactsProvider: () -> ContactIterator = { SystemContactsRepository.getAllSystemContacts(context, phoneNumberFormatter(context)) },
     clearInfoForMissingContacts: Boolean
   ) {
-    val localNumber: String = SignalStore.account().e164 ?: ""
+    val localNumber: String = SignalStore.account.e164 ?: ""
     val handle = SignalDatabase.recipients.beginBulkSystemContactUpdate(clearInfoForMissingContacts)
     try {
       contactsProvider().use { iterator ->
@@ -278,21 +292,27 @@ object ContactDiscovery {
   /**
    * Whether or not a session exists with the provided recipient.
    */
-  fun hasSession(id: RecipientId): Boolean {
+  private fun hasSession(id: RecipientId): Boolean {
     val recipient = Recipient.resolved(id)
 
-    if (!recipient.hasServiceId()) {
+    if (!recipient.hasServiceId) {
       return false
     }
 
     val protocolAddress = Recipient.resolved(id).requireServiceId().toProtocolAddress(SignalServiceAddress.DEFAULT_DEVICE_ID)
 
-    return ApplicationDependencies.getProtocolStore().aci().containsSession(protocolAddress) ||
-      ApplicationDependencies.getProtocolStore().pni().containsSession(protocolAddress)
+    return AppDependencies.protocolStore.aci().containsSession(protocolAddress) ||
+      AppDependencies.protocolStore.pni().containsSession(protocolAddress)
   }
 
   class RefreshResult(
     val registeredIds: Set<RecipientId>,
     val rewrites: Map<String, String>
+  )
+
+  data class LookupResult(
+    val recipientId: RecipientId,
+    val pni: ServiceId.PNI,
+    val aci: ServiceId.ACI?
   )
 }

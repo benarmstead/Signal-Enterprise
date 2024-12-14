@@ -14,7 +14,7 @@ import org.thoughtcrime.securesms.database.model.DistributionListId
 import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.database.model.StoryResult
 import org.thoughtcrime.securesms.database.model.StoryViewState
-import org.thoughtcrime.securesms.dependencies.ApplicationDependencies
+import org.thoughtcrime.securesms.dependencies.AppDependencies
 import org.thoughtcrime.securesms.jobs.MultiDeviceReadUpdateJob
 import org.thoughtcrime.securesms.keyvalue.SignalStore
 import org.thoughtcrime.securesms.recipients.Recipient
@@ -46,12 +46,12 @@ class StoriesLandingRepository(context: Context) {
 
         stories.forEach {
           val recipient = Recipient.resolved(it.recipientId)
-          if (recipient.isDistributionList || (it.isOutgoing && !recipient.isInactiveGroup())) {
+          if (recipient.isDistributionList || (it.isOutgoing && !recipient.isInactiveGroup)) {
             val list = mapping[myStories] ?: emptyList()
             mapping[myStories] = list + it
           }
 
-          if (!recipient.isDistributionList && !recipient.isBlocked && !recipient.isInactiveGroup()) {
+          if (!recipient.isDistributionList && !recipient.isBlocked && !recipient.isInactiveGroup) {
             val list = mapping[recipient] ?: emptyList()
             mapping[recipient] = list + it
           }
@@ -110,7 +110,7 @@ class StoriesLandingRepository(context: Context) {
           storyViewState = StoryViewState.NONE,
           hasReplies = messageRecords.any { SignalDatabase.messages.getNumberOfStoryReplies(it.id) > 0 },
           hasRepliesFromSelf = messageRecords.any { SignalDatabase.messages.hasSelfReplyInStory(it.id) },
-          isHidden = sender.shouldHideStory(),
+          isHidden = sender.shouldHideStory,
           primaryStory = ConversationMessage.ConversationMessageFactory.createWithUnresolvedData(context, messageRecords[primaryIndex], sender),
           secondaryStory = if (sender.isMyStory) {
             messageRecords.drop(1).firstOrNull()?.let {
@@ -134,12 +134,12 @@ class StoriesLandingRepository(context: Context) {
         refresh(it)
       }
 
-      ApplicationDependencies.getDatabaseObserver().registerConversationObserver(messageRecords.first().threadId, newRepliesObserver)
+      AppDependencies.databaseObserver.registerConversationObserver(messageRecords.first().threadId, newRepliesObserver)
       val liveRecipient = Recipient.live(sender.id)
       liveRecipient.observeForever(recipientChangedObserver)
 
       emitter.setCancellable {
-        ApplicationDependencies.getDatabaseObserver().unregisterObserver(newRepliesObserver)
+        AppDependencies.databaseObserver.unregisterObserver(newRepliesObserver)
         liveRecipient.removeForeverObserver(recipientChangedObserver)
       }
 
@@ -165,7 +165,7 @@ class StoriesLandingRepository(context: Context) {
   fun markStoriesRead() {
     SignalExecutors.BOUNDED_IO.execute {
       val messageInfos: List<MessageTable.MarkedMessageInfo> = SignalDatabase.messages.markAllIncomingStoriesRead()
-      val releaseThread: Long? = SignalStore.releaseChannelValues().releaseChannelRecipientId?.let { SignalDatabase.threads.getThreadIdIfExistsFor(it) }
+      val releaseThread: Long? = SignalStore.releaseChannel.releaseChannelRecipientId?.let { SignalDatabase.threads.getThreadIdIfExistsFor(it) }
 
       MultiDeviceReadUpdateJob.enqueue(messageInfos.filter { it.threadId == releaseThread }.map { it.syncMessageId })
     }

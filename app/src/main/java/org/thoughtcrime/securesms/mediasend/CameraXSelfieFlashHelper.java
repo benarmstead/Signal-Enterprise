@@ -11,12 +11,12 @@ import androidx.camera.view.CameraController;
 
 final class CameraXSelfieFlashHelper {
 
-  private static final float MAX_SCREEN_BRIGHTNESS    = 1f;
-  private static final float MAX_SELFIE_FLASH_ALPHA   = 0.9f;
+  private static final float MAX_SCREEN_BRIGHTNESS  = 1f;
+  private static final float MAX_SELFIE_FLASH_ALPHA = 0.9f;
 
-  private final Window           window;
+  private final Window            window;
   private final CameraController camera;
-  private final View             selfieFlash;
+  private final View              selfieFlash;
 
   private float   brightnessBeforeFlash;
   private boolean inFlash;
@@ -68,7 +68,7 @@ final class CameraXSelfieFlashHelper {
   }
 
   private boolean shouldUseViewBasedFlash() {
-    CameraSelector cameraSelector = camera.getCameraSelector() ;
+    CameraSelector cameraSelector = camera.getCameraSelector();
 
     return (camera.getImageCaptureFlashMode() == ImageCapture.FLASH_MODE_ON || flashMode == ImageCapture.FLASH_MODE_ON) &&
            cameraSelector == CameraSelector.DEFAULT_FRONT_CAMERA;

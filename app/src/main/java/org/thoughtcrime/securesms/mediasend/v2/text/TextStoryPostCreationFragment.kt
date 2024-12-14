@@ -146,7 +146,6 @@ class TextStoryPostCreationFragment : Fragment(R.layout.stories_text_post_creati
             StoriesMultiselectForwardActivity.Args(
               MultiselectForwardFragmentArgs(
                 title = R.string.MediaReviewFragment__send_to,
-                canSendToNonPush = false,
                 storySendRequirements = Stories.MediaTransform.SendRequirements.VALID_DURATION,
                 isSearchEnabled = false
               ),
@@ -158,7 +157,9 @@ class TextStoryPostCreationFragment : Fragment(R.layout.stories_text_post_creati
         MaterialAlertDialogBuilder(requireContext())
           .setMessage(getString(R.string.MediaReviewFragment__add_to_the_group_story, sharedViewModel.state.value!!.recipient!!.getDisplayName(requireContext())))
           .setPositiveButton(R.string.MediaReviewFragment__add_to_story) { _, _ -> performSend(contacts) }
-          .setNegativeButton(android.R.string.cancel) { _, _ -> }
+          .setNegativeButton(android.R.string.cancel) { _, _ ->
+            binding.sendInProgressIndicator.visible = false
+          }
           .show()
       } else {
         performSend(contacts)

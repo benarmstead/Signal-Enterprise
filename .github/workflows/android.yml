@@ -5,7 +5,7 @@ on:
   push:
     branches:
     - 'main'
-    - '6.**'
+    - '7.**'
 
 permissions:
   contents: read # to fetch code (actions/checkout)
@@ -31,11 +31,11 @@ jobs:
       uses: gradle/wrapper-validation-action@v1
 
     - name: Build with Gradle
-      run: ./gradlew qa --parallel
+      run: ./gradlew qa
 
     - name: Archive reports for failed build
       if: ${{ failure() }}
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: reports
         path: '*/build/reports'

@@ -2,7 +2,10 @@ package org.thoughtcrime.securesms.attachments
 
 import android.net.Uri
 import android.os.Parcel
+import org.thoughtcrime.securesms.blurhash.BlurHash
 import org.thoughtcrime.securesms.database.AttachmentTable
+import org.thoughtcrime.securesms.stickers.StickerLocator
+import java.util.UUID
 
 /**
  * An attachment that represents where an attachment used to be. Useful when you need to know that
@@ -11,15 +14,16 @@ import org.thoughtcrime.securesms.database.AttachmentTable
  * quote them and know their contentType even though the media has been deleted.
  */
 class TombstoneAttachment : Attachment {
-  constructor(contentType: String, quote: Boolean) : super(
+  constructor(contentType: String?, quote: Boolean) : super(
     contentType = contentType,
     quote = quote,
     transferState = AttachmentTable.TRANSFER_PROGRESS_DONE,
     size = 0,
     fileName = null,
-    cdnNumber = 0,
+    cdn = Cdn.CDN_0,
     remoteLocation = null,
     remoteKey = null,
+    remoteIv = null,
     remoteDigest = null,
     incrementalDigest = null,
     fastPreflightId = null,
@@ -34,11 +38,56 @@ class TombstoneAttachment : Attachment {
     stickerLocator = null,
     blurHash = null,
     audioHash = null,
-    transformProperties = null
+    transformProperties = null,
+    uuid = null
+  )
+
+  constructor(
+    contentType: String?,
+    incrementalMac: ByteArray?,
+    incrementalMacChunkSize: Int?,
+    width: Int?,
+    height: Int?,
+    caption: String?,
+    fileName: String? = null,
+    blurHash: String?,
+    voiceNote: Boolean = false,
+    borderless: Boolean = false,
+    gif: Boolean = false,
+    stickerLocator: StickerLocator? = null,
+    quote: Boolean,
+    uuid: UUID?
+  ) : super(
+    contentType = contentType ?: "",
+    quote = quote,
+    transferState = AttachmentTable.TRANSFER_PROGRESS_PERMANENT_FAILURE,
+    size = 0,
+    fileName = fileName,
+    cdn = Cdn.CDN_0,
+    remoteLocation = null,
+    remoteKey = null,
+    remoteIv = null,
+    remoteDigest = null,
+    incrementalDigest = incrementalMac,
+    fastPreflightId = null,
+    voiceNote = voiceNote,
+    borderless = borderless,
+    videoGif = gif,
+    width = width ?: 0,
+    height = height ?: 0,
+    incrementalMacChunkSize = incrementalMacChunkSize ?: 0,
+    uploadTimestamp = 0,
+    caption = caption,
+    stickerLocator = stickerLocator,
+    blurHash = BlurHash.parseOrNull(blurHash),
+    audioHash = null,
+    transformProperties = null,
+    uuid = uuid
   )
 
   constructor(parcel: Parcel) : super(parcel)
 
   override val uri: Uri? = null
   override val publicUri: Uri? = null
+  override val thumbnailUri: Uri? = null
 }

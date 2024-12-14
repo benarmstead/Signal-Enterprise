@@ -41,25 +41,26 @@ sealed class CallLogRow {
     val children: Set<Long>,
     val searchQuery: String?,
     val callLinkPeekInfo: CallLinkPeekInfo?,
+    val canUserBeginCall: Boolean,
     override val id: Id = Id.Call(children)
   ) : CallLogRow()
 
   /**
    * A row which can be used to clear the current filter.
    */
-  object ClearFilter : CallLogRow() {
+  data object ClearFilter : CallLogRow() {
     override val id: Id = Id.ClearFilter
   }
 
-  object CreateCallLink : CallLogRow() {
+  data object CreateCallLink : CallLogRow() {
     override val id: Id = Id.CreateCallLink
   }
 
   sealed class Id {
     data class Call(val children: Set<Long>) : Id()
     data class CallLink(val roomId: CallLinkRoomId) : Id()
-    object ClearFilter : Id()
-    object CreateCallLink : Id()
+    data object ClearFilter : Id()
+    data object CreateCallLink : Id()
   }
 
   enum class GroupCallState {

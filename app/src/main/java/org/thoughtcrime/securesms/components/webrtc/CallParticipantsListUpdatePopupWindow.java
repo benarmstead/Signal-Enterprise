@@ -2,6 +2,8 @@ package org.thoughtcrime.securesms.components.webrtc;
 
 
 import android.content.Context;
+import android.os.Handler;
+import android.os.Looper;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -11,7 +13,10 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.annotation.PluralsRes;
 import androidx.annotation.StringRes;
+import androidx.lifecycle.DefaultLifecycleObserver;
+import androidx.lifecycle.LifecycleOwner;
 
 import org.thoughtcrime.securesms.R;
 import org.thoughtcrime.securesms.badges.BadgeImageView;
@@ -23,14 +28,15 @@ import java.util.Iterator;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
-public class CallParticipantsListUpdatePopupWindow extends PopupWindow {
+public class CallParticipantsListUpdatePopupWindow extends PopupWindow implements DefaultLifecycleObserver {
 
-  private static final long DURATION = TimeUnit.SECONDS.toMillis(2);
+  private static final long DURATION = TimeUnit.SECONDS.toMillis(10);
 
   private final ViewGroup       parent;
   private final AvatarImageView avatarImageView;
   private final BadgeImageView  badgeImageView;
   private final TextView        descriptionTextView;
+  private final Handler         handler;
 
   private final Set<CallParticipantListUpdate.Wrapper> pendingAdditions = new HashSet<>();
   private final Set<CallParticipantListUpdate.Wrapper> pendingRemovals  = new HashSet<>();
@@ -46,6 +52,7 @@ public class CallParticipantsListUpdatePopupWindow extends PopupWindow {
     this.avatarImageView     = getContentView().findViewById(R.id.avatar);
     this.badgeImageView      = getContentView().findViewById(R.id.badge);
     this.descriptionTextView = getContentView().findViewById(R.id.description);
+    this.handler             = new Handler(Looper.getMainLooper());
 
     setOnDismissListener(this::showPending);
     setAnimationStyle(R.style.PopupAnimation);
@@ -71,6 +78,13 @@ public class CallParticipantsListUpdatePopupWindow extends PopupWindow {
     }
   }
 
+  @Override
+  public void onDestroy(@NonNull LifecycleOwner owner) {
+    handler.removeCallbacksAndMessages(null);
+    setOnDismissListener(null);
+    dismiss();
+  }
+
   private void showPending() {
     if (!pendingAdditions.isEmpty()) {
       showAdditions();
@@ -94,14 +108,14 @@ public class CallParticipantsListUpdatePopupWindow extends PopupWindow {
   }
 
   private void show() {
-    if (!isEnabled) {
+    if (!isEnabled || !parent.isAttachedToWindow()) {
       return;
     }
 
     showAtLocation(parent, Gravity.TOP | Gravity.START, 0, 0);
     measureChild();
     update();
-    getContentView().postDelayed(this::dismiss, DURATION);
+    handler.postDelayed(this::dismiss, DURATION);
   }
 
   private void measureChild() {
@@ -141,7 +155,7 @@ public class CallParticipantsListUpdatePopupWindow extends PopupWindow {
         description = context.getString(getThreeMemberDescriptionResourceId(isAdded), getNextDisplayName(iterator), getNextDisplayName(iterator), getNextDisplayName(iterator));
         break;
       default:
-        description = context.getString(getManyMemberDescriptionResourceId(isAdded), getNextDisplayName(iterator), getNextDisplayName(iterator), recipients.size() - 2);
+        description = context.getResources().getQuantityString(getManyMemberDescriptionResourceId(isAdded), recipients.size() - 2, getNextDisplayName(iterator), getNextDisplayName(iterator), recipients.size() - 2);
     }
 
     descriptionTextView.setText(description);
@@ -181,11 +195,11 @@ public class CallParticipantsListUpdatePopupWindow extends PopupWindow {
     }
   }
 
-  private static @StringRes int getManyMemberDescriptionResourceId(boolean isAdded) {
+  private static @PluralsRes int getManyMemberDescriptionResourceId(boolean isAdded) {
     if (isAdded) {
-      return R.string.CallParticipantsListUpdatePopupWindow__s_s_and_d_others_joined;
+      return R.plurals.CallParticipantsListUpdatePopupWindow__s_s_and_d_others_joined;
     } else {
-      return R.string.CallParticipantsListUpdatePopupWindow__s_s_and_d_others_left;
+      return R.plurals.CallParticipantsListUpdatePopupWindow__s_s_and_d_others_left;
     }
   }
 }

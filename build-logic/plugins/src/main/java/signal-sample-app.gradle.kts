@@ -33,7 +33,6 @@ android {
 
     minSdk = signalMinSdkVersion
     targetSdk = signalTargetSdkVersion
-    multiDexEnabled = true
   }
 
   compileOptions {
@@ -47,11 +46,12 @@ android {
   }
 
   buildFeatures {
+    buildConfig = true
     compose = true
   }
 
   composeOptions {
-    kotlinCompilerExtensionVersion = "1.4.4"
+    kotlinCompilerExtensionVersion = "1.5.4"
   }
 }
 
@@ -69,7 +69,6 @@ dependencies {
   implementation(libs.rxjava3.rxandroid)
   implementation(libs.rxjava3.rxjava)
   implementation(libs.rxjava3.rxkotlin)
-  implementation(libs.androidx.multidex)
   implementation(libs.material.material)
   implementation(libs.androidx.constraintlayout)
   implementation(libs.kotlin.stdlib.jdk8)
@@ -81,7 +80,6 @@ dependencies {
 
   testImplementation(testLibs.junit.junit)
   testImplementation(testLibs.mockito.core)
-  testImplementation(testLibs.mockito.android)
   testImplementation(testLibs.mockito.kotlin)
   testImplementation(testLibs.robolectric.robolectric)
   testImplementation(testLibs.androidx.test.core)

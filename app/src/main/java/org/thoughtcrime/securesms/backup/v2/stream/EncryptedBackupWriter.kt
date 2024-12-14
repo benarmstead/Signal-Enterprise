@@ -7,12 +7,13 @@ package org.thoughtcrime.securesms.backup.v2.stream
 
 import org.signal.core.util.stream.MacOutputStream
 import org.signal.core.util.writeVarInt32
+import org.thoughtcrime.securesms.backup.v2.proto.BackupInfo
 import org.thoughtcrime.securesms.backup.v2.proto.Frame
-import org.whispersystems.signalservice.api.backup.BackupKey
+import org.thoughtcrime.securesms.util.Util
+import org.whispersystems.signalservice.api.backup.MessageBackupKey
 import org.whispersystems.signalservice.api.push.ServiceId.ACI
 import java.io.IOException
 import java.io.OutputStream
-import java.util.zip.GZIPOutputStream
 import javax.crypto.Cipher
 import javax.crypto.CipherOutputStream
 import javax.crypto.Mac
@@ -26,34 +27,42 @@ import javax.crypto.spec.SecretKeySpec
  * to the end of the [outputStream].
  */
 class EncryptedBackupWriter(
-  key: BackupKey,
+  key: MessageBackupKey,
   aci: ACI,
   private val outputStream: OutputStream,
   private val append: (ByteArray) -> Unit
 ) : BackupExportWriter {
 
-  private val mainStream: GZIPOutputStream
+  private val mainStream: PaddedGzipOutputStream
   private val macStream: MacOutputStream
 
   init {
-    val keyMaterial = key.deriveSecrets(aci)
+    val keyMaterial = key.deriveBackupSecrets(aci)
+
+    val iv: ByteArray = Util.getSecretBytes(16)
+    outputStream.write(iv)
+    outputStream.flush()
 
     val cipher = Cipher.getInstance("AES/CBC/PKCS5Padding").apply {
-      init(Cipher.ENCRYPT_MODE, SecretKeySpec(keyMaterial.cipherKey, "AES"), IvParameterSpec(keyMaterial.iv))
+      init(Cipher.ENCRYPT_MODE, SecretKeySpec(keyMaterial.aesKey, "AES"), IvParameterSpec(iv))
     }
 
     val mac = Mac.getInstance("HmacSHA256").apply {
       init(SecretKeySpec(keyMaterial.macKey, "HmacSHA256"))
+      update(iv)
     }
 
     macStream = MacOutputStream(outputStream, mac)
+    val cipherStream = CipherOutputStream(macStream, cipher)
 
-    mainStream = GZIPOutputStream(
-      CipherOutputStream(
-        macStream,
-        cipher
-      )
-    )
+    mainStream = PaddedGzipOutputStream(cipherStream)
+  }
+
+  override fun write(header: BackupInfo) {
+    val headerBytes = header.encode()
+
+    mainStream.writeVarInt32(headerBytes.size)
+    mainStream.write(headerBytes)
   }
 
   @Throws(IOException::class)

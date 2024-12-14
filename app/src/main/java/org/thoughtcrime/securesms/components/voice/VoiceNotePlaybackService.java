@@ -34,12 +34,16 @@ import com.google.common.util.concurrent.ListenableFuture;
 
 import org.signal.core.util.concurrent.SignalExecutors;
 import org.signal.core.util.logging.Log;
+import org.thoughtcrime.securesms.attachments.AttachmentId;
+import org.thoughtcrime.securesms.attachments.DatabaseAttachment;
+import org.thoughtcrime.securesms.database.DatabaseObserver;
 import org.thoughtcrime.securesms.database.MessageTable;
 import org.thoughtcrime.securesms.database.SignalDatabase;
 import org.thoughtcrime.securesms.database.model.MessageId;
-import org.thoughtcrime.securesms.dependencies.ApplicationDependencies;
+import org.thoughtcrime.securesms.dependencies.AppDependencies;
 import org.thoughtcrime.securesms.jobs.MultiDeviceViewedUpdateJob;
 import org.thoughtcrime.securesms.jobs.SendViewedReceiptJob;
+import org.thoughtcrime.securesms.mms.PartUriParser;
 import org.thoughtcrime.securesms.recipients.RecipientId;
 import org.thoughtcrime.securesms.service.KeyCachingService;
 
@@ -64,6 +68,8 @@ public class VoiceNotePlaybackService extends MediaSessionService {
   private KeyClearedReceiver                   keyClearedReceiver;
   private VoiceNotePlayerCallback              voiceNotePlayerCallback;
 
+  private final DatabaseObserver.Observer attachmentDeletionObserver = this::onAttachmentDeleted;
+
   @Override
   public void onCreate() {
     super.onCreate();
@@ -71,37 +77,56 @@ public class VoiceNotePlaybackService extends MediaSessionService {
     player.addListener(new VoiceNotePlayerEventListener());
 
     voiceNotePlayerCallback = new VoiceNotePlayerCallback(this, player);
-    mediaSession            = buildMediaSession(false);
 
-    if (mediaSession == null) {
+    final MediaSession session = buildMediaSession(false);
+    if (session == null) {
       Log.e(TAG, "Unable to create media session at all, stopping service to avoid crash.");
       stopSelf();
       return;
+    } else {
+      mediaSession = session;
     }
 
-    keyClearedReceiver = new KeyClearedReceiver(this, mediaSession.getToken());
+    keyClearedReceiver = new KeyClearedReceiver(this, session.getToken());
 
     setMediaNotificationProvider(new VoiceNoteMediaNotificationProvider(this));
     setListener(new MediaSessionServiceListener());
+    AppDependencies.getDatabaseObserver().registerAttachmentDeletedObserver(attachmentDeletionObserver);
   }
 
   @Override
   public void onTaskRemoved(Intent rootIntent) {
     super.onTaskRemoved(rootIntent);
 
-    mediaSession.getPlayer().stop();
-    mediaSession.getPlayer().clearMediaItems();
+    final MediaSession session = mediaSession;
+    if (session != null) {
+      session.getPlayer().stop();
+      session.getPlayer().clearMediaItems();
+    }
   }
 
   @Override
   public void onDestroy() {
-    player.release();
-    mediaSession.release();
-    mediaSession = null;
+    AppDependencies.getDatabaseObserver().unregisterObserver(attachmentDeletionObserver);
+
+    final VoiceNotePlayer voiceNotePlayer = player;
+    if (voiceNotePlayer != null) {
+      voiceNotePlayer.release();
+    }
+
+    MediaSession session = mediaSession;
+    if (session != null) {
+      session.release();
+      mediaSession = null;
+    }
+
+    KeyClearedReceiver receiver = keyClearedReceiver;
+    if (receiver != null) {
+      receiver.unregister();
+    }
+
     clearListener();
-    mediaSession = null;
     super.onDestroy();
-    keyClearedReceiver.unregister();
   }
 
   @Nullable
@@ -191,19 +216,57 @@ public class VoiceNotePlaybackService extends MediaSessionService {
     }
   }
 
+  private void onAttachmentDeleted() {
+    Log.d(TAG, "Database attachment observer invoked.");
+    ContextCompat.getMainExecutor(getApplicationContext()).execute(() -> {
+      if (player != null) {
+        final MediaItem currentItem = player.getCurrentMediaItem();
+        if (currentItem == null || currentItem.playbackProperties == null) {
+          Log.d(TAG, "Current item is null or playback properties are null.");
+          return;
+        }
+
+        final Uri currentlyPlayingUri = currentItem.playbackProperties.uri;
+
+        if (currentlyPlayingUri == VoiceNoteMediaItemFactory.NEXT_URI || currentlyPlayingUri == VoiceNoteMediaItemFactory.END_URI) {
+          Log.v(TAG, "Attachment deleted while voice note service was playing a system tone.");
+        }
+
+        try {
+          final AttachmentId       partId     = new PartUriParser(currentlyPlayingUri).getPartId();
+          final DatabaseAttachment attachment = SignalDatabase.attachments().getAttachment(partId);
+          if (attachment == null) {
+            player.stop();
+            int playingIndex = player.getCurrentMediaItemIndex();
+            player.removeMediaItem(playingIndex);
+            Log.d(TAG, "Currently playing item removed.");
+          } else {
+            Log.d(TAG, "Attachment was not null, therefore not deleted, therefore no action taken.");
+          }
+        } catch (NumberFormatException ex) {
+          Log.w(TAG, "Could not parse currently playing URI into an attachmentId.", ex);
+        }
+      }
+    });
+  }
+
   /**
    * Some devices, such as the ASUS Zenfone 8, erroneously report multiple broadcast receivers for {@value Intent#ACTION_MEDIA_BUTTON} in the package manager.
    * This triggers a failure within the {@link MediaSession} initialization and throws an {@link IllegalStateException}.
    * This method will catch that exception and attempt to disable the duplicated broadcast receiver in the hopes of getting the package manager to
    * report only 1, avoiding the error.
    * If that doesn't work, it returns null, signaling the {@link MediaSession} cannot be built on this device.
+   * The opposite problem also appears to happen: the device reports that it cannot assign the media button receiver, which is required by AndroidX Media3.
+   * This is despite the fact that Media3 confirms the presence of the receiver before attempting to bind.
+   * In this case, the system throws an {@link IllegalArgumentException}, which we catch. Then we also disable the existing receiver, which should be the same
+   * as if we had never had the received in the first place, which should cause Media3 to abort trying to bind to it and allow it to proceed.
    *
    * @return the built MediaSession, or null if the session cannot be built.
    */
   private @Nullable MediaSession buildMediaSession(boolean isRetry) {
     try {
       return new MediaSession.Builder(this, player).setCallback(voiceNotePlayerCallback).setId(SESSION_ID).build();
-    } catch (IllegalStateException e) {
+    } catch (IllegalStateException | IllegalArgumentException e) {
 
       if (isRetry) {
         Log.e(TAG, "Unable to create media session, even after retry.", e);
@@ -279,10 +342,10 @@ public class VoiceNotePlaybackService extends MediaSessionService {
         MessageTable.MarkedMessageInfo markedMessageInfo = messageDatabase.setIncomingMessageViewed(messageId);
 
         if (markedMessageInfo != null) {
-          ApplicationDependencies.getJobManager().add(new SendViewedReceiptJob(markedMessageInfo.getThreadId(),
-                                                                               recipientId,
-                                                                               markedMessageInfo.getSyncMessageId().getTimetamp(),
-                                                                               new MessageId(messageId)));
+          AppDependencies.getJobManager().add(new SendViewedReceiptJob(markedMessageInfo.getThreadId(),
+                                                                       recipientId,
+                                                                       markedMessageInfo.getSyncMessageId().getTimetamp(),
+                                                                       new MessageId(messageId)));
           MultiDeviceViewedUpdateJob.enqueue(Collections.singletonList(markedMessageInfo.getSyncMessageId()));
         }
       });

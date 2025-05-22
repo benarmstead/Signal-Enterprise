@@ -152,8 +152,7 @@ public class OutgoingCallActionProcessor extends DeviceAwareActionProcessor {
       webRtcInteractor.getCallManager().proceed(activePeer.getCallId(),
                                                 context,
                                                 videoState.getLockableEglBase().require(),
-                                                RingRtcDynamicConfiguration.getAudioProcessingMethod(),
-                                                RingRtcDynamicConfiguration.shouldUseOboeAdm(),
+                                                RingRtcDynamicConfiguration.getAudioConfig(),
                                                 videoState.requireLocalSink(),
                                                 callParticipant.getVideoSink(),
                                                 videoState.requireCamera(),
@@ -231,6 +230,11 @@ public class OutgoingCallActionProcessor extends DeviceAwareActionProcessor {
                        .changeLocalDeviceState()
                        .isMicrophoneEnabled(!muted)
                        .build();
+  }
+
+  @Override
+  protected @NonNull WebRtcServiceState handleRemoteAudioEnable(@NonNull WebRtcServiceState currentState, boolean enable) {
+    return activeCallDelegate.handleRemoteAudioEnable(currentState, enable);
   }
 
   @Override

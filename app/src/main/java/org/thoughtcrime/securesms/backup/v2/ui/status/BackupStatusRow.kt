@@ -35,13 +35,15 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.withLink
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import org.signal.core.ui.Previews
-import org.signal.core.ui.Rows
-import org.signal.core.ui.SignalPreview
+import org.signal.core.ui.compose.Previews
+import org.signal.core.ui.compose.Rows
+import org.signal.core.ui.compose.SignalPreview
 import org.signal.core.util.ByteSize
 import org.thoughtcrime.securesms.R
 import kotlin.math.roundToInt
 import org.signal.core.ui.R as CoreUiR
+
+private val YELLOW_DOT = Color(0xFFFFCC00)
 
 /**
  * Backup status displayable as a row on a settings page.
@@ -106,12 +108,12 @@ fun BackupStatusRow(
       BackupStatusData.CouldNotCompleteBackup -> {
         val inlineContentMap = mapOf(
           "yellow_bullet" to InlineTextContent(
-            Placeholder(12.sp, 12.sp, PlaceholderVerticalAlign.TextCenter)
+            Placeholder(20.sp, 12.sp, PlaceholderVerticalAlign.TextCenter)
           ) {
             Box(
               modifier = Modifier
                 .size(12.dp)
-                .background(color = backupStatusData.iconColors.foreground, shape = CircleShape)
+                .background(color = YELLOW_DOT, shape = CircleShape)
             )
           }
         )
@@ -129,12 +131,12 @@ fun BackupStatusRow(
       BackupStatusData.BackupFailed -> {
         val inlineContentMap = mapOf(
           "yellow_bullet" to InlineTextContent(
-            Placeholder(12.sp, 12.sp, PlaceholderVerticalAlign.TextCenter)
+            Placeholder(20.sp, 12.sp, PlaceholderVerticalAlign.TextCenter)
           ) {
             Box(
               modifier = Modifier
                 .size(12.dp)
-                .background(color = backupStatusData.iconColors.foreground, shape = CircleShape)
+                .background(color = YELLOW_DOT, shape = CircleShape)
             )
           }
         )
@@ -184,9 +186,10 @@ private fun getRestoringMediaString(backupStatusData: BackupStatusData.Restoring
 
 @Composable
 private fun progressColor(backupStatusData: BackupStatusData): Color {
-  return when (backupStatusData) {
-    is BackupStatusData.RestoringMedia -> MaterialTheme.colorScheme.primary
-    else -> backupStatusData.iconColors.foreground
+  return if (backupStatusData is BackupStatusData.RestoringMedia && backupStatusData.restoreStatus == BackupStatusData.RestoreStatus.NORMAL) {
+    MaterialTheme.colorScheme.primary
+  } else {
+    backupStatusData.iconColors.foreground
   }
 }
 

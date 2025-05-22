@@ -76,7 +76,8 @@ class ByteSize(val bytes: Long) {
     }
   }
 
-  fun toUnitString(maxPlaces: Int = 1, spaced: Boolean = true): String {
+  @JvmOverloads
+  fun toUnitString(maxPlaces: Int = 2, spaced: Boolean = true): String {
     val (size, unit) = getLargestNonZeroValue()
 
     val formatter = NumberFormat.getInstance().apply {
@@ -97,6 +98,18 @@ class ByteSize(val bytes: Long) {
 
   operator fun compareTo(other: ByteSize): Int {
     return bytes.compareTo(other.bytes)
+  }
+
+  operator fun plus(other: ByteSize): ByteSize {
+    return ByteSize(this.inWholeBytes + other.inWholeBytes)
+  }
+
+  fun percentageOf(other: ByteSize): Float {
+    return this.inWholeBytes.toFloat() / other.inWholeBytes.toFloat()
+  }
+
+  operator fun minus(other: ByteSize): ByteSize {
+    return ByteSize(this.inWholeBytes - other.inWholeBytes)
   }
 
   enum class Size(val label: String) {

@@ -22,6 +22,7 @@ import org.thoughtcrime.securesms.database.model.databaseprotos.RecipientExtras
 import org.thoughtcrime.securesms.keyvalue.SignalStore
 import org.thoughtcrime.securesms.profiles.ProfileName
 import org.thoughtcrime.securesms.recipients.RecipientId
+import org.whispersystems.signalservice.api.push.ServiceId
 
 /**
  * Fetches all individual contacts for backups and returns the result as an iterator.
@@ -45,9 +46,16 @@ fun RecipientTable.getContactsForBackup(selfId: Long): ContactArchiveExporter {
       "${RecipientTable.TABLE_NAME}.${RecipientTable.PROFILE_GIVEN_NAME}",
       "${RecipientTable.TABLE_NAME}.${RecipientTable.PROFILE_FAMILY_NAME}",
       "${RecipientTable.TABLE_NAME}.${RecipientTable.PROFILE_JOINED_NAME}",
+      "${RecipientTable.TABLE_NAME}.${RecipientTable.SYSTEM_GIVEN_NAME}",
+      "${RecipientTable.TABLE_NAME}.${RecipientTable.SYSTEM_FAMILY_NAME}",
+      "${RecipientTable.TABLE_NAME}.${RecipientTable.SYSTEM_NICKNAME}",
+      "${RecipientTable.TABLE_NAME}.${RecipientTable.NICKNAME_GIVEN_NAME}",
+      "${RecipientTable.TABLE_NAME}.${RecipientTable.NICKNAME_FAMILY_NAME}",
+      "${RecipientTable.TABLE_NAME}.${RecipientTable.NOTE}",
       "${RecipientTable.TABLE_NAME}.${RecipientTable.MUTE_UNTIL}",
       "${RecipientTable.TABLE_NAME}.${RecipientTable.CHAT_COLORS}",
       "${RecipientTable.TABLE_NAME}.${RecipientTable.CUSTOM_CHAT_COLORS_ID}",
+      "${RecipientTable.TABLE_NAME}.${RecipientTable.AVATAR_COLOR}",
       "${RecipientTable.TABLE_NAME}.${RecipientTable.EXTRAS}",
       "${IdentityTable.TABLE_NAME}.${IdentityTable.IDENTITY_KEY}",
       "${IdentityTable.TABLE_NAME}.${IdentityTable.VERIFIED}"
@@ -76,7 +84,7 @@ fun RecipientTable.getContactsForBackup(selfId: Long): ContactArchiveExporter {
   return ContactArchiveExporter(cursor, selfId)
 }
 
-fun RecipientTable.getGroupsForBackup(): GroupArchiveExporter {
+fun RecipientTable.getGroupsForBackup(selfAci: ServiceId.ACI): GroupArchiveExporter {
   val cursor = readableDatabase
     .select(
       "${RecipientTable.TABLE_NAME}.${RecipientTable.ID}",
@@ -84,9 +92,11 @@ fun RecipientTable.getGroupsForBackup(): GroupArchiveExporter {
       "${RecipientTable.TABLE_NAME}.${RecipientTable.PROFILE_SHARING}",
       "${RecipientTable.TABLE_NAME}.${RecipientTable.MUTE_UNTIL}",
       "${RecipientTable.TABLE_NAME}.${RecipientTable.EXTRAS}",
+      "${RecipientTable.TABLE_NAME}.${RecipientTable.AVATAR_COLOR}",
       "${GroupTable.TABLE_NAME}.${GroupTable.V2_MASTER_KEY}",
       "${GroupTable.TABLE_NAME}.${GroupTable.SHOW_AS_STORY_STATE}",
       "${GroupTable.TABLE_NAME}.${GroupTable.TITLE}",
+      "${GroupTable.TABLE_NAME}.${GroupTable.ACTIVE}",
       "${GroupTable.TABLE_NAME}.${GroupTable.V2_DECRYPTED_GROUP}"
     )
     .from(
@@ -103,7 +113,7 @@ fun RecipientTable.getGroupsForBackup(): GroupArchiveExporter {
     )
     .run()
 
-  return GroupArchiveExporter(cursor)
+  return GroupArchiveExporter(selfAci, cursor)
 }
 
 /**

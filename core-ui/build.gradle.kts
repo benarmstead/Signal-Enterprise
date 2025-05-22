@@ -1,5 +1,6 @@
 plugins {
   id("signal-library")
+  alias(libs.plugins.compose.compiler)
 }
 
 android {
@@ -23,6 +24,9 @@ dependencies {
   }
 
   api(libs.androidx.compose.material3)
+  api(libs.androidx.compose.material3.adaptive)
+  api(libs.androidx.compose.material3.adaptive.layout)
+  api(libs.androidx.compose.material3.adaptive.navigation)
   api(libs.androidx.compose.ui.tooling.preview)
   debugApi(libs.androidx.compose.ui.tooling.core)
 }

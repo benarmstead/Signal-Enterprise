@@ -25,9 +25,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
-import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -54,28 +54,41 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.DialogProperties
 import androidx.fragment.app.viewModels
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
-import org.signal.core.ui.Dividers
-import org.signal.core.ui.Previews
-import org.signal.core.ui.Rows
-import org.signal.core.ui.SignalPreview
-import org.signal.core.ui.Snackbars
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import org.signal.core.ui.compose.Dividers
+import org.signal.core.ui.compose.Previews
+import org.signal.core.ui.compose.Rows
+import org.signal.core.ui.compose.SignalPreview
+import org.signal.core.ui.compose.Snackbars
+import org.signal.core.ui.compose.TextFields.TextField
+import org.signal.core.util.Hex
 import org.signal.core.util.getLength
 import org.thoughtcrime.securesms.R
 import org.thoughtcrime.securesms.attachments.AttachmentId
 import org.thoughtcrime.securesms.backup.v2.MessageBackupTier
+import org.thoughtcrime.securesms.components.compose.RoundCheckbox
+import org.thoughtcrime.securesms.components.settings.app.internal.backup.InternalBackupPlaygroundViewModel.DialogState
 import org.thoughtcrime.securesms.components.settings.app.internal.backup.InternalBackupPlaygroundViewModel.ScreenState
 import org.thoughtcrime.securesms.compose.ComposeFragment
 import org.thoughtcrime.securesms.jobs.LocalBackupJob
 import org.thoughtcrime.securesms.keyvalue.SignalStore
+import org.thoughtcrime.securesms.util.Util
 
 class InternalBackupPlaygroundFragment : ComposeFragment() {
 
@@ -190,19 +203,45 @@ class InternalBackupPlaygroundFragment : ComposeFragment() {
               .show()
           },
           onImportEncryptedBackupFromDiskClicked = {
-            val intent = Intent().apply {
-              action = Intent.ACTION_GET_CONTENT
-              type = "application/octet-stream"
-              addCategory(Intent.CATEGORY_OPENABLE)
+            viewModel.onImportSelected()
+          },
+          onImportEncryptedBackupFromDiskDismissed = {
+            viewModel.onDialogDismissed()
+          },
+          onImportEncryptedBackupFromDiskConfirmed = { aci, backupKey ->
+            viewModel.onDialogDismissed()
+            val valid = viewModel.onImportConfirmed(aci, backupKey)
+            if (valid) {
+              val intent = Intent().apply {
+                action = Intent.ACTION_GET_CONTENT
+                type = "application/octet-stream"
+                addCategory(Intent.CATEGORY_OPENABLE)
+              }
+              importEncryptedBackupFromDiskLauncher.launch(intent)
+            } else {
+              Toast.makeText(context, "Invalid credentials!", Toast.LENGTH_SHORT).show()
             }
-
-            importEncryptedBackupFromDiskLauncher.launch(intent)
           },
           onImportNewStyleLocalBackupClicked = {
             MaterialAlertDialogBuilder(context)
               .setTitle("Are you sure?")
               .setMessage("After you choose a file to import, this will delete all of your chats, then restore them from the file! Only do this on a test device!")
               .setPositiveButton("Wipe and restore") { _, _ -> viewModel.import(SignalStore.settings.signalBackupDirectory!!) }
+              .show()
+          },
+          onDeleteRemoteBackup = {
+            MaterialAlertDialogBuilder(context)
+              .setTitle("Are you sure?")
+              .setMessage("This will delete all of your remote backup data?")
+              .setPositiveButton("Delete remote data") { _, _ ->
+                lifecycleScope.launch {
+                  val success = viewModel.deleteRemoteBackupData()
+                  withContext(Dispatchers.Main) {
+                    Toast.makeText(requireContext(), if (success) "Deleted!" else "Failed!", Toast.LENGTH_SHORT).show()
+                  }
+                }
+              }
+              .setNegativeButton("Cancel", null)
               .show()
           }
         )
@@ -248,7 +287,7 @@ fun Tabs(
           navigationIcon = {
             IconButton(onClick = onBack) {
               Icon(
-                painter = painterResource(R.drawable.symbol_arrow_left_24),
+                painter = painterResource(R.drawable.symbol_arrow_start_24),
                 tint = MaterialTheme.colorScheme.onSurface,
                 contentDescription = null
               )
@@ -297,8 +336,12 @@ fun Screen(
   onValidateBackupClicked: () -> Unit = {},
   onSaveEncryptedBackupToDiskClicked: () -> Unit = {},
   onSavePlaintextBackupToDiskClicked: () -> Unit = {},
-  onImportEncryptedBackupFromDiskClicked: () -> Unit = {}
+  onImportEncryptedBackupFromDiskClicked: () -> Unit = {},
+  onImportEncryptedBackupFromDiskDismissed: () -> Unit = {},
+  onImportEncryptedBackupFromDiskConfirmed: (aci: String, backupKey: String) -> Unit = { _, _ -> },
+  onDeleteRemoteBackup: () -> Unit = {}
 ) {
+  val context = LocalContext.current
   val scrollState = rememberScrollState()
   val options = remember {
     mapOf(
@@ -306,6 +349,16 @@ fun Screen(
       "Free" to MessageBackupTier.FREE,
       "Paid" to MessageBackupTier.PAID
     )
+  }
+
+  when (state.dialog) {
+    DialogState.None -> Unit
+    DialogState.ImportCredentials -> {
+      ImportCredentialsDialog(
+        onSubmit = onImportEncryptedBackupFromDiskConfirmed,
+        onDismissed = onImportEncryptedBackupFromDiskDismissed
+      )
+    }
   }
 
   Surface {
@@ -391,6 +444,24 @@ fun Screen(
         onClick = onExportNewStyleLocalBackupClicked
       )
 
+      Rows.TextRow(
+        text = "Copy Account Entropy Pool (AEP)",
+        label = "Copies the Account Entropy Pool (AEP) to the clipboard, which is labeled as the \"Backup Key\" in the designs.",
+        onClick = {
+          Util.copyToClipboard(context, SignalStore.account.accountEntropyPool.value)
+          Toast.makeText(context, "Copied!", Toast.LENGTH_SHORT).show()
+        }
+      )
+
+      Rows.TextRow(
+        text = "Copy Cryptographic BackupKey",
+        label = "Copies the cryptographic BackupKey to the clipboard as a hex string. Important: this is the key that is derived from the AEP, and therefore *not* the same as the key labeled \"Backup Key\" in the designs. That's actually the AEP, listed above.",
+        onClick = {
+          Util.copyToClipboard(context, Hex.toStringCondensed(SignalStore.account.accountEntropyPool.deriveMessageBackupKey().value))
+          Toast.makeText(context, "Copied!", Toast.LENGTH_SHORT).show()
+        }
+      )
+
       Dividers.Default()
 
       Text(
@@ -443,7 +514,29 @@ fun Screen(
         onClick = onImportNewStyleLocalBackupClicked
       )
 
+      Rows.TextRow(
+        text = "Delete all backup data on server",
+        label = "Erases all content on the server.",
+        onClick = onDeleteRemoteBackup
+      )
+
       Dividers.Default()
+
+      Rows.TextRow(
+        text = "Mark backup failure",
+        label = "This will display the error sheet when returning to the chats list.",
+        onClick = {
+          SignalStore.backup.internalSetBackupFailedErrorState()
+        }
+      )
+
+      Rows.TextRow(
+        text = "Mark backup expired and downgraded",
+        label = "This will not actually downgrade the user.",
+        onClick = {
+          SignalStore.backup.backupExpiredAndDowngraded = true
+        }
+      )
 
       Spacer(modifier = Modifier.height(8.dp))
     }
@@ -451,11 +544,53 @@ fun Screen(
 }
 
 @Composable
-private fun StateLabel(text: String) {
-  Text(
-    text = text,
-    style = MaterialTheme.typography.labelSmall,
-    textAlign = TextAlign.Center
+private fun ImportCredentialsDialog(onSubmit: (aci: String, backupKey: String) -> Unit = { _, _ -> }, onDismissed: () -> Unit = {}) {
+  val dialogScrollState = rememberScrollState()
+  var aci by remember { mutableStateOf("") }
+  var backupKey by remember { mutableStateOf("") }
+  val inputOptions = KeyboardOptions(
+    capitalization = KeyboardCapitalization.None,
+    autoCorrectEnabled = false,
+    keyboardType = KeyboardType.Ascii,
+    imeAction = ImeAction.Next
+  )
+  androidx.compose.material3.AlertDialog(
+    onDismissRequest = onDismissed,
+    title = { Text(text = "Are you sure?") },
+    text = {
+      Column(modifier = Modifier.verticalScroll(dialogScrollState)) {
+        Row(modifier = Modifier.padding(vertical = 10.dp)) {
+          Text(text = "This will delete all of your chats! It's also not entirely realistic, because normally restores only happen during registration. Only do this on a test device!")
+        }
+        Row(modifier = Modifier.padding(vertical = 10.dp)) {
+          TextField(
+            value = aci,
+            keyboardOptions = inputOptions,
+            label = { Text("ACI") },
+            supportingText = { Text("(leave blank for the current user)") },
+            onValueChange = { aci = it }
+          )
+        }
+        Row(modifier = Modifier.padding(vertical = 10.dp)) {
+          TextField(
+            value = backupKey,
+            keyboardOptions = inputOptions.copy(imeAction = ImeAction.Done),
+            label = { Text("Cryptographic BackupKey (*not* AEP!)") },
+            supportingText = { Text("(leave blank for the current user)") },
+            onValueChange = { backupKey = it }
+          )
+        }
+      }
+    },
+    confirmButton = {
+      TextButton(onClick = {
+        onSubmit(aci, backupKey)
+      }) {
+        Text(text = "Wipe and restore")
+      }
+    },
+    modifier = Modifier,
+    properties = DialogProperties()
   )
 }
 
@@ -487,6 +622,7 @@ fun MediaList(
     }
   }
 
+  val haptics = LocalHapticFeedback.current
   var selectionState by remember { mutableStateOf(MediaMultiSelectState()) }
 
   Box(modifier = Modifier.fillMaxSize()) {
@@ -498,20 +634,18 @@ fun MediaList(
         val attachment = state.attachments[index]
         Row(
           modifier = Modifier
-            .combinedClickable(
-              onClick = {
-                if (selectionState.selecting) {
-                  selectionState = selectionState.copy(selected = if (selectionState.selected.contains(attachment.id)) selectionState.selected - attachment.id else selectionState.selected + attachment.id)
-                }
-              },
-              onLongClick = {
-                selectionState = if (selectionState.selecting) MediaMultiSelectState() else MediaMultiSelectState(selecting = true, selected = setOf(attachment.id))
+            .combinedClickable(onClick = {
+              if (selectionState.selecting) {
+                selectionState = selectionState.copy(selected = if (selectionState.selected.contains(attachment.id)) selectionState.selected - attachment.id else selectionState.selected + attachment.id)
               }
-            )
+            }, onLongClick = {
+              haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+              selectionState = if (selectionState.selecting) MediaMultiSelectState() else MediaMultiSelectState(selecting = true, selected = setOf(attachment.id))
+            })
             .padding(horizontal = 16.dp, vertical = 8.dp)
         ) {
           if (selectionState.selecting) {
-            Checkbox(
+            RoundCheckbox(
               checked = selectionState.selected.contains(attachment.id),
               onCheckedChange = { selected ->
                 selectionState = selectionState.copy(selected = if (selected) selectionState.selected + attachment.id else selectionState.selected - attachment.id)
@@ -648,5 +782,13 @@ fun PreviewScreen() {
 fun PreviewScreenExportInProgress() {
   Previews.Preview {
     Screen(state = ScreenState(statusMessage = "Some random status message."))
+  }
+}
+
+@SignalPreview
+@Composable
+fun PreviewImportCredentialDialog() {
+  Previews.Preview {
+    ImportCredentialsDialog()
   }
 }

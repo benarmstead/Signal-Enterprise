@@ -162,6 +162,7 @@ object StorageSyncHelper {
       storyViewReceiptsEnabled = storyViewReceiptsState
       hasSeenGroupStoryEducationSheet = SignalStore.story.userHasSeenGroupStoryEducationSheet
       hasCompletedUsernameOnboarding = SignalStore.uiHints.hasCompletedUsernameOnboarding()
+      avatarColor = StorageSyncModels.localToRemoteAvatarColor(self.avatarColor)
       username = SignalStore.account.username ?: ""
       usernameLink = SignalStore.account.usernameLink?.let { linkComponents ->
         AccountRecord.UsernameLink(
@@ -172,11 +173,11 @@ object StorageSyncHelper {
       }
 
       getSubscriber(InAppPaymentSubscriberRecord.Type.DONATION)?.let {
-        safeSetSubscriber(it.subscriberId.bytes.toByteString(), it.currency.currencyCode)
+        safeSetSubscriber(it.subscriberId.bytes.toByteString(), it.currency?.currencyCode ?: "")
       }
 
       getSubscriber(InAppPaymentSubscriberRecord.Type.BACKUP)?.let {
-        safeSetBackupsSubscriber(it.subscriberId.bytes.toByteString(), it.currency.currencyCode)
+        safeSetBackupsSubscriber(it.subscriberId.bytes.toByteString(), it.iapSubscriptionId)
       }
 
       safeSetPayments(SignalStore.payments.mobileCoinPaymentsEnabled(), Optional.ofNullable(SignalStore.payments.paymentsEntropy).map { obj: Entropy -> obj.bytes }.orElse(null))
@@ -219,9 +220,14 @@ object StorageSyncHelper {
       SignalStore.story.viewedReceiptsEnabled = update.new.proto.storyViewReceiptsEnabled == OptionalBool.ENABLED
     }
 
-    val remoteSubscriber = StorageSyncModels.remoteToLocalSubscriber(update.new.proto.subscriberId, update.new.proto.subscriberCurrencyCode, InAppPaymentSubscriberRecord.Type.DONATION)
+    val remoteSubscriber = StorageSyncModels.remoteToLocalDonorSubscriber(update.new.proto.subscriberId, update.new.proto.subscriberCurrencyCode)
     if (remoteSubscriber != null) {
       setSubscriber(remoteSubscriber)
+    }
+
+    val remoteBackupsSubscriber = StorageSyncModels.remoteToLocalBackupSubscriber(update.new.proto.backupSubscriberData)
+    if (remoteBackupsSubscriber != null) {
+      setSubscriber(remoteBackupsSubscriber)
     }
 
     if (update.new.proto.subscriptionManuallyCancelled && !update.old.proto.subscriptionManuallyCancelled) {
@@ -254,16 +260,16 @@ object StorageSyncHelper {
       Log.d(TAG, "Registration still ongoing. Ignore sync request.")
       return
     }
-    AppDependencies.jobManager.add(StorageSyncJob())
+    AppDependencies.jobManager.add(StorageSyncJob.forLocalChange())
   }
 
   @JvmStatic
   fun scheduleRoutineSync() {
     val timeSinceLastSync = System.currentTimeMillis() - SignalStore.storageService.lastSyncTime
 
-    if (timeSinceLastSync > REFRESH_INTERVAL) {
+    if (timeSinceLastSync > REFRESH_INTERVAL && SignalStore.registration.isRegistrationComplete) {
       Log.d(TAG, "Scheduling a sync. Last sync was $timeSinceLastSync ms ago.")
-      scheduleSyncForDataChange()
+      AppDependencies.jobManager.add(StorageSyncJob.forRemoteChange())
     } else {
       Log.d(TAG, "No need for sync. Last sync was $timeSinceLastSync ms ago.")
     }

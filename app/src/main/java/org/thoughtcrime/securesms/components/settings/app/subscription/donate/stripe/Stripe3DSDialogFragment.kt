@@ -18,19 +18,22 @@ import androidx.activity.ComponentDialog
 import androidx.core.os.bundleOf
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.setFragmentResult
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.navArgs
 import com.google.android.material.button.MaterialButton
-import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
-import io.reactivex.rxjava3.core.Completable
-import io.reactivex.rxjava3.schedulers.Schedulers
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.signal.core.util.concurrent.LifecycleDisposable
 import org.signal.donations.StripeIntentAccessor
 import org.thoughtcrime.securesms.R
+import org.thoughtcrime.securesms.components.ProgressCardDialogFragment
 import org.thoughtcrime.securesms.components.ViewBinderDelegate
 import org.thoughtcrime.securesms.components.settings.app.subscription.donate.DonationWebViewOnBackPressedCallback
 import org.thoughtcrime.securesms.database.SignalDatabase
 import org.thoughtcrime.securesms.database.model.databaseprotos.InAppPaymentData
 import org.thoughtcrime.securesms.databinding.DonationWebviewFragmentBinding
+import org.thoughtcrime.securesms.util.Environment
 import org.thoughtcrime.securesms.util.RemoteConfig
 import org.thoughtcrime.securesms.util.visible
 
@@ -84,14 +87,20 @@ class Stripe3DSDialogFragment : DialogFragment(R.layout.donation_webview_fragmen
       )
     )
 
-    if (RemoteConfig.internalUser && args.inAppPayment.data.paymentMethodType == InAppPaymentData.PaymentMethodType.IDEAL) {
+    if (Environment.IS_STAGING && RemoteConfig.internalUser && args.waitingForAuthPayment.data.paymentMethodType == InAppPaymentData.PaymentMethodType.IDEAL) {
       val openApp = MaterialButton(requireContext()).apply {
         text = "Open App"
         layoutParams = FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply {
           gravity = Gravity.TOP or Gravity.CENTER_HORIZONTAL
         }
         setOnClickListener {
-          handleLaunchExternal(Intent(Intent.ACTION_VIEW, args.uri))
+          ExternalNavigationHelper.maybeLaunchExternalNavigationIntent(
+            context,
+            args.uri,
+            force = true
+          ) {
+            handleLaunchExternal(it)
+          }
         }
       }
       binding.root.addView(openApp)
@@ -106,26 +115,33 @@ class Stripe3DSDialogFragment : DialogFragment(R.layout.donation_webview_fragmen
   }
 
   private fun handleLaunchExternal(intent: Intent) {
-    lifecycleDisposable += Completable
-      .fromAction {
-        SignalDatabase.inAppPayments.update(args.inAppPayment)
-      }
-      .subscribeOn(Schedulers.io())
-      .observeOn(AndroidSchedulers.mainThread())
-      .subscribe {
-        result = bundleOf(
-          LAUNCHED_EXTERNAL to true
-        )
+    lifecycleScope.launch {
+      val progress = ProgressCardDialogFragment.create()
+      progress.show(parentFragmentManager, null)
 
-        startActivity(intent)
-        dismissAllowingStateLoss()
+      withContext(Dispatchers.IO) {
+        SignalDatabase.inAppPayments.update(args.waitingForAuthPayment)
       }
+
+      progress.dismissAllowingStateLoss()
+      startActivity(intent)
+
+      result = bundleOf(
+        LAUNCHED_EXTERNAL to true
+      )
+
+      dismissAllowingStateLoss()
+    }
   }
 
   private inner class Stripe3DSWebClient : WebViewClient() {
 
     override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
-      return ExternalNavigationHelper.maybeLaunchExternalNavigationIntent(requireContext(), request?.url, this@Stripe3DSDialogFragment::handleLaunchExternal)
+      return ExternalNavigationHelper.maybeLaunchExternalNavigationIntent(
+        context = requireContext(),
+        webRequestUri = request?.url,
+        launchIntent = this@Stripe3DSDialogFragment::handleLaunchExternal
+      )
     }
 
     override fun onPageStarted(view: WebView?, url: String?, favicon: Bitmap?) {

@@ -16,7 +16,7 @@ import androidx.appcompat.widget.AppCompatEditText
 import androidx.core.animation.doOnEnd
 import androidx.core.text.isDigitsOnly
 import com.google.android.material.button.MaterialButton
-import org.signal.core.util.StringUtil
+import org.signal.core.util.BidiUtil
 import org.signal.core.util.money.FiatMoney
 import org.thoughtcrime.securesms.R
 import org.thoughtcrime.securesms.badges.BadgeImageView
@@ -255,7 +255,7 @@ data class Boost(
       dend: Int
     ): CharSequence? {
       val result = dest.subSequence(0, dstart).toString() + source.toString() + dest.subSequence(dend, dest.length)
-      val resultWithoutCurrencyPrefix = StringUtil.stripBidiIndicator(result.removePrefix(symbol).removeSuffix(symbol).trim())
+      val resultWithoutCurrencyPrefix = BidiUtil.stripBidiIndicator(result.removePrefix(symbol).removeSuffix(symbol).trim())
 
       if (resultWithoutCurrencyPrefix.length == 1 && !resultWithoutCurrencyPrefix.isDigitsOnly() && resultWithoutCurrencyPrefix != separator.toString()) {
         return dest.subSequence(dstart, dend)
@@ -291,23 +291,22 @@ data class Boost(
         }
 
         formatter.maximumFractionDigits = currency.defaultFractionDigits
+        formatter.isGroupingUsed = false
 
         val value = s.toString().toDoubleOrNull()
 
         if (value != null) {
           val formatted = formatter.format(value)
 
-          text?.removeTextChangedListener(this)
-
-          s.replace(0, s.length, formatted)
-          if (formatted.endsWith(symbol)) {
-            val result: MatchResult? = symbolPattern.find(formatted)
-            if (result != null && result.range.first < s.length) {
-              text?.setSelection(result.range.first)
+          modifyEditable {
+            s.replace(0, s.length, formatted)
+            if (formatted.endsWith(symbol)) {
+              val result: MatchResult? = symbolPattern.find(formatted)
+              if (result != null && result.range.first < s.length) {
+                text?.setSelection(result.range.first)
+              }
             }
           }
-
-          text?.addTextChangedListener(this)
         }
       }
 
@@ -325,15 +324,23 @@ data class Boost(
       }
 
       if (withoutSymbol != withoutLeadingZeroes) {
-        text?.removeTextChangedListener(this)
-
-        val start = s.indexOf(withoutSymbol)
-        s.replace(start, start + withoutSymbol.length, withoutLeadingZeroes)
-
-        text?.addTextChangedListener(this)
+        modifyEditable {
+          val start = s.indexOf(withoutSymbol)
+          s.replace(start, start + withoutSymbol.length, withoutLeadingZeroes)
+        }
       }
 
       onCustomAmountChanged(s.removePrefix(symbol).removeSuffix(symbol).trim().toString())
+    }
+
+    private fun modifyEditable(modification: () -> Unit) {
+      text?.removeTextChangedListener(this)
+      text?.keyListener = null
+
+      modification()
+
+      text?.addTextChangedListener(this)
+      text?.keyListener = this
     }
   }
 

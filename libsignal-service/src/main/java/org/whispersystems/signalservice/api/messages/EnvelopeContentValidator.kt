@@ -8,7 +8,6 @@ import org.signal.libsignal.zkgroup.groups.GroupMasterKey
 import org.signal.libsignal.zkgroup.receipts.ReceiptCredentialPresentation
 import org.whispersystems.signalservice.api.push.ServiceId
 import org.whispersystems.signalservice.api.push.ServiceId.ACI
-import org.whispersystems.signalservice.api.push.ServiceId.PNI
 import org.whispersystems.signalservice.internal.push.AttachmentPointer
 import org.whispersystems.signalservice.internal.push.Content
 import org.whispersystems.signalservice.internal.push.DataMessage
@@ -31,11 +30,7 @@ object EnvelopeContentValidator {
 
   fun validate(envelope: Envelope, content: Content, localAci: ACI): Result {
     if (envelope.type == Envelope.Type.PLAINTEXT_CONTENT) {
-      val result: Result? = createPlaintextResultIfInvalid(content)
-
-      if (result != null) {
-        return result
-      }
+      validatePlaintextContent(content)?.let { return it }
     }
 
     if (envelope.sourceServiceId != null && envelope.sourceServiceId.isInvalidServiceId()) {
@@ -82,7 +77,7 @@ object EnvelopeContentValidator {
     }
 
     if (dataMessage.timestamp != envelope.timestamp) {
-      Result.Invalid("[DataMessage] Timestamps don't match! envelope: ${envelope.timestamp}, content: ${dataMessage.timestamp}")
+      return Result.Invalid("[DataMessage] Timestamps don't match! envelope: ${envelope.timestamp}, content: ${dataMessage.timestamp}")
     }
 
     if (dataMessage.quote != null && dataMessage.quote.authorAci.isNullOrInvalidAci()) {
@@ -370,38 +365,40 @@ object EnvelopeContentValidator {
     }
   }
 
-  private fun createPlaintextResultIfInvalid(content: Content): Result? {
+  private fun validatePlaintextContent(content: Content): Result? {
     val errors: MutableList<String> = mutableListOf()
-
     if (content.decryptionErrorMessage == null) {
       errors += "Missing DecryptionErrorMessage"
     }
-    if (content.storyMessage != null) {
-      errors += "Unexpected StoryMessage"
-    }
-    if (content.senderKeyDistributionMessage != null) {
-      errors += "Unexpected SenderKeyDistributionMessage"
-    }
-    if (content.callMessage != null) {
-      errors += "Unexpected CallMessage"
-    }
-    if (content.editMessage != null) {
-      errors += "Unexpected EditMessage"
-    }
-    if (content.nullMessage != null) {
-      errors += "Unexpected NullMessage"
-    }
-    if (content.pniSignatureMessage != null) {
-      errors += "Unexpected PniSignatureMessage"
-    }
-    if (content.receiptMessage != null) {
-      errors += "Unexpected ReceiptMessage"
+    if (content.dataMessage != null) {
+      errors += "Unexpected DataMessage"
     }
     if (content.syncMessage != null) {
       errors += "Unexpected SyncMessage"
     }
+    if (content.callMessage != null) {
+      errors += "Unexpected CallMessage"
+    }
+    if (content.nullMessage != null) {
+      errors += "Unexpected NullMessage"
+    }
+    if (content.receiptMessage != null) {
+      errors += "Unexpected ReceiptMessage"
+    }
     if (content.typingMessage != null) {
       errors += "Unexpected TypingMessage"
+    }
+    if (content.senderKeyDistributionMessage != null) {
+      errors += "Unexpected SenderKeyDistributionMessage"
+    }
+    if (content.storyMessage != null) {
+      errors += "Unexpected StoryMessage"
+    }
+    if (content.pniSignatureMessage != null) {
+      errors += "Unexpected PniSignatureMessage"
+    }
+    if (content.editMessage != null) {
+      errors += "Unexpected EditMessage"
     }
 
     return if (errors.isNotEmpty()) {

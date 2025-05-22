@@ -77,6 +77,8 @@ abstract class BaseStoryRecipientSelectionFragment : Fragment(R.layout.stories_b
     }
 
     viewModel.state.observe(viewLifecycleOwner) {
+      actionButton.isEnabled = it.selection.isNotEmpty()
+
       if (it.distributionListId == null || it.privateStory != null) {
         if (it.isStartingSelection) {
           getAttachedContactSelectionFragment().markSelected(it.selection.toSet())
@@ -90,7 +92,7 @@ abstract class BaseStoryRecipientSelectionFragment : Fragment(R.layout.stories_b
       when (action) {
         is BaseStoryRecipientSelectionViewModel.Action.ExitFlow -> exitFlow()
         is BaseStoryRecipientSelectionViewModel.Action.GoToNextScreen -> goToNextScreen(
-          getAttachedContactSelectionFragment().selectedContacts.map { it.getOrCreateRecipientId(requireContext()) }.toSet()
+          getAttachedContactSelectionFragment().selectedContacts.map { it.getOrCreateRecipientId() }.toSet()
         )
       }
     }
@@ -141,7 +143,9 @@ abstract class BaseStoryRecipientSelectionFragment : Fragment(R.layout.stories_b
     return HeaderAction(
       R.string.BaseStoryRecipientSelectionFragment__select_all
     ) {
-      viewModel.toggleSelectAll()
+      lifecycleDisposable += viewModel.toggleSelectAll().subscribe { updatedRecipients ->
+        getAttachedContactSelectionFragment().markSelected(updatedRecipients)
+      }
     }
   }
 

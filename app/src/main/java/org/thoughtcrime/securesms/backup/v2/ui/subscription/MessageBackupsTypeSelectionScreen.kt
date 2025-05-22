@@ -31,6 +31,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
@@ -43,18 +44,18 @@ import androidx.compose.ui.text.withAnnotation
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import kotlinx.collections.immutable.persistentListOf
-import org.signal.core.ui.Buttons
-import org.signal.core.ui.Dialogs
-import org.signal.core.ui.Previews
-import org.signal.core.ui.Scaffolds
-import org.signal.core.ui.SignalPreview
-import org.signal.core.ui.theme.SignalTheme
+import org.signal.core.ui.compose.Buttons
+import org.signal.core.ui.compose.Dialogs
+import org.signal.core.ui.compose.Previews
+import org.signal.core.ui.compose.Scaffolds
+import org.signal.core.ui.compose.SignalPreview
+import org.signal.core.ui.compose.theme.SignalTheme
 import org.signal.core.util.bytes
 import org.signal.core.util.money.FiatMoney
 import org.thoughtcrime.securesms.R
 import org.thoughtcrime.securesms.backup.v2.MessageBackupTier
 import org.thoughtcrime.securesms.fonts.SignalSymbols
-import org.thoughtcrime.securesms.fonts.SignalSymbols.SignalSymbol
+import org.thoughtcrime.securesms.fonts.SignalSymbols.signalSymbolText
 import org.thoughtcrime.securesms.payments.FiatMoneyUtil
 import org.thoughtcrime.securesms.util.ByteUnit
 import java.math.BigDecimal
@@ -69,6 +70,7 @@ import org.signal.core.ui.R as CoreUiR
 @Composable
 fun MessageBackupsTypeSelectionScreen(
   stage: MessageBackupsStage,
+  paymentReadyState: MessageBackupsFlowState.PaymentReadyState,
   currentBackupTier: MessageBackupTier?,
   selectedBackupTier: MessageBackupTier?,
   availableBackupTypes: List<MessageBackupsType>,
@@ -80,7 +82,7 @@ fun MessageBackupsTypeSelectionScreen(
   Scaffolds.Settings(
     title = "",
     onNavigationClick = onNavigationClick,
-    navigationIconPainter = painterResource(id = R.drawable.symbol_arrow_left_24)
+    navigationIconPainter = painterResource(id = R.drawable.symbol_arrow_start_24)
   ) { paddingValues ->
     Column(
       modifier = Modifier
@@ -93,6 +95,7 @@ fun MessageBackupsTypeSelectionScreen(
         modifier = Modifier
           .fillMaxWidth()
           .weight(1f)
+          .testTag("message-backups-type-selection-screen-lazy-column")
       ) {
         item {
           Image(
@@ -158,7 +161,7 @@ fun MessageBackupsTypeSelectionScreen(
 
       Buttons.LargePrimary(
         onClick = onNextClicked,
-        enabled = selectedBackupTier != currentBackupTier && selectedBackupTier != null,
+        enabled = selectedBackupTier != currentBackupTier && selectedBackupTier != null && paymentReadyState == MessageBackupsFlowState.PaymentReadyState.READY,
         modifier = Modifier
           .fillMaxWidth()
           .padding(vertical = if (hasCurrentBackupTier) 10.dp else 16.dp)
@@ -198,7 +201,8 @@ private fun MessageBackupsTypeSelectionScreenPreview() {
       onNavigationClick = {},
       onReadMoreClicked = {},
       onNextClicked = {},
-      currentBackupTier = null
+      currentBackupTier = null,
+      paymentReadyState = MessageBackupsFlowState.PaymentReadyState.READY
     )
   }
 }
@@ -217,7 +221,8 @@ private fun MessageBackupsTypeSelectionScreenWithCurrentTierPreview() {
       onNavigationClick = {},
       onReadMoreClicked = {},
       onNextClicked = {},
-      currentBackupTier = MessageBackupTier.PAID
+      currentBackupTier = MessageBackupTier.PAID,
+      paymentReadyState = MessageBackupsFlowState.PaymentReadyState.READY
     )
   }
 }
@@ -255,11 +260,10 @@ fun MessageBackupsTypeBlock(
   ) {
     if (isCurrent) {
       Text(
-        text = buildAnnotatedString {
-          SignalSymbol(weight = SignalSymbols.Weight.REGULAR, glyph = SignalSymbols.Glyph.CHECKMARK)
-          append(" ")
-          append(stringResource(R.string.MessageBackupsTypeSelectionScreen__current_plan))
-        },
+        text = signalSymbolText(
+          text = stringResource(R.string.MessageBackupsTypeSelectionScreen__current_plan),
+          glyphStart = SignalSymbols.Glyph.CHECK
+        ),
         color = MaterialTheme.colorScheme.onSurfaceVariant,
         modifier = Modifier
           .padding(bottom = 12.dp)

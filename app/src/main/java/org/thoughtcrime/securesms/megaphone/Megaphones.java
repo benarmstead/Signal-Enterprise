@@ -39,6 +39,7 @@ import org.thoughtcrime.securesms.profiles.manage.EditProfileActivity;
 import org.thoughtcrime.securesms.profiles.username.NewWaysToConnectDialogFragment;
 import org.thoughtcrime.securesms.recipients.Recipient;
 import org.thoughtcrime.securesms.storage.StorageSyncHelper;
+import org.thoughtcrime.securesms.util.DateUtils;
 import org.thoughtcrime.securesms.util.RemoteConfig;
 import org.thoughtcrime.securesms.util.ServiceUtil;
 import org.thoughtcrime.securesms.util.dynamiclanguage.DynamicLanguageContextWrapper;
@@ -109,7 +110,9 @@ public final class Megaphones {
   private static Map<Event, MegaphoneSchedule> buildDisplayOrder(@NonNull Context context, @NonNull Map<Event, MegaphoneRecord> records) {
     return new LinkedHashMap<>() {{
       put(Event.PINS_FOR_ALL, new PinsForAllSchedule());
+      put(Event.UPDATE_PIN_AFTER_AEP_REGISTRATION, new UpdatePinAfterAepRegistrationSchedule());
       put(Event.CLIENT_DEPRECATED, SignalStore.misc().isClientDeprecated() ? ALWAYS : NEVER);
+      put(Event.NEW_LINKED_DEVICE, shouldShowNewLinkedDeviceMegaphone() ? ALWAYS: NEVER);
       put(Event.NOTIFICATIONS, shouldShowNotificationsMegaphone(context) ? RecurringSchedule.every(TimeUnit.DAYS.toMillis(30)) : NEVER);
       put(Event.GRANT_FULL_SCREEN_INTENT, shouldShowGrantFullScreenIntentPermission(context) ? RecurringSchedule.every(TimeUnit.DAYS.toMillis(3)) : NEVER);
       put(Event.BACKUP_SCHEDULE_PERMISSION, shouldShowBackupSchedulePermissionMegaphone(context) ? RecurringSchedule.every(TimeUnit.DAYS.toMillis(3)) : NEVER);
@@ -166,6 +169,10 @@ public final class Megaphones {
         return buildGrantFullScreenIntentPermission(context);
       case PNP_LAUNCH:
         return buildPnpLaunchMegaphone();
+      case NEW_LINKED_DEVICE:
+        return buildNewLinkedDeviceMegaphone(context);
+      case UPDATE_PIN_AFTER_AEP_REGISTRATION:
+        return buildUpdatePinAfterAepRegistrationMegaphone();
       default:
         throw new IllegalArgumentException("Event not handled!");
     }
@@ -184,7 +191,7 @@ public final class Megaphones {
     return new Megaphone.Builder(Event.LINKED_DEVICE_INACTIVE, Megaphone.Style.BASIC)
         .setTitle(R.string.LinkedDeviceInactiveMegaphone_title)
         .setBody(context.getResources().getQuantityString(R.plurals.LinkedDeviceInactiveMegaphone_body, expiringDays, device.name, expiringDays))
-        .setImage(R.drawable.ic_inactive_linked_device)
+        .setImage(R.drawable.symbol_linked_device)
         .setActionButton(R.string.LinkedDeviceInactiveMegaphone_got_it_button_label, (megaphone, listener) -> {
           listener.onMegaphoneSnooze(Event.LINKED_DEVICE_INACTIVE);
         })
@@ -229,9 +236,10 @@ public final class Megaphones {
             @Override
             public void onReminderDismissed(boolean includedFailure) {
               Log.i(TAG, "[PinReminder] onReminderDismissed(" + includedFailure + ")");
-              if (includedFailure) {
-                SignalStore.pin().onEntrySkipWithWrongGuess();
-              }
+
+              SignalStore.pin().onEntrySkip(includedFailure);
+              controller.onMegaphoneSnooze(Event.PIN_REMINDER);
+              controller.onMegaphoneToastRequested(controller.getMegaphoneActivity().getString(SignalPinReminders.getSkipReminderString(SignalStore.pin().getCurrentInterval())));
             }
 
             @Override
@@ -290,6 +298,23 @@ public final class Megaphones {
         })
         .setSecondaryButton(R.string.AddAProfilePhotoMegaphone__not_now, (megaphone, listener) -> {
           listener.onMegaphoneCompleted(Event.ADD_A_PROFILE_PHOTO);
+        })
+        .build();
+  }
+
+  private static @NonNull Megaphone buildNewLinkedDeviceMegaphone(@NonNull Context context) {
+    String createdAt = DateUtils.getDateTimeString(context, Locale.getDefault(), SignalStore.misc().getNewLinkedDeviceCreatedTime());
+    return new Megaphone.Builder(Event.NEW_LINKED_DEVICE, Megaphone.Style.BASIC)
+        .setTitle(R.string.NewLinkedDeviceNotification__you_linked_new_device)
+        .setBody(context.getString(R.string.NewLinkedDeviceMegaphone__a_new_device_was_linked, createdAt))
+        .setImage(R.drawable.symbol_linked_device)
+        .setActionButton(R.string.NewLinkedDeviceMegaphone__ok, (megaphone, listener) -> {
+          SignalStore.misc().setNewLinkedDeviceId(0);
+          SignalStore.misc().setNewLinkedDeviceCreatedTime(0);
+          listener.onMegaphoneSnooze(Event.NEW_LINKED_DEVICE);
+        })
+        .setSecondaryButton(R.string.NewLinkedDeviceMegaphone__view_device, (megaphone, listener) -> {
+          listener.onMegaphoneNavigationRequested(AppSettingsActivity.linkedDevices(context));
         })
         .build();
   }
@@ -415,8 +440,25 @@ public final class Megaphones {
         .build();
   }
 
+  public static @NonNull Megaphone buildUpdatePinAfterAepRegistrationMegaphone() {
+    return new Megaphone.Builder(Event.UPDATE_PIN_AFTER_AEP_REGISTRATION, Megaphone.Style.BASIC)
+        .setImage(R.drawable.kbs_pin_megaphone)
+        .setTitle(R.string.UpdatePinMegaphone__update_signal_pin)
+        .setBody(R.string.UpdatePinMegaphone__message)
+        .setActionButton(R.string.UpdatePinMegaphone__update_pin, (megaphone, listener) -> {
+          Intent intent = CreateSvrPinActivity.getIntentForPinCreate(AppDependencies.getApplication());
+
+          listener.onMegaphoneNavigationRequested(intent, CreateSvrPinActivity.REQUEST_NEW_PIN);
+        })
+        .build();
+  }
+
   private static boolean shouldShowOnboardingMegaphone(@NonNull Context context) {
     return SignalStore.onboarding().hasOnboarding(context);
+  }
+
+  private static boolean shouldShowNewLinkedDeviceMegaphone() {
+    return SignalStore.misc().getNewLinkedDeviceId() > 0 && !NotificationChannels.getInstance().areNotificationsEnabled();
   }
 
   private static boolean shouldShowTurnOffCircumventionMegaphone() {
@@ -525,7 +567,9 @@ public final class Megaphones {
     BACKUP_SCHEDULE_PERMISSION("backup_schedule_permission"),
     SET_UP_YOUR_USERNAME("set_up_your_username"),
     PNP_LAUNCH("pnp_launch"),
-    GRANT_FULL_SCREEN_INTENT("grant_full_screen_intent");
+    GRANT_FULL_SCREEN_INTENT("grant_full_screen_intent"),
+    NEW_LINKED_DEVICE("new_linked_device"),
+    UPDATE_PIN_AFTER_AEP_REGISTRATION("update_pin_after_registration");
 
     private final String key;
 

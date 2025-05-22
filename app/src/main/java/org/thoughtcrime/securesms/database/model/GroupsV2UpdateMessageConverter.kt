@@ -6,8 +6,7 @@
 package org.thoughtcrime.securesms.database.model
 
 import okio.ByteString
-import okio.ByteString.Companion.toByteString
-import org.signal.core.util.StringUtil
+import org.signal.core.util.BidiUtil
 import org.signal.core.util.isNullOrEmpty
 import org.signal.storageservice.protos.groups.AccessControl
 import org.signal.storageservice.protos.groups.AccessControl.AccessRequired
@@ -136,7 +135,7 @@ object GroupsV2UpdateMessageConverter {
     if (editorServiceId == null || editorServiceId.isUnknown) {
       editorUnknown = true
     }
-    translateMemberAdditions(change, editorUnknown, updates)
+    translateMemberAdditions(change, editorUnknown, editorServiceId, updates)
     translateModifyMemberRoles(change, editorUnknown, updates)
     translateInvitations(selfIds, change, editorUnknown, updates)
     translateRevokedInvitations(selfIds, change, editorUnknown, updates)
@@ -161,7 +160,7 @@ object GroupsV2UpdateMessageConverter {
   }
 
   @JvmStatic
-  fun translateMemberAdditions(change: DecryptedGroupChange, editorUnknown: Boolean, updates: MutableList<GroupChangeChatUpdate.Update>) {
+  fun translateMemberAdditions(change: DecryptedGroupChange, editorUnknown: Boolean, editorServiceId: ServiceId?, updates: MutableList<GroupChangeChatUpdate.Update>) {
     for (member in change.newMembers) {
       if (!editorUnknown && member.aciBytes == change.editorServiceIdBytes) {
         updates.add(
@@ -173,7 +172,7 @@ object GroupsV2UpdateMessageConverter {
         updates.add(
           GroupChangeChatUpdate.Update(
             groupMemberAddedUpdate = GroupMemberAddedUpdate(
-              updaterAci = if (editorUnknown) null else change.editorServiceIdBytes,
+              updaterAci = if (editorUnknown || editorServiceId is ServiceId.PNI) null else change.editorServiceIdBytes,
               newMemberAci = member.aciBytes,
               hadOpenInvitation = false
             )
@@ -242,9 +241,10 @@ object GroupsV2UpdateMessageConverter {
     for (invitee in change.deletePendingMembers) {
       val decline = invitee.serviceIdBytes == editorAci
       if (decline) {
+        val inviteeServiceId = ServiceId.parseOrNull(invitee.serviceIdBytes)
         updates.add(
           GroupChangeChatUpdate.Update(
-            groupInvitationDeclinedUpdate = GroupInvitationDeclinedUpdate(inviteeAci = invitee.serviceIdBytes)
+            groupInvitationDeclinedUpdate = GroupInvitationDeclinedUpdate(inviteeAci = if (inviteeServiceId is ServiceId.ACI) invitee.serviceIdBytes else null)
           )
         )
       } else if (selfIds.matches(invitee.serviceIdBytes)) {
@@ -340,7 +340,7 @@ object GroupsV2UpdateMessageConverter {
   fun translateNewTitle(change: DecryptedGroupChange, editorUnknown: Boolean, updates: MutableList<GroupChangeChatUpdate.Update>) {
     if (change.newTitle != null) {
       val editorAci = if (editorUnknown) null else change.editorServiceIdBytes
-      val newTitle = StringUtil.isolateBidi(change.newTitle?.value_)
+      val newTitle = BidiUtil.isolateBidi(change.newTitle?.value_)
       updates.add(
         GroupChangeChatUpdate.Update(
           groupNameUpdate = GroupNameUpdate(

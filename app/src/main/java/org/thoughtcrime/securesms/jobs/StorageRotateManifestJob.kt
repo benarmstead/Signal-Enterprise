@@ -90,17 +90,21 @@ class StorageRotateManifestJob private constructor(parameters: Parameters) : Job
       StorageServiceRepository.WriteStorageRecordsResult.Success -> {
         Log.i(TAG, "Successfully rotated the manifest as version ${manifestWithNewVersion.version}.${manifestWithNewVersion.sourceDeviceId}. Clearing restore key.")
         SignalStore.svr.masterKeyForInitialDataRestore = null
+
+        Log.i(TAG, "Saved new manifest. Now at version: ${manifestWithNewVersion.versionString}")
+        SignalStore.storageService.manifest = manifestWithNewVersion
+
         Result.success()
       }
       StorageServiceRepository.WriteStorageRecordsResult.ConflictError -> {
         Log.w(TAG, "Hit a conflict! Enqueuing a sync followed by another rotation.")
-        AppDependencies.jobManager.add(StorageSyncJob())
+        AppDependencies.jobManager.add(StorageSyncJob.forRemoteChange())
         AppDependencies.jobManager.add(StorageRotateManifestJob())
         Result.failure()
       }
       is StorageServiceRepository.WriteStorageRecordsResult.StatusCodeError -> {
-        Log.w(TAG, "Encountered a status code error during write, retrying.", result.exception)
-        Result.retry(defaultBackoff())
+        Log.w(TAG, "Encountered a non-conflict status code error during write. Failing.", result.exception)
+        Result.failure()
       }
 
       is StorageServiceRepository.WriteStorageRecordsResult.NetworkError -> {

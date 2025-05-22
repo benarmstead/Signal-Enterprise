@@ -42,6 +42,7 @@ import org.signal.core.util.logging.Log;
 import org.thoughtcrime.securesms.calls.YouAreAlreadyInACallSnackbar;
 import org.thoughtcrime.securesms.components.menu.ActionItem;
 import org.thoughtcrime.securesms.components.menu.SignalContextMenu;
+import org.thoughtcrime.securesms.components.settings.app.AppSettingsActivity;
 import org.thoughtcrime.securesms.contacts.management.ContactsManagementRepository;
 import org.thoughtcrime.securesms.contacts.management.ContactsManagementViewModel;
 import org.thoughtcrime.securesms.contacts.paged.ChatType;
@@ -130,7 +131,7 @@ public class NewConversationActivity extends ContactSelectionActivity
 
         AlertDialog progress = SimpleProgressDialog.show(this);
 
-        SimpleTask.run(getLifecycle(), () -> RecipientRepository.lookupNewE164(this, number), result -> {
+        SimpleTask.run(getLifecycle(), () -> RecipientRepository.lookupNewE164(number), result -> {
           progress.dismiss();
 
           if (result instanceof RecipientRepository.LookupResult.Success) {
@@ -204,8 +205,10 @@ public class NewConversationActivity extends ContactSelectionActivity
   }
 
   private void handleManualRefresh() {
-    contactsFragment.setRefreshing(true);
-    onRefresh();
+    if (!contactsFragment.isRefreshing()) {
+      contactsFragment.setRefreshing(true);
+      onRefresh();
+    }
   }
 
   private void handleCreateGroup() {
@@ -213,7 +216,7 @@ public class NewConversationActivity extends ContactSelectionActivity
   }
 
   private void handleInvite() {
-    startActivity(new Intent(this, InviteActivity.class));
+    startActivity(AppSettingsActivity.invite(this));
   }
 
   @Override
@@ -356,8 +359,11 @@ public class NewConversationActivity extends ContactSelectionActivity
                                               recipient,
                                               () -> {
                                                 disposables.add(viewModel.blockContact(recipient).subscribe(() -> {
+                                                  handleManualRefresh();
                                                   displaySnackbar(R.string.NewConversationActivity__s_has_been_blocked, recipient.getDisplayName(this));
                                                   contactsFragment.reset();
+                                                }, (throwable) -> {
+                                                  displaySnackbar(R.string.NewConversationActivity__block_failed);
                                                 }));
                                               })
     );
@@ -381,8 +387,9 @@ public class NewConversationActivity extends ContactSelectionActivity
         .setPositiveButton(R.string.NewConversationActivity__remove,
                            (dialog, which) -> {
                              disposables.add(viewModel.hideContact(recipient).subscribe(() -> {
-                               onRefresh();
+                               handleManualRefresh();
                                displaySnackbar(R.string.NewConversationActivity__s_has_been_removed, recipient.getDisplayName(this));
+                               contactsFragment.reset();
                              }));
                            }
         )

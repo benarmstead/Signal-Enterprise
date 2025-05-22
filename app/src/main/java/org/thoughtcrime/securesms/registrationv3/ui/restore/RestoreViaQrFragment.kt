@@ -54,12 +54,12 @@ import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.launch
-import org.signal.core.ui.Buttons
-import org.signal.core.ui.Dialogs
-import org.signal.core.ui.Previews
-import org.signal.core.ui.SignalPreview
-import org.signal.core.ui.horizontalGutters
-import org.signal.core.ui.theme.SignalTheme
+import org.signal.core.ui.compose.Buttons
+import org.signal.core.ui.compose.Dialogs
+import org.signal.core.ui.compose.Previews
+import org.signal.core.ui.compose.SignalPreview
+import org.signal.core.ui.compose.horizontalGutters
+import org.signal.core.ui.compose.theme.SignalTheme
 import org.signal.registration.proto.RegistrationProvisionMessage
 import org.thoughtcrime.securesms.R
 import org.thoughtcrime.securesms.components.settings.app.usernamelinks.QrCode
@@ -89,7 +89,7 @@ class RestoreViaQrFragment : ComposeFragment() {
           .distinctUntilChanged()
           .collect { message ->
             if (message.platform == RegistrationProvisionMessage.Platform.ANDROID || message.tier != null) {
-              sharedViewModel.registerWithBackupKey(requireContext(), message.accountEntropyPool, message.e164, message.pin)
+              sharedViewModel.registerWithBackupKey(requireContext(), message.accountEntropyPool, message.e164, message.pin, message.aciIdentityKeyPair, message.pniIdentityKeyPair)
             } else {
               findNavController().safeNavigate(RestoreViaQrFragmentDirections.goToNoBackupToRestore())
             }

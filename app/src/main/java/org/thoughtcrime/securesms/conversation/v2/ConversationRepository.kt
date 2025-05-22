@@ -14,7 +14,6 @@ import android.text.SpannableStringBuilder
 import androidx.core.content.pm.ShortcutInfoCompat
 import androidx.core.graphics.drawable.IconCompat
 import androidx.core.graphics.drawable.toBitmap
-import com.bumptech.glide.Glide
 import com.bumptech.glide.RequestManager
 import com.bumptech.glide.request.target.CustomTarget
 import com.bumptech.glide.request.transition.Transition
@@ -40,7 +39,6 @@ import org.thoughtcrime.securesms.components.emoji.EmojiStrings
 import org.thoughtcrime.securesms.contactshare.Contact
 import org.thoughtcrime.securesms.contactshare.ContactUtil
 import org.thoughtcrime.securesms.conversation.ConversationMessage
-import org.thoughtcrime.securesms.conversation.MessageSendType
 import org.thoughtcrime.securesms.conversation.mutiselect.MultiselectPart
 import org.thoughtcrime.securesms.conversation.v2.RequestReviewState.GroupReviewState
 import org.thoughtcrime.securesms.conversation.v2.RequestReviewState.IndividualReviewState
@@ -60,7 +58,6 @@ import org.thoughtcrime.securesms.database.model.Mention
 import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.database.model.MmsMessageRecord
-import org.thoughtcrime.securesms.database.model.Quote
 import org.thoughtcrime.securesms.database.model.ReactionRecord
 import org.thoughtcrime.securesms.database.model.StickerRecord
 import org.thoughtcrime.securesms.database.model.databaseprotos.BodyRangeList
@@ -112,7 +109,7 @@ class ConversationRepository(
    */
   fun getKeyboardImageDetails(uri: Uri): Maybe<KeyboardUtil.ImageDetails> {
     return MaybeCompat.fromCallable {
-      KeyboardUtil.getImageDetails(Glide.with(applicationContext), uri)
+      KeyboardUtil.getImageDetails(uri)
     }.subscribeOn(Schedulers.io())
   }
 
@@ -186,8 +183,7 @@ class ConversationRepository(
     val sendCompletable = Completable.create { emitter ->
       val splitMessage: MessageUtil.SplitResult = MessageUtil.getSplitMessage(
         applicationContext,
-        body,
-        MessageSendType.SignalMessageSendType.calculateCharacters(body).maxPrimaryMessageSize
+        body
       )
 
       val outgoingMessageSlideDeck: SlideDeck? = splitMessage.textSlide.map {
@@ -252,9 +248,9 @@ class ConversationRepository(
     oldConversationRepository.markGiftBadgeRevealed(messageId)
   }
 
-  fun getQuotedMessagePosition(threadId: Long, quote: Quote): Single<Int> {
+  fun getQuotedMessagePosition(threadId: Long, quoteId: Long, authorId: RecipientId): Single<Int> {
     return Single.fromCallable {
-      SignalDatabase.messages.getQuotedMessagePosition(threadId, quote.id, quote.author)
+      SignalDatabase.messages.getQuotedMessagePosition(threadId, quoteId, authorId)
     }.subscribeOn(Schedulers.io())
   }
 
@@ -542,12 +538,6 @@ class ConversationRepository(
   fun startExpirationTimeout(expirationInfos: List<MessageTable.ExpirationInfo>) {
     SignalDatabase.messages.markExpireStarted(expirationInfos.map { it.id to it.expireStarted })
     AppDependencies.expiringMessageManager.scheduleDeletion(expirationInfos)
-  }
-
-  fun markLastSeen(threadId: Long) {
-    SignalExecutors.BOUNDED_IO.execute {
-      SignalDatabase.threads.setLastSeen(threadId)
-    }
   }
 
   fun getEarliestMessageSentDate(threadId: Long): Single<Long> {

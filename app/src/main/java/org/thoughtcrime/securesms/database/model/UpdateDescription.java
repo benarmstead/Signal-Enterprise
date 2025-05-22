@@ -11,7 +11,8 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.WorkerThread;
 
-import org.whispersystems.signalservice.api.push.ServiceId.ACI;
+import org.thoughtcrime.securesms.fonts.SignalSymbols;
+import org.thoughtcrime.securesms.fonts.SignalSymbols.Glyph;
 import org.whispersystems.signalservice.api.push.ServiceId;
 
 import java.util.Collection;
@@ -30,17 +31,17 @@ public final class UpdateDescription {
     Spannable create();
   }
 
-  private final Collection<ACI>  mentioned;
-  private final SpannableFactory stringFactory;
-  private final Spannable        staticString;
-  private final int              lightIconResource;
-  private final int              lightTint;
-  private final int              darkTint;
+  private final Collection<ServiceId> mentioned;
+  private final SpannableFactory      stringFactory;
+  private final Spannable             staticString;
+  private final Glyph                 glyph;
+  private final int                   lightTint;
+  private final int                   darkTint;
 
-  private UpdateDescription(@NonNull Collection<ACI> mentioned,
+  private UpdateDescription(@NonNull Collection<ServiceId> mentioned,
                             @Nullable SpannableFactory stringFactory,
                             @Nullable Spannable staticString,
-                            @DrawableRes int iconResource,
+                            @NonNull Glyph glyph,
                             @ColorInt int lightTint,
                             @ColorInt int darkTint)
   {
@@ -50,7 +51,7 @@ public final class UpdateDescription {
     this.mentioned         = mentioned;
     this.stringFactory     = stringFactory;
     this.staticString      = staticString;
-    this.lightIconResource = iconResource;
+    this.glyph             = glyph;
     this.lightTint         = lightTint;
     this.darkTint          = darkTint;
   }
@@ -62,45 +63,45 @@ public final class UpdateDescription {
    * @param mentioned     UUIDs of recipients that are mentioned in the string.
    * @param stringFactory The background method for generating the string.
    */
-  public static UpdateDescription mentioning(@NonNull Collection<ACI> mentioned,
+  public static UpdateDescription mentioning(@NonNull Collection<ServiceId> mentioned,
                                              @NonNull SpannableFactory stringFactory,
-                                             @DrawableRes int iconResource)
+                                             Glyph glyph)
   {
-    return new UpdateDescription(mentioned.stream().filter(ACI::isValid).collect(Collectors.toList()),
+    return new UpdateDescription(mentioned.stream().filter(ServiceId::isValid).collect(Collectors.toList()),
                                  stringFactory,
                                  null,
-                                 iconResource,
+                                 glyph,
                                  0,
                                  0);
   }
 
   /**
-   * Create an update description that's string value is fixed.
+   * Create an update description that's string value is fixed with a start glyph.
    */
   public static UpdateDescription staticDescription(@NonNull String staticString,
-                                                    @DrawableRes int iconResource)
+                                                    Glyph glyph)
   {
-    return new UpdateDescription(Collections.emptyList(), null, new SpannableString(staticString), iconResource, 0, 0);
+    return new UpdateDescription(Collections.emptyList(), null, new SpannableString(staticString), glyph, 0, 0);
   }
 
   /**
    * Create an update description that's string value is fixed.
    */
   public static UpdateDescription staticDescription(@NonNull Spannable staticString,
-                                                    @DrawableRes int iconResource)
+                                                    Glyph glyph)
   {
-    return new UpdateDescription(Collections.emptyList(), null, staticString, iconResource, 0, 0);
+    return new UpdateDescription(Collections.emptyList(), null, staticString, glyph, 0, 0);
   }
 
   /**
    * Create an update description that's string value is fixed with a specific tint color.
    */
   public static UpdateDescription staticDescription(@NonNull String staticString,
-                                                    @DrawableRes int iconResource,
+                                                    Glyph glyph,
                                                     @ColorInt int lightTint,
                                                     @ColorInt int darkTint)
   {
-    return new UpdateDescription(Collections.emptyList(), null, new SpannableString(staticString), iconResource, lightTint, darkTint);
+    return new UpdateDescription(Collections.emptyList(), null, new SpannableString(staticString), glyph, lightTint, darkTint);
   }
 
   public boolean isStringStatic() {
@@ -127,12 +128,12 @@ public final class UpdateDescription {
   }
 
   @AnyThread
-  public @NonNull Collection<ACI> getMentioned() {
+  public @NonNull Collection<ServiceId> getMentioned() {
     return mentioned;
   }
 
-  public @DrawableRes int getIconResource() {
-    return lightIconResource;
+  public @Nullable Glyph getGlyph() {
+    return glyph;
   }
 
   public @ColorInt int getLightTint() {
@@ -154,11 +155,11 @@ public final class UpdateDescription {
 
     if (allAreStatic(updateDescriptions)) {
       return UpdateDescription.staticDescription(concatStaticLines(updateDescriptions),
-                                                 updateDescriptions.get(0).getIconResource()
+                                                 updateDescriptions.get(0).getGlyph()
       );
     }
 
-    Set<ACI> allMentioned = new HashSet<>();
+    Set<ServiceId> allMentioned = new HashSet<>();
 
     for (UpdateDescription updateDescription : updateDescriptions) {
       allMentioned.addAll(updateDescription.getMentioned());
@@ -166,7 +167,7 @@ public final class UpdateDescription {
 
     return UpdateDescription.mentioning(allMentioned,
                                         () -> concatLines(updateDescriptions),
-                                        updateDescriptions.get(0).getIconResource());
+                                        updateDescriptions.get(0).getGlyph());
   }
 
   private static boolean allAreStatic(@NonNull Collection<UpdateDescription> updateDescriptions) {

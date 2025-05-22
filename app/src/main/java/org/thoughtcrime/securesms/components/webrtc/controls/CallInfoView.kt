@@ -30,11 +30,11 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rxjava3.subscribeAsState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -51,17 +51,18 @@ import androidx.lifecycle.toLiveData
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import io.reactivex.rxjava3.core.BackpressureStrategy
 import io.reactivex.rxjava3.core.Observable
-import org.signal.core.ui.Dialogs
-import org.signal.core.ui.Dividers
-import org.signal.core.ui.Previews
-import org.signal.core.ui.Rows
-import org.signal.core.ui.theme.LocalExtendedColors
-import org.signal.core.ui.theme.SignalTheme
+import kotlinx.coroutines.flow.map
+import org.signal.core.ui.compose.Dialogs
+import org.signal.core.ui.compose.Dividers
+import org.signal.core.ui.compose.Previews
+import org.signal.core.ui.compose.Rows
+import org.signal.core.ui.compose.theme.LocalExtendedColors
+import org.signal.core.ui.compose.theme.SignalTheme
 import org.thoughtcrime.securesms.R
 import org.thoughtcrime.securesms.avatar.fallback.FallbackAvatar
 import org.thoughtcrime.securesms.avatar.fallback.FallbackAvatarImage
 import org.thoughtcrime.securesms.components.AvatarImageView
-import org.thoughtcrime.securesms.components.webrtc.WebRtcCallViewModel
+import org.thoughtcrime.securesms.components.webrtc.v2.WebRtcCallViewModel
 import org.thoughtcrime.securesms.conversation.colors.AvatarColor
 import org.thoughtcrime.securesms.dependencies.AppDependencies
 import org.thoughtcrime.securesms.events.CallParticipant
@@ -83,22 +84,22 @@ object CallInfoView {
     callbacks: Callbacks,
     modifier: Modifier
   ) {
-    val participantsState: ParticipantsState by webRtcCallViewModel.callParticipantsState
-      .toFlowable(BackpressureStrategy.LATEST)
-      .map { state ->
-        ParticipantsState(
-          inCallLobby = state.callState == WebRtcViewModel.State.CALL_PRE_JOIN,
-          ringGroup = state.ringGroup,
-          includeSelf = state.groupCallState === WebRtcViewModel.GroupCallState.CONNECTED_AND_JOINED || state.groupCallState === WebRtcViewModel.GroupCallState.IDLE,
-          participantCount = if (state.participantCount.isPresent) state.participantCount.asLong.toInt() else 0,
-          remoteParticipants = state.allRemoteParticipants.sortedBy { it.callParticipantId.recipientId },
-          localParticipant = state.localParticipant,
-          groupMembers = state.groupMembers.filterNot { it.member.isSelf },
-          callRecipient = state.recipient,
-          raisedHands = state.raisedHands
-        )
-      }
-      .subscribeAsState(ParticipantsState())
+    val participantsState: ParticipantsState by remember {
+      webRtcCallViewModel.callParticipantsState
+        .map { state ->
+          ParticipantsState(
+            inCallLobby = state.callState == WebRtcViewModel.State.CALL_PRE_JOIN,
+            ringGroup = state.ringGroup,
+            includeSelf = state.groupCallState === WebRtcViewModel.GroupCallState.CONNECTED_AND_JOINED || state.groupCallState === WebRtcViewModel.GroupCallState.IDLE,
+            participantCount = if (state.participantCount.isPresent) state.participantCount.asLong.toInt() else 0,
+            remoteParticipants = state.allRemoteParticipants.sortedBy { it.callParticipantId.recipientId },
+            localParticipant = state.localParticipant,
+            groupMembers = state.groupMembers.filterNot { it.member.isSelf },
+            callRecipient = state.recipient,
+            raisedHands = state.raisedHands
+          )
+        }
+    }.collectAsState(ParticipantsState())
 
     val controlAndInfoState: ControlAndInfoState by controlsAndInfoViewModel.state
 

@@ -16,6 +16,8 @@ import org.thoughtcrime.securesms.registration.data.network.RegistrationSessionR
 import org.thoughtcrime.securesms.registration.data.network.VerificationCodeRequestResult
 import org.whispersystems.signalservice.api.svr.Svr3Credentials
 import org.whispersystems.signalservice.internal.push.AuthCredentials
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
 
 /**
  * State holder shared across all of registration.
@@ -24,6 +26,7 @@ data class RegistrationState(
   val sessionId: String? = null,
   val enteredCode: String = "",
   val phoneNumber: Phonenumber.PhoneNumber? = fetchExistingE164FromValues(),
+  val nationalNumber: String = "",
   val inProgress: Boolean = false,
   val isReRegister: Boolean = false,
   val recoveryPassword: String? = null,
@@ -42,9 +45,9 @@ data class RegistrationState(
   val challengesPresented: Set<Challenge> = emptySet(),
   val captchaToken: String? = null,
   val allowedToRequestCode: Boolean = false,
-  val nextSmsTimestamp: Long = 0L,
-  val nextCallTimestamp: Long = 0L,
-  val nextVerificationAttempt: Long = 0L,
+  val nextSmsTimestamp: Duration = 0.seconds,
+  val nextCallTimestamp: Duration = 0.seconds,
+  val nextVerificationAttempt: Duration = 0.seconds,
   val verified: Boolean = false,
   val smsListenerTimeout: Long = 0L,
   val registrationCheckpoint: RegistrationCheckpoint = RegistrationCheckpoint.INITIALIZATION,
@@ -71,5 +74,23 @@ data class RegistrationState(
         return null
       }
     }
+  }
+
+  fun toNavigationStateOnly(): NavigationState {
+    return NavigationState(challengesRequested, challengesPresented, captchaToken, registrationCheckpoint, canSkipSms)
+  }
+
+  /**
+   * Subset of [RegistrationState] useful for deciding on navigation. Prevents other properties updating from re-triggering
+   * navigation decisions.
+   */
+  data class NavigationState(
+    val challengesRequested: List<Challenge>,
+    val challengesPresented: Set<Challenge>,
+    val captchaToken: String? = null,
+    val registrationCheckpoint: RegistrationCheckpoint,
+    val canSkipSms: Boolean
+  ) {
+    val challengesRemaining: List<Challenge> = challengesRequested.filterNot { it in challengesPresented }
   }
 }

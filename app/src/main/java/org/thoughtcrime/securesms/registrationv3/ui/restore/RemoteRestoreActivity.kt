@@ -9,6 +9,7 @@ import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import androidx.activity.compose.setContent
+import androidx.activity.viewModels
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -41,11 +42,11 @@ import kotlinx.coroutines.launch
 import org.greenrobot.eventbus.EventBus
 import org.greenrobot.eventbus.Subscribe
 import org.greenrobot.eventbus.ThreadMode
-import org.signal.core.ui.Buttons
-import org.signal.core.ui.Dialogs
-import org.signal.core.ui.Previews
-import org.signal.core.ui.SignalPreview
-import org.signal.core.ui.theme.SignalTheme
+import org.signal.core.ui.compose.Buttons
+import org.signal.core.ui.compose.Dialogs
+import org.signal.core.ui.compose.Previews
+import org.signal.core.ui.compose.SignalPreview
+import org.signal.core.ui.compose.theme.SignalTheme
 import org.signal.core.util.bytes
 import org.thoughtcrime.securesms.BaseActivity
 import org.thoughtcrime.securesms.MainActivity
@@ -54,10 +55,15 @@ import org.thoughtcrime.securesms.backup.v2.MessageBackupTier
 import org.thoughtcrime.securesms.backup.v2.RestoreV2Event
 import org.thoughtcrime.securesms.backup.v2.ui.subscription.MessageBackupsTypeFeature
 import org.thoughtcrime.securesms.backup.v2.ui.subscription.MessageBackupsTypeFeatureRow
+import org.thoughtcrime.securesms.components.contactsupport.ContactSupportCallbacks
+import org.thoughtcrime.securesms.components.contactsupport.ContactSupportDialog
+import org.thoughtcrime.securesms.components.contactsupport.ContactSupportViewModel
+import org.thoughtcrime.securesms.components.contactsupport.SendSupportEmailEffect
 import org.thoughtcrime.securesms.conversation.v2.registerForLifecycle
-import org.thoughtcrime.securesms.profiles.edit.CreateProfileActivity
+import org.thoughtcrime.securesms.keyvalue.SignalStore
 import org.thoughtcrime.securesms.registrationv3.ui.shared.RegistrationScreen
 import org.thoughtcrime.securesms.util.DateUtils
+import org.thoughtcrime.securesms.util.PlayStoreUtil
 import org.thoughtcrime.securesms.util.viewModel
 import java.util.Locale
 
@@ -80,6 +86,8 @@ class RemoteRestoreActivity : BaseActivity() {
     RemoteRestoreViewModel(intent.getBooleanExtra(KEY_ONLY_OPTION, false))
   }
 
+  private val contactSupportViewModel: ContactSupportViewModel by viewModels()
+
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
 
@@ -91,27 +99,47 @@ class RemoteRestoreActivity : BaseActivity() {
         .firstOrNull()
 
       if (restored != null) {
-        continueRegistration(restored.missingProfileData)
+        startActivity(MainActivity.clearTop(this@RemoteRestoreActivity))
+        finish()
       }
     }
 
     setContent {
       val state: RemoteRestoreViewModel.ScreenState by viewModel.state.collectAsStateWithLifecycle()
+      val contactSupportState: ContactSupportViewModel.ContactSupportState by contactSupportViewModel.state.collectAsStateWithLifecycle()
+
+      SendSupportEmailEffect(
+        contactSupportState = contactSupportState,
+        subjectRes = R.string.EnterBackupKey_network_failure_support_email,
+        filterRes = R.string.EnterBackupKey_network_failure_support_email_filter
+      ) {
+        contactSupportViewModel.hideContactSupport()
+      }
 
       SignalTheme {
         Surface {
           RestoreFromBackupContent(
             state = state,
+            contactSupportState = contactSupportState,
             onRestoreBackupClick = { viewModel.restore() },
+            onRetryRestoreTier = { viewModel.reload() },
+            onContactSupport = { contactSupportViewModel.showContactSupport() },
             onCancelClick = {
-              if (state.isRemoteRestoreOnlyOption) {
-                viewModel.skipRestore()
-                startActivity(MainActivity.clearTop(this))
-              }
+              lifecycleScope.launch {
+                if (state.isRemoteRestoreOnlyOption) {
+                  viewModel.skipRestore()
+                  viewModel.performStorageServiceAccountRestoreIfNeeded()
+                  startActivity(MainActivity.clearTop(this@RemoteRestoreActivity))
+                }
 
-              finish()
+                finish()
+              }
             },
-            onErrorDialogDismiss = { viewModel.clearError() }
+            onImportErrorDialogDismiss = { viewModel.clearError() },
+            onUpdateSignal = {
+              PlayStoreUtil.openPlayStoreOrOurApkDownloadPage(this)
+            },
+            contactSupportCallbacks = contactSupportViewModel
           )
         }
       }
@@ -124,28 +152,19 @@ class RemoteRestoreActivity : BaseActivity() {
   fun onEvent(restoreEvent: RestoreV2Event) {
     viewModel.updateRestoreProgress(restoreEvent)
   }
-
-  private fun continueRegistration(missingProfileData: Boolean) {
-    val main = MainActivity.clearTop(this)
-
-    if (missingProfileData) {
-      val profile = CreateProfileActivity.getIntentForUserProfile(this)
-      profile.putExtra("next_intent", main)
-      startActivity(profile)
-    } else {
-      startActivity(main)
-    }
-
-    finish()
-  }
 }
 
 @Composable
 private fun RestoreFromBackupContent(
   state: RemoteRestoreViewModel.ScreenState,
+  contactSupportState: ContactSupportViewModel.ContactSupportState = ContactSupportViewModel.ContactSupportState(),
   onRestoreBackupClick: () -> Unit = {},
+  onRetryRestoreTier: () -> Unit = {},
+  onContactSupport: () -> Unit = {},
   onCancelClick: () -> Unit = {},
-  onErrorDialogDismiss: () -> Unit = {}
+  onImportErrorDialogDismiss: () -> Unit = {},
+  onUpdateSignal: () -> Unit = {},
+  contactSupportCallbacks: ContactSupportCallbacks = ContactSupportCallbacks.Empty
 ) {
   when (state.loadState) {
     RemoteRestoreViewModel.ScreenState.LoadState.LOADING -> {
@@ -159,16 +178,33 @@ private fun RestoreFromBackupContent(
         state = state,
         onRestoreBackupClick = onRestoreBackupClick,
         onCancelClick = onCancelClick,
-        onErrorDialogDismiss = onErrorDialogDismiss
+        onImportErrorDialogDismiss = onImportErrorDialogDismiss,
+        onUpdateSignal = onUpdateSignal
       )
     }
 
     RemoteRestoreViewModel.ScreenState.LoadState.NOT_FOUND -> {
-      RestoreFailedDialog(onDismiss = onCancelClick)
+      BackupNotFoundDialog(onDismiss = onCancelClick)
     }
 
     RemoteRestoreViewModel.ScreenState.LoadState.FAILURE -> {
-      RestoreFailedDialog(onDismiss = onCancelClick)
+      if (contactSupportState.show) {
+        ContactSupportDialog(
+          showInProgress = contactSupportState.showAsProgress,
+          callbacks = contactSupportCallbacks
+        )
+      } else {
+        TierRestoreFailedDialog(
+          loadAttempts = state.loadAttempts,
+          onRetryRestore = onRetryRestoreTier,
+          onContactSupport = onContactSupport,
+          onCancel = onCancelClick
+        )
+      }
+    }
+
+    RemoteRestoreViewModel.ScreenState.LoadState.STORAGE_SERVICE_RESTORE -> {
+      Dialogs.IndeterminateProgressDialog()
     }
   }
 }
@@ -178,7 +214,8 @@ private fun BackupAvailableContent(
   state: RemoteRestoreViewModel.ScreenState,
   onRestoreBackupClick: () -> Unit,
   onCancelClick: () -> Unit,
-  onErrorDialogDismiss: () -> Unit
+  onImportErrorDialogDismiss: () -> Unit,
+  onUpdateSignal: () -> Unit
 ) {
   val subtitle = if (state.backupSize.bytes > 0) {
     stringResource(
@@ -244,7 +281,13 @@ private fun BackupAvailableContent(
       RemoteRestoreViewModel.ImportState.None -> Unit
       RemoteRestoreViewModel.ImportState.InProgress -> RestoreProgressDialog(state.restoreProgress)
       is RemoteRestoreViewModel.ImportState.Restored -> Unit
-      RemoteRestoreViewModel.ImportState.Failed -> RestoreFailedDialog(onDismiss = onErrorDialogDismiss)
+      RemoteRestoreViewModel.ImportState.Failed -> {
+        if (SignalStore.backup.hasInvalidBackupVersion) {
+          InvalidBackupVersionDialog(onUpdateSignal = onUpdateSignal, onDismiss = onImportErrorDialogDismiss)
+        } else {
+          RestoreFailedDialog(onDismiss = onImportErrorDialogDismiss)
+        }
+      }
     }
   }
 }
@@ -360,10 +403,10 @@ private fun RestoreProgressDialog(restoreProgress: RestoreV2Event?) {
           )
 
           if (restoreProgress != null) {
-            val progressBytes = restoreProgress.count.toUnitString(maxPlaces = 2)
-            val totalBytes = restoreProgress.estimatedTotalCount.toUnitString(maxPlaces = 2)
+            val progressBytes = restoreProgress.count.toUnitString()
+            val totalBytes = restoreProgress.estimatedTotalCount.toUnitString()
             Text(
-              text = stringResource(id = R.string.RemoteRestoreActivity__s_of_s_s, progressBytes, totalBytes, "%.2f%%".format(restoreProgress.getProgress())),
+              text = stringResource(id = R.string.RemoteRestoreActivity__s_of_s_s, progressBytes, totalBytes, "%.2f%%".format(restoreProgress.getProgress() * 100)),
               style = MaterialTheme.typography.bodySmall,
               modifier = Modifier.padding(bottom = 12.dp)
             )
@@ -390,6 +433,19 @@ private fun ProgressDialogPreview() {
 }
 
 @Composable
+fun BackupNotFoundDialog(
+  onDismiss: () -> Unit = {}
+) {
+  Dialogs.SimpleAlertDialog(
+    title = stringResource(R.string.EnterBackupKey_backup_not_found),
+    body = stringResource(R.string.EnterBackupKey_backup_key_you_entered_is_correct_but_no_backup),
+    confirm = stringResource(android.R.string.ok),
+    onConfirm = onDismiss,
+    onDismiss = onDismiss
+  )
+}
+
+@Composable
 fun RestoreFailedDialog(
   onDismiss: () -> Unit = {}
 ) {
@@ -402,10 +458,64 @@ fun RestoreFailedDialog(
   )
 }
 
+@Composable
+fun TierRestoreFailedDialog(
+  loadAttempts: Int = 0,
+  onRetryRestore: () -> Unit = {},
+  onContactSupport: () -> Unit = {},
+  onCancel: () -> Unit = {}
+) {
+  if (loadAttempts > 2) {
+    Dialogs.AdvancedAlertDialog(
+      title = stringResource(R.string.EnterBackupKey_cant_restore_backup),
+      body = stringResource(R.string.EnterBackupKey_your_backup_cant_be_restored_right_now),
+      positive = stringResource(R.string.EnterBackupKey_try_again),
+      neutral = stringResource(R.string.EnterBackupKey_contact_support),
+      negative = stringResource(android.R.string.cancel),
+      onPositive = onRetryRestore,
+      onNeutral = onContactSupport,
+      onNegative = onCancel
+    )
+  } else {
+    Dialogs.SimpleAlertDialog(
+      title = stringResource(R.string.EnterBackupKey_cant_restore_backup),
+      body = stringResource(R.string.EnterBackupKey_your_backup_cant_be_restored_right_now),
+      confirm = stringResource(R.string.EnterBackupKey_try_again),
+      dismiss = stringResource(android.R.string.cancel),
+      onConfirm = onRetryRestore,
+      onDeny = onCancel,
+      onDismissRequest = {}
+    )
+  }
+}
+
 @SignalPreview
 @Composable
 private fun RestoreFailedDialogPreview() {
   Previews.Preview {
     RestoreFailedDialog()
+  }
+}
+
+@Composable
+fun InvalidBackupVersionDialog(
+  onUpdateSignal: () -> Unit = {},
+  onDismiss: () -> Unit = {}
+) {
+  Dialogs.SimpleAlertDialog(
+    title = stringResource(R.string.RemoteRestoreActivity__couldnt_restore),
+    body = stringResource(R.string.RemoteRestoreActivity__update_latest),
+    confirm = stringResource(R.string.RemoteRestoreActivity__update_signal),
+    onConfirm = onUpdateSignal,
+    dismiss = stringResource(R.string.RemoteRestoreActivity__not_now),
+    onDismiss = onDismiss
+  )
+}
+
+@SignalPreview
+@Composable
+private fun InvalidBackupVersionDialogPreview() {
+  Previews.Preview {
+    InvalidBackupVersionDialog()
   }
 }

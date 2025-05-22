@@ -15,9 +15,11 @@ import org.thoughtcrime.securesms.jobs.RemoteConfigRefreshJob
 import org.thoughtcrime.securesms.jobs.Svr3MirrorJob
 import org.thoughtcrime.securesms.keyvalue.SignalStore
 import org.thoughtcrime.securesms.messageprocessingalarm.RoutineMessageFetchReceiver
+import org.thoughtcrime.securesms.net.SignalNetwork
 import org.thoughtcrime.securesms.util.RemoteConfig.Config
 import org.thoughtcrime.securesms.util.RemoteConfig.remoteBoolean
 import org.thoughtcrime.securesms.util.RemoteConfig.remoteValue
+import org.whispersystems.signalservice.api.NetworkResultUtil
 import java.io.IOException
 import java.util.TreeMap
 import java.util.concurrent.locks.ReentrantLock
@@ -90,7 +92,7 @@ object RemoteConfig {
   @WorkerThread
   @Throws(IOException::class)
   fun refreshSync() {
-    val result = AppDependencies.signalServiceAccountManager.getRemoteConfig()
+    val result = NetworkResultUtil.toBasicLegacy(SignalNetwork.remoteConfig.getRemoteConfig())
     update(result.config)
   }
 
@@ -119,10 +121,9 @@ object RemoteConfig {
     Log.i(TAG, "[Disk]   After : ${result.disk}")
   }
 
-  /** Only for rendering debug info.  */
   @JvmStatic
   @get:Synchronized
-  val debugMemoryValues: Map<String, Any>
+  val memoryValues: Map<String, Any>
     get() = TreeMap(REMOTE_VALUES)
 
   /** Only for rendering debug info.  */
@@ -693,37 +694,9 @@ object RemoteConfig {
     hotSwappable = false
   )
 
-  /** A comma-separated list of models that should *not* use hardware AEC for calling.  */
-  val hardwareAecBlocklistModels: String by remoteString(
-    key = "android.calling.hardwareAecBlockList",
-    defaultValue = "",
-    hotSwappable = true
-  )
-
-  /** A comma-separated list of models that should *not* use software AEC for calling.  */
-  val softwareAecBlocklistModels: String by remoteString(
-    key = "android.calling.softwareAecBlockList",
-    defaultValue = "",
-    hotSwappable = true
-  )
-
-  /** Whether the Oboe ADM should be used or not.  */
-  val oboeDeployment: Boolean by remoteBoolean(
-    key = "android.calling.oboeDeployment",
-    defaultValue = false,
-    hotSwappable = false
-  )
-
-  /** A comma-separated list of models that should use the Java ADM instead of the Oboe ADM.  */
-  val useJavaAdmModels: String by remoteString(
-    key = "android.calling.useJavaAdmList",
-    defaultValue = "",
-    hotSwappable = true
-  )
-
-  /** A comma-separated list of models that should use software AEC for calling with the Oboe ADM.  */
-  val useSoftwareAecForOboeModels: String by remoteString(
-    key = "android.calling.useSoftwareAecForOboe",
+  /** A json string representing rules necessary to build an audio configuration for a device. */
+  val callingAudioDeviceConfig: String by remoteString(
+    key = "android.calling.audioDeviceConfig",
     defaultValue = "",
     hotSwappable = true
   )
@@ -754,13 +727,6 @@ object RemoteConfig {
     key = "android.cameraXMixedModelBlockList",
     defaultValue = "",
     hotSwappable = false
-  )
-
-  /** Whether or not hardware AEC should be used for calling on devices older than API 29.  */
-  val useHardwareAecIfOlderThanApi29: Boolean by remoteBoolean(
-    key = "android.calling.useHardwareAecIfOlderThanApi29",
-    defaultValue = false,
-    hotSwappable = true
   )
 
   /** Prefetch count for stories from a given user. */
@@ -1011,7 +977,7 @@ object RemoteConfig {
   val messageBackups: Boolean by remoteValue(
     key = "android.messageBackups",
     hotSwappable = false,
-    active = false
+    active = true
   ) { value ->
     BuildConfig.MESSAGE_BACKUP_RESTORE_ENABLED || value.asBoolean(false)
   }
@@ -1019,8 +985,17 @@ object RemoteConfig {
   /** Whether unauthenticated chat web socket is backed by libsignal-net  */
   @JvmStatic
   @get:JvmName("libSignalWebSocketEnabled")
-  val libSignalWebSocketEnabled: Boolean by remoteBoolean(
-    key = "android.libsignalWebSocketEnabled",
+  val libSignalWebSocketEnabled: Boolean by remoteValue(
+    key = "android.libsignalWebSocketEnabled.4",
+    hotSwappable = false
+  ) { value ->
+    value.asBoolean(false) || Environment.IS_NIGHTLY
+  }
+
+  @JvmStatic
+  @get:JvmName("libsignalEnforceMinTlsVersion")
+  val libsignalEnforceMinTlsVersion by remoteBoolean(
+    key = "android.libsignalEnforceMinTlsVersion",
     defaultValue = false,
     hotSwappable = false
   )
@@ -1034,20 +1009,6 @@ object RemoteConfig {
     active = false
   ) { value ->
     BuildConfig.MESSAGE_BACKUP_RESTORE_ENABLED || value.asBoolean(false)
-  }
-
-  /**
-   * Percentage [0, 100] of web socket requests that will be "shadowed" by sending
-   * an unauthenticated keep-alive via libsignal-net. Default: 0
-   */
-  @JvmStatic
-  @get:JvmName("libSignalWebSocketShadowingPercentage")
-  val libSignalWebSocketShadowingPercentage: Int by remoteValue(
-    key = "android.libsignalWebSocketShadowingPercentage",
-    hotSwappable = false
-  ) { value ->
-    val remote = value.asInteger(0)
-    remote.coerceIn(0, 100)
   }
 
   @JvmStatic
@@ -1083,7 +1044,7 @@ object RemoteConfig {
   /** JSON object representing some details about how we might want to warn the user around connectivity issues. */
   val connectivityWarningConfig: String by remoteString(
     key = "android.connectivityWarningConfig",
-    defaultValue = "",
+    defaultValue = "{}",
     hotSwappable = true
   )
 
@@ -1119,18 +1080,17 @@ object RemoteConfig {
     hotSwappable = false
   )
 
-  /** Whether or not this device supports syncing data to newly-linked device. */
-  @JvmStatic
-  val linkAndSync: Boolean by remoteBoolean(
-    key = "android.linkAndSync.3",
+  /** Whether to allow different WindowSizeClasses to be used to determine screen layout */
+  val largeScreenUi: Boolean by remoteBoolean(
+    key = "android.largeScreenUI",
     defaultValue = false,
-    hotSwappable = true
+    hotSwappable = false
   )
 
-  /** Whether or not this device supports the new storage service recordIkm encryption. */
   @JvmStatic
-  val storageServiceEncryptionV2: Boolean by remoteBoolean(
-    key = "android.ssre2",
+  @get:JvmName("useMessageSendRestFallback")
+  val useMessageSendRestFallback: Boolean by remoteBoolean(
+    key = "android.useMessageSendRestFallback",
     defaultValue = false,
     hotSwappable = true
   )

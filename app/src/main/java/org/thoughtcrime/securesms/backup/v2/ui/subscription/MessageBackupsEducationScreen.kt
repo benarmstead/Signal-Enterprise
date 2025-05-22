@@ -28,10 +28,12 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import org.signal.core.ui.Buttons
-import org.signal.core.ui.Previews
-import org.signal.core.ui.Scaffolds
+import org.signal.core.ui.compose.Buttons
+import org.signal.core.ui.compose.Previews
+import org.signal.core.ui.compose.Scaffolds
 import org.thoughtcrime.securesms.R
+import org.thoughtcrime.securesms.components.compose.BetaHeader
+import org.thoughtcrime.securesms.components.compose.TextWithBetaLabel
 import org.signal.core.ui.R as CoreUiR
 
 /**
@@ -46,6 +48,7 @@ fun MessageBackupsEducationScreen(
 ) {
   Scaffolds.Settings(
     onNavigationClick = onNavigationClick,
+    navigationContentDescription = stringResource(android.R.string.cancel),
     navigationIconPainter = painterResource(id = R.drawable.symbol_x_24),
     title = ""
   ) {
@@ -62,6 +65,10 @@ fun MessageBackupsEducationScreen(
           .weight(1f)
       ) {
         item {
+          BetaHeader()
+        }
+
+        item {
           Image(
             painter = painterResource(id = R.drawable.image_signal_backups),
             contentDescription = null,
@@ -72,9 +79,9 @@ fun MessageBackupsEducationScreen(
         }
 
         item {
-          Text(
+          TextWithBetaLabel(
             text = stringResource(id = R.string.RemoteBackupsSettingsFragment__signal_backups),
-            style = MaterialTheme.typography.headlineMedium,
+            textStyle = MaterialTheme.typography.headlineMedium,
             modifier = Modifier.padding(top = 15.dp)
           )
         }

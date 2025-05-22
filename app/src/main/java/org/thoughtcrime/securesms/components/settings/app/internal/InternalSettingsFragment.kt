@@ -6,6 +6,7 @@ import android.content.Context
 import android.content.DialogInterface
 import android.os.Bundle
 import android.view.View
+import android.widget.EditText
 import android.widget.Toast
 import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.fragment.findNavController
@@ -28,6 +29,7 @@ import org.thoughtcrime.securesms.components.settings.DSLSettingsText
 import org.thoughtcrime.securesms.components.settings.app.privacy.advanced.AdvancedPrivacySettingsRepository
 import org.thoughtcrime.securesms.components.settings.app.subscription.InAppPaymentsRepository
 import org.thoughtcrime.securesms.components.settings.configure
+import org.thoughtcrime.securesms.conversation.ConversationIntents
 import org.thoughtcrime.securesms.database.JobDatabase
 import org.thoughtcrime.securesms.database.LocalMetricsDatabase
 import org.thoughtcrime.securesms.database.LogDatabase
@@ -35,6 +37,7 @@ import org.thoughtcrime.securesms.database.MegaphoneDatabase
 import org.thoughtcrime.securesms.database.OneTimePreKeyTable
 import org.thoughtcrime.securesms.database.SignalDatabase
 import org.thoughtcrime.securesms.database.model.InAppPaymentSubscriberRecord
+import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.dependencies.AppDependencies
 import org.thoughtcrime.securesms.jobmanager.JobTracker
 import org.thoughtcrime.securesms.jobs.DownloadLatestEmojiDataJob
@@ -52,6 +55,7 @@ import org.thoughtcrime.securesms.megaphone.MegaphoneRepository
 import org.thoughtcrime.securesms.megaphone.Megaphones
 import org.thoughtcrime.securesms.payments.DataExportUtil
 import org.thoughtcrime.securesms.recipients.Recipient
+import org.thoughtcrime.securesms.recipients.RecipientId
 import org.thoughtcrime.securesms.storage.StorageSyncHelper
 import org.thoughtcrime.securesms.util.ConversationUtil
 import org.thoughtcrime.securesms.util.Util
@@ -149,7 +153,37 @@ class InternalSettingsFragment : DSLSettingsFragment(R.string.preferences__inter
           onUnregisterClicked()
         }
       )
+
+      clickPref(
+        title = DSLSettingsText.from("Jump to message"),
+        summary = DSLSettingsText.from("Find and jump to a message via its sentTimestamp."),
+        onClick = {
+          promptUserForSentTimestamp()
+        }
+      )
       dividerPref()
+
+      sectionHeaderPref(DSLSettingsText.from("App UI"))
+
+      switchPref(
+        title = DSLSettingsText.from("Enable new split pane UI."),
+        summary = DSLSettingsText.from("Warning: Some bugs and non functional buttons are expected. App will restart."),
+        isChecked = state.largeScreenUi,
+        onClick = {
+          viewModel.setUseLargeScreenUi(!state.largeScreenUi)
+          AppUtil.restart(requireContext())
+        }
+      )
+
+      switchPref(
+        isEnabled = state.largeScreenUi,
+        title = DSLSettingsText.from("Force split pane UI on landscape phones."),
+        summary = DSLSettingsText.from("This setting requires split pane UI to be enabled."),
+        isChecked = state.forceSplitPaneOnCompactLandscape,
+        onClick = {
+          viewModel.setForceSplitPaneOnCompactLandscape(!state.forceSplitPaneOnCompactLandscape)
+        }
+      )
 
       sectionHeaderPref(DSLSettingsText.from("Playgrounds"))
 
@@ -534,15 +568,6 @@ class InternalSettingsFragment : DSLSettingsFragment(R.string.preferences__inter
       )
 
       radioListPref(
-        title = DSLSettingsText.from("Audio processing method"),
-        listItems = CallManager.AudioProcessingMethod.entries.map { it.name }.toTypedArray(),
-        selected = CallManager.AudioProcessingMethod.entries.indexOf(state.callingAudioProcessingMethod),
-        onSelected = {
-          viewModel.setInternalCallingAudioProcessingMethod(CallManager.AudioProcessingMethod.entries[it])
-        }
-      )
-
-      radioListPref(
         title = DSLSettingsText.from("Bandwidth mode"),
         listItems = CallManager.DataMode.entries.map { it.name }.toTypedArray(),
         selected = CallManager.DataMode.entries.indexOf(state.callingDataMode),
@@ -560,10 +585,55 @@ class InternalSettingsFragment : DSLSettingsFragment(R.string.preferences__inter
       )
 
       switchPref(
-        title = DSLSettingsText.from("Enable Oboe ADM"),
-        isChecked = state.callingEnableOboeAdm,
+        title = DSLSettingsText.from("Set Audio Config:"),
+        isChecked = state.callingSetAudioConfig,
         onClick = {
-          viewModel.setInternalCallingEnableOboeAdm(!state.callingEnableOboeAdm)
+          viewModel.setInternalCallingSetAudioConfig(!state.callingSetAudioConfig)
+        }
+      )
+
+      switchPref(
+        title = DSLSettingsText.from("    Use Oboe ADM"),
+        isChecked = state.callingUseOboeAdm,
+        isEnabled = state.callingSetAudioConfig,
+        onClick = {
+          viewModel.setInternalCallingUseOboeAdm(!state.callingUseOboeAdm)
+        }
+      )
+
+      switchPref(
+        title = DSLSettingsText.from("    Use Software AEC"),
+        isChecked = state.callingUseSoftwareAec,
+        isEnabled = state.callingSetAudioConfig,
+        onClick = {
+          viewModel.setInternalCallingUseSoftwareAec(!state.callingUseSoftwareAec)
+        }
+      )
+
+      switchPref(
+        title = DSLSettingsText.from("    Use Software NS"),
+        isChecked = state.callingUseSoftwareNs,
+        isEnabled = state.callingSetAudioConfig,
+        onClick = {
+          viewModel.setInternalCallingUseSoftwareNs(!state.callingUseSoftwareNs)
+        }
+      )
+
+      switchPref(
+        title = DSLSettingsText.from("    Use Input Low Latency"),
+        isChecked = state.callingUseInputLowLatency,
+        isEnabled = state.callingSetAudioConfig,
+        onClick = {
+          viewModel.setInternalCallingUseInputLowLatency(!state.callingUseInputLowLatency)
+        }
+      )
+
+      switchPref(
+        title = DSLSettingsText.from("    Use Input Voice Comm"),
+        isChecked = state.callingUseInputVoiceComm,
+        isEnabled = state.callingSetAudioConfig,
+        onClick = {
+          viewModel.setInternalCallingUseInputVoiceComm(!state.callingUseInputVoiceComm)
         }
       )
 
@@ -856,7 +926,6 @@ class InternalSettingsFragment : DSLSettingsFragment(R.string.preferences__inter
                 SignalStore.account.setRegistered(false)
                 SignalStore.registration.clearRegistrationComplete()
                 SignalStore.registration.hasUploadedProfile = false
-                SignalStore.registration.debugClearSkippedTransferOrRestore()
                 Toast.makeText(context, "Unregistered!", Toast.LENGTH_SHORT).show()
               }
 
@@ -1032,5 +1101,44 @@ class InternalSettingsFragment : DSLSettingsFragment(R.string.preferences__inter
     }) {
       Toast.makeText(requireContext(), "Dumped to logs", Toast.LENGTH_SHORT).show()
     }
+  }
+
+  private fun promptUserForSentTimestamp() {
+    val input = EditText(requireContext()).apply {
+      inputType = android.text.InputType.TYPE_CLASS_NUMBER
+    }
+
+    MaterialAlertDialogBuilder(requireContext())
+      .setTitle("Enter sentTimestamp")
+      .setView(input)
+      .setPositiveButton(android.R.string.ok) { _, _ ->
+        val number = input.text.toString().toLongOrNull()
+        if (number == null) {
+          Toast.makeText(requireContext(), "Failed to parse timestamp!", Toast.LENGTH_SHORT).show()
+          return@setPositiveButton
+        }
+
+        val messages = SignalDatabase.messages.getMessagesBySentTimestamp(number)
+        if (messages.isEmpty()) {
+          Toast.makeText(requireContext(), "Could not find a message with that timestamp!", Toast.LENGTH_SHORT).show()
+          return@setPositiveButton
+        }
+
+        if (messages.size > 1) {
+          Toast.makeText(requireContext(), "There's ${messages.size} messages with that timestamp! Go run SQL or something.", Toast.LENGTH_SHORT).show()
+          return@setPositiveButton
+        }
+
+        val message: MessageRecord = messages[0]
+        val startingPosition = SignalDatabase.messages.getMessagePositionInConversation(message.threadId, message.dateReceived)
+        val intent = ConversationIntents
+          .createBuilderSync(requireContext(), RecipientId.UNKNOWN, message.threadId)
+          .withStartingPosition(startingPosition)
+          .build()
+
+        startActivity(intent)
+      }
+      .setNegativeButton("Cancel", null)
+      .show()
   }
 }

@@ -10,6 +10,7 @@
   <!-- Removed by excludeNonTranslatables <string name="install_url" translatable="false">https://signal.org/install</string> -->
   <!-- Removed by excludeNonTranslatables <string name="donate_url" translatable="false">https://signal.org/donate</string> -->
   <!-- Removed by excludeNonTranslatables <string name="backup_support_url" translatable="false">https://support.signal.org/hc/articles/360007059752</string> -->
+  <!-- Removed by excludeNonTranslatables <string name="backup_failed_support_url" translatable="false">https://support.signal.org/hc/articles/8768161836954</string> -->
   <!-- Removed by excludeNonTranslatables <string name="transfer_support_url" translatable="false">https://support.signal.org/hc/articles/360007059752</string> -->
   <!-- Removed by excludeNonTranslatables <string name="support_center_url" translatable="false">https://support.signal.org/</string> -->
   <!-- Removed by excludeNonTranslatables <string name="terms_and_privacy_policy_url" translatable="false">https://signal.org/legal</string> -->
@@ -150,6 +151,7 @@
     <!-- BlockedUsersActivity -->
     <string name="BlockedUsersActivity__blocked_users">Blokerede brugere</string>
     <string name="BlockedUsersActivity__add_blocked_user">Tilføj blokeret bruger</string>
+    <string name="BlockedUsersActivity__cannot_block_yourself">Du kan ikke blokere dig selv</string>
     <string name="BlockedUsersActivity__blocked_users_will">Blokerede brugere vil ikke kunne ringe eller sende beskeder til dig.</string>
     <string name="BlockedUsersActivity__no_blocked_users">Ingen blokerede brugere</string>
     <string name="BlockedUsersActivity__block_user">Blokér bruger?</string>
@@ -412,6 +414,7 @@
     <!-- Footer shown in legacy SMS message where %s is the name of the recipient the message is going to -->
     <string name="ConversationItem_to_s">til %1$s</string>
     <string name="ConversationItem_read_more">  Læs mere</string>
+    <!-- Footer shown at the end of long body messages to download more of it -->
     <string name="ConversationItem_download_more">  Hent mere</string>
     <string name="ConversationItem_pending">  Afventer</string>
     <string name="ConversationItem_this_message_was_deleted">Denne besked blev slettet.</string>
@@ -542,6 +545,8 @@
     <string name="ConversationActivity__invite_to_signal">Inviter til Signal</string>
     <!-- Snackbar message shown after dismissing the full screen sms export megaphone indicating we\'ll do it again soon -->
     <string name="ConversationActivity__you_will_be_reminded_again_soon">Du vil snart blive påmindet igen.</string>
+    <!-- Toast message shown when trying to record a voice message during an ongoing call -->
+    <string name="ConversationFragment_cannot_record_voice_message_during_call">Det er ikke muligt at optage en talebesked under opkald.</string>
 
     <!-- Title for dialog shown when first sending formatted text -->
     <string name="SendingFormattingTextDialog_title">Sender formateret tekst</string>
@@ -570,11 +575,6 @@
         <item quantity="one">Gemmes denne fil i lagerplads, vil alle andre apps også have mulighed for at tilgå den.\n\nVil du fortsætte?</item>
         <item quantity="other">Gemmes alle %1$d filer i lagerplads, vil alle andre apps også have mulighed for at tilgå dem.\n\nVil du fortsætte?</item>
     </plurals>
-    <plurals name="ConversationFragment_error_while_saving_attachments_to_sd_card">
-        <item quantity="one">Kunne ikke gemme vedhæftede fil!</item>
-        <item quantity="other">Kunne ikke gemme vedhæftede filer!</item>
-    </plurals>
-    <string name="ConversationFragment_unable_to_write_to_sd_card_exclamation">Kunne ikke gemme i lagerplads!</string>
     <plurals name="ConversationFragment_saving_n_attachments">
         <item quantity="one">Gemmer vedhæftet fil</item>
         <item quantity="other">Gemmer %1$d vedhæftede filer</item>
@@ -583,6 +583,8 @@
         <item quantity="one">Gemmer vedhæftet fil i lagerplads…</item>
         <item quantity="other">Gemmer %1$d vedhæftede filer i lagerplads…</item>
     </plurals>
+    <!-- Checkbox shown in dialog to not show the dialog again in future cases -->
+    <string name="ConversationFragment_dont_show_again">Vis ikke dette igen</string>
     <string name="ConversationFragment_pending">Afventer …</string>
     <!-- Describes how the message was sent when looking at a message detail. Previously, messages could be through other means like SMS -->
     <string name="ConversationFragment_push">Data (Signal)</string>
@@ -658,6 +660,18 @@
     <string name="ConversationFragment_reported_as_spam_and_blocked">Rapporteret som spam og blokeret</string>
     <!-- Dialog message shown after accepting a message request and tapping on options from the conversation event -->
     <string name="ConversationFragment_you_accepted_a_message_request_from_s">Du accepterede en beskedanmodningen fra %1$s. Hvis dette var en fejl, kan du vælge en handling nedenfor.</string>
+    <!-- Text shown in conversation header when in a message request state and to carefully review the user -->
+    <string name="ConversationFragment_review_carefully">Gennemgå omhyggeligt</string>
+    <!-- Text shown in conversation header when in a message request state that profile names are not verified. Placeholder will be \'Profile names\' -->
+    <string name="ConversationFragment_profile_names_not_verified">%1$s er ikke verificeret</string>
+    <!-- Text shown in conversation header when in a message request state that group names are not verified. Placeholder will be \'Group names\' -->
+    <string name="ConversationFragment_group_names_not_verified">%1$s er ikke verificeret</string>
+    <!-- Placeholder text shown in conversation header that when clicked will open a dialog about profile names -->
+    <string name="ConversationFragment_profile_names">Profilnavne</string>
+    <!-- Placeholder text shown in conversation header that when clicked will open a dialog about group names -->
+    <string name="ConversationFragment_group_names">Gruppenavne</string>
+    <!-- Snackbar toast message shown when a profile cannot be downloaded and to try again. -->
+    <string name="ConversationFragment_photo_failed">Billedet kunne ikke downloades. Prøv igen.</string>
 
     <!-- Title of Safety Tips bottom sheet dialog -->
     <string name="SafetyTips_title">Sikkerhedstips</string>
@@ -669,6 +683,10 @@
     <string name="SafetyTips_previous_tip">Forrige tip</string>
     <!-- Button text to move to the next tip -->
     <string name="SafetyTips_next_tip">Næste tip</string>
+    <!-- Title of tip 0 -->
+    <string name="SafetyTips_tip0_title">Falske navne og kontoer</string>
+    <!-- Message of tip 0 -->
+    <string name="SafetyTips_tip0_message">Signal kontakter dig aldrig for at bede om din registreringskode eller pinkode. Tag dig i agt for anmodninger fra folk, der udgiver sig for at være nogen, de ikke er. Profilnavne vælges af kontoens indehaver og verificeres ikke.</string>
     <!-- Title of tip 1 -->
     <string name="SafetyTips_tip1_title">Krypto- eller pengesvindel</string>
     <!-- Message of tip 1 -->
@@ -685,6 +703,21 @@
     <string name="SafetyTips_tip4_title">Falske virksomheder og institutioner</string>
     <!-- Message of tip 4 -->
     <string name="SafetyTips_tip4_message">Forhold dig skeptisk, når du bliver kontaktet af virksomheder eller offentlige myndigheder. Beskeder vedrørende skattebureauer, fragtvirksomheder osv. kan være spam.</string>
+
+    <!-- Bottom sheet text explaining that profile names are chosen by the account holder. Placeholder will be \'Profile names\' -->
+    <string name="ProfileNameBottomSheet__profile_names_on_signal">%1$s på Signal vælges af kontoens indehaver.</string>
+    <!-- Bottom sheet text explaining that profile names are not verified. -->
+    <string name="ProfileNameBottomSheet__profile_names_arent_verified">Profilnavne verificeres ikke</string>
+    <!-- Bottom sheet text explaining that accounts can impersonate other people and to be cautious -->
+    <string name="ProfileNameBottomSheet__be_cautious_of_accounts">Tag dig i agt for kontoer, der udgiver sig for at være nogen, de ikke er</string>
+    <!-- Bottom sheet text explaining that personal information should not be shared with strangers -->
+    <string name="ProfileNameBottomSheet__dont_share_personal">Del ikke personlige oplysninger med personer, du ikke kender</string>
+    <!-- Bottom sheet text explaining that group names are chosen by the group members. Placeholder will be \'Group names\' -->
+    <string name="ProfileNameBottomSheet__group_names_on_signal">%1$s er valgt af gruppens medlemmer.</string>
+    <!-- Bottom sheet text explaining that groups can impersonate organizations and to be cautious -->
+    <string name="ProfileNameBottomSheet__be_cautious_of_groups">Tag dig i agt for grupper, der udgiver sig for at være organisationer og virksomheder</string>
+    <!-- Bottom sheet text explaining that profile names of group members are not verified -->
+    <string name="ProfileNameBottomSheet__profile_names_in_groups">Profilnavne på medlemmer i grupper verificeres ikke</string>
 
     <!-- Label for a button displayed in conversation list to clear the chat filter -->
     <string name="ConversationListFragment__clear_filter">Ryd filter</string>
@@ -748,8 +781,11 @@
     <string name="AddToFolderBottomSheet_choose_a_folder">Vælg en mappe</string>
     <!-- Toast shown when a chat has been added to a folder, where %s is the name of the folder -->
     <string name="AddToFolderBottomSheet_added_to_s">Tilføjet til \"%1$s\"</string>
-    <!-- Toast shown when a user tries to add a chat to a folder, but the folder already has that chat. %s is the name of the folder -->
-    <string name="AddToFolderBottomSheet_this_chat_is_already">Denne chat er allerede i mappen \"%1$s\"</string>
+    <!-- Toast shown when a user tries to add chats to a folder, but the folder already has those chats. %s is the name of the folder -->
+    <plurals name="AddToFolderBottomSheet_these_chat_are_already_in_s">
+        <item quantity="one">Denne chat er allerede i \"%1$s\"</item>
+        <item quantity="other">Disse chats er allerede i \"%1$s\"</item>
+    </plurals>
 
     <!-- Show in conversation list overflow menu to open selection bottom sheet -->
     <string name="ConversationListFragment__notification_profile">Notifikationsprofil</string>
@@ -918,6 +954,16 @@
     <string name="DateUtils_tomorrow">I morgen</string>
     <!-- Used in the context: Tonight at 9:00pm for example. Specifically this is after 7pm -->
     <string name="DateUtils_tonight">I aften</string>
+    <!-- Used when showing the time a device was linked. %1$s is replaced with the date while %2$s is replaced with the time. e.g. on Jan 15 at 9:00pm -->
+    <plurals name="DateUtils_date_time_at">
+        <item quantity="one">den %1$s kl. %2$s</item>
+        <item quantity="other">den %1$s kl. %2$s</item>
+    </plurals>
+    <!-- Used when showing the time a device was linked. e.g. at 9:00pm -->
+    <plurals name="DateUtils_time_at">
+        <item quantity="one">kl. %1$s</item>
+        <item quantity="other">kl. %1$s</item>
+    </plurals>
 
     <!-- Scheduled Messages -->
     <!-- Title for dialog that shows all the users scheduled messages for a chat -->
@@ -964,7 +1010,7 @@
 
     <!-- LinkDeviceFragment -->
     <!-- Description for how Signal will work with a linked device (eg desktop, iPad) -->
-    <string name="LinkDeviceFragment__use_signal_on_desktop_ipad">Brug Signal på computer eller iPad. Dine beskeder synkroniseres til dine forbundne enheder.</string>
+    <string name="LinkDeviceFragment__use_signal_on_desktop_ipad">Brug denne Signal-konto på computer eller iPad.</string>
     <!-- Button prompting users to link a new device to their account -->
     <string name="LinkDeviceFragment__link_a_new_device">Forbind en ny enhed</string>
     <!-- Text explaining that on linked devices, messages will be encrypted where %s will be replaced with an image-->
@@ -1004,16 +1050,46 @@
     <string name="LinkDeviceFragment__tap_continue_and_enter_phone">Tryk på Fortsæt, og angiv din telefons kode for at bekræfte. Angiv ikke din Signal-pinkode.</string>
     <!-- Button that dismisses the bottom sheet -->
     <string name="LinkDeviceFragment__continue">Fortsæt</string>
+    <!-- Option on button to contact support -->
+    <string name="LinkDeviceFragment__contact_support">Kontakt support</string>
+    <!-- Title of dialog asking users if they want to submit debug logs when contacting support -->
+    <string name="LinkDeviceFragment__submit_debug_log">Vil du indsende fejlsøgningslog?</string>
+    <!-- Body of dialog explaining what debug logs are and that they are optional to submit -->
+    <string name="LinkDeviceFragment__your_debug_logs">Dine fejlsøgningslogs hjælper os med at fejlsøge hurtigere. Det er frivilligt om du ønsker at vedhæfte dem.</string>
+    <!-- Button option to submit debug log when contacting support -->
+    <string name="LinkDeviceFragment__submit_with_debug">Send med fejlsøgningslog</string>
+    <!-- Button option to not submit debug log when contacting support -->
+    <string name="LinkDeviceFragment__submit_without_debug">Send uden fejlsøgningslog</string>
+    <!-- Button option to dismiss dialog -->
+    <string name="LinkDeviceFragment__cancel">Annuller</string>
+    <!-- Email subject when contacting support on a linked device syncing issue -->
+    <string name="LinkDeviceFragment__link_sync_failure_support_email">Android eksport (Link&amp;Sync) mislykkedes</string>
+  <!-- Removed by excludeNonTranslatables <string name="LinkDeviceFragment__link_sync_failure_support_email_filter" translatable="false">Android Link&amp;Sync Export Failed</string> -->
     <!-- Title of a dialog letting the user know that syncing messages to their linked device failed -->
     <string name="LinkDeviceFragment__sync_failure_title">Kunne ikke synkronisere beskeder</string>
     <!-- Body of a dialog letting the user know that syncing messages to their linked device failed -->
     <string name="LinkDeviceFragment__sync_failure_body">Dine beskeder kunne ikke overføres til din forbundne enhed. Du kan prøve at forbinde og overføre igen eller fortsætte uden at overføre din beskedhistorik.</string>
+    <!-- Body of a dialog letting the user know that syncing messages to their linked device failed but the device was still able to be linked -->
+    <string name="LinkDeviceFragment__sync_failure_body_unretryable">Der blev oprettet forbindelse til din enhed, men dine beskeder kunne ikke overføres.</string>
+    <!-- Text button in a dialog that, when pressed, will redirect to the Signal support page -->
+    <string name="LinkDeviceFragment__learn_more">Få mere at vide</string>
+  <!-- Removed by excludeNonTranslatables <string name="LinkDeviceFragment__learn_more_url" translatable="false">https://support.signal.org/hc/articles/360007320551</string> -->
     <!-- Text button of a button in a dialog that, when pressed, will restart the process of linking a device -->
-    <string name="LinkDeviceFragment__sync_failure_retry_button">Prøv at forbinde igen</string>
+    <string name="LinkDeviceFragment__sync_failure_retry_button">Prøv igen</string>
     <!-- Text button of a button in a dialog that, when pressed, will ignore syncing errors and link a new device without syncing message content -->
     <string name="LinkDeviceFragment__sync_failure_dismiss_button">Fortsæt uden at overføre</string>
     <!-- Option in context menu to edit the name of a linked device -->
     <string name="LinkDeviceFragment__edit_name">Redigér navn</string>
+    <!-- Toast shown when the process of linking a device has been cancelled -->
+    <string name="LinkDeviceFragment__linking_cancelled">Forbindelsen er annulleret</string>
+    <!-- Message shown in progress dialog telling users to avoid closing the app while messages are being synced -->
+    <string name="LinkDeviceFragment__do_not_close">Undlad at lukke appen</string>
+    <!-- Dialog title shown when a device is unlinked -->
+    <string name="LinkDeviceFragment__device_unlinked">Forbindelsen til enheden er fjernet</string>
+    <!-- Dialog body shown when a device is unlinked where %1$s is the date and time the device was originally linked (eg Jan 15 at 9:00pm) -->
+    <string name="LinkDeviceFragment__the_device_that_was">Enheden, der blev tilknyttet %1$s, er ikke længere tilknyttet.</string>
+    <!-- Button to dismiss dialog -->
+    <string name="LinkDeviceFragment__ok">OK</string>
 
     <!-- EditDeviceNameFragment -->
     <!-- App bar title when editing the name of a device -->
@@ -1053,11 +1129,16 @@
     <!-- Option in bottom sheet to transfer message history -->
     <string name="LinkDeviceSyncBottomSheet_transfer">Overfør beskedhistorik</string>
     <!-- Description in bottom sheet of what transferring message history will do -->
-    <string name="LinkDeviceSyncBottomSheet_transfer_your_text">Overfør dine beskeder og seneste medier til din forbundne enhed</string>
+    <string name="LinkDeviceSyncBottomSheet_transfer_your_text">Overfør dine beskeder og medierne fra de sidste 45 dage</string>
     <!-- Option in bottom sheet to not transfer message history -->
     <string name="LinkDeviceSyncBottomSheet_dont_transfer">Overfør ikke</string>
     <!-- Description in bottom sheet of what not transferring history will do -->
     <string name="LinkDeviceSyncBottomSheet_no_old_messages">Ingen gamle beskeder eller medier vil blive overført til din forbundne enhed</string>
+
+    <!-- Title of notification telling users that a device was linked to their account -->
+    <string name="NewLinkedDeviceNotification__you_linked_new_device">Du har tilknyttet en ny enhed</string>
+    <!-- Message body of notification telling users that a device was linked to their account. %1$s is the time it was linked -->
+    <string name="NewLinkedDeviceNotification__a_new_device_was_linked">En ny enhed blev knyttet til din konto %1$s. Tryk for at se.</string>
 
     <!-- DeviceListActivity -->
     <string name="DeviceListActivity_unlink_s">Frakobl \"%1$s\"?</string>
@@ -1077,6 +1158,7 @@
 
     <!-- DocumentView -->
     <string name="DocumentView_unnamed_file">Unavngivet fil</string>
+    <string name="DocumentView_document_file">Dokumentfil</string>
 
     <!-- DozeReminder -->
     <string name="DozeReminder_optimize_for_missing_play_services">Optimér for manglende Play Services</string>
@@ -1297,9 +1379,10 @@
     <!-- AddMembersActivity -->
     <string name="AddMembersActivity__done">Udført</string>
     <string name="AddMembersActivity__this_person_cant_be_added_to_legacy_groups">Personen kan ikke tilføjes forældede grupper</string>
+    <!-- Confirmation text when adding a member to a group. If one person is added, %1$s is their name. If multiple people are added, the total number is %3$d. %2$s is the name of the group -->
     <plurals name="AddMembersActivity__add_d_members_to_s">
-        <item quantity="one">Føj \"%1$s\" til \"%2$s\"?</item>
-        <item quantity="other">Føj %3$d medlemmer til \"%2$s\"?</item>
+        <item quantity="one">Vil du føje \"%1$s\" til \"%2$s\"?</item>
+        <item quantity="other">Vil du føje %3$d medlemmer til \"%2$s\"?</item>
     </plurals>
     <string name="AddMembersActivity__add">Tilføj</string>
     <string name="AddMembersActivity__add_members">Tilføj medlemmer</string>
@@ -1383,9 +1466,17 @@
     <!-- Text label button to skip restore from remote -->
     <string name="RemoteRestoreActivity__skip_restore">Spring gendannelse over</string>
     <!-- Dialog title displayed when remote restore failed -->
-    <string name="RemoteRestoreActivity__couldnt_transfer">Couldn\'t finish transfer</string>
+    <string name="RemoteRestoreActivity__couldnt_transfer">Overførslen kunne ikke afsluttes</string>
     <!-- Dialog message displayed when remote restore failed -->
-    <string name="RemoteRestoreActivity__error_occurred">An error occurred and your account couldn’t be transferred. Try again by choosing your transfer method.</string>
+    <string name="RemoteRestoreActivity__error_occurred">Der opstod en fejl, og din konto kunne ikke overføres. Prøv igen ved at vælge din overførselsmetode.</string>
+    <!-- Dialog title displayed when remote restore failed because of an outdated backup version. -->
+    <string name="RemoteRestoreActivity__couldnt_restore">Kunne ikke gennemføre denne sikkerhedskopiering</string>
+    <!-- Dialog message explaining that an update to Signal is required to restore the backup. -->
+    <string name="RemoteRestoreActivity__update_latest">Denne version af Signal kan ikke gendanne din sikkerhedskopi. Opdatér til den nyeste version, og prøv igen.</string>
+    <!-- Text on button that when pressed will redirect them to update Signal -->
+    <string name="RemoteRestoreActivity__update_signal">Opdater Signal</string>
+    <!-- Text label button to dismiss the dialog -->
+    <string name="RemoteRestoreActivity__not_now">Ikke nu</string>
 
     <!-- GroupMentionSettingDialog -->
     <string name="GroupMentionSettingDialog_notify_me_for_mentions">Underret mig ved omtaler</string>
@@ -1455,7 +1546,9 @@
     <string name="CustomNotificationsDialogFragment__change_sound_and_vibration">Skift lyd og vibration</string>
     <string name="CustomNotificationsDialogFragment__call_settings">Indstillinger for opkald</string>
     <string name="CustomNotificationsDialogFragment__ringtone">Ringetone</string>
+    <!-- Subtitle when the ringtone used for calls is the default system -->
     <string name="CustomNotificationsDialogFragment__default">Standard</string>
+    <!-- Subtitle when the ringtone used for calls is unknown -->
     <string name="CustomNotificationsDialogFragment__unknown">Ukendt</string>
 
     <!-- ShareableGroupLinkDialogFragment -->
@@ -1593,7 +1686,6 @@
     </plurals>
     <string name="MediaOverviewActivity_Media_delete_progress_title">Sletter</string>
     <string name="MediaOverviewActivity_Media_delete_progress_message">Sletter beskeder …</string>
-    <string name="MediaOverviewActivity_collecting_attachments">Samler vedhæftninger …</string>
     <string name="MediaOverviewActivity_Sort_by">Sortér efter</string>
     <string name="MediaOverviewActivity_Newest">Nyeste</string>
     <string name="MediaOverviewActivity_Oldest">Ældste</string>
@@ -1628,6 +1720,8 @@
     <string name="MediaOverviewActivity_sent_by_you">Sendt af dig</string>
     <string name="MediaOverviewActivity_sent_by_s_to_s">Sendt af %1$s til %2$s</string>
     <string name="MediaOverviewActivity_sent_by_you_to_s">Sendt fra dig til %1$s</string>
+    <!-- Error message shown when the user is trying to open a media that is not sent yet. -->
+    <string name="MediaOverviewActivity_this_media_is_not_sent_yet">Dette medie er ikke sendt endnu.</string>
 
     <!-- Megaphones -->
     <string name="Megaphones_remind_me_later">Påmind mig senere</string>
@@ -1636,9 +1730,17 @@
     <string name="Megaphones_verify_pin">Verificer pinkode</string>
     <string name="Megaphones_get_started">Kom i gang</string>
     <string name="Megaphones_new_group">Ny gruppe</string>
+    <!-- Text in a card view to invite friends as part of the onboarding megaphone -->
     <string name="Megaphones_invite_friends">Invitér ven</string>
     <string name="Megaphones_chat_colors">Chatfarver</string>
     <string name="Megaphones_add_a_profile_photo">Tilføj foto</string>
+
+    <!-- Message body of megaphone telling users that a device was linked to their account. %1$s is the time it was linked -->
+    <string name="NewLinkedDeviceMegaphone__a_new_device_was_linked">En ny enhed blev knyttet til din konto %1$s.</string>
+    <!-- Button shown on megaphone that will redirect to the linked devices screen -->
+    <string name="NewLinkedDeviceMegaphone__view_device">Se enhed</string>
+    <!-- Button shown on megaphone to acknowledge and dismiss the megaphone -->
+    <string name="NewLinkedDeviceMegaphone__ok">OK</string>
 
     <!-- Title of a bottom sheet to render messages that all quote a specific message -->
     <string name="MessageQuotesBottomSheet_replies">Svar</string>
@@ -1689,6 +1791,10 @@
     <string name="MessageRecord_missed_voice_call">Ubesvaret stemmeopkald</string>
     <!-- Update message shown when receiving an incoming 1:1 video call and not answered -->
     <string name="MessageRecord_missed_video_call">Ubesvaret videoopkald</string>
+    <!-- Update message shown when receiving an incoming 1:1 voice/audio call and not answered -->
+    <string name="MessageRecord_declined_voice_call">Afvist taleopkald</string>
+    <!-- Update message shown when receiving an incoming 1:1 video call and not answered -->
+    <string name="MessageRecord_declined_video_call">Afvist videoopkald</string>
     <!-- Update message shown when receiving an incoming voice call and declined due to notification profile -->
     <string name="MessageRecord_missed_voice_call_notification_profile">Ubesvaret taleopkald, mens notifikationsprofilen var aktiveret</string>
     <!-- Update message shown when receiving an incoming video call and declined due to notification profile -->
@@ -1869,6 +1975,7 @@
 
     <!-- GV2 group link deny -->
     <string name="MessageRecord_your_request_to_join_the_group_has_been_denied_by_an_admin">Din anmodning om at deltage i gruppen, blev afvist af en administrator.</string>
+    <string name="MessageRecord_you_denied_a_request_to_join_the_group_from_s">Du afviste en anmodning fra %1$s om at deltage i gruppen.</string>
     <string name="MessageRecord_s_denied_a_request_to_join_the_group_from_s">%1$s afviste en anmodning fra %2$s om at deltage i gruppen.</string>
     <string name="MessageRecord_a_request_to_join_the_group_from_s_has_been_denied">En anmodning fra %1$s om at deltage i gruppen blev afvist</string>
     <string name="MessageRecord_you_canceled_your_request_to_join_the_group">Du annullerede din anmodning om at deltage i gruppen.</string>
@@ -1913,12 +2020,16 @@
     <string name="MessageRecord_s_is_in_the_call_s">%1$s er med i opkaldet · %2$s</string>
     <!-- Chat log text for an ongoing group call only the local user has joined with a placeholder for formatted time -->
     <string name="MessageRecord_you_are_in_the_call_s1">Du er med i opkaldet · %1$s</string>
+    <!-- Chat log text for an ongoing group call with you and another participant where %1$s is the short display name of the other user and %2$s is the formatted time -->
+    <string name="MessageRecord_s_and_you_are_in_the_call_s1">%1$s og du er med i opkaldet · %2$s</string>
     <!-- Chat log text for an ongoing group call with two participants with two placeholders for the short display name of the users that joined and a placeholder for formatted time -->
     <string name="MessageRecord_s_and_s_are_in_the_call_s1">%1$s og %2$s er med i opkaldet · %3$s</string>
     <!-- Chat log text for an ongoing group call that has one participant -->
     <string name="MessageRecord_s_is_in_the_call">%1$s er med i opkaldet</string>
     <!-- Chat log text for an ongoing group call only the local user has joined -->
     <string name="MessageRecord_you_are_in_the_call">Du er med i opkaldet</string>
+    <!-- Chat log text for an ongoing group call with you and another participant where %1$s is the short display name of the other user -->
+    <string name="MessageRecord_s_and_you_are_in_the_call">%1$s og du er med i opkaldet</string>
     <!-- Chat log text for an ongoing group call with two participants with two placeholders, each for the short display name of the users that joined -->
     <string name="MessageRecord_s_and_s_are_in_the_call">%1$s og %2$s er med i opkaldet</string>
     <!-- Chat log text for a group call that ended within the last 5 minutes -->
@@ -1972,6 +2083,14 @@
     <string name="MessageRecord_reported_as_spam">Rapporteret som spam</string>
     <!-- Update message shown in chat after accept a message request -->
     <string name="MessageRecord_you_accepted_the_message_request">Du accepterede beskedanmodningen</string>
+    <!-- Update message shown in chat after you block a person -->
+    <string name="MessageRecord_you_blocked_this_person">Du blokerede denne person</string>
+    <!-- Update message shown in chat after you unblock a person -->
+    <string name="MessageRecord_you_unblocked_this_person">Du har fjernet blokeringen af denne person</string>
+    <!-- Update message shown in chat after you block a group -->
+    <string name="MessageRecord_you_blocked_this_group">Du har blokeret denne gruppe.</string>
+    <!-- Update message shown in chat after you unblock a group -->
+    <string name="MessageRecord_you_unblocked_this_group">Du har fjernet blokeringen af denne gruppe.</string>
 
     <!-- MessageRequestBottomView -->
     <string name="MessageRequestBottomView_accept">Godkend</string>
@@ -2021,8 +2140,39 @@
         <item quantity="one">%1$d yderligere gruppe</item>
         <item quantity="other">%1$d yderligere grupper</item>
     </plurals>
+    <!-- Describes the names of members in a group. MessageRequestProfileView_group_members_* is nested in the first parentheses. MessageRequestProfileView_invited is nested in the second -->
+    <string name="MessageRequestProfileView_member_names_and_invited">%1$s (%2$s)</string>
+    <!-- Text for an empty group or when you are the only member -->
+    <string name="MessageRequestProfileView_group_members_zero">Endnu ingen andre gruppemedlemmer</string>
+    <!-- Text for a group with one member (not you). %1$s is their name -->
+    <string name="MessageRequestProfileView_group_members_one">%1$s</string>
+    <!-- Text for a 2 member group you are in. %1$s is the name of the other member -->
+    <string name="MessageRequestProfileView_group_members_one_and_you">%1$s og dig</string>
+    <!-- Text for a 2 member group you are not in. %1$s and %2$s are the members\' names -->
+    <string name="MessageRequestProfileView_group_members_two">%1$s og %2$s</string>
+    <!-- Text for a 3 member group you are in. %1$s and %2$s are the members\' names -->
+    <string name="MessageRequestProfileView_group_members_two_and_you">%1$s, %2$s og dig</string>
+    <!-- Text for a 3 member group you are not in. %1$s, %2$s, %3$s are the names of the other members. -->
+    <string name="MessageRequestProfileView_group_members_three">%1$s, %2$s og %3$s</string>
+    <!-- Text for a 3+ member group. %1$s, %2$s, %3$s are member names. %4$s is the string key MessageRequestProfileView_other_members-->
+    <string name="MessageRequestProfileView_group_members_other">%1$s, %2$s, %3$s og %4$s</string>
+    <!-- Nested in MessageRequestProfileView_group_members_other that shows how many members (besides three) are in the group -->
+    <plurals name="MessageRequestProfileView_other_members">
+        <item quantity="one">%1$d anden</item>
+        <item quantity="other">%1$d mere</item>
+    </plurals>
     <!-- Button label to report spam for a conversation when in a message request state -->
     <string name="MessageRequestBottomView_report">Rapportér…</string>
+    <!-- Alert dialog title to accept a message request -->
+    <string name="MessageRequestBottomView_accept_request">Vil du acceptere anmodningen?</string>
+    <!-- Alert dialog body to review the message request carefully -->
+    <string name="MessageRequestBottomView_review_requests_carefully">Gennemgå anmodninger omhyggeligt. Profilnavne vælges af kontoens indehaver og verificeres ikke.</string>
+    <!-- Alert dialog title to accept a message request to join a group -->
+    <string name="MessageRequestBottomView_join_group">Vil du deltage i gruppen?</string>
+    <!-- Alert dialog body to review the message request for a group carefully -->
+    <string name="MessageRequestBottomView_review_requests_carefully_groups">Gennemgå anmodninger omhyggeligt. Gruppenavne vælges af gruppens medlemmer og verificeres ikke.</string>
+    <!-- Button text to join a group -->
+    <string name="MessageRequestBottomView_join">Deltag</string>
 
     <!-- PassphraseChangeActivity -->
     <string name="PassphraseChangeActivity_passphrases_dont_match_exclamation">Adgangssætninger matcher ikke!</string>
@@ -2047,7 +2197,7 @@
     <string name="DeviceProvisioningActivity_sorry_you_have_too_many_devices_linked_already">Beklager. Du har allerede for mange enheder tilsluttet, prøv at fjerne én</string>
     <string name="DeviceActivity_sorry_this_is_not_a_valid_device_link_qr_code">Beklager, QR-koden kan ikke bruges til at forbinde enheder.</string>
     <string name="DeviceProvisioningActivity_link_a_signal_device">Tilknyt en Signal-enhed?</string>
-    <string name="DeviceProvisioningActivity_it_looks_like_youre_trying_to_link_a_signal_device_using_a_3rd_party_scanner">Det ser ud som om du forsøger at tilknytte en Signal-enhed via en tredjeparts scanner. Af sikkerhedshensyn bør du bruge den integrerede scanner i Signal-appen.</string>
+    <string name="DeviceProvisioningActivity_to_link_a_desktop_or_ipad_to_this_signal_account">For at tilknytte en computer eller iPad til denne Signal-konto skal du gå til Forbundne enheder, trykke på \"Tilknyt en ny enhed\", og scanne QR-koden igen. Sørg for kun at scanne QR-koder, der kommer direkte fra Signal.</string>
 
     <string name="DeviceActivity_signal_needs_the_camera_permission_in_order_to_scan_a_qr_code">Signal beder om tilladelse til at tilgå dit kamera, for at kunne scanne en QR-kode, hvilket er blevet nægtet. Gå venligst til appindstillinger, vælg \"Tilladelser\" og tilvælg \"Kamera\".</string>
     <string name="DeviceActivity_unable_to_scan_a_qr_code_without_the_camera_permission">Kan ikke scanne en QR-kode uden tilladelse til at tilgå kameraet</string>
@@ -2126,6 +2276,7 @@
 
     <!-- ReactionsBottomSheetDialogFragment -->
     <string name="ReactionsBottomSheetDialogFragment_all">Alle · %1$d</string>
+    <string name="ReactionsBottomSheetDialogFragment_tap_to_remove">Tryk for at fjerne</string>
 
     <!-- ReactionsConversationView -->
     <string name="ReactionsConversationView_plus">+%1$d</string>
@@ -2331,6 +2482,15 @@
     <!-- Content description for toggling group ring state -->
     <string name="WebRtcCallView__toggle_group_ringing">Slå ringetone i gruppeopkald til og fra</string>
 
+    <!-- Alert message indicating that the local user was remotely muted by some other user. Placeholder is the muters display name. -->
+    <string name="WebRtcCallView__s_remotely_muted_you">%1$s har sat dig på lydløs.</string>
+    <!-- Alert message indicating that the local user remotely muted another user. Placeholder is the name of the person muted. -->
+    <string name="WebRtcCallView__you_remotely_muted_s">Du har sat %1$s på lydløs.</string>
+    <!-- Alert message indicating that a remote user remotely muted another remote user. First placeholder is the muters display name, second is the display name of the person muted. -->
+    <string name="WebRtcCallView__s_remotely_muted_s">%1$s har sat %2$s på lydløs.</string>
+    <!-- Alert message indicating that the local user joined a call on a second device and muted this one from the other one. -->
+    <string name="WebRtcCallView__you_muted_yourself">Du har sat dig selv på lydløs fra en anden enhed.</string>
+
     <!-- Error message when the developer added a button in the wrong place. -->
     <string name="WebRtcAudioOutputToggleButton_fragment_activity_error">Der er opstået en brugergrænsefejl. Rapportér denne fejl til udviklerne.</string>
     <!-- Error message when the user is trying to change audio outputs but none are present. -->
@@ -2358,6 +2518,8 @@
     <string name="CallOverflowPopupWindow__view">Vis</string>
 
 
+    <!-- A notification to the user that their hand is raised but they are currently speaking -->
+    <string name="CallRaiseHandSnackbar__lower_your_hand">Tag hånden ned?</string>
     <!-- A notification to the user that they successfully raised their hand. The placeholder string is CallParticipant__you, or CallParticipant__you_on_another_device -->
     <string name="CallRaiseHandSnackbar__expanded_second_person_raised_a_hand_single">%1$s har rakt hånden op</string>
     <!-- A notification to the user that they and at least one more participants in the call successfully raised their hand. The placeholder is a number quantifying how many other hands are also raised, besides the user. -->
@@ -2393,17 +2555,28 @@
     <!-- An accessibility label for screen readers on a view that can be expanded -->
     <string name="CallOverflowPopupWindow__expand_snackbar_accessibility_label">Udvid visning af oprakte hænder</string>
 
+    <!-- Toolbar title of country picker selection page -->
+    <string name="CountryCodeFragment__your_country">Dit land</string>
+    <!-- Hint text in search bar to either enter in a country name or number -->
+    <string name="CountryCodeFragment__search_by">Søg efter navn eller landekode</string>
+    <!-- Text shown when displaying a list of countries that indicates an unknown country    -->
+    <string name="CountryCodeFragment__unknown_country">Ukendt land</string>
+
     <!-- AboutSheet -->
     <!-- Displayed in a sheet row and allows user to open signal connection explanation on tap -->
     <string name="AboutSheet__signal_connection">Signal-kontakt</string>
     <!-- Displayed in a sheet row describing that the user has marked this contact as \'verified\' from within the app -->
     <string name="AboutSheet__verified">Bekræftet</string>
+    <!-- Displayed in a sheet row that tells users that profile names are not verified -->
+    <string name="AboutSheet__profile_names_are_not_verified">Profilnavne verificeres ikke</string>
+    <!-- Displayed in a sheet row describing that the user is in a message request state with the person -->
+    <string name="AboutSheet__pending_message_request">Afventende beskedanmodning</string>
     <!-- Displayed in bottom sheet describing that the user has no direct messages with this person. The placeholder is a person\'s name. -->
     <string name="AboutSheet__no_direct_message">Ingen direkte beskeder med %1$s</string>
     <!-- Explains that the given user (placeholder is short name) is in the users system contact -->
     <string name="AboutSheet__s_is_in_your_system_contacts">%1$s er i din telefons kontakter</string>
     <!-- Notice in a row when user has no groups in common -->
-    <string name="AboutSheet__you_have_no_groups_in_common">I har ingen grupper tilfælles</string>
+    <string name="AboutSheet__you_have_no_groups_in_common">Ingen grupper tilfælles</string>
     <!-- Notice when a user is not a connection to review requests carefully -->
     <string name="AboutSheet__review_requests_carefully">Gennemgå anmodninger omhyggeligt</string>
     <!-- Text used when user has groups in common. Placeholder is the count -->
@@ -2417,6 +2590,12 @@
     <string name="AboutSheet__you">Dig</string>
     <!-- Displays the name of a contact. The first placeholder is the name the user has assigned to that contact, the second name is the name the contact assigned to themselves -->
     <string name="AboutSheet__user_set_display_name_and_profile_name">%1$s (%2$s)</string>
+
+    <!-- Title of the screen showing which groups they have in common with another user. -->
+    <plurals name="GroupsInCommon__n_groups_in_common_title">
+        <item quantity="one">%1$s gruppe til fælles</item>
+        <item quantity="other">%1$s grupper til fælles</item>
+    </plurals>
 
     <!-- CallParticipantsListDialog -->
     <plurals name="CallParticipantsListDialog_in_this_call">
@@ -2457,6 +2636,7 @@
 
     <!-- RecaptchaProofActivity -->
     <string name="RecaptchaProofActivity_failed_to_submit">Det lykkedes ikke at indsende</string>
+    <!-- Toolbar title when solving a captcha -->
     <string name="RecaptchaProofActivity_complete_verification">Gennemfør bekræftelsen</string>
 
     <!-- RegistrationActivity -->
@@ -2474,6 +2654,12 @@
     <string name="RegistrationActivity_additional_verification_required">Yderligere verificering er påkrævet</string>
     <!-- Dialog message shown when we need to verify sms and carrier rates may apply. -->
     <string name="RegistrationActivity_a_verification_code_will_be_sent_to_this_number">Der sendes en bekræftelseskode til dette nummer. Almindelig sms-takst kan gælde.</string>
+    <!-- Text explaining to users that they will be receiving a verification for their phone number and that carrier rates could apply -->
+    <string name="RegistrationActivity_you_will_receive_a_verification_code">Du modtager en verifikationskode. Takster fra dit teleselskab kan blive pålagt.</string>
+    <!-- Hint text to select a country -->
+    <string name="RegistrationActivity_select_a_country">Vælg et land</string>
+    <!-- Hint text explaining that this is where the country code should go -->
+    <string name="RegistrationActivity_default_country_code">0</string>
     <string name="RegistrationActivity_you_will_receive_a_call_to_verify_this_number">Du vil modtage et opkald for at bekræfte dette nummer.</string>
     <string name="RegistrationActivity_edit_number">Redigér nummer</string>
     <string name="RegistrationActivity_missing_google_play_services">Mangler Google Play-tjenester</string>
@@ -2590,6 +2776,12 @@
     <string name="SignalPinReminders_well_remind_you_again_in_a_week">Pinkode korrekt verificeret. Vi vil minde dig om det igen om en uge.</string>
     <string name="SignalPinReminders_well_remind_you_again_in_a_couple_weeks">Pinkode korrekt verificeret. Vi vil minde dig om det igen om et par uge.</string>
     <string name="SignalPinReminders_well_remind_you_again_in_a_month">Pinkode korrekt verificeret. Vi vil minde dig om det igen om en måned.</string>
+    <string name="SignalPinReminders__well_remind_you_again_later">Du bliver mindet om det igen senere i dag.</string>
+    <string name="SignalPinReminders__well_remind_you_again_tomorrow">Du bliver mindet om det igen i morgen.</string>
+    <string name="SignalPinReminders__well_remind_you_again_in_a_few_days">Du bliver mindet om det igen om nogle dage.</string>
+    <string name="SignalPinReminders__well_remind_you_again_in_a_week">Du bliver mindet om det igen om en uge.</string>
+    <string name="SignalPinReminders__well_remind_you_again_in_a_couple_weeks">Du bliver mindet om det igen om nogle uger.</string>
+    <string name="SignalPinReminders__well_remind_you_again_in_a_month">Du bliver mindet om det igen om en måned.</string>
 
     <!-- Slide -->
     <string name="Slide_image">Billede</string>
@@ -2602,18 +2794,80 @@
     <string name="SmsMessageRecord_secure_session_reset_s">%1$s har nulstillet den sikre session</string>
     <string name="SmsMessageRecord_duplicate_message">Duplikér besked</string>
 
-    <!-- StickerManagementActivity -->
-    <string name="StickerManagementActivity_stickers">Klistermærker</string>
+    <!-- Sticker management screen default title. -->
+    <string name="StickerManagement_title_stickers">Klistermærker</string>
+    <!-- Sticker management screen title displayed when multiple sticker packs are selected in order to perform an action. The placeholder is the number of selected items. -->
+    <plurals name="StickerManagement_title_n_selected">
+        <item quantity="one">%1$s valgt</item>
+        <item quantity="other">%1$s valgte</item>
+    </plurals>
+    <!-- Label for the sticker management screen tab which shows the stickers that are available to install. -->
+    <string name="StickerManagement_available_tab_label">Tilgængelig</string>
+    <!-- Label for the sticker management screen tab which shows the stickers that are currently installed. -->
+    <string name="StickerManagement_installed_tab_label">Installeret</string>
+    <!-- Shown when there are no sticker packs available for installation. -->
+    <string name="StickerManagement_available_tab_empty_text">Ingen klistermærkepakker tilgængelig</string>
+    <!-- Shown when there are no sticker packs currently installed. -->
+    <string name="StickerManagement_installed_tab_empty_text">Ingen klistermærkepakker installeret</string>
+    <!-- Message shown when the author of the sticker pack is unknown. -->
+    <string name="StickerManagement_author_unknown">Ukendt</string>
+    <!-- Sticker pack list section header for packs that are already installed. -->
+    <string name="StickerManagement_installed_stickers_header">Installerede klistermærker</string>
+    <!-- Sticker pack list section header for packs that have been received from incoming messages. -->
+    <string name="StickerManagement_stickers_you_received_header">Klistermærker du har modtaget</string>
+    <!-- Sticker pack list section header for highlighted/"blessed" packs. -->
+    <string name="StickerManagement_signal_artist_series_header">Signal-kunstnerserie</string>
+    <!-- Title shown when sharing a sticker pack with another user. -->
+    <string name="StickerManagement_share_sheet_title">Videresend til</string>
+    <!-- Bottom action bar option to select all sticker packs in the list. -->
+    <string name="StickerManagement_action_select_all">Vælg alle</string>
+    <!-- Bottom action bar option to deselect all sticker packs in the list. -->
+    <string name="StickerManagement_action_deselect_all">Fravælg alt</string>
+    <!-- Bottom action bar option to uninstall all selected sticker packs. -->
+    <string name="StickerManagement_action_delete_selected">Slet</string>
+    <!-- Confirmation message shown before uninstalling sticker packs. The placeholder is the number of items to delete. -->
+    <plurals name="StickerManagement_delete_n_packs_confirmation">
+        <item quantity="one">Slet %1$s klistermærkepakke</item>
+        <item quantity="other">Slet %1$s klistermærkepakker</item>
+    </plurals>
+    <!-- Message shown after installing a sticker pack. The placeholder is the name of the sticker pack that was installed. -->
+    <string name="StickerManagement_installed_pack_s">%1$s er installeret.</string>
+    <!-- Message shown after uninstalling a sticker pack. The placeholder is the name of the sticker pack that was deleted. -->
+    <string name="StickerManagement_deleted_pack_s">%1$s er slettet.</string>
+    <!-- Message shown after uninstalling sticker packs. The placeholder is the number of items that were deleted. -->
+    <plurals name="StickerManagement_deleted_n_packs">
+        <item quantity="one">%1$s klistermærkepakke er slettet.</item>
+        <item quantity="other">%1$s klistermærkepakker er slettet.</item>
+    </plurals>
+
+    <!-- Sticker pack list dropdown menu label for the button to forward a sticker pack to another user. -->
+    <string name="StickerManagement_menu_forward_pack">Videresend</string>
+    <!-- Sticker pack list dropdown menu label for the button to mark a sticker pack as selected in order to perform additional actions. -->
+    <string name="StickerManagement_menu_select_pack">Vælg</string>
+    <!-- Sticker pack list dropdown menu label for the button to install a sticker pack. -->
+    <string name="StickerManagement_menu_install_pack">Installér</string>
+    <!-- Sticker pack list dropdown menu label for the button to uninstall a sticker pack. -->
+    <string name="StickerManagement_menu_remove_pack">Fjern</string>
+    <!-- Sticker management screen dropdown menu label for the button to enter multi-select mode. -->
+    <string name="StickerManagement_menu_select_packs">Vælg klistermærkepakker</string>
+
+    <!-- Accessibility label for the button to download a sticker pack. The placeholder is the sticker pack name. -->
+    <string name="StickerManagement_accessibility_download_pack">Download klistermærkepakken %1$s</string>
+    <!-- Accessibility label for the icon that is displayed after a sticker pack has been downloaded. The placeholder is the sticker pack name. -->
+    <string name="StickerManagement_accessibility_downloaded_checkmark">Downloadafkrydsningsmærke</string>
+    <!-- Accessibility label for the sticker pack drag and drop handle used to reorder the list. -->
+    <string name="StickerManagement_accessibility_drag_handle">Træk og slip-håndtag</string>
+    <!-- Accessibility label for the button to download a sticker pack. -->
+    <string name="StickerManagement_accessibility_download">Hent</string>
+    <!-- Accessibility label for opening the screen specific dropdown menu. -->
+    <string name="StickerManagement_accessibility_open_top_bar_menu">Åbn menu</string>
+    <!-- Accessibility label for opening the context menu for a sticker pack row item. -->
+    <string name="StickerManagement_accessibility_open_context_menu">Åbn genvejsmenu</string>
+    <!-- Accessibility label for opening the context menu for a sticker pack row item. -->
+    <string name="StickerManagement_accessibility_exit_multi_select_mode">Afslut valgtilstand og slet valgte</string>
 
     <!-- StickerManagementAdapter -->
-    <string name="StickerManagementAdapter_installed_stickers">Installerede klistermærker</string>
-    <string name="StickerManagementAdapter_stickers_you_received">Klistermærker du har modtaget</string>
-    <string name="StickerManagementAdapter_signal_artist_series">Signal-kunstnerserie</string>
-    <string name="StickerManagementAdapter_no_stickers_installed">Ingen klistermærker installeret</string>
-    <string name="StickerManagementAdapter_stickers_from_incoming_messages_will_appear_here">Klistermærker fra modtagede beskeder vises her</string>
     <string name="StickerManagementAdapter_untitled">Ingen titel</string>
-    <!-- Message shown when the author of the sticker pack is unknown -->
-    <string name="StickerManagementAdapter_unknown">Ukendt</string>
 
     <!-- StickerPackPreviewActivity -->
     <string name="StickerPackPreviewActivity_untitled">Ingen titel</string>
@@ -2640,6 +2894,8 @@
     <string name="SubmitDebugLogActivity_copy_this_url_and_add_it_to_your_issue">Kopier denne URL og tilføj den til din fejlrapport, eller til din e-mail til supporten:\n\n<b>%1$s</b></string>
     <string name="SubmitDebugLogActivity_share">Del</string>
     <string name="SubmitDebugLogActivity_this_log_will_be_posted_publicly_online_for_contributors">Denne log vil blive offentliggjort online, så bidragyderne kan se den. Du kan undersøge den, inden den uploades.</string>
+    <!-- Banner message shown while submitting debug log -->
+    <string name="SubmitDebugLogActivity_your_log_will_be_posted_online">Når du klikker på Indsend, bliver din log lagt online i 30 dage på en unik, ikke-offentliggjort URL-adresse. Du kan gemme den lokalt først.</string>
 
     <!-- SupportEmailUtil -->
   <!-- Removed by excludeNonTranslatables <string name="SupportEmailUtil_support_email" translatable="false">support@signal.org</string> -->
@@ -2708,6 +2964,10 @@
     <string name="ThreadRecord_message_history_has_been_merged">Din beskedhistorik er blevet slået sammen</string>
     <!--  Displayed in the conversation list when identities have been merged. The first placeholder is a phone number, and the second is a person\'s name -->
     <string name="ThreadRecord_s_belongs_to_s">%1$s tilhører %2$s</string>
+    <!-- Displayed in the conversation list when a person has been blocked -->
+    <string name="ThreadRecord_blocked">Blokeret</string>
+    <!-- Displayed in the conversation list when a group has been blocked -->
+    <string name="ThreadRecord_blocked_group">Blokeret</string>
 
     <!-- ApkUpdateNotifications -->
     <string name="ApkUpdateNotifications_prompt_install_title">Opdater Signal</string>
@@ -2807,10 +3067,6 @@
     <!-- MessageDisplayHelper -->
     <string name="MessageDisplayHelper_message_encrypted_for_non_existing_session">Beskeden er krypteret til en session der ikke findes</string>
 
-    <!-- MmsMessageRecord -->
-    <string name="MmsMessageRecord_bad_encrypted_mms_message">Ugyldig krypteret MMS-besked</string>
-    <string name="MmsMessageRecord_mms_message_encrypted_for_non_existing_session">MMS-besked krypteret til en session der ikke findes</string>
-
     <!-- MuteDialog -->
     <string name="MuteDialog_mute_notifications">Slå notifikationer fra</string>
 
@@ -2823,8 +3079,6 @@
     <string name="MediaPreviewActivity_you">Dig</string>
     <string name="MediaPreviewActivity_unssuported_media_type">Medietype ikke understøttet</string>
     <string name="MediaPreviewActivity_draft">Kladde</string>
-    <string name="MediaPreviewActivity_signal_needs_the_storage_permission_in_order_to_write_to_external_storage_but_it_has_been_permanently_denied">Signal beder om tilladelse til at tilgå din lagerplads, for at kunne gemme til ekstern placering, hvilket er blevet nægtet. Gå venligst til appindstillinger, vælg \"Tilladelser\" og tilvælg \"Lagerplads\".</string>
-    <string name="MediaPreviewActivity_unable_to_write_to_external_storage_without_permission">Ikke muligt at gemme til ekstern placering, uden tilladelse</string>
     <string name="MediaPreviewActivity_media_delete_confirmation_title">Slet besked?</string>
     <string name="MediaPreviewActivity_media_delete_confirmation_message">Dette sletter beskeden permanent.</string>
     <string name="MediaPreviewActivity_s_to_s">%1$s til %2$s</string>
@@ -2928,15 +3182,49 @@
     <string name="NotificationChannel_critical_app_alerts">Vigtige appadvarsler</string>
     <!-- Notification channel name for other notifications related to messages. Will appear in the system notification settings as the title of this notification channel. -->
     <string name="NotificationChannel_additional_message_notifications">Yderligere beskednotifikationer</string>
-
-    <!-- ProfileEditNameFragment -->
+    <!-- Notification channel name for notifications sent when a device has been linked -->
+    <string name="NotificationChannel_new_linked_device">Ny forbundet enhed</string>
 
     <!-- QuickResponseService -->
     <string name="QuickResponseService_quick_response_unavailable_when_Signal_is_locked">Hurtig svar utilgængelig når Signal er låst!</string>
     <string name="QuickResponseService_problem_sending_message">Problem med at sende besked!</string>
 
-    <!-- A small toast notification to let the user know their image/video/audio was downloaded and saved to their device, accessible in other apps. -->
-    <string name="SaveAttachmentTask_saved">Medie gemt</string>
+    <!-- A toast notification that is shown when the app does not have sufficient permissions to save media files to the device storage. -->
+    <string name="SaveAttachment_unable_to_write_to_sd_card_exclamation">Kunne ikke gemme i lagerplads!</string>
+
+    <!-- A toast notification that is shown after image/video/audio media was successfully downloaded and saved to the device storage, accessible in other apps. -->
+    <plurals name="SaveAttachment_saved_success">
+        <item quantity="one">Medie gemt</item>
+        <item quantity="other">Medier gemt</item>
+    </plurals>
+
+    <!-- A toast notification that is shown after some image/video/audio media was successfully downloaded and saved to the device storage, but some failed to save
+         %1$s is the number of items that failed to save and %2$s is the total number of items that the user requested to save. -->
+    <plurals name="SaveAttachment_saved_success_n_failures">
+        <item quantity="one">Medie gemt (%1$s af %2$s mislykkedes)</item>
+        <item quantity="other">Medier gemt (%1$s af %2$s mislykkedes)</item>
+    </plurals>
+
+    <!-- A toast notification that is shown after all of the requested image/video/audio media failed to save to the device storage. -->
+    <plurals name="SaveAttachment_error_while_saving_attachments_to_sd_card">
+        <item quantity="one">Kunne ikke gemme vedhæftede fil!</item>
+        <item quantity="other">Kunne ikke gemme vedhæftede filer!</item>
+    </plurals>
+
+    <!-- Dialog title asking to save media to your phone\'s storage -->
+    <string name="AttachmentSaver__save_to_phone">Vil du gemme på telefonen?</string>
+
+    <!-- Dialog message explaining that media will be saved to your phone and can potentially be accessed by other phones. -->
+    <plurals name="AttachmentSaver__this_media_will_be_saved">
+        <item quantity="one">Dette medie vil blive gemt på din telefon. Andre apps kan muligvis tilgå mediet afhængigt af din telefons tilladelser.</item>
+        <item quantity="other">Disse medier vil blive gemt på din telefon. Andre apps kan muligvis tilgå dem afhængigt af din telefons tilladelser.</item>
+    </plurals>
+
+    <!-- Message shown when the app requests permission to save media to the device storage, but that permission has been permanently denied by the user. -->
+    <string name="AttachmentSaver__signal_needs_the_storage_permission_in_order_to_write_to_external_storage_but_it_has_been_permanently_denied">Signal beder om tilladelse til at tilgå din lagerplads, for at kunne gemme til ekstern placering, hvilket er blevet nægtet. Gå venligst til appindstillinger, vælg \"Tilladelser\" og tilvælg \"Lagerplads\".</string>
+
+    <!-- Message explaining that it is not possible to save media to the device storage after the user denied the system save to storage permission. -->
+    <string name="AttachmentSaver__unable_to_write_to_external_storage_without_permission">Ikke muligt at gemme til ekstern placering, uden tilladelse</string>
 
     <!-- SearchToolbar -->
     <string name="SearchToolbar_search">Søg</string>
@@ -2981,6 +3269,7 @@
 
     <!-- ThumbnailView -->
     <string name="ThumbnailView_Play_video_description">Afspil video</string>
+    <!-- Content description to describe an icon that indicates a video has captions -->
     <string name="ThumbnailView_Has_a_caption_description">Har en billedtekst</string>
 
     <!-- TransferControlView -->
@@ -2991,10 +3280,7 @@
     <!-- Status update label used while the device is transcoding video as a prerequisite to uploading -->
     <string name="TransferControlView__processing">Behandler…</string>
     <!-- Status update label used while the device is transmitting data over the network. Will take the form of "1.0 MB/2.0 MB" -->
-    <string name="TransferControlView__download_progress">%1$1.1f MB/%2$2.1f MB</string>
-    <!-- Attachment file size label for not-yet-downloaded images and video. Will take the form of "1.0 MB" -->
-    <string name="TransferControlView__filesize">%1$1.1f MB</string>
-
+    <string name="TransferControlView__download_progress_s_s">%1$s/%2$s</string>
 
     <!-- UnauthorizedReminder -->
     <!-- Message shown in a reminder banner when the user\'s device is no longer registered -->
@@ -3175,7 +3461,8 @@
     <string name="ConversationUpdateItem_update_contact">Opdatér kontakt</string>
     <!-- Update item button text to show to block a recipient from requesting to join via group link -->
     <string name="ConversationUpdateItem_block_request">Blokér anmodning</string>
-    <string name="ConversationUpdateItem_no_groups_in_common_review_requests_carefully">Ingen grupper til fælles. Gennemgå anmodninger omhyggeligt.</string>
+    <!-- Text shown in conversation header that the account messaging the user does not have any groups in common with them -->
+    <string name="ConversationUpdateItem_no_groups_in_common_review_requests_carefully">Ingen grupper tilfælles</string>
     <string name="ConversationUpdateItem_no_contacts_in_this_group_review_requests_carefully">Ingen kontakter i gruppen. Gennemgå anmodninger omhyggeligt.</string>
     <string name="ConversationUpdateItem_view">Vis</string>
     <string name="ConversationUpdateItem_the_disappearing_message_time_will_be_set_to_s_when_you_message_them">Udløbstiden for forsvindende besked indstilles til %1$s, når du sender beskeder til dem.</string>
@@ -3195,6 +3482,11 @@
     <!-- audio_view -->
     <string name="audio_view__play_pause_accessibility_description">Afspil … Pause</string>
     <string name="audio_view__download_accessibility_description">Hent</string>
+
+    <!-- document_view -->
+    <string name="document_view__download_accessibility_description">Hent</string>
+    <string name="document_view__upload_accessibility_description">Upload</string>
+    <string name="document_view__cancel_accessibility_description">Annuller</string>
 
     <!-- QuoteView -->
     <string name="QuoteView_audio">Lyd</string>
@@ -3491,10 +3783,10 @@
         <item>Funktionsanmodning</item>
         <item>Spørgsmål</item>
         <item>Feedback</item>
-        <item>Andet</item>
         <item>Betalinger (MobileCoin)</item>
         <item>Donationer og badges</item>
         <item>Signal-sikkerhedskopi på Android</item>
+        <item>Andet</item>
     </string-array>
     <!-- Subject of email when submitting debug logs to help debug slow notifications -->
     <string name="DebugLogsPromptDialogFragment__signal_android_support_request">Indsendelse af fejlretningslog fra Signal Android</string>
@@ -3504,6 +3796,7 @@
     <string name="DebugLogsPromptDialogFragment__no_thanks">Nej tak</string>
 
     <!-- ReactWithAnyEmojiBottomSheetDialogFragment -->
+    <string name="ReactWithAnyEmojiBottomSheetDialogFragment__recents">Nylige</string>
     <string name="ReactWithAnyEmojiBottomSheetDialogFragment__this_message">Denne besked</string>
     <string name="ReactWithAnyEmojiBottomSheetDialogFragment__recently_used">Senest brugte</string>
     <string name="ReactWithAnyEmojiBottomSheetDialogFragment__smileys_and_people">Smileys &amp; personer</string>
@@ -3516,6 +3809,17 @@
     <string name="ReactWithAnyEmojiBottomSheetDialogFragment__flags">Flag</string>
     <string name="ReactWithAnyEmojiBottomSheetDialogFragment__emoticons">Humørikoner</string>
     <string name="ReactWithAnyEmojiBottomSheetDialogFragment__no_results_found">Ingen fundne resultater</string>
+
+    <!-- GifQuickSearchOption -->
+    <string name="GifQuickSearchOption__recents">Nylige</string>
+    <string name="GifQuickSearchOption__trending">Trending</string>
+    <string name="GifQuickSearchOption__celebrate">Fejring</string>
+    <string name="GifQuickSearchOption__love">Kærlighed</string>
+    <string name="GifQuickSearchOption__thumbs_up">Tommel op</string>
+    <string name="GifQuickSearchOption__surprised">Overrasket</string>
+    <string name="GifQuickSearchOption__excited">Spændt</string>
+    <string name="GifQuickSearchOption__sad">Trist</string>
+    <string name="GifQuickSearchOption__angry">Sur</string>
 
     <!-- arrays.xml -->
     <string name="arrays__use_default">Brug standard</string>
@@ -3574,7 +3878,9 @@
     <string name="preferences__lock_signal_and_message_notifications_with_a_passphrase">Lås skærm og notifikationer med adgangssætning</string>
     <string name="preferences__screen_security">Skærmsikkerhed</string>
     <string name="preferences__auto_lock_signal_after_a_specified_time_interval_of_inactivity">Lås automatisk Signal efter et bestemt tidsrum med inaktivitet</string>
+    <!-- Legacy preference menu item to enable locking of app after inactivity -->
     <string name="preferences__inactivity_timeout_passphrase">Adgangssætning for timeout ved inaktivitet</string>
+    <!-- Legacy preference menu item to choose the interval of inactivity before lockout -->
     <string name="preferences__inactivity_timeout_interval">Timeout-interval for inaktivitet</string>
     <string name="preferences__notifications">Notifikationer</string>
     <string name="preferences__led_color">LED-farve</string>
@@ -3585,6 +3891,7 @@
     <!-- Preference menu item to control the sound of notifications -->
     <string name="preferences__sound">Lyd</string>
     <string name="preferences__silent">Lydløs</string>
+    <!-- Preference menu item to use the default sound for notifications -->
     <string name="preferences__default">Standard</string>
     <string name="preferences__repeat_alerts">Gentag notifikationer</string>
     <string name="preferences__never">Aldrig</string>
@@ -3601,6 +3908,7 @@
     <string name="preferences__cyan">Cyan</string>
     <string name="preferences__magenta">Magenta</string>
     <string name="preferences__white">Hvid</string>
+    <!-- Text shown when no preference label has been selected -->
     <string name="preferences__none">Ingen</string>
     <string name="preferences__fast">Hurtig</string>
     <string name="preferences__normal">Normal</string>
@@ -3663,6 +3971,8 @@
     <string name="preferences__language">Sprog</string>
     <string name="preferences__signal_messages_and_calls">Signal-beskeder og opkald</string>
     <string name="preferences__advanced_pin_settings">Avancerede pinkode-indstillinger</string>
+    <!-- Title of toolbar for the advanced pin settings screen -->
+    <string name="preferences__advanced_pin_settings_title">Avancerede pinkode-indstillinger</string>
     <string name="preferences__free_private_messages_and_calls">Gratis private beskeder og opkald til Signal-brugere</string>
     <string name="preferences__submit_debug_log">Indsend fejlsøgningslog</string>
     <string name="preferences__delete_account">Slet konto</string>
@@ -3767,6 +4077,7 @@
     <string name="preferences_connection_failed">Forbindelsen mislykkedes</string>
     <string name="preferences_couldnt_connect_to_the_proxy">Forbindelse til proxyen kunne ikke oprettes. Tjek proxy-adressen, og prøv igen.</string>
     <string name="preferences_you_are_connected_to_the_proxy">Du er forbundet til proxyen. Du kan til enhver tid deaktivere proxyen via Indstillinger.</string>
+    <!-- Title of alert dialog after a successful connection to the proxy -->
     <string name="preferences_success">Succes!</string>
     <string name="preferences_failed_to_connect">Oprettelse af forbindelse mislykkedes</string>
     <string name="preferences_enter_proxy_address">Indtast proxy-adresse</string>
@@ -4104,6 +4415,8 @@
     <string name="conversation_list_fragment__fab_content_description">Ny chat</string>
     <string name="conversation_list_fragment__open_camera_description">Åbn kamera</string>
     <string name="conversation_list_fragment__no_chats_yet_get_started_by_messaging_a_friend">Der er ingen chats endnu.\nKom i gang ved at sende en besked til en ven.</string>
+    <!-- Message shown when there are no archived chats to display -->
+    <string name="conversation_list_fragment__archived_chats_will_appear_here">Arkiverede chats vises her.</string>
     <!-- Message shown when there are no chats in the chat folder to display -->
     <string name="conversation_list_fragment__no_chats_to_display">Ingen chats at vise</string>
     <!-- Button text that will open up chat folder settings -->
@@ -4191,6 +4504,7 @@
 
 
     <!-- media_preview_activity -->
+    <!-- Content description of images or videos when viewing media -->
     <string name="media_preview_activity__media_content_description">Forhåndsvisning af mediefil</string>
 
     <!-- new_conversation_activity -->
@@ -4275,8 +4589,8 @@
     <string name="RegistrationLockFragment__signal_registration_need_help_with_pin_for_android_v2_pin">Signal-registrering - Brug for hjælp med pinkode til Android (v2 PIN)</string>
 
     <plurals name="RegistrationLockFragment__for_your_privacy_and_security_there_is_no_way_to_recover">
-        <item quantity="one">For dit privatliv og din sikkerheds skyld, er det ikke muligt at gendanne din PIN. Hvis du ikke kan huske din PIN, kan du verificere med sms på ny efter %1$d dages inaktivitet. I sådant tilfælde, vil din konto blive fjernet og alt indhold slettet</item>
-        <item quantity="other">For dit privatliv og din sikkerheds skyld, er det ikke muligt at gendanne din pinkode. Hvis du ikke kan huske din pinkode, kan du verificere med sms på ny efter %1$d dages inaktivitet. I sådant tilfælde, vil din konto blive ryddet og alt indhold slettet.</item>
+        <item quantity="one">For dit privatliv og din sikkerheds skyld er det ikke muligt at gendanne din PIN. Hvis du ikke kan huske din PIN, kan du verificere med sms på ny efter %1$d dages inaktivitet. I sådant tilfælde, vil din konto blive fjernet og alt indhold slettet</item>
+        <item quantity="other">For dit privatliv og din sikkerheds skyld er det ikke muligt at gendanne din pinkode. Hvis du ikke kan huske din pinkode, kan du verificere med sms på ny efter %1$d dages inaktivitet. I sådant tilfælde, vil din konto blive ryddet og alt indhold slettet.</item>
     </plurals>
 
     <plurals name="RegistrationLockFragment__incorrect_pin_d_attempts_remaining">
@@ -4306,6 +4620,13 @@
     <string name="KbsMegaphone__create_a_pin">Opret en pinkode</string>
     <string name="KbsMegaphone__pins_keep_information_thats_stored_with_signal_encrytped">Pinkoder krypterer oplysninger, som er lagret hos Signal.</string>
     <string name="KbsMegaphone__create_pin">Opret pinkode</string>
+
+    <!-- Title for megaphone shown after registration without a pin but with aep to prompt the user to enter their pin -->
+    <string name="UpdatePinMegaphone__update_signal_pin">Opdater Signal-pinkode</string>
+    <!-- Message for megaphone shown after registration without a pin but with aep to prompt the user to enter their pin -->
+    <string name="UpdatePinMegaphone__message">Opdater din Signal-pinkode for at fuldføre kontoregistrering.</string>
+    <!-- Button text for megaphone shown after registration without a pin but with aep to prompt the user to enter their pin -->
+    <string name="UpdatePinMegaphone__update_pin">Opdatér pinkode</string>
 
     <!-- CallNotificationBuilder -->
     <!-- Displayed in a notification when a Signal voice call is ringing -->
@@ -4364,10 +4685,12 @@
     <string name="BackupDialog_disable_and_delete_all_local_backups">Deaktiver og slet alle lokale sikkerhedskopier?</string>
     <string name="BackupDialog_delete_backups_statement">Slet sikkerhedskopier</string>
     <string name="BackupDialog_to_enable_backups_choose_a_folder">Vælg en mappe for at aktivere sikkerhedskopier. Sikkerhedskopier vil blive gemt i denne mappe.</string>
+    <!-- Button shown in dialog to choose a folder for backups -->
     <string name="BackupDialog_choose_folder">Vælg mappe</string>
     <string name="BackupDialog_copied_to_clipboard">Kopieret til udklipsholder</string>
     <string name="BackupDialog_no_file_picker_available">Ingen filvælger tilgængelig.</string>
     <string name="BackupDialog_enter_backup_passphrase_to_verify">Indtast din adgangssætning til sikkerhedskopi for at verificere</string>
+    <!-- Confirmation button text on an alert dialog to verify whether the entered backup phrase was correct -->
     <string name="BackupDialog_verify">Verificér</string>
     <string name="BackupDialog_you_successfully_entered_your_backup_passphrase">Du indtastede den korrekte adgangssætning til sikkerhedskopi</string>
     <string name="BackupDialog_passphrase_was_not_correct">Forkert adgangssætning</string>
@@ -4392,6 +4715,7 @@
     <string name="RegistrationActivity_code_support_subject">Signal-registrering - Verifikationskode for Android</string>
     <string name="RegistrationActivity_incorrect_code">Forkert kode</string>
     <string name="BackupUtil_never">Aldrig</string>
+    <!-- Subtext below last backup time when we do not know when the last backup was -->
     <string name="BackupUtil_unknown">Ukendt</string>
     <!-- Phone number heading displayed as a screen title -->
     <string name="preferences_app_protection__phone_number">Telefonnummer</string>
@@ -4446,6 +4770,14 @@
     <string name="RegistrationActivity_you_have_made_too_many_attempts_please_try_again_later">For mange mislykkede forsøg. Prøv igen senere</string>
     <string name="RegistrationActivity_error_connecting_to_service">Fejl ved oprettelse af forbindelse til service</string>
     <string name="preferences_chats__backups">Sikkerhedskopier</string>
+
+    <!-- Button label to indicate that a feature is in beta mode -->
+    <string name="Beta__beta_title">Beta</string>
+    <!-- Content description for info icon -->
+    <string name="Beta__info">Information</string>
+    <!-- Text in header describing that the feature is a beta feature and prone to frequent changes -->
+    <string name="Beta__this_is_beta">Dette er en betafunktion, som vi løbende vil tilføje funktionalitet til.</string>
+
     <!-- Title text shown when Signal is locked and needs to be unlocked -->
     <string name="prompt_passphrase_activity__unlock_signal">Lås Signal op</string>
     <!-- Description text explaining how to unlock Signal -->
@@ -4576,6 +4908,7 @@
     <string name="DeviceTransferSetup__try_turning_wifi_off_and_on_on_both_devices">Prøv at slå Wi-Fi fra og til på begge enheder.</string>
     <string name="DeviceTransferSetup__make_sure_both_devices_are_in_transfer_mode">Sørg for begge enheder er i overførselstilstand.</string>
     <string name="DeviceTransferSetup__go_to_support_page">Gå til supportsiden</string>
+    <!-- Button text when a device transfer could not occur and to try again -->
     <string name="DeviceTransferSetup__try_again">Prøv igen</string>
     <string name="DeviceTransferSetup__waiting_for_other_device">Venter på anden enhed</string>
     <string name="DeviceTransferSetup__tap_continue_on_your_other_device_to_start_the_transfer">Tryk på Fortsæt på din anden enhed for at starte overførslen.</string>
@@ -4715,8 +5048,8 @@
     <string name="ReviewCardDialogFragment__no_other_groups_in_common">Ingen andre grupper til fælles</string>
     <string name="ReviewCardDialogFragment__no_groups_in_common">Ingen grupper til fælles</string>
     <plurals name="ReviewCardDialogFragment__d_other_groups_in_common">
-        <item quantity="one">%1$d gruppe til fælles</item>
-        <item quantity="other">%1$d grupper til fælles</item>
+        <item quantity="one">%1$d anden gruppe til fælles</item>
+        <item quantity="other">%1$d andre grupper til fælles</item>
     </plurals>
     <plurals name="ReviewCardDialogFragment__d_groups_in_common">
         <item quantity="one">%1$d gruppe til fælles</item>
@@ -4808,6 +5141,7 @@
     <string name="ShareActivity__share">Del</string>
     <!-- Label to describe circular spinner button -->
     <string name="ShareActivity__send">Send</string>
+    <!-- When sharing to a list of people, %1$s is the name of a person -->
     <string name="ShareActivity__comma_s">. %1$s</string>
     <!-- Toast when the incoming intent is invalid -->
     <string name="ShareActivity__could_not_get_share_data_from_intent">Kunne ikke hente data fra den ønskede kilde.</string>
@@ -4997,6 +5331,8 @@
     <string name="AppSettingsFragment__renew_your_signal_backups_subscription">Forny dit abonnement på Signal-sikkerhedskopier</string>
     <!-- String alerting user that backup failed -->
     <string name="AppSettingsFragment__couldnt_complete_backup">Kunne ikke gennemføre sikkerhedskopieringen</string>
+    <!-- String alerting user that backup redemption -->
+    <string name="AppSettingsFragment__couldnt_redeem_your_backups_subscription">Dit sikkerhedskopieringsabonnement kunne ikke indløses</string>
     <!-- String displayed telling user to invite their friends to Signal -->
     <string name="AppSettingsFragment__invite_your_friends">Inviter dine venner</string>
     <!-- String displayed in a toast when we successfully copy the donations subscriber id to the clipboard -->
@@ -5074,9 +5410,11 @@
     <string name="ChangeNumberEnterPhoneNumberFragment__you_must_specify_your_old_phone_number">Du skal angive dit gamle telefonnummer</string>
     <string name="ChangeNumberEnterPhoneNumberFragment__you_must_specify_your_new_number_country_code">Du skal angive dit nye nummers landekode</string>
     <string name="ChangeNumberEnterPhoneNumberFragment__you_must_specify_your_new_phone_number">Du skal angive dit nye telefonnummer</string>
+    <string name="ChangeNumberEnterPhoneNumberFragment__your_new_phone_number_can_not_be_same_as_your_old_phone_number">Dit nye telefonnummer må ikke være det samme som dit gamle telefonnummer</string>
 
     <!-- ChangeNumberVerifyFragment -->
     <string name="ChangeNumberVerifyFragment__change_number">Skift nummer</string>
+    <!-- Text shown when verifying a new phone number where %1$s is the number being changed -->
     <string name="ChangeNumberVerifyFragment__verifying_s">Bekræfter %1$s</string>
     <string name="ChangeNumberVerifyFragment__captcha_required">Captcha påkrævet</string>
 
@@ -5452,6 +5790,7 @@
     <string name="ConversationSettingsFragment__permissions">Tilladelser</string>
     <string name="ConversationSettingsFragment__requests_and_invites">Anmodninger &amp; invitationer</string>
     <string name="ConversationSettingsFragment__group_link">Gruppelink</string>
+    <!-- Option in conversation settings to add a user as a contact -->
     <string name="ConversationSettingsFragment__add_as_a_contact">Tilføj som en kontakt</string>
     <string name="ConversationSettingsFragment__unmute">Slå notifikationer til</string>
     <!-- The subtitle for a settings item that describes how long the user\'s chat is muted. If a chat is muted, you will not receive notifications unless @mentioned. The placeholder represents a time (e.g. 10pm, March 4, etc). -->
@@ -5460,6 +5799,8 @@
     <string name="ConversationSettingsFragment__copied_phone_number_to_clipboard">Kopierede telefonnummer til udklipsholder.</string>
     <string name="ConversationSettingsFragment__phone_number">Telefonnummer</string>
     <string name="ConversationSettingsFragment__get_badges">Få badges til din profil ved at støtte Signal. Tryk på et badge for at få mere at vide.</string>
+    <!-- Error message shown when the user is trying to open a media that is not sent yet. -->
+    <string name="ConversationSettingsFragment__this_media_is_not_sent_yet">Dette medie er ikke sendt endnu.</string>
 
     <!-- PermissionsSettingsFragment -->
     <string name="PermissionsSettingsFragment__add_members">Tilføj medlemmer</string>
@@ -5476,6 +5817,7 @@
     <string name="SoundsAndNotificationsSettingsFragment__not_muted">Ikke ignoreret</string>
     <string name="SoundsAndNotificationsSettingsFragment__mentions">Omtaler</string>
     <string name="SoundsAndNotificationsSettingsFragment__always_notify">Underret altid</string>
+    <!-- Dialog option to not send notifications if mentioned when the conversation is muted -->
     <string name="SoundsAndNotificationsSettingsFragment__do_not_notify">Underret ikke</string>
     <string name="SoundsAndNotificationsSettingsFragment__custom_notifications">Brugerdefinerede notifikationer</string>
 
@@ -5511,6 +5853,8 @@
     <string name="NewConversationActivity__s_has_been_removed">%1$s er blevet fjernet</string>
     <!-- Snackbar message after blocking a contact -->
     <string name="NewConversationActivity__s_has_been_blocked">%1$s er blevet blokeret</string>
+    <!-- Snackbar message when blocking a contact has failed -->
+    <string name="NewConversationActivity__block_failed">Blokering mislykkedes</string>
     <!-- Dialog title when remove target contact is in system contacts -->
     <string name="NewConversationActivity__unable_to_remove_s">Kunne ikke fjerne %1$s</string>
     <!-- Dialog message when remove target contact is in system contacts -->
@@ -5564,9 +5908,10 @@
     <string name="ShareInterstitialActivity__share">Del</string>
 
     <!-- DSLSettingsToolbar -->
+    <!-- Content description describing the back arrow on toolbars -->
     <string name="DSLSettingsToolbar__navigate_up">Naviger opad</string>
     <string name="MultiselectForwardFragment__forward_to">Videresend til</string>
-    <!-- Displayed when sharing content via the fragment -->
+    <!-- Displayed when sharing content to people via the fragment -->
     <string name="MultiselectForwardFragment__share_with">Del med</string>
     <string name="MultiselectForwardFragment__add_a_message">Tilføj en besked</string>
     <string name="MultiselectForwardFragment__faster_forwards">Hurtigere videresendelser</string>
@@ -5574,6 +5919,7 @@
     <string name="MultiselectForwardFragment__videos_will_be_trimmed">Videoer vil blive beskåret til klip på 30 sek. og sendt som flere historier.</string>
     <!-- Displayed when user selects a video that cannot be sent as a story -->
     <string name="MultiselectForwardFragment__videos_sent_to_stories_cant">Videoer, der er sendt til Historier, kan ikke være længere end 30 sek.</string>
+    <!-- Body in alert dialog telling users that messages are now sent immediately -->
     <string name="MultiselectForwardFragment__forwarded_messages_are_now">Videresendte beskeder sendes nu øjeblikkeligt.</string>
     <plurals name="MultiselectForwardFragment_send_d_messages">
         <item quantity="one">Send %1$d besked</item>
@@ -5621,6 +5967,24 @@
     <string name="MediaReviewFragment__photo_set_to_high_quality">Billede indstillet til høj kvalitet</string>
     <!-- Small notification presented to the user when they set their still image to be sent in standard (lower than high) visual quality. -->
     <string name="MediaReviewFragment__photo_set_to_standard_quality">Billede indstillet til standardkvalitet</string>
+    <!-- Accessibility label describing the add media button on the Media review screen -->
+    <string name="MediaReviewFragment__add_media_accessibility_label">Tilføj en mediefil</string>
+    <!-- Accessibility label describing the brush and pen button on the Media review screen -->
+    <string name="MediaReviewFragment__brush_pen_accessibility_label">Pensel og pen</string>
+    <!-- Accessibility label describing the crop and rotate button on the Media review screen -->
+    <string name="MediaReviewFragment__crop_rotate_accessibility_label">Beskær og roter</string>
+    <!-- Accessibility label describing the change media quality button on the Media review screen -->
+    <string name="MediaReviewFragment__change_media_quality_accessibility_label">Skift mediekvalitet</string>
+    <!-- Accessibility label describing the save media button on the Media review screen -->
+    <string name="MediaReviewFragment__save_media_accessibility_label">Gem mediefil</string>
+    <!-- Accessibility label describing the toggle emoji keyboard button on the Media review screen -->
+    <string name="MediaReviewFragment__emoji_toggle_accessibility_label">Slå Emoji tastatur til/fra</string>
+    <!-- Accessibility label describing the toggle view once button on the Media review screen -->
+    <string name="MediaReviewFragment__view_once_toggle_accessibility_label">Skift til engangsvisning</string>
+    <!-- Accessibility label describing the send media button on the Media review screen -->
+    <string name="MediaReviewFragment__send_media_accessibility_label">Send mediefil</string>
+    <!-- Accessibility label describing the finish adding a message button on the Media review screen dialog -->
+    <string name="MediaReviewFragment__finish_adding_a_message_accessibility_label">Afslut tilføjelse af en meddelelse</string>
     <!-- Small notification presented to the user when they set multiple media items to be sent in high visual quality. -->
     <plurals name="MediaReviewFragment__items_set_to_high_quality">
         <item quantity="one">%1$d emne indstillet til høj kvalitet</item>
@@ -5665,7 +6029,7 @@
     <!-- The title of a dialog notifying that the user scanned a QR code that could be used to link a Signal device. -->
     <string name="MediaCaptureFragment_device_link_dialog_title">Forbind enhed?</string>
     <!-- The body of a dialog notifying that the user scanned a QR code that could be used to link a Signal device. -->
-    <string name="MediaCaptureFragment_device_link_dialog_body">Det ser ud som om, at du forsøger at tilknytte en Signal-enhed. Tryk på fortsæt, og scan koden igen for at oprette forbindelsen.</string>
+    <string name="MediaCaptureFragment_it_looks_like_youre_trying">Det ser ud til, at du forsøger at tilknytte en Signal-enhed. Tryk på fortsæt, tryk \"Tilknyt en ny enhed\", og scan QR-koden igen.</string>
     <!-- The label of a dialog asking the user if they would like to continue to the linked device settings screen. -->
     <string name="MediaCaptureFragment_device_link_dialog_continue">Fortsæt</string>
 
@@ -5760,6 +6124,7 @@
 
     <string name="MySupportPreference__s_per_month">%1$s/måned</string>
     <string name="MySupportPreference__renews_s">Fornyes %1$s</string>
+    <!-- Subtitle shown when processing a donation transaction -->
     <string name="MySupportPreference__processing_transaction">Behandler transaktion …</string>
     <!-- Displayed on "My Support" screen when user badge failed to be added to their account -->
     <string name="MySupportPreference__couldnt_add_badge_s">Kunne ikke tilføje badge. %1$s</string>
@@ -5770,6 +6135,8 @@
     <string name="MySupportPreference__your_bank_transfer_of_s">Din bankoverførsel på %1$s afventer. Det kan tage 1-14 arbejdsdage at gennemføre en bankoverførsel.  </string>
     <!-- Displayed in the pending help dialog, used to launch user to more details about bank transfers -->
     <string name="MySupportPreference__learn_more">Få mere at vide</string>
+    <!-- Displayed when a subscription refresh is being performed -->
+    <string name="MySupportPreference__checking_subscription">Tjekker abonnement…</string>
 
     <!-- Title of dialog telling user they need to update signal as it expired -->
     <string name="UpdateSignalExpiredDialog__title">Opdater Signal</string>
@@ -5868,7 +6235,7 @@
     <string name="DonationsErrors__your_payment_is_still">Din donation er stadig under behandling. Det kan tage et par minutter afhængigt af din forbindelse.</string>
     <string name="DonationsErrors__failed_to_cancel_subscription">Opsigelse af abonnementet mislykkedes</string>
     <string name="DonationsErrors__subscription_cancellation_requires_an_internet_connection">Opsigelse af abonnement kræver en internetforbindelse.</string>
-    <string name="ViewBadgeBottomSheetDialogFragment__your_device_doesn_t_support_google_pay_so_you_can_t_subscribe_to_earn_a_badge_you_can_still_support_signal_by_making_a_donation_on_our_website">Din enhed understøtter ikke Google Pay, så du kan ikke abonnere for at optjene et badge. Du kan stadig støtte Signal ved at give et bidrag på vores hjemmeside.</string>
+    <string name="ViewBadgeBottomSheetDialogFragment__your_device_doesn_t_support">Din enhed understøtter ikke donationer i appen, så du kan ikke abonnere for at optjene et badge. Du kan stadig støtte Signal ved at give et bidrag på vores hjemmeside.</string>
     <string name="NetworkFailure__network_error_check_your_connection_and_try_again">Netværksfejl. Kontroller din forbindelse, og prøv igen.</string>
     <string name="NetworkFailure__retry">Prøv igen</string>
     <!-- Displayed as a dialog title when the selected recipient for a gift doesn\'t support gifting -->
@@ -6108,6 +6475,16 @@
 
     <!-- Description shown for the Signal Release Notes channel -->
     <string name="ReleaseNotes__signal_release_notes_and_news">Signal-udgivelsesnoter og nyheder</string>
+    <!-- Text description shown for the Signal Release Notes channel explaining that it is the only chat from Signal -->
+    <string name="ReleaseNotes__this_is_official_chat_period">Dette er den officielle og eneste Signal-chat.</string>
+    <!-- Text description shown for the Signal Release Notes channel explaining what the channel is for -->
+    <string name="ReleaseNotes__keep_up_to_date_period">Få alle nyheder og udgivelsesbemærkninger.</string>
+    <!-- Text description in Signal Release channel details explaining that it is the only chat from Signal -->
+    <string name="ReleaseNotes__this_is_official_chat">Dette er den officielle og eneste Signal-chat</string>
+    <!-- Text description in Signal Release channel details explaining what the channel is for -->
+    <string name="ReleaseNotes__keep_up_to_date">Få alle nyheder og udgivelsesbemærkninger</string>
+    <!-- Subtitle for the Signal Release channel explaining that it is the only chat from Signal -->
+    <string name="ReleaseNotes__official_only_chat">Den officiel og eneste Signal-chat</string>
 
     <!-- Donation receipts activity title -->
     <string name="DonationReceiptListFragment__all_activity">Alle aktiviteter</string>
@@ -6170,7 +6547,7 @@
     <string name="StoriesLandingItem__info">Information</string>
     <!-- Label when a story is pending sending -->
     <string name="StoriesLandingItem__sending">Sender …</string>
-    <!-- Label when multiple stories are pending sending -->
+    <!-- Label when multiple stories are pending sending where %1$d is the number of stories being sent -->
     <string name="StoriesLandingItem__sending_d">Sender %1$d…</string>
     <!-- Label when a story fails to send due to networking -->
     <string name="StoriesLandingItem__send_failed">Afsendelse mislykkedes</string>
@@ -6233,6 +6610,8 @@
     <string name="StoryViewerPageFragment__send_failed">Kunne ikke sendes. Klik for at prøve igen</string>
     <!-- Label for the reply button in story viewer, which will launch the group story replies bottom sheet. -->
     <string name="StoryViewerPageFragment__reply_to_group">Svar til gruppe</string>
+    <!-- Content description for the any reaction button in reply to story composer, which will launch the emojis bottom sheet. -->
+    <string name="StoryViewerPageFragment_any_reaction_content_description">Flere reaktioner</string>
     <!-- Displayed when a story has no views -->
     <string name="StoryViewsFragment__no_views_yet">Ingen visninger endnu</string>
     <!-- Displayed when user has disabled receipts -->
@@ -6298,8 +6677,8 @@
     <string name="MyStorySettingsFragment__only_share_with_selected_people">Del kun med udvalgte personer</string>
     <!-- Summary of clickable option displaying how many people you have included to send to in your story -->
     <plurals name="MyStorySettingsFragment__d_people">
-        <item quantity="one">%1$d viewer</item>
-        <item quantity="other">%1$d viewers</item>
+        <item quantity="one">%1$d seer</item>
+        <item quantity="other">%1$d seere</item>
     </plurals>
     <!-- My story privacy fine print about what the privacy settings are for -->
     <string name="MyStorySettingsFragment__choose_who_can_view_your_story">Vælg, hvem der kan se din historie. Ændringer vil ikke påvirke historier, som du allerede har sendt.</string>
@@ -6430,7 +6809,7 @@
     <!-- Displayed when copying group story reply text to clipboard -->
     <string name="StoryGroupReplyFragment__copied_to_clipboard">Kopieret til udklipsholder</string>
     <!-- Displayed in story caption when content is longer than 5 lines -->
-    <string name="StoryViewerPageFragment__see_more">Se mere</string>
+    <string name="StoryViewerPageFragment__read_more">Læs mere</string>
     <!-- Displayed in toast after sending a direct reply -->
     <string name="StoryDirectReplyDialogFragment__sending_reply">Sender svar …</string>
     <!-- Displayed in the viewer when a story is no longer available -->
@@ -6782,34 +7161,6 @@
     <string name="ExternalNavigationHelper__leave_signal_to_confirm_payment">Forlad Signal for at bekræfte donation?</string>
     <string name="ExternalNavigationHelper__once_this_payment_is_confirmed">Vend tilbage til Signal når den er bekræftet for at afslutte behandlingen af din donation.</string>
 
-    <!-- IdealBank -->
-    <!-- iDEAL bank name -->
-    <string name="IdealBank__abn_amro">ABN AMRO</string>
-    <!-- iDEAL bank name -->
-    <string name="IdealBank__asn_bank">ASN Bank</string>
-    <!-- iDEAL bank name -->
-    <string name="IdealBank__bunq">bunq</string>
-    <!-- iDEAL bank name -->
-    <string name="IdealBank__ing">ING</string>
-    <!-- iDEAL bank name -->
-    <string name="IdealBank__knab">Knab</string>
-    <!-- iDEAL bank name -->
-    <string name="IdealBank__n26">N26</string>
-    <!-- iDEAL bank name -->
-    <string name="IdealBank__rabobank">Rabobank</string>
-    <!-- iDEAL bank name -->
-    <string name="IdealBank__regiobank">RegioBank</string>
-    <!-- iDEAL bank name -->
-    <string name="IdealBank__revolut">Revolut</string>
-    <!-- iDEAL bank name -->
-    <string name="IdealBank__sns_bank">SNS Bank</string>
-    <!-- iDEAL bank name -->
-    <string name="IdealBank__triodos_bank">Triodos Bank</string>
-    <!-- iDEAL bank name -->
-    <string name="IdealBank__van_lanschot">Van Lanschot Kempen</string>
-    <!-- iDEAL bank name -->
-    <string name="IdealBank__yoursafe">Yoursafe</string>
-
     <!-- BankTransferMandateFragment -->
     <!-- Title of screen displaying the bank transfer mandate -->
     <string name="BankTransferMandateFragment__bank_transfer">Bankoverførsel</string>
@@ -6870,7 +7221,7 @@
     <!-- Default label for bank selection -->
     <string name="IdealTransferDetailsFragment__choose_your_bank">Vælg din bank</string>
     <!-- Dialog title shown when using iDEAL payment for setting up a monthly donation -->
-    <string name="IdealTransferDetailsFragment__confirm_your_donation_with_s">Bekræft din donation med %1$s</string>
+    <string name="IdealTransferDetailsFragment__confirm_your_donation_with_ideal">Bekræft din betaling med iDEAL</string>
     <!-- Dialog warning shown when using iDEAL payment for setting up a monthly donation. Placeholder is donation amount.Z -->
     <string name="IdealTransferDetailsFragment__to_setup_your_recurring_donation">Tryk fortsæt for at bekræfte opkrævningen af et gebyr på 0,01 EUR hos din bank. Beløbet refunderes automatisk og gør det muligt at opkræve din donation på %1$s R/måned fra din konto.</string>
     <!-- Dialog button shown when using iDEAL payment for setting up a monthly donation to continue with the donation -->
@@ -7139,6 +7490,8 @@
     <string name="CameraControls_capture_button_accessibility_label">Billedknap</string>
     <!-- Accessibility label describing the continue button on the camera screen -->
     <string name="CameraControls_continue_button_accessibility_label">Fortsæt-knap</string>
+    <!-- Accessibility label describing the flash Mode toggle button on the camera screen -->
+    <string name="CameraControls_toggle_flash_mode_accessibility_label">Skift til blitztilstand</string>
 
     <!-- CallPreference -->
     <!-- Generic group call in call info -->
@@ -7245,6 +7598,8 @@
     <string name="CallLinkDetailsFragment__delete_call_link">Slet opkaldslink</string>
     <!-- Displayed whenever a name change, revocation, etc, fails. -->
     <string name="CallLinkDetailsFragment__couldnt_save_changes">Kunne ikke gemme ændringer. Tjek din netværksforbindelse, og prøv igen.</string>
+    <!-- Displayed whenever an admin update fails with a 409. -->
+    <string name="CallLinkDetailsFragment__couldnt_update_admin_approval">Kunne ikke opdatere indstillinger for administratorgodkendelse. Tjek at opkaldslinket ikke er i brug.</string>
     <!-- Displayed when the call link is in use when the user tries to delete it -->
     <string name="CallLinkDetailsFragment__couldnt_delete_call_link">Kunne ikke slette opkaldslink, da det er i brug.</string>
     <!-- Displayed as title in dialog when user attempts to delete the link -->
@@ -7478,14 +7833,25 @@
     <string name="BackupAlertBottomSheet__your_backups_subscription_failed_to_renew">Dit sikkerhedskopieringsabonnement kunne ikke fornyes</string>
     <!-- Sheet body when user payment failed to process -->
     <string name="BackupAlertBottomSheet__check_to_make_sure_your_payment_method">Sørg for, at din betalingsmetode er opdateret. Tryk på Administrer abonnement, og tryk på Opdater under Betalingsmetoder.</string>
+    <!-- Sheet title for when user falls out of grace period -->
+    <string name="BackupAlertBottomSheet__your_backups_subscription_has_expired">Your backups subscription has expired</string>
+    <!-- Sheet body part 1 for when user falls out of grace period -->
+    <string name="BackupAlertBottomSheet__your_subscription_couldnt_be_renewed">Your subscription couldn\'t be renewed with your payment method. To continue backing up media you need an active subscription.</string>
+    <!-- Sheet body part 2 for when user falls out of grace period -->
+    <string name="BackupAlertBottomSheet__youll_continue_to_have_access_to_the_free">You\'ll continue to have access to the free Signal Backups plan.</string>
     <!-- Sheet title for generic backup error -->
     <string name="BackupAlertBottomSheet__couldnt_complete_backup">Kunne ikke gennemføre sikkerhedskopieringen</string>
     <!-- Sheet body for generic backup error. Placeholder is days since last backup. -->
-    <string name="BackupAlertBottomSheet__your_device_hasnt">Din enhed har ikke udført en sikkerhedskopiering i %1$d dage. Tjek, at din enhed er forbundet til et wi-fi-netværk, og tryk på \"Sikkerhedskopiér nu\". </string>
+    <plurals name="BackupAlertBottomSheet__your_device_hasnt">
+        <item quantity="one">Din enhed har ikke udført en sikkerhedskopiering i %1$d dag. Tjek, at din enhed er forbundet til et wi-fi-netværk, og tryk på \"Sikkerhedskopiér nu\". </item>
+        <item quantity="other">Din enhed har ikke udført en sikkerhedskopiering i %1$d dage. Tjek, at din enhed er forbundet til et wi-fi-netværk, og tryk på \"Sikkerhedskopiér nu\".</item>
+    </plurals>
     <!-- Clickable text to learn more about the content of this bottom sheet -->
     <string name="BackupAlertBottomSheet__learn_more">Få mere at vide</string>
     <!-- Secondary action button text when user does not have enough free space to download their backup. -->
     <string name="BackupAlertBottomSheet__skip_restore">Spring gendannelse over</string>
+    <!-- Primary action button to open backups management screen -->
+    <string name="BackupAlertBottomSheet__manage_backups">Manage backups</string>
     <!-- Primary action button to start backup immediately -->
     <string name="BackupAlertBottomSheet__back_up_now">Sikkerhedskopiér nu</string>
     <!-- Primary action button when user doesn\'t have enough space -->
@@ -7518,10 +7884,18 @@
     <string name="BackupAlertBottomSheet__if_you_skip_restore_the">Hvis du springer gendannelse over, kan du downloade medierne og de vedhæftede filer i sikkerhedskopien senere, når der er tilgængelig lagerplads.</string>
     <!-- Dialog title when a backup fails to be created -->
     <string name="BackupAlertBottomSheet__backup_failed">Sikkerhedskopiering mislykkedes</string>
+    <!-- Dialog title when a backup redemption fails -->
+    <string name="BackupAlertBottomSheet__couldnt_redeem_your_backups_subscription">Dit sikkerhedskopieringsabonnement kunne ikke indløses</string>
     <!-- Dialog text for when a backup fails to be created and ways to fix it -->
     <string name="BackupAlertBottomSheet__an_error_occurred">Der opstod en fejl, og din sikkerhedskopiering kunne ikke fuldføres. Tjek, at du har den nyeste version af Signal, og prøv igen. Kontakt support, hvis problemet fortsætter.</string>
     <!-- Dialog action button that will allow you to check for any Signal version updates -->
     <string name="BackupAlertBottomSheet__check_for_update">Tjek efter ny version</string>
+    <!-- Backup redemption error sheet text line 1 -->
+    <string name="BackupAlertBottomSheet__too_many_devices_have_tried">For mange enheder har forsøgt at indløse dit abonnement i denne måned. Måske du har:</string>
+    <!-- Backup redemption error sheet bullet point 1 -->
+    <string name="BackupAlertBottomSheet__reregistered_your_signal_account">Omregistreret din Signal-konto for mange gange.</string>
+    <!-- Backup redemption error sheet bullet point 2 -->
+    <string name="BackupAlertBottomSheet__have_too_many_devices_using_the_same_subscription">For mange enheder, der bruger det samme abonnement.</string>
 
     <!-- BackupStatus -->
     <!-- Status title when user does not have enough free space to download their media. Placeholder is required disk space. -->
@@ -7529,11 +7903,13 @@
     <!-- Status title for banner when user is actively restoring media from a backup -->
     <string name="BackupStatus__restoring_media">Gendanner medier</string>
     <!-- Status title for banner when user has paused restore media from a backup -->
-    <string name="BackupStatus__restore_paused">Gendannelse sat på pause</string>
+    <string name="BackupStatus__restore_paused">Gendannelse af medier sat på pause</string>
     <!-- Status title for banner when user has completed restoring restore media from a backup -->
     <string name="BackupStatus__restore_complete">Gendannelse afsluttet</string>
     <!-- Status action label for seeing more details about storage space -->
     <string name="BackupStatus__details">Detaljer</string>
+    <!-- Status action label for resume restore from a paused state -->
+    <string name="BackupStatus__resume">Genoptag</string>
 
     <!-- Status subtitle for banner when restoring media pauses for Wi-Fi -->
     <string name="BackupStatus__status_waiting_for_wifi">Venter på wi-fi…</string>
@@ -7548,13 +7924,13 @@
     <!-- Content description for x icon at the end of the linear progress indicator -->
     <string name="BackupStatusRow__cancel_download">Annuller download</string>
     <!-- Backup progress. Placeholders are size restored, size to restore, and percent, i.e. 50MB of 100MB (50%) -->
-    <string name="BackupStatusRow__restoring_s_of_s_s">Restoring: %1$s of %2$s (%3$s%%)</string>
+    <string name="BackupStatusRow__restoring_s_of_s_s">Gendanner: %1$s af %2$s (%3$s%%)</string>
     <!-- Text displayed under progress bar when restoring media pauses for Wi-Fi -->
-    <string name="BackupStatusRow__restore_waiting_for_wifi">Restore paused: Waiting for Wi-Fi…</string>
+    <string name="BackupStatusRow__restore_waiting_for_wifi">Gendannelse sat på pause: Venter på Wi-Fi…</string>
     <!-- Text displayed under progress bar when restoring media pauses for internet -->
-    <string name="BackupStatusRow__restore_no_internet">Restore paused: No internet…</string>
+    <string name="BackupStatusRow__restore_no_internet">Gendannelse sat på pause: Ingen internetforbindelse…</string>
     <!-- Text displayed under progress bar when restoring media pauses for low battery -->
-    <string name="BackupStatusRow__restore_device_has_low_battery">Restore paused: Device has low battery</string>
+    <string name="BackupStatusRow__restore_device_has_low_battery">Gendannelse sat på pause: Enheden har lavt batteri</string>
     <!-- Notice that there is not enough free space to continue restore. Placeholder is required space, for example 1.6GB -->
     <string name="BackupStatusRow__not_enough_space">Ikke nok plads til at gemme din sikkerhedskopi. Frigør %1$s for at fortsætte.</string>
     <!-- Text row label to skip download -->
@@ -7565,6 +7941,11 @@
     <string name="BackupStatusRow__your_last_backup_latest_version">Din sidste sikkerhedskopiering kunne ikke gennemføres. Tjek, at du har den nyeste version af Signal, og prøv igen.</string>
     <!-- Text displayed in a row to learn more about why a backup failed -->
     <string name="BackupStatusRow__learn_more">Få mere at vide</string>
+
+    <!-- Dialog title to prompt resuming media restore over cellular -->
+    <string name="ResumeRestoreCellular_resume_using_cellular_title">Vil du fortsætte med brug af mobildata?</string>
+    <!-- Dialog message to prompt resuming media restore over cellular -->
+    <string name="ResumeRestoreCellular_resume_using_cellular_message">Gendannelse af dine medier via mobildata kan medføre datagebyrer. Du kan oprette forbindelse til et Wi-Fi-netværk for automatisk at genoptage.</string>
 
     <!-- BackupsTypeSettingsFragment -->
     <!-- Displayed as the user\'s payment method as a label in a preference row -->
@@ -7657,14 +8038,18 @@
     <string name="BackupsSettingsFragment_set_up">Opsæt</string>
 
     <!-- RemoteBackupsSettingsFragment -->
+    <!-- Content description for canceling backup upload -->
+    <string name="RemoteBackupsSettingsFragment__cancel_upload">Cancel upload</string>
     <!-- Displayed on the title bar -->
     <string name="RemoteBackupsSettingsFragment__signal_backups">Signal-sikkerhedskopier</string>
+    <!-- Text shown in a popup indicating that the user needs to enter their screen lock -->
+    <string name="RemoteBackupsSettingsFragment__authenticatino_required">Autentificering påkrævet</string>
     <!-- Row label to launch payment history screen -->
     <string name="RemoteBackupsSettingsFragment__payment_history">Betalingshistorik</string>
     <!-- Section header for backup information -->
     <string name="RemoteBackupsSettingsFragment__backup_details">Sikkerhedskopioplysninger</string>
-    <!-- Toggle row label to allow the restoration of a backup to occur while on cellular connection -->
-    <string name="RemoteBackupsSettingsFragment__restore_using_cellular">Restore using cellular</string>
+    <!-- Row label to allow the restoration of a backup to occur while on cellular connection -->
+    <string name="RemoteBackupsSettingsFragment__resume_download">Genoptag download</string>
     <!-- Row label for backup size -->
     <string name="RemoteBackupsSettingsFragment__backup_size">Sikkerhedskopistørrelse</string>
     <!-- Row label for backup frequency -->
@@ -7761,6 +8146,8 @@
     <string name="RemoteBackupsSettingsFragment__downloading_your_backup">Downloader din sikkerhedskopi</string>
     <!-- Dialog message for dialog which alerts user their optimized media will be downloaded -->
     <string name="RemoteBackupsSettingsFragment__depending_on_the_size">Afhængigt af størrelsen på din sikkerhedskopi kan dette tage lang tid. Du kan bruge din telefon, som du plejer, mens sikkerhedskopieringen oprettes.</string>
+    <!-- Displayed in card when user has backups enabled but there is otherwise no subscription available. This can happen for example after a device transfer. -->
+    <string name="RemoteBackupsSettingsFragment__your_subscription_was_not_found">Your subscription was not found on this device. Renew to continue using Signal Backups.</string>
     <!-- Displayed in card when user has a signal subscription but the device doesn\'t see a google play billing subscription. Placeholder is days until subscription expiration. -->
     <plurals name="RemoteBackupsSettingsFragment__your_subscription_on_this_device_is_valid">
         <item quantity="one">Dit abonnement på denne enhed er gyldigt i den næste %1$d dag. Forny for at fortsætte med at bruge Signal-sikkerhedskopier</item>
@@ -7773,17 +8160,19 @@
     <!-- Linear progress dialog text shown when creating a backup -->
     <string name="RemoteBackupsSettingsFragment__processing_backup">Behandler sikkerhedskopi…</string>
     <!-- Linear progress dialog text shown when preparing a backup -->
-    <string name="RemoteBackupsSettingsFragment__preparing_backup">Preparing backup…</string>
+    <string name="RemoteBackupsSettingsFragment__preparing_backup">Forbereder sikkerhedskopi…</string>
     <!-- Linear progress dialog text shown when processing messages for backup. First placeholder is completed count, second is approximate total count, third is percent completed. -->
-    <plurals name="RemoteBackupsSettingsFragment__processing_d_of_d_d_messages">
-        <item quantity="one">Processing %1$d of %2$d (%3$d%%) message</item>
-        <item quantity="other">Processing %1$d of %2$d (%3$d%%) messages</item>
+    <plurals name="RemoteBackupsSettingsFragment__processing_messages_progress_text">
+        <item quantity="one">Behandler %1$s af %2$s besked (%3$d %%)</item>
+        <item quantity="other">Behandler %1$s af ~%2$s beskeder (%3$d %%)</item>
     </plurals>
     <!-- Displayed in row when backup is available for download and users subscription has expired. First placeholder is data size e.g. 12MB, second is days before expiration -->
     <plurals name="RemoteBackupsSettingsFragment__you_have_s_of_backup_data">
         <item quantity="one">Du har %1$s sikkerhedskopieret data, der ikke er på denne enhed. Din sikkerhedskopi slettes, når dit abonnement slutter om %2$d dag.</item>
         <item quantity="other">Du har %1$s sikkerhedskopieret data, der ikke er på denne enhed. Din sikkerhedskopi slettes, når dit abonnement slutter om %2$d dage.</item>
     </plurals>
+    <!-- Display in a row when backup is available for download but the user has canceled the restore. Place holder is data size e.g. 12MB -->
+    <string name="RemoteBackupsSettingsFragment__you_have_s_of_backup_data_not_on_device">Du har %1$s sikkerhedskopieret data, som ikke er på denne enhed. </string>
     <!-- Displayed in row when backup is available for download to let user start download -->
     <string name="RemoteBackupsSettingsFragment__download">Hent</string>
     <!-- Dialog title for skipping download of backed up media -->
@@ -7793,6 +8182,10 @@
         <item quantity="one">Hvis du springer downloaden over, vil de resterende medier og vedhæftede filer i din sikkerhedskopi blive slettet om %1$d dag.</item>
         <item quantity="other">Hvis du springer downloaden over, vil de resterende medier og vedhæftede filer i din sikkerhedskopi blive slettet om %1$d dage.</item>
     </plurals>
+    <!-- Dialog title for skipping download of in progress initial restore of backed up media -->
+    <string name="RemoteBackupsSettingsFragment__skip_restore_question">Vil du springe gendannelse over?</string>
+    <!-- Dialog message for skipping download of in progress initial restore of backed up media -->
+    <string name="RemoteBackupsSettingsFragment__skip_restore_message">Hvis du springer gendannelse over, kan du downloade medierne og de vedhæftede filer i sikkerhedskopien senere.</string>
     <!-- Positive dialog action to skip download -->
     <string name="RemoteBackupsSettingsFragment__skip">Spring over</string>
     <!-- Dialog title for network error while trying to disable backups -->
@@ -7800,7 +8193,9 @@
     <!-- Dialog body for network error while trying to disable backups -->
     <string name="RemoteBackupsSettingsFragment__a_network_error_occurred">Der opstod en netværksfejl. Tjek din internetforbindelse, og prøv igen.</string>
     <!-- Progress message when backup file is being uploaded. First placeholder and second placeholder are formatted byte sizes (2 MB) and third is percent completion. -->
-    <string name="RemoteBackupsSettingsFragment__uploading_s_of_s_d">Uploading: %1$s of %2$s (%3$d%%)</string>
+    <string name="RemoteBackupsSettingsFragment__uploading_s_of_s_d">Downloader: %1$s af %2$s (%3$d %%)</string>
+    <!-- Button label to see more details about redemption error -->
+    <string name="RemoteBackupsSettingsFragment__details">Detaljer</string>
 
     <!-- SubscriptionNotFoundBottomSheet -->
     <!-- Displayed as a bottom sheet title -->
@@ -7821,6 +8216,10 @@
     <string name="SubscriptionNotFoundBottomSheet__got_it">Forstået</string>
     <!-- Action button label to contact support -->
     <string name="SubscriptionNotFoundBottomSheet__contact_support">Kontakt support</string>
+
+    <!-- MessageBackupsFlowFragment -->
+    <!-- Body for network failure dialog in message backups checkout flow -->
+    <string name="MessageBackupsFlowFragment__a_network_failure_occurred">Der opstod en netværksfejl. Prøv igen senere.</string>
 
     <!-- MessageBackupsEducationScreen -->
     <!-- Screen subtitle underneath large headline title -->
@@ -7865,6 +8264,19 @@
     <string name="MessageBackupsKeyRecordScreen__continue">Fortsæt</string>
     <!-- Sheet secondary action button label -->
     <string name="MessageBackupsKeyRecordScreen__see_key_again">Se nøglen igen</string>
+
+    <!-- Confirm key title -->
+    <string name="MessageBackupsKeyVerifyScreen__confirm_your_backup_key">Bekræft din sikkerhedskopinøgle</string>
+    <!-- Confirm your key subtitle -->
+    <string name="MessageBackupsKeyVerifyScreen__enter_the_backup_key_that_you_just_recorded">Angiv den sikkerhedskopinøgle, du lige har registreret</string>
+    <!-- Confirm your key text entry hint text -->
+    <string name="MessageBackupsKeyVerifyScreen__backup_key">Sikkerhedskopinøgle</string>
+    <!-- Confirm your key text entry error text -->
+    <string name="MessageBackupsKeyVerifyScreen__incorrect_backup_key">Forkert sikkerhedskopinøgle</string>
+    <!-- Confirm your key button text to return to record key screen. -->
+    <string name="MessageBackupsKeyVerifyScreen__see_key_again">Se nøglen igen</string>
+    <!-- Confirm your key button text to move onto next screen in flow -->
+    <string name="MessageBackupsKeyVerifyScreen__next">Næste</string>
 
     <!-- MessagesBackupsTypeSelectionScreen -->
     <!-- Screen headline -->
@@ -7971,6 +8383,45 @@
     <string name="EnterBackupKey_learn_more">Få mere at vide</string>
     <!-- Backup key not known bottom sheet button to skip backup key entry and resume normal reregistration -->
     <string name="EnterBackupKey_skip_and_dont_restore">Spring over uden gendannelse</string>
+    <!-- Dialog title shown when entered AEP doesn\'t work to register with provided e164 -->
+    <string name="EnterBackupKey_incorrect_backup_key_title">Forkert sikkerhedskopinøgle</string>
+    <!-- Dialog message shown when entered AEP doesn\'t work to register with provided e164 -->
+    <string name="EnterBackupKey_incorrect_backup_key_message">Sørg for, at du registrerer dig med det telefonnummer og den sikkerhedskopinøgle (64 tegn) du gemte, da du aktiverede Signal-sikkerhedskopier. Sikkerhedskopier kan ikke gendannes uden denne kode.</string>
+    <!-- Dialog positive button text to try entering their backup key again -->
+    <string name="EnterBackupKey_try_again">Prøv igen</string>
+    <!-- Dialog negative button text to get help with backup key -->
+    <string name="EnterBackupKey_backup_key_help">Hjælp til sikkerhedskopinøgle</string>
+    <!-- Text field error text when the backup key provided has been confirmed invalid -->
+    <string name="EnterBackupKey_incorrect_backup_key_error">Forkert sikkerhedskopinøgle</string>
+    <!-- Text field error text when the backup key is too long -->
+    <string name="EnterBackupKey_too_long_error">For lang (%1$d/%2$d)</string>
+    <!-- Text field error when the backup key is invalid -->
+    <string name="EnterBackupKey_invalid_backup_key_error">Ugyldig sikkerhedskopinøgle</string>
+    <!-- Dialog title shown during registration and trying to restore a remote backup -->
+    <string name="EnterBackupKey_backup_not_found">Sikkerhedskopi ikke fundet</string>
+    <!-- Dialog message shown during registration and trying to restore a remote backup -->
+    <string name="EnterBackupKey_backup_key_you_entered_is_correct_but_no_backup">Den sikkerhedskopinøgle, du angav, er korrekt, men der er ingen forbundet sikkerhedskopi. Hvis du stadig har din gamle telefon, skal du tjekke, at sikkerhedskopiering er aktiveret, og at en sikkerhedskopiering er gennemført. Du kan derefter prøve igen.</string>
+    <!-- Dialog button shown during registration and trying to restore a remote backup to instead skip said backup process -->
+    <string name="EnterBackupKey_skip_restore">Spring gendannelse over</string>
+    <!-- Dialog title text when encountering backup restore network error -->
+    <string name="EnterBackupKey_cant_restore_backup">Kan ikke gendanne sikkerhedskopien</string>
+    <!-- Dialog body text when encountering backup restore network error -->
+    <string name="EnterBackupKey_your_backup_cant_be_restored_right_now">Din sikkerhedskopi kan ikke gendannes lige nu. Tjek din internetforbindelse, og prøv igen. </string>
+    <!-- Dialog button text to contact support on network error -->
+    <string name="EnterBackupKey_contact_support">Kontakt support</string>
+
+    <!-- Email subject when contacting support on a restore backup network issue -->
+    <string name="EnterBackupKey_network_failure_support_email">Netværksfejl under gendannelse af Signal Android-sikkerhedskopi</string>
+  <!-- Removed by excludeNonTranslatables <string name="EnterBackupKey_network_failure_support_email_filter" translatable="false">Signal Android Backup restore network error</string> -->
+
+    <!-- Title of dialog asking to submit debuglogs -->
+    <string name="ContactSupportDialog_submit_debug_log">Vil du indsende fejlsøgningslog?</string>
+    <!-- Body of dialog explaining what debug logs are and that they are optional to submit -->
+    <string name="ContactSupportDialog_your_debug_logs">Dine fejlsøgningslogs hjælper os med at fejlsøge hurtigere. Det er frivilligt om du ønsker at vedhæfte dem.</string>
+    <!-- Button option to submit debug log when contacting support -->
+    <string name="ContactSupportDialog_submit_with_debug">Send med fejlsøgningslog</string>
+    <!-- Button option to not submit debug log when contacting support -->
+    <string name="ContactSupportDialog_submit_without_debug">Send uden fejlsøgningslog</string>
 
     <!-- Title for restore via qr screen -->
     <string name="RestoreViaQr_title">Scan denne kode med din gamle telefon</string>
@@ -7987,7 +8438,7 @@
     <!-- Error button text to retry getting a qr code -->
     <string name="RestoreViaQr_retry">Prøv igen</string>
     <!-- Error message shown when register after receiving the provisioning message failed -->
-    <string name="RestoreViaQr_registration_error">An error occurred and your account couldn’t be transferred. Try again by scanning the QR code again.</string>
+    <string name="RestoreViaQr_registration_error">Der opstod en fejl, og din konto kunne ikke overføres. Prøv igen ved at scanne QR-koden igen.</string>
 
     <!-- Old device Transfer account screen title -->
     <string name="TransferAccount_title">Overfør konto</string>
@@ -8029,6 +8480,27 @@
     <string name="NoBackupToRestore_step3">Slå sikkerhedskopiering til, og vent til din sikkerhedskopiering er færdig</string>
     <!-- No backup to Restore tonal cta to skip restore -->
     <string name="NoBackupToRestore_skip_restore">Spring gendannelse over</string>
+
+    <!-- Accessibility label for close search button in MainToolbar -->
+    <string name="MainToolbar__close_search_content_description">Luk søgning</string>
+    <!-- Accessibility label for clear search query in MainToolbar -->
+    <string name="MainToolbar__clear_search_content_description">Ryd søgning</string>
+    <!-- Accessibility label for more options button in MainToolbar -->
+    <string name="MainToolbar__more_options_content_description">Flere muligheder</string>
+    <!-- Accessibility label for more options button in MainToolbar -->
+    <string name="MainToolbar__notification_profile_content_description">Notifikationsprofil</string>
+    <!-- Accessibility label for more options button in MainToolbar -->
+    <string name="MainToolbar__proxy_content_description">Proxy</string>
+
+    <!-- Accessibility label for a button displayed in the toolbar to return to the previous screen. -->
+    <string name="DefaultTopAppBar__navigate_up_content_description">Naviger opad</string>
+
+    <!-- Accessibility label describing the action that occurs when clicking a checkbox. -->
+    <string name="SignalCheckbox_accessibility_on_click_label">Skift</string>
+    <!-- Accessibility label describing a checked checkbox. -->
+    <string name="SignalCheckbox_accessibility_checked_description">Markeret</string>
+    <!-- Accessibility label describing an unchecked checkbox. -->
+    <string name="SignalCheckbox_accessibility_unchecked_description">Ikke markeret</string>
 
     <!-- EOF -->
 </resources>

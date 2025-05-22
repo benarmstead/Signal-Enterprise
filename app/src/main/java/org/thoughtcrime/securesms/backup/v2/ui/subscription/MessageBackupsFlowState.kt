@@ -11,13 +11,19 @@ import org.thoughtcrime.securesms.keyvalue.SignalStore
 import org.whispersystems.signalservice.api.AccountEntropyPool
 
 data class MessageBackupsFlowState(
-  val hasBackupSubscriberAvailable: Boolean = false,
   val selectedMessageBackupTier: MessageBackupTier? = SignalStore.backup.backupTier,
-  val currentMessageBackupTier: MessageBackupTier? = SignalStore.backup.backupTier,
+  val currentMessageBackupTier: MessageBackupTier? = null,
   val availableBackupTypes: List<MessageBackupsType> = emptyList(),
   val inAppPayment: InAppPaymentTable.InAppPayment? = null,
   val startScreen: MessageBackupsStage,
   val stage: MessageBackupsStage = startScreen,
   val accountEntropyPool: AccountEntropyPool = SignalStore.account.accountEntropyPool,
-  val failure: Throwable? = null
-)
+  val failure: Throwable? = null,
+  val paymentReadyState: PaymentReadyState = PaymentReadyState.NOT_READY
+) {
+  enum class PaymentReadyState {
+    NOT_READY,
+    READY,
+    FAILED
+  }
+}

@@ -10,7 +10,6 @@ import android.content.Intent
 import android.os.Bundle
 import android.view.View
 import android.widget.Toast
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -19,28 +18,31 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentSize
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.dimensionResource
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.core.app.ShareCompat
+import androidx.core.os.bundleOf
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.navigation.fragment.findNavController
 import io.reactivex.rxjava3.kotlin.subscribeBy
-import org.signal.core.ui.BottomSheets
-import org.signal.core.ui.Buttons
-import org.signal.core.ui.Dividers
-import org.signal.core.ui.Previews
-import org.signal.core.ui.Rows
-import org.signal.core.ui.SignalPreview
+import org.signal.core.ui.compose.BottomSheets
+import org.signal.core.ui.compose.Buttons
+import org.signal.core.ui.compose.Dividers
+import org.signal.core.ui.compose.Previews
+import org.signal.core.ui.compose.Rows
+import org.signal.core.ui.compose.SignalPreview
 import org.signal.core.util.concurrent.LifecycleDisposable
 import org.signal.core.util.logging.Log
 import org.signal.ringrtc.CallLinkState
@@ -89,18 +91,19 @@ class CreateCallLinkBottomSheetDialogFragment : ComposeBottomSheetDialogFragment
   override fun SheetContent() {
     val callLink: CallLinkTable.CallLink by viewModel.callLink
     val displayAlreadyInACallSnackbar: Boolean by viewModel.showAlreadyInACall.collectAsStateWithLifecycle(false)
+    val isLoadingAdminApprovalChange: Boolean by viewModel.isLoadingAdminApprovalChange.collectAsStateWithLifecycle(false)
 
     CreateCallLinkBottomSheetContent(
       callLink = callLink,
       onJoinClicked = this@CreateCallLinkBottomSheetDialogFragment::onJoinClicked,
       onAddACallNameClicked = this@CreateCallLinkBottomSheetDialogFragment::onAddACallNameClicked,
       onApproveAllMembersChanged = this@CreateCallLinkBottomSheetDialogFragment::setApproveAllMembers,
-      onToggleApproveAllMembersClicked = this@CreateCallLinkBottomSheetDialogFragment::toggleApproveAllMembers,
       onShareViaSignalClicked = this@CreateCallLinkBottomSheetDialogFragment::onShareViaSignalClicked,
       onCopyLinkClicked = this@CreateCallLinkBottomSheetDialogFragment::onCopyLinkClicked,
       onShareLinkClicked = this@CreateCallLinkBottomSheetDialogFragment::onShareLinkClicked,
       onDoneClicked = this@CreateCallLinkBottomSheetDialogFragment::onDoneClicked,
-      displayAlreadyInACallSnackbar = displayAlreadyInACallSnackbar
+      displayAlreadyInACallSnackbar = displayAlreadyInACallSnackbar,
+      isLoadingAdminApprovalChange = isLoadingAdminApprovalChange
     )
   }
 
@@ -122,20 +125,11 @@ class CreateCallLinkBottomSheetDialogFragment : ComposeBottomSheetDialogFragment
     }, onError = this::handleError)
   }
 
-  private fun toggleApproveAllMembers() {
-    lifecycleDisposable += viewModel.toggleApproveAllMembers().subscribeBy(onSuccess = {
-      if (it !is UpdateCallLinkResult.Update) {
-        Log.w(TAG, "Failed to update call link restrictions")
-        toastFailure()
-      }
-    }, onError = this::handleError)
-  }
-
   private fun onAddACallNameClicked() {
     val snapshot = viewModel.callLink.value
-    findNavController().navigate(
-      CreateCallLinkBottomSheetDialogFragmentDirections.actionCreateCallLinkBottomSheetToEditCallLinkNameDialogFragment(snapshot.state.name)
-    )
+    EditCallLinkNameDialogFragment().apply {
+      arguments = bundleOf(EditCallLinkNameDialogFragment.ARG_NAME to snapshot.state.name)
+    }.show(parentFragmentManager, null)
   }
 
   private fun onJoinClicked() {
@@ -236,10 +230,10 @@ class CreateCallLinkBottomSheetDialogFragment : ComposeBottomSheetDialogFragment
 private fun CreateCallLinkBottomSheetContent(
   callLink: CallLinkTable.CallLink,
   displayAlreadyInACallSnackbar: Boolean,
+  isLoadingAdminApprovalChange: Boolean,
   onJoinClicked: () -> Unit = {},
   onAddACallNameClicked: () -> Unit = {},
   onApproveAllMembersChanged: (Boolean) -> Unit = {},
-  onToggleApproveAllMembersClicked: () -> Unit = {},
   onShareViaSignalClicked: () -> Unit = {},
   onCopyLinkClicked: () -> Unit = {},
   onShareLinkClicked: () -> Unit = {},
@@ -250,6 +244,7 @@ private fun CreateCallLinkBottomSheetContent(
       modifier = Modifier
         .fillMaxWidth()
         .wrapContentSize(Alignment.Center)
+        .verticalScroll(rememberScrollState())
     ) {
       BottomSheets.Handle(modifier = Modifier.align(Alignment.CenterHorizontally))
 
@@ -288,26 +283,26 @@ private fun CreateCallLinkBottomSheetContent(
         checked = callLink.state.restrictions == CallLinkState.Restrictions.ADMIN_APPROVAL,
         text = stringResource(id = R.string.CreateCallLinkBottomSheetDialogFragment__require_admin_approval),
         onCheckChanged = onApproveAllMembersChanged,
-        modifier = Modifier.clickable(onClick = onToggleApproveAllMembersClicked)
+        isLoading = isLoadingAdminApprovalChange
       )
 
       Dividers.Default()
 
       Rows.TextRow(
         text = stringResource(id = R.string.CreateCallLinkBottomSheetDialogFragment__share_link_via_signal),
-        icon = painterResource(id = R.drawable.symbol_forward_24),
+        icon = ImageVector.vectorResource(id = R.drawable.symbol_forward_24),
         onClick = onShareViaSignalClicked
       )
 
       Rows.TextRow(
         text = stringResource(id = R.string.CreateCallLinkBottomSheetDialogFragment__copy_link),
-        icon = painterResource(id = R.drawable.symbol_copy_android_24),
+        icon = ImageVector.vectorResource(id = R.drawable.symbol_copy_android_24),
         onClick = onCopyLinkClicked
       )
 
       Rows.TextRow(
         text = stringResource(id = R.string.CreateCallLinkBottomSheetDialogFragment__share_link),
-        icon = painterResource(id = R.drawable.symbol_share_android_24),
+        icon = ImageVector.vectorResource(id = R.drawable.symbol_share_android_24),
         onClick = onShareLinkClicked
       )
 
@@ -347,7 +342,8 @@ private fun CreateCallLinkBottomSheetContentPreview() {
         ),
         deletionTimestamp = 0L
       ),
-      displayAlreadyInACallSnackbar = true
+      displayAlreadyInACallSnackbar = true,
+      isLoadingAdminApprovalChange = false
     )
   }
 }

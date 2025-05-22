@@ -42,6 +42,7 @@ public abstract class Job {
   private long lastRunAttemptTime;
   private long nextBackoffInterval;
 
+  private volatile boolean cascadingFailure;
   private volatile boolean canceled;
 
   protected Context context;
@@ -104,6 +105,16 @@ public abstract class Job {
   /** Should only be invoked by {@link JobController} */
   final void cancel() {
     this.canceled = true;
+  }
+
+  /** Indicates that this job is failing because a job earlier in the chain failed. */
+  final void markCascadingFailure() {
+    this.cascadingFailure = true;
+  }
+
+  /** Whether or not this job is failing because a job earlier in the chain failed. */
+  protected boolean isCascadingFailure() {
+    return this.cascadingFailure;
   }
 
   /** Provides a default exponential backoff given the current run attempt. */
@@ -286,6 +297,7 @@ public abstract class Job {
     private final boolean      memoryOnly;
     private final int          globalPriority;
     private final int          queuePriority;
+    private final long         initialDelay;
 
     private Parameters(@NonNull String id,
                        long createTime,
@@ -298,7 +310,8 @@ public abstract class Job {
                        @Nullable byte[] inputData,
                        boolean memoryOnly,
                        int globalPriority,
-                       int queuePriority)
+                       int queuePriority,
+                       long initialDelay)
     {
       this.id                     = id;
       this.createTime             = createTime;
@@ -312,6 +325,7 @@ public abstract class Job {
       this.memoryOnly             = memoryOnly;
       this.globalPriority         = globalPriority;
       this.queuePriority          = queuePriority;
+      this.initialDelay           = initialDelay;
     }
 
     @NonNull String getId() {
@@ -362,8 +376,12 @@ public abstract class Job {
       return queuePriority;
     }
 
+    long getInitialDelay() {
+      return initialDelay;
+    }
+
     public Builder toBuilder() {
-      return new Builder(id, createTime, lifespan, maxAttempts, maxInstancesForFactory, maxInstancesForQueue, queue, constraintKeys, inputData, memoryOnly, globalPriority, queuePriority);
+      return new Builder(id, createTime, lifespan, maxAttempts, maxInstancesForFactory, maxInstancesForQueue, queue, constraintKeys, inputData, memoryOnly, globalPriority, queuePriority, initialDelay);
     }
 
 
@@ -380,13 +398,14 @@ public abstract class Job {
       private boolean      memoryOnly;
       private int          globalPriority;
       private int          queuePriority;
+      private long         initialDelay;
 
       public Builder() {
         this(UUID.randomUUID().toString());
       }
 
       Builder(@NonNull String id) {
-        this(id, System.currentTimeMillis(), IMMORTAL, 1, UNLIMITED, UNLIMITED, null, new LinkedList<>(), null, false, Parameters.PRIORITY_DEFAULT, Parameters.PRIORITY_DEFAULT);
+        this(id, System.currentTimeMillis(), IMMORTAL, 1, UNLIMITED, UNLIMITED, null, new LinkedList<>(), null, false, Parameters.PRIORITY_DEFAULT, Parameters.PRIORITY_DEFAULT, 0);
       }
 
       private Builder(@NonNull String id,
@@ -400,7 +419,8 @@ public abstract class Job {
                       @Nullable byte[] inputData,
                       boolean memoryOnly,
                       int globalPriority,
-                      int queuePriority)
+                      int queuePriority,
+                      long initialDelay)
       {
         this.id                     = id;
         this.createTime             = createTime;
@@ -414,6 +434,7 @@ public abstract class Job {
         this.memoryOnly             = memoryOnly;
         this.globalPriority         = globalPriority;
         this.queuePriority          = queuePriority;
+        this.initialDelay           = initialDelay;
       }
 
       /** Should only be invoked by {@link JobController} */
@@ -553,8 +574,16 @@ public abstract class Job {
         return this;
       }
 
+      /**
+       * Specifies a delay (in milliseconds) before the job runs. Default is 0.
+       */
+      public @NonNull Builder setInitialDelay(long initialDelay) {
+        this.initialDelay = initialDelay;
+        return this;
+      }
+
       public @NonNull Parameters build() {
-        return new Parameters(id, createTime, lifespan, maxAttempts, maxInstancesForFactory, maxInstancesForQueue, queue, constraintKeys, inputData, memoryOnly, globalPriority, queuePriority);
+        return new Parameters(id, createTime, lifespan, maxAttempts, maxInstancesForFactory, maxInstancesForQueue, queue, constraintKeys, inputData, memoryOnly, globalPriority, queuePriority, initialDelay);
       }
     }
   }

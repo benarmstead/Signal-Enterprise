@@ -12,6 +12,7 @@ import org.signal.protos.resumableuploads.ResumableUpload
 import org.thoughtcrime.securesms.attachments.AttachmentId
 import org.thoughtcrime.securesms.attachments.AttachmentUploadUtil
 import org.thoughtcrime.securesms.attachments.DatabaseAttachment
+import org.thoughtcrime.securesms.backup.ArchiveUploadProgress
 import org.thoughtcrime.securesms.backup.v2.BackupRepository
 import org.thoughtcrime.securesms.database.AttachmentTable
 import org.thoughtcrime.securesms.database.SignalDatabase
@@ -24,9 +25,12 @@ import org.thoughtcrime.securesms.net.SignalNetwork
 import org.whispersystems.signalservice.api.NetworkResult
 import org.whispersystems.signalservice.api.archive.ArchiveMediaUploadFormStatusCodes
 import org.whispersystems.signalservice.api.attachment.AttachmentUploadResult
+import org.whispersystems.signalservice.api.messages.SignalServiceAttachment
+import java.io.FileNotFoundException
 import java.io.IOException
 import java.net.ProtocolException
 import kotlin.random.Random
+import kotlin.random.nextInt
 import kotlin.time.Duration.Companion.days
 
 /**
@@ -42,12 +46,17 @@ class UploadAttachmentToArchiveJob private constructor(
   companion object {
     private val TAG = Log.tag(UploadAttachmentToArchiveJob::class)
     const val KEY = "UploadAttachmentToArchiveJob"
+    const val MAX_JOB_QUEUES = 2
 
     /**
-     * This randomly selects between one of two queues. It's a fun way of limiting the concurrency of the upload jobs to
+     * This randomly selects between one of [MAX_JOB_QUEUES] queues. It's a fun way of limiting the concurrency of the upload jobs to
      * take up at most two job runners.
      */
-    fun buildQueueKey() = "ArchiveAttachmentJobs_${Random.nextInt(0, 2)}"
+    fun buildQueueKey(
+      queue: Int = Random.nextInt(0, MAX_JOB_QUEUES)
+    ) = "ArchiveAttachmentJobs_$queue"
+
+    fun getAllQueueKeys() = (0 until MAX_JOB_QUEUES).map { buildQueueKey(queue = it) }
   }
 
   constructor(attachmentId: AttachmentId) : this(
@@ -72,7 +81,7 @@ class UploadAttachmentToArchiveJob private constructor(
 
     if (transferStatus == AttachmentTable.ArchiveTransferState.NONE) {
       Log.d(TAG, "[$attachmentId] Updating archive transfer state to ${AttachmentTable.ArchiveTransferState.UPLOAD_IN_PROGRESS}")
-      SignalDatabase.attachments.setArchiveTransferState(attachmentId, AttachmentTable.ArchiveTransferState.UPLOAD_IN_PROGRESS)
+      SignalDatabase.attachments.setArchiveTransferStateUnlessPermanentFailure(attachmentId, AttachmentTable.ArchiveTransferState.UPLOAD_IN_PROGRESS)
     }
   }
 
@@ -108,7 +117,6 @@ class UploadAttachmentToArchiveJob private constructor(
 
     if (attachment.remoteKey == null || attachment.remoteIv == null) {
       Log.w(TAG, "[$attachmentId] Attachment is missing remote key or IV! Cannot upload.")
-      SignalDatabase.attachments.setArchiveTransferState(attachmentId, AttachmentTable.ArchiveTransferState.NONE)
       return Result.failure()
     }
 
@@ -135,10 +143,18 @@ class UploadAttachmentToArchiveJob private constructor(
         context = context,
         attachment = attachment,
         uploadSpec = uploadSpec!!,
-        cancellationSignal = { this.isCanceled }
+        cancellationSignal = { this.isCanceled },
+        progressListener = object : SignalServiceAttachment.ProgressListener {
+          override fun onAttachmentProgress(total: Long, progress: Long) = ArchiveUploadProgress.onAttachmentProgress(attachmentId, progress)
+          override fun shouldCancel() = this@UploadAttachmentToArchiveJob.isCanceled
+        }
       )
+    } catch (e: FileNotFoundException) {
+      Log.w(TAG, "[$attachmentId] No file exists for this attachment! Marking as a permanent failure.", e)
+      SignalDatabase.attachments.setArchiveTransferState(attachmentId, AttachmentTable.ArchiveTransferState.PERMANENT_FAILURE)
+      return Result.failure()
     } catch (e: IOException) {
-      Log.e(TAG, "[$attachmentId] Failed to get attachment stream.", e)
+      Log.w(TAG, "[$attachmentId] Failed while reading the stream.", e)
       return Result.retry(defaultBackoff())
     }
 
@@ -172,7 +188,11 @@ class UploadAttachmentToArchiveJob private constructor(
 
     SignalDatabase.attachments.finalizeAttachmentAfterUpload(attachment.attachmentId, uploadResult)
 
-    AppDependencies.jobManager.add(CopyAttachmentToArchiveJob(attachment.attachmentId))
+    if (!isCanceled) {
+      AppDependencies.jobManager.add(CopyAttachmentToArchiveJob(attachment.attachmentId))
+    } else {
+      Log.d(TAG, "[$attachmentId] Job was canceled. Skipping copy job.")
+    }
 
     return Result.success()
   }
@@ -182,7 +202,7 @@ class UploadAttachmentToArchiveJob private constructor(
       Log.w(TAG, "[$attachmentId] Job was canceled, updating archive transfer state to ${AttachmentTable.ArchiveTransferState.NONE}.")
       SignalDatabase.attachments.setArchiveTransferState(attachmentId, AttachmentTable.ArchiveTransferState.NONE)
     } else {
-      Log.w(TAG, "[$attachmentId] Job failed, updating archive transfer state to ${AttachmentTable.ArchiveTransferState.TEMPORARY_FAILURE}.")
+      Log.w(TAG, "[$attachmentId] Job failed, updating archive transfer state to ${AttachmentTable.ArchiveTransferState.TEMPORARY_FAILURE} (if not already a permanent failure).")
       SignalDatabase.attachments.setArchiveTransferState(attachmentId, AttachmentTable.ArchiveTransferState.TEMPORARY_FAILURE)
     }
   }

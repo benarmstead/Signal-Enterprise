@@ -10,6 +10,7 @@
   <!-- Removed by excludeNonTranslatables <string name="install_url" translatable="false">https://signal.org/install</string> -->
   <!-- Removed by excludeNonTranslatables <string name="donate_url" translatable="false">https://signal.org/donate</string> -->
   <!-- Removed by excludeNonTranslatables <string name="backup_support_url" translatable="false">https://support.signal.org/hc/articles/360007059752</string> -->
+  <!-- Removed by excludeNonTranslatables <string name="backup_failed_support_url" translatable="false">https://support.signal.org/hc/articles/8768161836954</string> -->
   <!-- Removed by excludeNonTranslatables <string name="transfer_support_url" translatable="false">https://support.signal.org/hc/articles/360007059752</string> -->
   <!-- Removed by excludeNonTranslatables <string name="support_center_url" translatable="false">https://support.signal.org/</string> -->
   <!-- Removed by excludeNonTranslatables <string name="terms_and_privacy_policy_url" translatable="false">https://signal.org/legal</string> -->
@@ -150,6 +151,7 @@
     <!-- BlockedUsersActivity -->
     <string name="BlockedUsersActivity__blocked_users">Letiltott felhasználók</string>
     <string name="BlockedUsersActivity__add_blocked_user">Letiltott felhasználó hozzáadása</string>
+    <string name="BlockedUsersActivity__cannot_block_yourself">Nem tilthatod le saját magad</string>
     <string name="BlockedUsersActivity__blocked_users_will">A letiltott felhasználók nem fognak tudni sem üzenetet küldeni neked, sem pedig felhívni.</string>
     <string name="BlockedUsersActivity__no_blocked_users">Nincs letiltott felhasználó</string>
     <string name="BlockedUsersActivity__block_user">Felhasználó letiltása?</string>
@@ -412,6 +414,7 @@
     <!-- Footer shown in legacy SMS message where %s is the name of the recipient the message is going to -->
     <string name="ConversationItem_to_s">neki: %1$s</string>
     <string name="ConversationItem_read_more"> Tovább</string>
+    <!-- Footer shown at the end of long body messages to download more of it -->
     <string name="ConversationItem_download_more"> További letöltése</string>
     <string name="ConversationItem_pending"> Függőben</string>
     <string name="ConversationItem_this_message_was_deleted">Ez az üzenet ki lett törölve.</string>
@@ -542,6 +545,8 @@
     <string name="ConversationActivity__invite_to_signal">Meghívás a Signalra</string>
     <!-- Snackbar message shown after dismissing the full screen sms export megaphone indicating we\'ll do it again soon -->
     <string name="ConversationActivity__you_will_be_reminded_again_soon">Hamarosan ismét kapsz egy emlékeztetőt.</string>
+    <!-- Toast message shown when trying to record a voice message during an ongoing call -->
+    <string name="ConversationFragment_cannot_record_voice_message_during_call">Hívás közben nem lehet hangüzenetet rögzíteni.</string>
 
     <!-- Title for dialog shown when first sending formatted text -->
     <string name="SendingFormattingTextDialog_title">Formázott szöveg küldése</string>
@@ -570,11 +575,6 @@
         <item quantity="one">A médiafájl a tárhelyre mentést követően az eszközödre telepített összes alkalmazás számára elérhetővé válik.\n\nFolytatod?</item>
         <item quantity="other">A(z) %1$d db médiafájl a tárhelyre mentést követően az eszközödre telepített összes alkalmazás számára elérhetővé válik.\n\nFolytatod?</item>
     </plurals>
-    <plurals name="ConversationFragment_error_while_saving_attachments_to_sd_card">
-        <item quantity="one">Hiba történt a melléklet tárolóra mentése közben!</item>
-        <item quantity="other">Hiba történt a mellékletek tárolóra mentése során!</item>
-    </plurals>
-    <string name="ConversationFragment_unable_to_write_to_sd_card_exclamation">Nem lehet írni a tárolóra!</string>
     <plurals name="ConversationFragment_saving_n_attachments">
         <item quantity="one">Melléklet mentése</item>
         <item quantity="other">%1$d db melléklet mentése</item>
@@ -583,6 +583,8 @@
         <item quantity="one">%1$d db melléklet mentése a háttértárba…</item>
         <item quantity="other">%1$d db melléklet mentése a háttértárba…</item>
     </plurals>
+    <!-- Checkbox shown in dialog to not show the dialog again in future cases -->
+    <string name="ConversationFragment_dont_show_again">Ne jelenjen meg újra</string>
     <string name="ConversationFragment_pending">Folyamatban…</string>
     <!-- Describes how the message was sent when looking at a message detail. Previously, messages could be through other means like SMS -->
     <string name="ConversationFragment_push">Adat (Signal)</string>
@@ -658,6 +660,18 @@
     <string name="ConversationFragment_reported_as_spam_and_blocked">Megjelölve kéretlen üzenetként és letiltva</string>
     <!-- Dialog message shown after accepting a message request and tapping on options from the conversation event -->
     <string name="ConversationFragment_you_accepted_a_message_request_from_s">Elfogadtad %1$s üzenetkérését. Ha ez hiba volt, alább választhatsz egy műveletet.</string>
+    <!-- Text shown in conversation header when in a message request state and to carefully review the user -->
+    <string name="ConversationFragment_review_carefully">Tekintsd át figyelmesen</string>
+    <!-- Text shown in conversation header when in a message request state that profile names are not verified. Placeholder will be \'Profile names\' -->
+    <string name="ConversationFragment_profile_names_not_verified">A %1$s nincsenek ellenőrizve</string>
+    <!-- Text shown in conversation header when in a message request state that group names are not verified. Placeholder will be \'Group names\' -->
+    <string name="ConversationFragment_group_names_not_verified">A %1$s nincsenek ellenőrizve</string>
+    <!-- Placeholder text shown in conversation header that when clicked will open a dialog about profile names -->
+    <string name="ConversationFragment_profile_names">profilnevek</string>
+    <!-- Placeholder text shown in conversation header that when clicked will open a dialog about group names -->
+    <string name="ConversationFragment_group_names">csoportnevek</string>
+    <!-- Snackbar toast message shown when a profile cannot be downloaded and to try again. -->
+    <string name="ConversationFragment_photo_failed">Nem sikerült letölteni a fotót. Próbáld újra.</string>
 
     <!-- Title of Safety Tips bottom sheet dialog -->
     <string name="SafetyTips_title">Biztonsági tippek</string>
@@ -669,6 +683,10 @@
     <string name="SafetyTips_previous_tip">Előző tipp</string>
     <!-- Button text to move to the next tip -->
     <string name="SafetyTips_next_tip">Következő tipp</string>
+    <!-- Title of tip 0 -->
+    <string name="SafetyTips_tip0_title">Hamis nevek és fiókok</string>
+    <!-- Message of tip 0 -->
+    <string name="SafetyTips_tip0_message">A Signal soha nem fogja felvenni veled a kapcsolatot regisztrációs vagy PIN-kódoddal kapcsolatban. Legyél óvatos azokkal a kérésekkel, amelyeket mások nevében küldenek. A profilneveket a fióktulajdonos választja ki, és nincsenek ellenőrizve.</string>
     <!-- Title of tip 1 -->
     <string name="SafetyTips_tip1_title">Kripto- vagy pénzzel kapcsolatos átverések</string>
     <!-- Message of tip 1 -->
@@ -685,6 +703,21 @@
     <string name="SafetyTips_tip4_title">Hamis vállalkozások és intézmények</string>
     <!-- Message of tip 4 -->
     <string name="SafetyTips_tip4_message">Legyél óvatos, ha vállalkozások vagy kormányzati szervek lépnek kapcsolatba veled. Az adóhivatalokat, futárszolgálatokat stb. érintő üzenetek kéretlen üzenetek lehetnek.</string>
+
+    <!-- Bottom sheet text explaining that profile names are chosen by the account holder. Placeholder will be \'Profile names\' -->
+    <string name="ProfileNameBottomSheet__profile_names_on_signal">A %1$s a Signalon a fióktulajdonos által kerülnek kiválasztásra.</string>
+    <!-- Bottom sheet text explaining that profile names are not verified. -->
+    <string name="ProfileNameBottomSheet__profile_names_arent_verified">A profilnevek nincsenek ellenőrizve</string>
+    <!-- Bottom sheet text explaining that accounts can impersonate other people and to be cautious -->
+    <string name="ProfileNameBottomSheet__be_cautious_of_accounts">Legyél óvatos azokkal a fiókokkal, amelyek másoknak adják ki magukat</string>
+    <!-- Bottom sheet text explaining that personal information should not be shared with strangers -->
+    <string name="ProfileNameBottomSheet__dont_share_personal">Ne oszd meg a személyes adataidat olyanokkal, akiket nem ismersz</string>
+    <!-- Bottom sheet text explaining that group names are chosen by the group members. Placeholder will be \'Group names\' -->
+    <string name="ProfileNameBottomSheet__group_names_on_signal">A %1$s a csoporttagok által kerülnek kiválasztásra.</string>
+    <!-- Bottom sheet text explaining that groups can impersonate organizations and to be cautious -->
+    <string name="ProfileNameBottomSheet__be_cautious_of_groups">Legyél óvatos azokkal a csoportokkal, amelyek szervezeteknek és vállalkozásoknak adják ki magukat</string>
+    <!-- Bottom sheet text explaining that profile names of group members are not verified -->
+    <string name="ProfileNameBottomSheet__profile_names_in_groups">A csoporttagok profilnevei nincsenek ellenőrizve</string>
 
     <!-- Label for a button displayed in conversation list to clear the chat filter -->
     <string name="ConversationListFragment__clear_filter">Szűrő törlése</string>
@@ -748,8 +781,11 @@
     <string name="AddToFolderBottomSheet_choose_a_folder">Válassz egy mappát</string>
     <!-- Toast shown when a chat has been added to a folder, where %s is the name of the folder -->
     <string name="AddToFolderBottomSheet_added_to_s">Hozzáadva ehhez: „%1$s”</string>
-    <!-- Toast shown when a user tries to add a chat to a folder, but the folder already has that chat. %s is the name of the folder -->
-    <string name="AddToFolderBottomSheet_this_chat_is_already">Ez a csevegés már a(z) „%1$s” mappában van</string>
+    <!-- Toast shown when a user tries to add chats to a folder, but the folder already has those chats. %s is the name of the folder -->
+    <plurals name="AddToFolderBottomSheet_these_chat_are_already_in_s">
+        <item quantity="one">Ez a csevegés már itt van: „%1$s”</item>
+        <item quantity="other">Ezek a csevegések már itt vannak: „%1$s”</item>
+    </plurals>
 
     <!-- Show in conversation list overflow menu to open selection bottom sheet -->
     <string name="ConversationListFragment__notification_profile">Értesítési profilok</string>
@@ -918,6 +954,16 @@
     <string name="DateUtils_tomorrow">Holnap</string>
     <!-- Used in the context: Tonight at 9:00pm for example. Specifically this is after 7pm -->
     <string name="DateUtils_tonight">Ma este</string>
+    <!-- Used when showing the time a device was linked. %1$s is replaced with the date while %2$s is replaced with the time. e.g. on Jan 15 at 9:00pm -->
+    <plurals name="DateUtils_date_time_at">
+        <item quantity="one">ekkor: %1$s, %2$s</item>
+        <item quantity="other">ekkor: %1$s, %2$s</item>
+    </plurals>
+    <!-- Used when showing the time a device was linked. e.g. at 9:00pm -->
+    <plurals name="DateUtils_time_at">
+        <item quantity="one">ekkor: %1$s</item>
+        <item quantity="other">ekkor: %1$s</item>
+    </plurals>
 
     <!-- Scheduled Messages -->
     <!-- Title for dialog that shows all the users scheduled messages for a chat -->
@@ -964,7 +1010,7 @@
 
     <!-- LinkDeviceFragment -->
     <!-- Description for how Signal will work with a linked device (eg desktop, iPad) -->
-    <string name="LinkDeviceFragment__use_signal_on_desktop_ipad">A Signal használata asztali számítógépen vagy iPaden. Üzeneteid szinkronizálódnak a kapcsolt eszközökkel.</string>
+    <string name="LinkDeviceFragment__use_signal_on_desktop_ipad">Asztali számítógépen vagy iPaden ezt a Signal-fiókot használd.</string>
     <!-- Button prompting users to link a new device to their account -->
     <string name="LinkDeviceFragment__link_a_new_device">Új eszköz összekapcsolása</string>
     <!-- Text explaining that on linked devices, messages will be encrypted where %s will be replaced with an image-->
@@ -1004,16 +1050,46 @@
     <string name="LinkDeviceFragment__tap_continue_and_enter_phone">Koppints a Folytatás gombra, és a megerősítéshez add meg a telefonod feloldó kódját. Ne a Signal PIN-kódodat add meg.</string>
     <!-- Button that dismisses the bottom sheet -->
     <string name="LinkDeviceFragment__continue">Tovább</string>
+    <!-- Option on button to contact support -->
+    <string name="LinkDeviceFragment__contact_support">Segítségkérés</string>
+    <!-- Title of dialog asking users if they want to submit debug logs when contacting support -->
+    <string name="LinkDeviceFragment__submit_debug_log">Hibanapló küldése?</string>
+    <!-- Body of dialog explaining what debug logs are and that they are optional to submit -->
+    <string name="LinkDeviceFragment__your_debug_logs">A hibanapló fájlok segítenek a hibák gyorsabb javításában. Beküldésük opcionális.</string>
+    <!-- Button option to submit debug log when contacting support -->
+    <string name="LinkDeviceFragment__submit_with_debug">Beküldés hibanaplóval együtt</string>
+    <!-- Button option to not submit debug log when contacting support -->
+    <string name="LinkDeviceFragment__submit_without_debug">Beküldés hibanapló nélkül</string>
+    <!-- Button option to dismiss dialog -->
+    <string name="LinkDeviceFragment__cancel">Mégse</string>
+    <!-- Email subject when contacting support on a linked device syncing issue -->
+    <string name="LinkDeviceFragment__link_sync_failure_support_email">Android exportálás (Link&amp;Sync) sikertelen</string>
+  <!-- Removed by excludeNonTranslatables <string name="LinkDeviceFragment__link_sync_failure_support_email_filter" translatable="false">Android Link&amp;Sync Export Failed</string> -->
     <!-- Title of a dialog letting the user know that syncing messages to their linked device failed -->
     <string name="LinkDeviceFragment__sync_failure_title">Az üzenetek szinkronizálása sikertelen</string>
     <!-- Body of a dialog letting the user know that syncing messages to their linked device failed -->
     <string name="LinkDeviceFragment__sync_failure_body">Az üzeneteidet nem sikerült átvinni a kapcsolt eszközre. Megpróbálhatod újra összekapcsolni és átvinni azokat, vagy folytathatod az üzenetelőzmények átvitele nélkül.</string>
+    <!-- Body of a dialog letting the user know that syncing messages to their linked device failed but the device was still able to be linked -->
+    <string name="LinkDeviceFragment__sync_failure_body_unretryable">Eszközöd összekapcsolása sikeresen megtörtént, de az üzenetek átvitele nem sikerült.</string>
+    <!-- Text button in a dialog that, when pressed, will redirect to the Signal support page -->
+    <string name="LinkDeviceFragment__learn_more">Tudj meg többet</string>
+  <!-- Removed by excludeNonTranslatables <string name="LinkDeviceFragment__learn_more_url" translatable="false">https://support.signal.org/hc/articles/360007320551</string> -->
     <!-- Text button of a button in a dialog that, when pressed, will restart the process of linking a device -->
-    <string name="LinkDeviceFragment__sync_failure_retry_button">Próbáld meg újra összekapcsolni</string>
+    <string name="LinkDeviceFragment__sync_failure_retry_button">Újra</string>
     <!-- Text button of a button in a dialog that, when pressed, will ignore syncing errors and link a new device without syncing message content -->
     <string name="LinkDeviceFragment__sync_failure_dismiss_button">Folytatás átvitel nélkül</string>
     <!-- Option in context menu to edit the name of a linked device -->
     <string name="LinkDeviceFragment__edit_name">Név szerkesztése</string>
+    <!-- Toast shown when the process of linking a device has been cancelled -->
+    <string name="LinkDeviceFragment__linking_cancelled">Összekapcsolás megszakítva</string>
+    <!-- Message shown in progress dialog telling users to avoid closing the app while messages are being synced -->
+    <string name="LinkDeviceFragment__do_not_close">Ne zárd be az alkalmazást</string>
+    <!-- Dialog title shown when a device is unlinked -->
+    <string name="LinkDeviceFragment__device_unlinked">Eszköz leválasztva</string>
+    <!-- Dialog body shown when a device is unlinked where %1$s is the date and time the device was originally linked (eg Jan 15 at 9:00pm) -->
+    <string name="LinkDeviceFragment__the_device_that_was">A(z) ekkor (%1$s) összekapcsolt eszköz már nincs összekapcsolva.</string>
+    <!-- Button to dismiss dialog -->
+    <string name="LinkDeviceFragment__ok">OK</string>
 
     <!-- EditDeviceNameFragment -->
     <!-- App bar title when editing the name of a device -->
@@ -1053,11 +1129,16 @@
     <!-- Option in bottom sheet to transfer message history -->
     <string name="LinkDeviceSyncBottomSheet_transfer">Üzenetelőzmények áthelyezése</string>
     <!-- Description in bottom sheet of what transferring message history will do -->
-    <string name="LinkDeviceSyncBottomSheet_transfer_your_text">Helyezd át a szöveges üzeneteidet és a legutóbbi médiafájlokat a kapcsolt eszközeidre</string>
+    <string name="LinkDeviceSyncBottomSheet_transfer_your_text">Helyezd át a szöveges üzeneteidet és az elmúlt 45 nap médiatartalmát</string>
     <!-- Option in bottom sheet to not transfer message history -->
     <string name="LinkDeviceSyncBottomSheet_dont_transfer">Nem kerül áthelyezésre</string>
     <!-- Description in bottom sheet of what not transferring history will do -->
     <string name="LinkDeviceSyncBottomSheet_no_old_messages">A régi üzenetek vagy médiafájlok mostantól nem kerülnek áthelyezésre a kapcsolt eszközeidre</string>
+
+    <!-- Title of notification telling users that a device was linked to their account -->
+    <string name="NewLinkedDeviceNotification__you_linked_new_device">Összekapcsoltál egy új eszközt</string>
+    <!-- Message body of notification telling users that a device was linked to their account. %1$s is the time it was linked -->
+    <string name="NewLinkedDeviceNotification__a_new_device_was_linked">Új eszközt kapcsoltak a fiókodhoz ekkor: %1$s. A megtekintéshez koppints.</string>
 
     <!-- DeviceListActivity -->
     <string name="DeviceListActivity_unlink_s">Társítás megszüntetése ezzel: \"%1$s\"?</string>
@@ -1077,6 +1158,7 @@
 
     <!-- DocumentView -->
     <string name="DocumentView_unnamed_file">Névtelen fájl</string>
+    <string name="DocumentView_document_file">Dokumentumfájl</string>
 
     <!-- DozeReminder -->
     <string name="DozeReminder_optimize_for_missing_play_services">Optimalizálás hiányzó Play Szolgáltatásokra</string>
@@ -1297,8 +1379,9 @@
     <!-- AddMembersActivity -->
     <string name="AddMembersActivity__done">Befejezés</string>
     <string name="AddMembersActivity__this_person_cant_be_added_to_legacy_groups">Ez a személy nem adható régi típusú csoporthoz.</string>
+    <!-- Confirmation text when adding a member to a group. If one person is added, %1$s is their name. If multiple people are added, the total number is %3$d. %2$s is the name of the group -->
     <plurals name="AddMembersActivity__add_d_members_to_s">
-        <item quantity="one">%1$s tag hozzáadása a(z) „%2$s” csoporthoz?</item>
+        <item quantity="one">%1$s hozzáadása a(z) „%2$s” csoporthoz?</item>
         <item quantity="other">%3$d tag hozzáadása a(z) „%2$s” csoporthoz?</item>
     </plurals>
     <string name="AddMembersActivity__add">Hozzáadás</string>
@@ -1383,9 +1466,17 @@
     <!-- Text label button to skip restore from remote -->
     <string name="RemoteRestoreActivity__skip_restore">Visszaállítás kihagyása</string>
     <!-- Dialog title displayed when remote restore failed -->
-    <string name="RemoteRestoreActivity__couldnt_transfer">Couldn\'t finish transfer</string>
+    <string name="RemoteRestoreActivity__couldnt_transfer">Nem sikerült befejezni az átvitelt</string>
     <!-- Dialog message displayed when remote restore failed -->
-    <string name="RemoteRestoreActivity__error_occurred">An error occurred and your account couldn’t be transferred. Try again by choosing your transfer method.</string>
+    <string name="RemoteRestoreActivity__error_occurred">Hiba történt, és a fiókodat nem sikerült áthelyezni. Próbáld újra az átviteli mód kiválasztásával.</string>
+    <!-- Dialog title displayed when remote restore failed because of an outdated backup version. -->
+    <string name="RemoteRestoreActivity__couldnt_restore">Nem sikerült visszaállítani ezt a biztonsági másolatot</string>
+    <!-- Dialog message explaining that an update to Signal is required to restore the backup. -->
+    <string name="RemoteRestoreActivity__update_latest">A Signal ezen verziója nem tudja visszaállítani a biztonsági másolatot. Frissíts a legújabb verzióra, és próbáld újra!</string>
+    <!-- Text on button that when pressed will redirect them to update Signal -->
+    <string name="RemoteRestoreActivity__update_signal">Signal frissítése</string>
+    <!-- Text label button to dismiss the dialog -->
+    <string name="RemoteRestoreActivity__not_now">Később</string>
 
     <!-- GroupMentionSettingDialog -->
     <string name="GroupMentionSettingDialog_notify_me_for_mentions">Értesítsen említés esetén</string>
@@ -1455,7 +1546,9 @@
     <string name="CustomNotificationsDialogFragment__change_sound_and_vibration">Hangjelzés és rezgés megváltoztatása</string>
     <string name="CustomNotificationsDialogFragment__call_settings">Hívás beállításai</string>
     <string name="CustomNotificationsDialogFragment__ringtone">Csengőhang</string>
+    <!-- Subtitle when the ringtone used for calls is the default system -->
     <string name="CustomNotificationsDialogFragment__default">Alapértelmezett</string>
+    <!-- Subtitle when the ringtone used for calls is unknown -->
     <string name="CustomNotificationsDialogFragment__unknown">Ismeretlen</string>
 
     <!-- ShareableGroupLinkDialogFragment -->
@@ -1593,7 +1686,6 @@
     </plurals>
     <string name="MediaOverviewActivity_Media_delete_progress_title">Törlés</string>
     <string name="MediaOverviewActivity_Media_delete_progress_message">Üzenetek törlése…</string>
-    <string name="MediaOverviewActivity_collecting_attachments">Mellékletek összegyűjtése…</string>
     <string name="MediaOverviewActivity_Sort_by">Rendezés</string>
     <string name="MediaOverviewActivity_Newest">Legújabb</string>
     <string name="MediaOverviewActivity_Oldest">Legrégebbi</string>
@@ -1628,6 +1720,8 @@
     <string name="MediaOverviewActivity_sent_by_you">Te küldted</string>
     <string name="MediaOverviewActivity_sent_by_s_to_s">Küldte: %1$s, címzett: %2$s</string>
     <string name="MediaOverviewActivity_sent_by_you_to_s">Te küldted %1$s részére</string>
+    <!-- Error message shown when the user is trying to open a media that is not sent yet. -->
+    <string name="MediaOverviewActivity_this_media_is_not_sent_yet">Ez a médiafájl még nincs elküldve.</string>
 
     <!-- Megaphones -->
     <string name="Megaphones_remind_me_later">Emlékeztess később</string>
@@ -1636,9 +1730,17 @@
     <string name="Megaphones_verify_pin">PIN hitelesítése</string>
     <string name="Megaphones_get_started">Kezdés</string>
     <string name="Megaphones_new_group">Új csoport</string>
+    <!-- Text in a card view to invite friends as part of the onboarding megaphone -->
     <string name="Megaphones_invite_friends">Meghívás</string>
     <string name="Megaphones_chat_colors">Csevegés színe</string>
     <string name="Megaphones_add_a_profile_photo">Profilkép</string>
+
+    <!-- Message body of megaphone telling users that a device was linked to their account. %1$s is the time it was linked -->
+    <string name="NewLinkedDeviceMegaphone__a_new_device_was_linked">Új eszközt kapcsoltak a fiókodhoz ekkor: %1$s.</string>
+    <!-- Button shown on megaphone that will redirect to the linked devices screen -->
+    <string name="NewLinkedDeviceMegaphone__view_device">Eszköz megtekintése</string>
+    <!-- Button shown on megaphone to acknowledge and dismiss the megaphone -->
+    <string name="NewLinkedDeviceMegaphone__ok">OK</string>
 
     <!-- Title of a bottom sheet to render messages that all quote a specific message -->
     <string name="MessageQuotesBottomSheet_replies">Válaszok</string>
@@ -1689,6 +1791,10 @@
     <string name="MessageRecord_missed_voice_call">Nem fogadott hanghívás</string>
     <!-- Update message shown when receiving an incoming 1:1 video call and not answered -->
     <string name="MessageRecord_missed_video_call">Nem fogadott videóhívás</string>
+    <!-- Update message shown when receiving an incoming 1:1 voice/audio call and not answered -->
+    <string name="MessageRecord_declined_voice_call">Elutasított hanghívás</string>
+    <!-- Update message shown when receiving an incoming 1:1 video call and not answered -->
+    <string name="MessageRecord_declined_video_call">Elutasított videohívás</string>
     <!-- Update message shown when receiving an incoming voice call and declined due to notification profile -->
     <string name="MessageRecord_missed_voice_call_notification_profile">Nem fogadott hanghívás, miközben az értesítési profil be van kapcsolva</string>
     <!-- Update message shown when receiving an incoming video call and declined due to notification profile -->
@@ -1869,6 +1975,7 @@
 
     <!-- GV2 group link deny -->
     <string name="MessageRecord_your_request_to_join_the_group_has_been_denied_by_an_admin">Csatlakozási igényedet egy admin elutasította.</string>
+    <string name="MessageRecord_you_denied_a_request_to_join_the_group_from_s">Elutasítottad %1$s csatlakozási igényét.</string>
     <string name="MessageRecord_s_denied_a_request_to_join_the_group_from_s">%1$s elutasította %2$s csatlakozási igényét.</string>
     <string name="MessageRecord_a_request_to_join_the_group_from_s_has_been_denied">%1$s csatlakozási igényét elutasították.</string>
     <string name="MessageRecord_you_canceled_your_request_to_join_the_group">Visszavontad csatlakozási igényedet.</string>
@@ -1913,12 +2020,16 @@
     <string name="MessageRecord_s_is_in_the_call_s">%1$s részt vesz a hívásban · %2$s</string>
     <!-- Chat log text for an ongoing group call only the local user has joined with a placeholder for formatted time -->
     <string name="MessageRecord_you_are_in_the_call_s1">Részt veszel a hívásban · %1$s</string>
+    <!-- Chat log text for an ongoing group call with you and another participant where %1$s is the short display name of the other user and %2$s is the formatted time -->
+    <string name="MessageRecord_s_and_you_are_in_the_call_s1">%1$s és te részt veszel a hívásban · %2$s</string>
     <!-- Chat log text for an ongoing group call with two participants with two placeholders for the short display name of the users that joined and a placeholder for formatted time -->
     <string name="MessageRecord_s_and_s_are_in_the_call_s1">%1$s és %2$s részt vesznek a hívásban · %3$s</string>
     <!-- Chat log text for an ongoing group call that has one participant -->
     <string name="MessageRecord_s_is_in_the_call">%1$s részt vesz a hívásban</string>
     <!-- Chat log text for an ongoing group call only the local user has joined -->
     <string name="MessageRecord_you_are_in_the_call">Részt veszel a hívásban</string>
+    <!-- Chat log text for an ongoing group call with you and another participant where %1$s is the short display name of the other user -->
+    <string name="MessageRecord_s_and_you_are_in_the_call">%1$s és te részt veszel a hívásban</string>
     <!-- Chat log text for an ongoing group call with two participants with two placeholders, each for the short display name of the users that joined -->
     <string name="MessageRecord_s_and_s_are_in_the_call">%1$s és %2$s részt vesznek a hívásban</string>
     <!-- Chat log text for a group call that ended within the last 5 minutes -->
@@ -1972,6 +2083,14 @@
     <string name="MessageRecord_reported_as_spam">Megjelölve kéretlen üzenetként</string>
     <!-- Update message shown in chat after accept a message request -->
     <string name="MessageRecord_you_accepted_the_message_request">Elfogadtad az üzenetkérést</string>
+    <!-- Update message shown in chat after you block a person -->
+    <string name="MessageRecord_you_blocked_this_person">Letiltottad ezt a személyt</string>
+    <!-- Update message shown in chat after you unblock a person -->
+    <string name="MessageRecord_you_unblocked_this_person">Feloldottad ennek a személynek a letiltását</string>
+    <!-- Update message shown in chat after you block a group -->
+    <string name="MessageRecord_you_blocked_this_group">Letiltottad ezt a csoportot.</string>
+    <!-- Update message shown in chat after you unblock a group -->
+    <string name="MessageRecord_you_unblocked_this_group">Feloldottad ennek a csoportnak a letiltását.</string>
 
     <!-- MessageRequestBottomView -->
     <string name="MessageRequestBottomView_accept">Elfogadás</string>
@@ -2021,8 +2140,39 @@
         <item quantity="one">%1$d további csoport</item>
         <item quantity="other">%1$d további csoport</item>
     </plurals>
+    <!-- Describes the names of members in a group. MessageRequestProfileView_group_members_* is nested in the first parentheses. MessageRequestProfileView_invited is nested in the second -->
+    <string name="MessageRequestProfileView_member_names_and_invited">%1$s (%2$s)</string>
+    <!-- Text for an empty group or when you are the only member -->
+    <string name="MessageRequestProfileView_group_members_zero">Még nincs más csoporttag</string>
+    <!-- Text for a group with one member (not you). %1$s is their name -->
+    <string name="MessageRequestProfileView_group_members_one">%1$s</string>
+    <!-- Text for a 2 member group you are in. %1$s is the name of the other member -->
+    <string name="MessageRequestProfileView_group_members_one_and_you">%1$s és te</string>
+    <!-- Text for a 2 member group you are not in. %1$s and %2$s are the members\' names -->
+    <string name="MessageRequestProfileView_group_members_two">%1$s és %2$s</string>
+    <!-- Text for a 3 member group you are in. %1$s and %2$s are the members\' names -->
+    <string name="MessageRequestProfileView_group_members_two_and_you">%1$s, %2$s és te</string>
+    <!-- Text for a 3 member group you are not in. %1$s, %2$s, %3$s are the names of the other members. -->
+    <string name="MessageRequestProfileView_group_members_three">%1$s, %2$s és %3$s</string>
+    <!-- Text for a 3+ member group. %1$s, %2$s, %3$s are member names. %4$s is the string key MessageRequestProfileView_other_members-->
+    <string name="MessageRequestProfileView_group_members_other">%1$s, %2$s, %3$s és %4$s</string>
+    <!-- Nested in MessageRequestProfileView_group_members_other that shows how many members (besides three) are in the group -->
+    <plurals name="MessageRequestProfileView_other_members">
+        <item quantity="one">%1$d további</item>
+        <item quantity="other">%1$d további</item>
+    </plurals>
     <!-- Button label to report spam for a conversation when in a message request state -->
     <string name="MessageRequestBottomView_report">Jelentés…</string>
+    <!-- Alert dialog title to accept a message request -->
+    <string name="MessageRequestBottomView_accept_request">Elfogadod a felkérést?</string>
+    <!-- Alert dialog body to review the message request carefully -->
+    <string name="MessageRequestBottomView_review_requests_carefully">Gondosan nézd át a felkéréseket. A profilneveket a fióktulajdonos választja ki, és nincsenek ellenőrizve.</string>
+    <!-- Alert dialog title to accept a message request to join a group -->
+    <string name="MessageRequestBottomView_join_group">Csatlakozol a csoporthoz?</string>
+    <!-- Alert dialog body to review the message request for a group carefully -->
+    <string name="MessageRequestBottomView_review_requests_carefully_groups">Gondosan nézd át a felkéréseket. A csoportnevek a csoporttagok által kerülnek kiválasztásra, és nincsenek ellenőrizve.</string>
+    <!-- Button text to join a group -->
+    <string name="MessageRequestBottomView_join">Csatlakozás</string>
 
     <!-- PassphraseChangeActivity -->
     <string name="PassphraseChangeActivity_passphrases_dont_match_exclamation">A jelmondatok nem egyeznek!</string>
@@ -2047,7 +2197,7 @@
     <string name="DeviceProvisioningActivity_sorry_you_have_too_many_devices_linked_already">Sajnáljuk, de jelenleg túl sok eszköz van társítva, próbálj meg eltávolítani néhányat</string>
     <string name="DeviceActivity_sorry_this_is_not_a_valid_device_link_qr_code">Sajnáljuk, de ez nem egy érvényes eszköz-társítási QR kód.</string>
     <string name="DeviceProvisioningActivity_link_a_signal_device">Signal eszköz társítása?</string>
-    <string name="DeviceProvisioningActivity_it_looks_like_youre_trying_to_link_a_signal_device_using_a_3rd_party_scanner">Úgy tűnik, hogy egy harmadik féltől származó vonalkódolvasóval próbálsz Signal eszközt társítani. A saját védelmed érdekében kérlek szkenneld újra a kódot Signalon belül!</string>
+    <string name="DeviceProvisioningActivity_to_link_a_desktop_or_ipad_to_this_signal_account">Ha asztali számítógépet vagy iPadet szeretnél kapcsolni ehhez a Signal-fiókhoz, lépj a Kapcsolt eszközök oldalra, koppints az „Új eszköz összekapcsolása” lehetőségre, és olvasd be újra a QR-kódot. Ügyelj rá, hogy csak közvetlenül a Signaltól származó QR-kódokat olvass be.</string>
 
     <string name="DeviceActivity_signal_needs_the_camera_permission_in_order_to_scan_a_qr_code">A Signalnak szüksége van a Kamera engedélyre, hogy QR kódot szkennelhessen, de ez jelenleg nincs megadva. Kérlek menj az alkalmazásbeállításokhoz, válaszd az \"Engedélyek\"-et és engedélyezd a \"Kamera\"-t.</string>
     <string name="DeviceActivity_unable_to_scan_a_qr_code_without_the_camera_permission">Nem lehet QR kódot szkennelni Kamera hozzáférési engedély nélkül</string>
@@ -2126,6 +2276,7 @@
 
     <!-- ReactionsBottomSheetDialogFragment -->
     <string name="ReactionsBottomSheetDialogFragment_all">Összes %1$d</string>
+    <string name="ReactionsBottomSheetDialogFragment_tap_to_remove">Koppints az eltávolításhoz</string>
 
     <!-- ReactionsConversationView -->
     <string name="ReactionsConversationView_plus">+%1$d</string>
@@ -2331,6 +2482,15 @@
     <!-- Content description for toggling group ring state -->
     <string name="WebRtcCallView__toggle_group_ringing">Csoportos csengetés váltása</string>
 
+    <!-- Alert message indicating that the local user was remotely muted by some other user. Placeholder is the muters display name. -->
+    <string name="WebRtcCallView__s_remotely_muted_you">%1$s elnémított téged.</string>
+    <!-- Alert message indicating that the local user remotely muted another user. Placeholder is the name of the person muted. -->
+    <string name="WebRtcCallView__you_remotely_muted_s">%1$s elnémításra került.</string>
+    <!-- Alert message indicating that a remote user remotely muted another remote user. First placeholder is the muters display name, second is the display name of the person muted. -->
+    <string name="WebRtcCallView__s_remotely_muted_s">%1$s elnémította %2$s felhasználót.</string>
+    <!-- Alert message indicating that the local user joined a call on a second device and muted this one from the other one. -->
+    <string name="WebRtcCallView__you_muted_yourself">Elnémítottad magadat egy másik eszközről.</string>
+
     <!-- Error message when the developer added a button in the wrong place. -->
     <string name="WebRtcAudioOutputToggleButton_fragment_activity_error">Hiba történt a felhasználói felülettel. Kérjük, jelentsd a hibát a fejlesztőknek.</string>
     <!-- Error message when the user is trying to change audio outputs but none are present. -->
@@ -2358,6 +2518,8 @@
     <string name="CallOverflowPopupWindow__view">Megtekintés</string>
 
 
+    <!-- A notification to the user that their hand is raised but they are currently speaking -->
+    <string name="CallRaiseHandSnackbar__lower_your_hand">Leteszed a kezed?</string>
     <!-- A notification to the user that they successfully raised their hand. The placeholder string is CallParticipant__you, or CallParticipant__you_on_another_device -->
     <string name="CallRaiseHandSnackbar__expanded_second_person_raised_a_hand_single">%1$s felemelted a kezed</string>
     <!-- A notification to the user that they and at least one more participants in the call successfully raised their hand. The placeholder is a number quantifying how many other hands are also raised, besides the user. -->
@@ -2393,17 +2555,28 @@
     <!-- An accessibility label for screen readers on a view that can be expanded -->
     <string name="CallOverflowPopupWindow__expand_snackbar_accessibility_label">A felemelt kéz nézet megnyitása</string>
 
+    <!-- Toolbar title of country picker selection page -->
+    <string name="CountryCodeFragment__your_country">Az országod</string>
+    <!-- Hint text in search bar to either enter in a country name or number -->
+    <string name="CountryCodeFragment__search_by">Keresés név vagy ország előhívószám alapján</string>
+    <!-- Text shown when displaying a list of countries that indicates an unknown country    -->
+    <string name="CountryCodeFragment__unknown_country">Ismeretlen ország</string>
+
     <!-- AboutSheet -->
     <!-- Displayed in a sheet row and allows user to open signal connection explanation on tap -->
     <string name="AboutSheet__signal_connection">Signal Névjegy</string>
     <!-- Displayed in a sheet row describing that the user has marked this contact as \'verified\' from within the app -->
     <string name="AboutSheet__verified">Megerősítve</string>
+    <!-- Displayed in a sheet row that tells users that profile names are not verified -->
+    <string name="AboutSheet__profile_names_are_not_verified">A profilnevek nincsenek ellenőrizve</string>
+    <!-- Displayed in a sheet row describing that the user is in a message request state with the person -->
+    <string name="AboutSheet__pending_message_request">Függő üzenetkérés</string>
     <!-- Displayed in bottom sheet describing that the user has no direct messages with this person. The placeholder is a person\'s name. -->
     <string name="AboutSheet__no_direct_message">Nincs közvetlen üzenet %1$s felhasználóval</string>
     <!-- Explains that the given user (placeholder is short name) is in the users system contact -->
     <string name="AboutSheet__s_is_in_your_system_contacts">%1$s szerepel a telefonod névjegyei között</string>
     <!-- Notice in a row when user has no groups in common -->
-    <string name="AboutSheet__you_have_no_groups_in_common">Nincsenek közös csoportjaitok</string>
+    <string name="AboutSheet__you_have_no_groups_in_common">Nincsenek közös csoportok</string>
     <!-- Notice when a user is not a connection to review requests carefully -->
     <string name="AboutSheet__review_requests_carefully">Gondosan nézd át a kéréseket</string>
     <!-- Text used when user has groups in common. Placeholder is the count -->
@@ -2417,6 +2590,12 @@
     <string name="AboutSheet__you">Te</string>
     <!-- Displays the name of a contact. The first placeholder is the name the user has assigned to that contact, the second name is the name the contact assigned to themselves -->
     <string name="AboutSheet__user_set_display_name_and_profile_name">%1$s (%2$s)</string>
+
+    <!-- Title of the screen showing which groups they have in common with another user. -->
+    <plurals name="GroupsInCommon__n_groups_in_common_title">
+        <item quantity="one">%1$s db közös csoport</item>
+        <item quantity="other">%1$s db közös csoport</item>
+    </plurals>
 
     <!-- CallParticipantsListDialog -->
     <plurals name="CallParticipantsListDialog_in_this_call">
@@ -2457,6 +2636,7 @@
 
     <!-- RecaptchaProofActivity -->
     <string name="RecaptchaProofActivity_failed_to_submit">Sikertelen beküldés</string>
+    <!-- Toolbar title when solving a captcha -->
     <string name="RecaptchaProofActivity_complete_verification">Ellenőrzés befejezése</string>
 
     <!-- RegistrationActivity -->
@@ -2474,6 +2654,12 @@
     <string name="RegistrationActivity_additional_verification_required">További ellenőrzés szükséges</string>
     <!-- Dialog message shown when we need to verify sms and carrier rates may apply. -->
     <string name="RegistrationActivity_a_verification_code_will_be_sent_to_this_number">Az ellenőrző kódot erre a számra küldjük. Szolgáltatói díjak lehetnek érvényben.</string>
+    <!-- Text explaining to users that they will be receiving a verification for their phone number and that carrier rates could apply -->
+    <string name="RegistrationActivity_you_will_receive_a_verification_code">Hamarosan megerősítő kódot fogsz kapni. Szolgáltatói költségek felmerülhetnek.</string>
+    <!-- Hint text to select a country -->
+    <string name="RegistrationActivity_select_a_country">Válassz országot</string>
+    <!-- Hint text explaining that this is where the country code should go -->
+    <string name="RegistrationActivity_default_country_code">0</string>
     <string name="RegistrationActivity_you_will_receive_a_call_to_verify_this_number">A számod megerősítése érdekében hamarosan egy hívást indítunk a megadott számra.</string>
     <string name="RegistrationActivity_edit_number">Szám szerkesztése</string>
     <string name="RegistrationActivity_missing_google_play_services">Hiányzó Google Play Szolgáltatások</string>
@@ -2590,6 +2776,12 @@
     <string name="SignalPinReminders_well_remind_you_again_in_a_week">A PIN megerősítése sikerült. Egy hét múlva újra emlékeztetni fogunk.</string>
     <string name="SignalPinReminders_well_remind_you_again_in_a_couple_weeks">A PIN megerősítése sikerült. Néhány hét múlva újra emlékeztetni fogunk.</string>
     <string name="SignalPinReminders_well_remind_you_again_in_a_month">A PIN megerősítése sikerült. Egy hónap múlva újra emlékeztetni fogunk.</string>
+    <string name="SignalPinReminders__well_remind_you_again_later">Később újra emlékeztetünk.</string>
+    <string name="SignalPinReminders__well_remind_you_again_tomorrow">Holnap újra emlékeztetünk.</string>
+    <string name="SignalPinReminders__well_remind_you_again_in_a_few_days">Pár napon belül újra emlékeztetünk.</string>
+    <string name="SignalPinReminders__well_remind_you_again_in_a_week">Egy héten múlva újra emlékeztetünk.</string>
+    <string name="SignalPinReminders__well_remind_you_again_in_a_couple_weeks">Pár hét múlva újra emlékeztetünk.</string>
+    <string name="SignalPinReminders__well_remind_you_again_in_a_month">Egy hónap múlva újra emlékeztetünk.</string>
 
     <!-- Slide -->
     <string name="Slide_image">Kép</string>
@@ -2602,18 +2794,80 @@
     <string name="SmsMessageRecord_secure_session_reset_s">%1$s újraindította a biztonságos munkamenetet.</string>
     <string name="SmsMessageRecord_duplicate_message">Üzenet duplikálása.</string>
 
-    <!-- StickerManagementActivity -->
-    <string name="StickerManagementActivity_stickers">Matricák</string>
+    <!-- Sticker management screen default title. -->
+    <string name="StickerManagement_title_stickers">Matricák</string>
+    <!-- Sticker management screen title displayed when multiple sticker packs are selected in order to perform an action. The placeholder is the number of selected items. -->
+    <plurals name="StickerManagement_title_n_selected">
+        <item quantity="one">%1$s kiválasztva</item>
+        <item quantity="other">%1$s kiválasztva</item>
+    </plurals>
+    <!-- Label for the sticker management screen tab which shows the stickers that are available to install. -->
+    <string name="StickerManagement_available_tab_label">Elérhető</string>
+    <!-- Label for the sticker management screen tab which shows the stickers that are currently installed. -->
+    <string name="StickerManagement_installed_tab_label">Telepítve</string>
+    <!-- Shown when there are no sticker packs available for installation. -->
+    <string name="StickerManagement_available_tab_empty_text">Nincs elérhető matricacsomag</string>
+    <!-- Shown when there are no sticker packs currently installed. -->
+    <string name="StickerManagement_installed_tab_empty_text">Nincs telepítve matricacsomag</string>
+    <!-- Message shown when the author of the sticker pack is unknown. -->
+    <string name="StickerManagement_author_unknown">Ismeretlen</string>
+    <!-- Sticker pack list section header for packs that are already installed. -->
+    <string name="StickerManagement_installed_stickers_header">Telepített matricák</string>
+    <!-- Sticker pack list section header for packs that have been received from incoming messages. -->
+    <string name="StickerManagement_stickers_you_received_header">Beérkezett matricák</string>
+    <!-- Sticker pack list section header for highlighted/"blessed" packs. -->
+    <string name="StickerManagement_signal_artist_series_header">Signal Művészi Sorozat</string>
+    <!-- Title shown when sharing a sticker pack with another user. -->
+    <string name="StickerManagement_share_sheet_title">Továbbítás számukra</string>
+    <!-- Bottom action bar option to select all sticker packs in the list. -->
+    <string name="StickerManagement_action_select_all">Összes kivál.</string>
+    <!-- Bottom action bar option to deselect all sticker packs in the list. -->
+    <string name="StickerManagement_action_deselect_all">Összes kiválasztás törlése</string>
+    <!-- Bottom action bar option to uninstall all selected sticker packs. -->
+    <string name="StickerManagement_action_delete_selected">Törlés</string>
+    <!-- Confirmation message shown before uninstalling sticker packs. The placeholder is the number of items to delete. -->
+    <plurals name="StickerManagement_delete_n_packs_confirmation">
+        <item quantity="one">%1$s matricacsomag eltávolítása</item>
+        <item quantity="other">%1$s matricacsomag eltávolítása</item>
+    </plurals>
+    <!-- Message shown after installing a sticker pack. The placeholder is the name of the sticker pack that was installed. -->
+    <string name="StickerManagement_installed_pack_s">%1$s telepítve.</string>
+    <!-- Message shown after uninstalling a sticker pack. The placeholder is the name of the sticker pack that was deleted. -->
+    <string name="StickerManagement_deleted_pack_s">%1$s eltávolítva.</string>
+    <!-- Message shown after uninstalling sticker packs. The placeholder is the number of items that were deleted. -->
+    <plurals name="StickerManagement_deleted_n_packs">
+        <item quantity="one">%1$s matricacsomag eltávolítva.</item>
+        <item quantity="other">%1$s matricacsomag eltávolítva.</item>
+    </plurals>
+
+    <!-- Sticker pack list dropdown menu label for the button to forward a sticker pack to another user. -->
+    <string name="StickerManagement_menu_forward_pack">Továbbítás</string>
+    <!-- Sticker pack list dropdown menu label for the button to mark a sticker pack as selected in order to perform additional actions. -->
+    <string name="StickerManagement_menu_select_pack">Kiválasztás</string>
+    <!-- Sticker pack list dropdown menu label for the button to install a sticker pack. -->
+    <string name="StickerManagement_menu_install_pack">Telepítés</string>
+    <!-- Sticker pack list dropdown menu label for the button to uninstall a sticker pack. -->
+    <string name="StickerManagement_menu_remove_pack">Eltávolítás</string>
+    <!-- Sticker management screen dropdown menu label for the button to enter multi-select mode. -->
+    <string name="StickerManagement_menu_select_packs">Matricacsomagok kiválasztása</string>
+
+    <!-- Accessibility label for the button to download a sticker pack. The placeholder is the sticker pack name. -->
+    <string name="StickerManagement_accessibility_download_pack">%1$s matricacsomag letöltése</string>
+    <!-- Accessibility label for the icon that is displayed after a sticker pack has been downloaded. The placeholder is the sticker pack name. -->
+    <string name="StickerManagement_accessibility_downloaded_checkmark">Letöltés pipa</string>
+    <!-- Accessibility label for the sticker pack drag and drop handle used to reorder the list. -->
+    <string name="StickerManagement_accessibility_drag_handle">Behúzás ikon</string>
+    <!-- Accessibility label for the button to download a sticker pack. -->
+    <string name="StickerManagement_accessibility_download">Letöltés</string>
+    <!-- Accessibility label for opening the screen specific dropdown menu. -->
+    <string name="StickerManagement_accessibility_open_top_bar_menu">Menü megnyitása</string>
+    <!-- Accessibility label for opening the context menu for a sticker pack row item. -->
+    <string name="StickerManagement_accessibility_open_context_menu">Helyi menü megnyitása</string>
+    <!-- Accessibility label for opening the context menu for a sticker pack row item. -->
+    <string name="StickerManagement_accessibility_exit_multi_select_mode">Kilépés a kijelölési módból és a kijelölések törlése</string>
 
     <!-- StickerManagementAdapter -->
-    <string name="StickerManagementAdapter_installed_stickers">Telepített matricák</string>
-    <string name="StickerManagementAdapter_stickers_you_received">Beérkezett matricák</string>
-    <string name="StickerManagementAdapter_signal_artist_series">Signal Művészi Sorozat</string>
-    <string name="StickerManagementAdapter_no_stickers_installed">Nincsenek matricák telepítve</string>
-    <string name="StickerManagementAdapter_stickers_from_incoming_messages_will_appear_here">A beérkezett üzenetekben szereplő matricák itt fognak megjelenni</string>
     <string name="StickerManagementAdapter_untitled">Névtelen</string>
-    <!-- Message shown when the author of the sticker pack is unknown -->
-    <string name="StickerManagementAdapter_unknown">Ismeretlen</string>
 
     <!-- StickerPackPreviewActivity -->
     <string name="StickerPackPreviewActivity_untitled">Névtelen</string>
@@ -2640,6 +2894,8 @@
     <string name="SubmitDebugLogActivity_copy_this_url_and_add_it_to_your_issue">Másold ki ezt a URL-t és illeszd be a hibajegybe vagy a támogatásnak küldött e-mailbe:\n\n<b>%1$s</b></string>
     <string name="SubmitDebugLogActivity_share">Megosztás</string>
     <string name="SubmitDebugLogActivity_this_log_will_be_posted_publicly_online_for_contributors">Ez a naplófájl nyilvánosan elérhető lesz az interneten annak érdekében, hogy a fejlesztők megtekinthessék. A tartalmát feltöltés előtt ellenőrizheted, és szabadon szerkesztheted.</string>
+    <!-- Banner message shown while submitting debug log -->
+    <string name="SubmitDebugLogActivity_your_log_will_be_posted_online">A Küldés gombra nyomva a hibanaplód egy egyedi, nem publikus online tárhelyre kerül feltöltésre, ahonnan 30 nap után törlődik. Ha gondolod, mentsd el előbb a készülékedre is.</string>
 
     <!-- SupportEmailUtil -->
   <!-- Removed by excludeNonTranslatables <string name="SupportEmailUtil_support_email" translatable="false">support@signal.org</string> -->
@@ -2708,6 +2964,10 @@
     <string name="ThreadRecord_message_history_has_been_merged">Az üzenetelőzményeid egyesítésre kerültek</string>
     <!--  Displayed in the conversation list when identities have been merged. The first placeholder is a phone number, and the second is a person\'s name -->
     <string name="ThreadRecord_s_belongs_to_s">A(z) %1$s telefonszám %2$s felhasználóhoz tartozik</string>
+    <!-- Displayed in the conversation list when a person has been blocked -->
+    <string name="ThreadRecord_blocked">Letiltva</string>
+    <!-- Displayed in the conversation list when a group has been blocked -->
+    <string name="ThreadRecord_blocked_group">Letiltva</string>
 
     <!-- ApkUpdateNotifications -->
     <string name="ApkUpdateNotifications_prompt_install_title">Signal frissítés</string>
@@ -2807,10 +3067,6 @@
     <!-- MessageDisplayHelper -->
     <string name="MessageDisplayHelper_message_encrypted_for_non_existing_session">Az üzenet nem létező munkamenethez lett titkosítva</string>
 
-    <!-- MmsMessageRecord -->
-    <string name="MmsMessageRecord_bad_encrypted_mms_message">Hibás titkosított MMS üzenet</string>
-    <string name="MmsMessageRecord_mms_message_encrypted_for_non_existing_session">Az MMS üzenet nem létező munkamenethez lett titkosítva</string>
-
     <!-- MuteDialog -->
     <string name="MuteDialog_mute_notifications">Értesítések némítása</string>
 
@@ -2823,8 +3079,6 @@
     <string name="MediaPreviewActivity_you">Te</string>
     <string name="MediaPreviewActivity_unssuported_media_type">Nem támogatott médiatípus</string>
     <string name="MediaPreviewActivity_draft">Piszkozat</string>
-    <string name="MediaPreviewActivity_signal_needs_the_storage_permission_in_order_to_write_to_external_storage_but_it_has_been_permanently_denied">A Signalnak szüksége van a Tárhely engedélyre ahhoz, hogy külső tárolóra menthessen, de ez jelenleg nincs megadva. Kérlek menj az alkalmazásbeállításokhoz, válaszd az \"Engedélyek\"-et és engedélyezd a \"Tárhely\"-t.</string>
-    <string name="MediaPreviewActivity_unable_to_write_to_external_storage_without_permission">Nem lehet engedély nélkül menteni a külső tárolóra</string>
     <string name="MediaPreviewActivity_media_delete_confirmation_title">Törlöd az üzenetet?</string>
     <string name="MediaPreviewActivity_media_delete_confirmation_message">Ez véglegesen törölni fogja ezt az üzenetet.</string>
     <string name="MediaPreviewActivity_s_to_s">%1$s (címzett: %2$s)</string>
@@ -2928,15 +3182,49 @@
     <string name="NotificationChannel_critical_app_alerts">Fontos alkalmazás-figyelmeztetések</string>
     <!-- Notification channel name for other notifications related to messages. Will appear in the system notification settings as the title of this notification channel. -->
     <string name="NotificationChannel_additional_message_notifications">További üzenetértesítések</string>
-
-    <!-- ProfileEditNameFragment -->
+    <!-- Notification channel name for notifications sent when a device has been linked -->
+    <string name="NotificationChannel_new_linked_device">Új kapcsolt eszköz</string>
 
     <!-- QuickResponseService -->
     <string name="QuickResponseService_quick_response_unavailable_when_Signal_is_locked">A gyors válasz nem érhető el, ha a Signal zárolva van!</string>
     <string name="QuickResponseService_problem_sending_message">Probléma lépett fel az üzenet küldése során!</string>
 
-    <!-- A small toast notification to let the user know their image/video/audio was downloaded and saved to their device, accessible in other apps. -->
-    <string name="SaveAttachmentTask_saved">Médiafájl elmentve</string>
+    <!-- A toast notification that is shown when the app does not have sufficient permissions to save media files to the device storage. -->
+    <string name="SaveAttachment_unable_to_write_to_sd_card_exclamation">Nem lehet írni a tárolóra!</string>
+
+    <!-- A toast notification that is shown after image/video/audio media was successfully downloaded and saved to the device storage, accessible in other apps. -->
+    <plurals name="SaveAttachment_saved_success">
+        <item quantity="one">Médiafájl elmentve</item>
+        <item quantity="other">Médiafájl elmentve</item>
+    </plurals>
+
+    <!-- A toast notification that is shown after some image/video/audio media was successfully downloaded and saved to the device storage, but some failed to save
+         %1$s is the number of items that failed to save and %2$s is the total number of items that the user requested to save. -->
+    <plurals name="SaveAttachment_saved_success_n_failures">
+        <item quantity="one">Médiafájl elmentve (%1$s/%2$s sikertelen)</item>
+        <item quantity="other">Médiafájl elmentve (%1$s/%2$s sikertelen)</item>
+    </plurals>
+
+    <!-- A toast notification that is shown after all of the requested image/video/audio media failed to save to the device storage. -->
+    <plurals name="SaveAttachment_error_while_saving_attachments_to_sd_card">
+        <item quantity="one">Hiba történt a melléklet tárolóra mentése közben!</item>
+        <item quantity="other">Hiba történt a mellékletek tárolóra mentése során!</item>
+    </plurals>
+
+    <!-- Dialog title asking to save media to your phone\'s storage -->
+    <string name="AttachmentSaver__save_to_phone">Mentés telefonra?</string>
+
+    <!-- Dialog message explaining that media will be saved to your phone and can potentially be accessed by other phones. -->
+    <plurals name="AttachmentSaver__this_media_will_be_saved">
+        <item quantity="one">Ezt a médiatartalmat a rendszer a telefon tárhelyére menti. A telefon engedélyeitől függően más alkalmazások is hozzáférhetnek.</item>
+        <item quantity="other">Ezt a médiatartalmat a rendszer a telefon tárhelyére menti. A telefon engedélyeitől függően más alkalmazások is hozzáférhetnek.</item>
+    </plurals>
+
+    <!-- Message shown when the app requests permission to save media to the device storage, but that permission has been permanently denied by the user. -->
+    <string name="AttachmentSaver__signal_needs_the_storage_permission_in_order_to_write_to_external_storage_but_it_has_been_permanently_denied">A Signalnak szüksége van a Tárhely engedélyre ahhoz, hogy külső tárolóra menthessen, de ez jelenleg nincs megadva. Kérlek menj az alkalmazásbeállításokhoz, válaszd az \"Engedélyek\"-et és engedélyezd a \"Tárhely\"-t.</string>
+
+    <!-- Message explaining that it is not possible to save media to the device storage after the user denied the system save to storage permission. -->
+    <string name="AttachmentSaver__unable_to_write_to_external_storage_without_permission">Nem lehet engedély nélkül menteni a külső tárolóra</string>
 
     <!-- SearchToolbar -->
     <string name="SearchToolbar_search">Keresés</string>
@@ -2981,6 +3269,7 @@
 
     <!-- ThumbnailView -->
     <string name="ThumbnailView_Play_video_description">Videó lejátszása</string>
+    <!-- Content description to describe an icon that indicates a video has captions -->
     <string name="ThumbnailView_Has_a_caption_description">Felirattal rendelkezik</string>
 
     <!-- TransferControlView -->
@@ -2991,10 +3280,7 @@
     <!-- Status update label used while the device is transcoding video as a prerequisite to uploading -->
     <string name="TransferControlView__processing">Feldolgozás…</string>
     <!-- Status update label used while the device is transmitting data over the network. Will take the form of "1.0 MB/2.0 MB" -->
-    <string name="TransferControlView__download_progress">%1$1.1f MB/%2$2.1f MB</string>
-    <!-- Attachment file size label for not-yet-downloaded images and video. Will take the form of "1.0 MB" -->
-    <string name="TransferControlView__filesize">%1$1.1f MB</string>
-
+    <string name="TransferControlView__download_progress_s_s">%1$s/%2$s</string>
 
     <!-- UnauthorizedReminder -->
     <!-- Message shown in a reminder banner when the user\'s device is no longer registered -->
@@ -3175,7 +3461,8 @@
     <string name="ConversationUpdateItem_update_contact">Profil frissítése</string>
     <!-- Update item button text to show to block a recipient from requesting to join via group link -->
     <string name="ConversationUpdateItem_block_request">Felkérés letiltása</string>
-    <string name="ConversationUpdateItem_no_groups_in_common_review_requests_carefully">Nincs közös csoportotok. A kérelmek áttekintése során légy óvatos.</string>
+    <!-- Text shown in conversation header that the account messaging the user does not have any groups in common with them -->
+    <string name="ConversationUpdateItem_no_groups_in_common_review_requests_carefully">Nincsenek közös csoportok</string>
     <string name="ConversationUpdateItem_no_contacts_in_this_group_review_requests_carefully">Nincs ismerősöd ebben a csoportban. A kérelmek áttekintése során légy óvatos.</string>
     <string name="ConversationUpdateItem_view">Megtekintés</string>
     <string name="ConversationUpdateItem_the_disappearing_message_time_will_be_set_to_s_when_you_message_them">Az eltűnő üzenetek időzítője %1$s értékre lesz állítva a következő üzenettől kezdve.</string>
@@ -3195,6 +3482,11 @@
     <!-- audio_view -->
     <string name="audio_view__play_pause_accessibility_description">Lejátszás … Szünet</string>
     <string name="audio_view__download_accessibility_description">Letöltés</string>
+
+    <!-- document_view -->
+    <string name="document_view__download_accessibility_description">Letöltés</string>
+    <string name="document_view__upload_accessibility_description">Feltöltés</string>
+    <string name="document_view__cancel_accessibility_description">Mégse</string>
 
     <!-- QuoteView -->
     <string name="QuoteView_audio">Hang</string>
@@ -3491,10 +3783,10 @@
         <item>Funkciókérés</item>
         <item>Kérdés</item>
         <item>Visszajelzés</item>
-        <item>Egyéb</item>
         <item>Fizetések (MobileCoin)</item>
         <item>Adományok és jelvények</item>
         <item>Signal Android biztonsági mentés</item>
+        <item>Egyéb</item>
     </string-array>
     <!-- Subject of email when submitting debug logs to help debug slow notifications -->
     <string name="DebugLogsPromptDialogFragment__signal_android_support_request">A Signal Android hibajavítási naplójának benyújtása</string>
@@ -3504,6 +3796,7 @@
     <string name="DebugLogsPromptDialogFragment__no_thanks">Nem, köszönöm</string>
 
     <!-- ReactWithAnyEmojiBottomSheetDialogFragment -->
+    <string name="ReactWithAnyEmojiBottomSheetDialogFragment__recents">Előzmények</string>
     <string name="ReactWithAnyEmojiBottomSheetDialogFragment__this_message">Jelenlegi üzenet</string>
     <string name="ReactWithAnyEmojiBottomSheetDialogFragment__recently_used">Nemrég használt</string>
     <string name="ReactWithAnyEmojiBottomSheetDialogFragment__smileys_and_people">Smiley-k és emberek</string>
@@ -3516,6 +3809,17 @@
     <string name="ReactWithAnyEmojiBottomSheetDialogFragment__flags">Zászlók</string>
     <string name="ReactWithAnyEmojiBottomSheetDialogFragment__emoticons">Emotikonok</string>
     <string name="ReactWithAnyEmojiBottomSheetDialogFragment__no_results_found">Nincs találat</string>
+
+    <!-- GifQuickSearchOption -->
+    <string name="GifQuickSearchOption__recents">Előzmények</string>
+    <string name="GifQuickSearchOption__trending">Felkapott</string>
+    <string name="GifQuickSearchOption__celebrate">Ünneplés</string>
+    <string name="GifQuickSearchOption__love">Szeretet/Szerelem</string>
+    <string name="GifQuickSearchOption__thumbs_up">Lájk</string>
+    <string name="GifQuickSearchOption__surprised">Meglepett</string>
+    <string name="GifQuickSearchOption__excited">Izgatott</string>
+    <string name="GifQuickSearchOption__sad">Szomorú</string>
+    <string name="GifQuickSearchOption__angry">Dühös</string>
 
     <!-- arrays.xml -->
     <string name="arrays__use_default">Alapértelmezett használata</string>
@@ -3574,7 +3878,9 @@
     <string name="preferences__lock_signal_and_message_notifications_with_a_passphrase">Képernyő és értesítések zárolása jelmondattal</string>
     <string name="preferences__screen_security">Képernyőbiztonság</string>
     <string name="preferences__auto_lock_signal_after_a_specified_time_interval_of_inactivity">Signal automatikus zárolása meghatározott inaktivitási időszak után</string>
+    <!-- Legacy preference menu item to enable locking of app after inactivity -->
     <string name="preferences__inactivity_timeout_passphrase">Inaktivitási időtúllépés jelmondat</string>
+    <!-- Legacy preference menu item to choose the interval of inactivity before lockout -->
     <string name="preferences__inactivity_timeout_interval">Inaktivitási időtúllépés időköz</string>
     <string name="preferences__notifications">Értesítések</string>
     <string name="preferences__led_color">LED színe</string>
@@ -3585,6 +3891,7 @@
     <!-- Preference menu item to control the sound of notifications -->
     <string name="preferences__sound">Dallam</string>
     <string name="preferences__silent">Csendes</string>
+    <!-- Preference menu item to use the default sound for notifications -->
     <string name="preferences__default">Alapértelmezett</string>
     <string name="preferences__repeat_alerts">Figyelmeztetések ismétlése</string>
     <string name="preferences__never">Soha</string>
@@ -3601,6 +3908,7 @@
     <string name="preferences__cyan">Cián</string>
     <string name="preferences__magenta">Bíborvörös</string>
     <string name="preferences__white">Fehér</string>
+    <!-- Text shown when no preference label has been selected -->
     <string name="preferences__none">Egyik sem</string>
     <string name="preferences__fast">Gyors</string>
     <string name="preferences__normal">Normál</string>
@@ -3663,6 +3971,8 @@
     <string name="preferences__language">Nyelv</string>
     <string name="preferences__signal_messages_and_calls">Signal üzenetek és hívások</string>
     <string name="preferences__advanced_pin_settings">További PIN beállítások</string>
+    <!-- Title of toolbar for the advanced pin settings screen -->
+    <string name="preferences__advanced_pin_settings_title">További PIN beállítások</string>
     <string name="preferences__free_private_messages_and_calls">Ingyenes és privát üzenetek, valamint hívások Signal felhasználók részére</string>
     <string name="preferences__submit_debug_log">Hibakeresési napló küldése</string>
     <string name="preferences__delete_account">Fiók törlése</string>
@@ -3767,6 +4077,7 @@
     <string name="preferences_connection_failed">Sikertelen kapcsolódás</string>
     <string name="preferences_couldnt_connect_to_the_proxy">Nem sikerült csatlakozni a proxyhoz. Ellenőrizd a proxy szerver címét, és próbáld újra!</string>
     <string name="preferences_you_are_connected_to_the_proxy">Csatlakozva vagy a proxyhoz. A proxyt bármikor kikapcsolhatod a Beállítások menüben.</string>
+    <!-- Title of alert dialog after a successful connection to the proxy -->
     <string name="preferences_success">Siker</string>
     <string name="preferences_failed_to_connect">Sikertelen kapcsolódás</string>
     <string name="preferences_enter_proxy_address">Proxy cím megadása</string>
@@ -4104,6 +4415,8 @@
     <string name="conversation_list_fragment__fab_content_description">Új csevegés</string>
     <string name="conversation_list_fragment__open_camera_description">Kamera megnyitása</string>
     <string name="conversation_list_fragment__no_chats_yet_get_started_by_messaging_a_friend">Még üres a csevegéslista.\nKezdésként üzenj egy barátodnak.</string>
+    <!-- Message shown when there are no archived chats to display -->
+    <string name="conversation_list_fragment__archived_chats_will_appear_here">Az archivált csevegések itt jelennek meg.</string>
     <!-- Message shown when there are no chats in the chat folder to display -->
     <string name="conversation_list_fragment__no_chats_to_display">Nincs megjeleníthető csevegés</string>
     <!-- Button text that will open up chat folder settings -->
@@ -4191,6 +4504,7 @@
 
 
     <!-- media_preview_activity -->
+    <!-- Content description of images or videos when viewing media -->
     <string name="media_preview_activity__media_content_description">Médiafájl előnézete</string>
 
     <!-- new_conversation_activity -->
@@ -4307,6 +4621,13 @@
     <string name="KbsMegaphone__pins_keep_information_thats_stored_with_signal_encrytped">A PIN-nek köszönhetően a Signal által tárolt információk titkosítva vannak.</string>
     <string name="KbsMegaphone__create_pin">PIN létrehozása</string>
 
+    <!-- Title for megaphone shown after registration without a pin but with aep to prompt the user to enter their pin -->
+    <string name="UpdatePinMegaphone__update_signal_pin">Signal PIN-kód frissítése</string>
+    <!-- Message for megaphone shown after registration without a pin but with aep to prompt the user to enter their pin -->
+    <string name="UpdatePinMegaphone__message">A fiókregisztráció befejezéséhez frissítsd a Signal PIN-kódodat.</string>
+    <!-- Button text for megaphone shown after registration without a pin but with aep to prompt the user to enter their pin -->
+    <string name="UpdatePinMegaphone__update_pin">PIN kód frissítése</string>
+
     <!-- CallNotificationBuilder -->
     <!-- Displayed in a notification when a Signal voice call is ringing -->
     <string name="CallNotificationBuilder__incoming_signal_voice_call">Bejövő Signal-hanghívás</string>
@@ -4364,10 +4685,12 @@
     <string name="BackupDialog_disable_and_delete_all_local_backups">Letiltod és törlöd az összes helyi biztonsági mentést?</string>
     <string name="BackupDialog_delete_backups_statement">Biztonsági mentések törlése</string>
     <string name="BackupDialog_to_enable_backups_choose_a_folder">A biztonsági mentések engedélyezéséhez válassz egy mappát! A mentések itt lesznek létrehozva.</string>
+    <!-- Button shown in dialog to choose a folder for backups -->
     <string name="BackupDialog_choose_folder">Mappa kiválasztása</string>
     <string name="BackupDialog_copied_to_clipboard">Vágólapra másolva</string>
     <string name="BackupDialog_no_file_picker_available">Nem érhető el fájlválasztó alkalmazás.</string>
     <string name="BackupDialog_enter_backup_passphrase_to_verify">Add meg megerősítés céljából a biztonsági mentés jelmondatát</string>
+    <!-- Confirmation button text on an alert dialog to verify whether the entered backup phrase was correct -->
     <string name="BackupDialog_verify">Hitelesítés</string>
     <string name="BackupDialog_you_successfully_entered_your_backup_passphrase">A biztonsági mentés jelmondat megadása sikeres volt</string>
     <string name="BackupDialog_passphrase_was_not_correct">A jelmondat nem megfelelő</string>
@@ -4392,6 +4715,7 @@
     <string name="RegistrationActivity_code_support_subject">Signal regisztráció - megerősítő kód Androidhoz</string>
     <string name="RegistrationActivity_incorrect_code">Helytelen kód</string>
     <string name="BackupUtil_never">Soha</string>
+    <!-- Subtext below last backup time when we do not know when the last backup was -->
     <string name="BackupUtil_unknown">Ismeretlen</string>
     <!-- Phone number heading displayed as a screen title -->
     <string name="preferences_app_protection__phone_number">Telefonszám</string>
@@ -4446,6 +4770,14 @@
     <string name="RegistrationActivity_you_have_made_too_many_attempts_please_try_again_later">Túl sokszor próbálkoztál. Kérlek próbáld újra később!</string>
     <string name="RegistrationActivity_error_connecting_to_service">Hiba történt a szolgáltatáshoz történő csatlakozás során</string>
     <string name="preferences_chats__backups">Biztonsági mentések</string>
+
+    <!-- Button label to indicate that a feature is in beta mode -->
+    <string name="Beta__beta_title">Béta</string>
+    <!-- Content description for info icon -->
+    <string name="Beta__info">Részletek</string>
+    <!-- Text in header describing that the feature is a beta feature and prone to frequent changes -->
+    <string name="Beta__this_is_beta">Ez egy béta funkció, amelyhez folyamatosan funkciókat fogunk hozzáadni.</string>
+
     <!-- Title text shown when Signal is locked and needs to be unlocked -->
     <string name="prompt_passphrase_activity__unlock_signal">Signal feloldása</string>
     <!-- Description text explaining how to unlock Signal -->
@@ -4576,6 +4908,7 @@
     <string name="DeviceTransferSetup__try_turning_wifi_off_and_on_on_both_devices">Próbáld ki-, majd bekapcsolni a Wi-Fit mindkét készüléken!</string>
     <string name="DeviceTransferSetup__make_sure_both_devices_are_in_transfer_mode">Ellenőrizd, hogy mindkét eszköz átviteli módban van.</string>
     <string name="DeviceTransferSetup__go_to_support_page">Támogatás megnyitása</string>
+    <!-- Button text when a device transfer could not occur and to try again -->
     <string name="DeviceTransferSetup__try_again">Újra</string>
     <string name="DeviceTransferSetup__waiting_for_other_device">Várakozás a másik eszközre</string>
     <string name="DeviceTransferSetup__tap_continue_on_your_other_device_to_start_the_transfer">Koppints a Folytatásra másik eszközödön az átvitel megkezdéséhez!</string>
@@ -4715,8 +5048,8 @@
     <string name="ReviewCardDialogFragment__no_other_groups_in_common">Nincs egyéb közös csoportotok.</string>
     <string name="ReviewCardDialogFragment__no_groups_in_common">Nincs közös csoportotok.</string>
     <plurals name="ReviewCardDialogFragment__d_other_groups_in_common">
-        <item quantity="one">%1$d db közös csoport</item>
-        <item quantity="other">%1$d db közös csoport</item>
+        <item quantity="one">%1$d egyéb közös csoport</item>
+        <item quantity="other">%1$d egyéb közös csoport</item>
     </plurals>
     <plurals name="ReviewCardDialogFragment__d_groups_in_common">
         <item quantity="one">%1$d db közös csoport</item>
@@ -4808,6 +5141,7 @@
     <string name="ShareActivity__share">Megosztás</string>
     <!-- Label to describe circular spinner button -->
     <string name="ShareActivity__send">Küldés</string>
+    <!-- When sharing to a list of people, %1$s is the name of a person -->
     <string name="ShareActivity__comma_s">, %1$s</string>
     <!-- Toast when the incoming intent is invalid -->
     <string name="ShareActivity__could_not_get_share_data_from_intent">Nem sikerült lekérni a megosztási adatokat.</string>
@@ -4997,6 +5331,8 @@
     <string name="AppSettingsFragment__renew_your_signal_backups_subscription">Újítsd meg Signal Biztonsági mentések visszaállítása előfizetésedet</string>
     <!-- String alerting user that backup failed -->
     <string name="AppSettingsFragment__couldnt_complete_backup">Nem sikerült elvégezni a biztonsági mentést</string>
+    <!-- String alerting user that backup redemption -->
+    <string name="AppSettingsFragment__couldnt_redeem_your_backups_subscription">Nem sikerült aktiválni a biztonsági mentésre vonatkozó előfizetésedet</string>
     <!-- String displayed telling user to invite their friends to Signal -->
     <string name="AppSettingsFragment__invite_your_friends">Hívd meg barátaidat!</string>
     <!-- String displayed in a toast when we successfully copy the donations subscriber id to the clipboard -->
@@ -5074,9 +5410,11 @@
     <string name="ChangeNumberEnterPhoneNumberFragment__you_must_specify_your_old_phone_number">Meg kell adnod régi telefonszámodat</string>
     <string name="ChangeNumberEnterPhoneNumberFragment__you_must_specify_your_new_number_country_code">Meg kell adnod az új számod országkódját</string>
     <string name="ChangeNumberEnterPhoneNumberFragment__you_must_specify_your_new_phone_number">Meg kell adnod új telefonszámodat</string>
+    <string name="ChangeNumberEnterPhoneNumberFragment__your_new_phone_number_can_not_be_same_as_your_old_phone_number">Az új telefonszámod nem egyezhet meg a régi telefonszámoddal</string>
 
     <!-- ChangeNumberVerifyFragment -->
     <string name="ChangeNumberVerifyFragment__change_number">Szám változtatása</string>
+    <!-- Text shown when verifying a new phone number where %1$s is the number being changed -->
     <string name="ChangeNumberVerifyFragment__verifying_s">%1$s ellenőrzése</string>
     <string name="ChangeNumberVerifyFragment__captcha_required">Captcha szükséges</string>
 
@@ -5452,6 +5790,7 @@
     <string name="ConversationSettingsFragment__permissions">Jogosultságok</string>
     <string name="ConversationSettingsFragment__requests_and_invites">Kérelmek &amp; meghívók</string>
     <string name="ConversationSettingsFragment__group_link">Csoporthivatkozás</string>
+    <!-- Option in conversation settings to add a user as a contact -->
     <string name="ConversationSettingsFragment__add_as_a_contact">Hozzáadás kontaktként</string>
     <string name="ConversationSettingsFragment__unmute">Némítás feloldása</string>
     <!-- The subtitle for a settings item that describes how long the user\'s chat is muted. If a chat is muted, you will not receive notifications unless @mentioned. The placeholder represents a time (e.g. 10pm, March 4, etc). -->
@@ -5460,6 +5799,8 @@
     <string name="ConversationSettingsFragment__copied_phone_number_to_clipboard">Telefonszám átmásolva a vágólapra.</string>
     <string name="ConversationSettingsFragment__phone_number">Telefonszám</string>
     <string name="ConversationSettingsFragment__get_badges">Szerezz jelvényeket a profilképedre a Signal támogatásával. Koppints az egyik jelvényre a további tudnivalókért!</string>
+    <!-- Error message shown when the user is trying to open a media that is not sent yet. -->
+    <string name="ConversationSettingsFragment__this_media_is_not_sent_yet">Ez a médiafájl még nincs elküldve.</string>
 
     <!-- PermissionsSettingsFragment -->
     <string name="PermissionsSettingsFragment__add_members">Tagok hozzáadása</string>
@@ -5476,6 +5817,7 @@
     <string name="SoundsAndNotificationsSettingsFragment__not_muted">Nincs némítva</string>
     <string name="SoundsAndNotificationsSettingsFragment__mentions">Említések</string>
     <string name="SoundsAndNotificationsSettingsFragment__always_notify">Mindig értesítsen</string>
+    <!-- Dialog option to not send notifications if mentioned when the conversation is muted -->
     <string name="SoundsAndNotificationsSettingsFragment__do_not_notify">Ne értesítsen</string>
     <string name="SoundsAndNotificationsSettingsFragment__custom_notifications">Egyedi értesítések</string>
 
@@ -5511,6 +5853,8 @@
     <string name="NewConversationActivity__s_has_been_removed">%1$s eltávolításra került</string>
     <!-- Snackbar message after blocking a contact -->
     <string name="NewConversationActivity__s_has_been_blocked">%1$s letiltva</string>
+    <!-- Snackbar message when blocking a contact has failed -->
+    <string name="NewConversationActivity__block_failed">Letiltás sikertelen</string>
     <!-- Dialog title when remove target contact is in system contacts -->
     <string name="NewConversationActivity__unable_to_remove_s">%1$s eltávolítása sikertelen</string>
     <!-- Dialog message when remove target contact is in system contacts -->
@@ -5564,9 +5908,10 @@
     <string name="ShareInterstitialActivity__share">Megosztás</string>
 
     <!-- DSLSettingsToolbar -->
+    <!-- Content description describing the back arrow on toolbars -->
     <string name="DSLSettingsToolbar__navigate_up">Navigáció fel</string>
     <string name="MultiselectForwardFragment__forward_to">Továbbítás számukra</string>
-    <!-- Displayed when sharing content via the fragment -->
+    <!-- Displayed when sharing content to people via the fragment -->
     <string name="MultiselectForwardFragment__share_with">Megosztás…</string>
     <string name="MultiselectForwardFragment__add_a_message">Szöveg hozzáadása</string>
     <string name="MultiselectForwardFragment__faster_forwards">Gyorsabb továbbítás</string>
@@ -5574,6 +5919,7 @@
     <string name="MultiselectForwardFragment__videos_will_be_trimmed">A videókat levágjuk 30 mp-es klipekre, és több Történetként kerülnek elküldésre.</string>
     <!-- Displayed when user selects a video that cannot be sent as a story -->
     <string name="MultiselectForwardFragment__videos_sent_to_stories_cant">A Történetként kirakott videók nem lehetnek 30 mp-nél hosszabbak.</string>
+    <!-- Body in alert dialog telling users that messages are now sent immediately -->
     <string name="MultiselectForwardFragment__forwarded_messages_are_now">A továbbított üzenetek azonnal elküldésre kerülnek.</string>
     <plurals name="MultiselectForwardFragment_send_d_messages">
         <item quantity="one">%1$d üzenet küldése</item>
@@ -5621,6 +5967,24 @@
     <string name="MediaReviewFragment__photo_set_to_high_quality">A fotó magas minőségre van állítva</string>
     <!-- Small notification presented to the user when they set their still image to be sent in standard (lower than high) visual quality. -->
     <string name="MediaReviewFragment__photo_set_to_standard_quality">A fotó normál minőségre van állítva</string>
+    <!-- Accessibility label describing the add media button on the Media review screen -->
+    <string name="MediaReviewFragment__add_media_accessibility_label">Médiatartalom hozzáadása</string>
+    <!-- Accessibility label describing the brush and pen button on the Media review screen -->
+    <string name="MediaReviewFragment__brush_pen_accessibility_label">Ecset és toll</string>
+    <!-- Accessibility label describing the crop and rotate button on the Media review screen -->
+    <string name="MediaReviewFragment__crop_rotate_accessibility_label">Vágás és forgatás</string>
+    <!-- Accessibility label describing the change media quality button on the Media review screen -->
+    <string name="MediaReviewFragment__change_media_quality_accessibility_label">Médiatartalom minőségének módosítása</string>
+    <!-- Accessibility label describing the save media button on the Media review screen -->
+    <string name="MediaReviewFragment__save_media_accessibility_label">Médiatartalom mentése</string>
+    <!-- Accessibility label describing the toggle emoji keyboard button on the Media review screen -->
+    <string name="MediaReviewFragment__emoji_toggle_accessibility_label">Emoji billentyűzet kapcsoló</string>
+    <!-- Accessibility label describing the toggle view once button on the Media review screen -->
+    <string name="MediaReviewFragment__view_once_toggle_accessibility_label">Egyszer megtekinthető nézet be-/kikapcsolása</string>
+    <!-- Accessibility label describing the send media button on the Media review screen -->
+    <string name="MediaReviewFragment__send_media_accessibility_label">Médiatartalom küldése</string>
+    <!-- Accessibility label describing the finish adding a message button on the Media review screen dialog -->
+    <string name="MediaReviewFragment__finish_adding_a_message_accessibility_label">Fejezd be az üzenet hozzáadását</string>
     <!-- Small notification presented to the user when they set multiple media items to be sent in high visual quality. -->
     <plurals name="MediaReviewFragment__items_set_to_high_quality">
         <item quantity="one">%1$d elem magas minőségre van állítva</item>
@@ -5665,7 +6029,7 @@
     <!-- The title of a dialog notifying that the user scanned a QR code that could be used to link a Signal device. -->
     <string name="MediaCaptureFragment_device_link_dialog_title">Eszköz társítása?</string>
     <!-- The body of a dialog notifying that the user scanned a QR code that could be used to link a Signal device. -->
-    <string name="MediaCaptureFragment_device_link_dialog_body">Úgy tűnik, hogy egy Signal-eszközt próbálsz társítani. Koppints a Folytatás gombra, és a társításhoz szkenneld be újra a kódot.</string>
+    <string name="MediaCaptureFragment_it_looks_like_youre_trying">Úgy tűnik, hogy egy Signal-eszközt próbálsz társítani. Koppints a Folytatás, majd az „Új eszköz összekapcsolása” elemre, és olvasd be újra a QR-kódot.</string>
     <!-- The label of a dialog asking the user if they would like to continue to the linked device settings screen. -->
     <string name="MediaCaptureFragment_device_link_dialog_continue">Tovább</string>
 
@@ -5760,6 +6124,7 @@
 
     <string name="MySupportPreference__s_per_month">%1$s/hó</string>
     <string name="MySupportPreference__renews_s">Megújul ekkor: %1$s</string>
+    <!-- Subtitle shown when processing a donation transaction -->
     <string name="MySupportPreference__processing_transaction">Tranzakció folyamatban…</string>
     <!-- Displayed on "My Support" screen when user badge failed to be added to their account -->
     <string name="MySupportPreference__couldnt_add_badge_s">Jelvény hozzáadása sikertelen. %1$s</string>
@@ -5770,6 +6135,8 @@
     <string name="MySupportPreference__your_bank_transfer_of_s">%1$s összegű banki átutalásod függőben van. A banki átutalások teljesítése 1–14 munkanapot vehet igénybe.  </string>
     <!-- Displayed in the pending help dialog, used to launch user to more details about bank transfers -->
     <string name="MySupportPreference__learn_more">Tudj meg többet</string>
+    <!-- Displayed when a subscription refresh is being performed -->
+    <string name="MySupportPreference__checking_subscription">Előfizetés ellenőrzése…</string>
 
     <!-- Title of dialog telling user they need to update signal as it expired -->
     <string name="UpdateSignalExpiredDialog__title">Signal frissítése</string>
@@ -5868,7 +6235,7 @@
     <string name="DonationsErrors__your_payment_is_still">Az adományod feldolgozása még folyamatban van. Ez a kapcsolattól függően néhány percig is eltarthat.</string>
     <string name="DonationsErrors__failed_to_cancel_subscription">Előfizetés törlése sikertelen</string>
     <string name="DonationsErrors__subscription_cancellation_requires_an_internet_connection">Az előfizetés törlése internetkapcsolatot igényel.</string>
-    <string name="ViewBadgeBottomSheetDialogFragment__your_device_doesn_t_support_google_pay_so_you_can_t_subscribe_to_earn_a_badge_you_can_still_support_signal_by_making_a_donation_on_our_website">Az eszközöd nem támogatja a Google Pay-t, így nem tudsz előfizetést indítani jelvény elnyeréséért. Alternatívaként továbbra is adományozhatsz a Signal számára weboldalunkon.</string>
+    <string name="ViewBadgeBottomSheetDialogFragment__your_device_doesn_t_support">Az eszközöd nem támogatja az alkalmazáson belüli adományozást, így nem tudsz előfizetést indítani jelvény elnyeréséért. Alternatívaként továbbra is adományozhatsz a Signal számára a weboldalunkon.</string>
     <string name="NetworkFailure__network_error_check_your_connection_and_try_again">Hálózati hiba. Ellenőrizd a hálózati kapcsolatot és próbáld újra!</string>
     <string name="NetworkFailure__retry">Újra</string>
     <!-- Displayed as a dialog title when the selected recipient for a gift doesn\'t support gifting -->
@@ -6108,6 +6475,16 @@
 
     <!-- Description shown for the Signal Release Notes channel -->
     <string name="ReleaseNotes__signal_release_notes_and_news">Signal újdonságok &amp; és hírek</string>
+    <!-- Text description shown for the Signal Release Notes channel explaining that it is the only chat from Signal -->
+    <string name="ReleaseNotes__this_is_official_chat_period">Ez a hivatalos és egyetlen Signal chat.</string>
+    <!-- Text description shown for the Signal Release Notes channel explaining what the channel is for -->
+    <string name="ReleaseNotes__keep_up_to_date_period">Legyél naprakész a hírekkel és a frissítésekkel kapcsolatban.</string>
+    <!-- Text description in Signal Release channel details explaining that it is the only chat from Signal -->
+    <string name="ReleaseNotes__this_is_official_chat">Ez a hivatalos és egyetlen Signal chat</string>
+    <!-- Text description in Signal Release channel details explaining what the channel is for -->
+    <string name="ReleaseNotes__keep_up_to_date">Legyél naprakész a hírekkel és a frissítésekkel kapcsolatban</string>
+    <!-- Subtitle for the Signal Release channel explaining that it is the only chat from Signal -->
+    <string name="ReleaseNotes__official_only_chat">A hivatalos és egyetlen Signal chat</string>
 
     <!-- Donation receipts activity title -->
     <string name="DonationReceiptListFragment__all_activity">Minden tevékenység</string>
@@ -6170,7 +6547,7 @@
     <string name="StoriesLandingItem__info">Részletek</string>
     <!-- Label when a story is pending sending -->
     <string name="StoriesLandingItem__sending">Küldés…</string>
-    <!-- Label when multiple stories are pending sending -->
+    <!-- Label when multiple stories are pending sending where %1$d is the number of stories being sent -->
     <string name="StoriesLandingItem__sending_d">%1$d küldése…</string>
     <!-- Label when a story fails to send due to networking -->
     <string name="StoriesLandingItem__send_failed">Küldés sikertelen</string>
@@ -6233,6 +6610,8 @@
     <string name="StoryViewerPageFragment__send_failed">Küldés sikertelen. Az újrapróbálkozáshoz koppints</string>
     <!-- Label for the reply button in story viewer, which will launch the group story replies bottom sheet. -->
     <string name="StoryViewerPageFragment__reply_to_group">Válasz a csoportnak</string>
+    <!-- Content description for the any reaction button in reply to story composer, which will launch the emojis bottom sheet. -->
+    <string name="StoryViewerPageFragment_any_reaction_content_description">Még több reakció</string>
     <!-- Displayed when a story has no views -->
     <string name="StoryViewsFragment__no_views_yet">Még nem látta senki</string>
     <!-- Displayed when user has disabled receipts -->
@@ -6298,8 +6677,8 @@
     <string name="MyStorySettingsFragment__only_share_with_selected_people">Megosztás csak bizonyos személyekkel</string>
     <!-- Summary of clickable option displaying how many people you have included to send to in your story -->
     <plurals name="MyStorySettingsFragment__d_people">
-        <item quantity="one">%1$d viewer</item>
-        <item quantity="other">%1$d viewers</item>
+        <item quantity="one">%1$d megtekintő</item>
+        <item quantity="other">%1$d megtekintő</item>
     </plurals>
     <!-- My story privacy fine print about what the privacy settings are for -->
     <string name="MyStorySettingsFragment__choose_who_can_view_your_story">Döntsd el, ki láthatja a Történeted. A módosítások nem lesznek hatással a már elküldött Történetekre.</string>
@@ -6430,7 +6809,7 @@
     <!-- Displayed when copying group story reply text to clipboard -->
     <string name="StoryGroupReplyFragment__copied_to_clipboard">Vágólapra másolva</string>
     <!-- Displayed in story caption when content is longer than 5 lines -->
-    <string name="StoryViewerPageFragment__see_more">Továbbiak</string>
+    <string name="StoryViewerPageFragment__read_more">További információk</string>
     <!-- Displayed in toast after sending a direct reply -->
     <string name="StoryDirectReplyDialogFragment__sending_reply">Válasz küldése…</string>
     <!-- Displayed in the viewer when a story is no longer available -->
@@ -6782,34 +7161,6 @@
     <string name="ExternalNavigationHelper__leave_signal_to_confirm_payment">Kilépsz a Signalból az adomány megerősítéséhez?</string>
     <string name="ExternalNavigationHelper__once_this_payment_is_confirmed">A megerősítést követően térj vissza a Signalhoz, hogy véglegesítsd az adomány feldolgozását.</string>
 
-    <!-- IdealBank -->
-    <!-- iDEAL bank name -->
-    <string name="IdealBank__abn_amro">ABN AMRO</string>
-    <!-- iDEAL bank name -->
-    <string name="IdealBank__asn_bank">ASN Bank</string>
-    <!-- iDEAL bank name -->
-    <string name="IdealBank__bunq">bunq</string>
-    <!-- iDEAL bank name -->
-    <string name="IdealBank__ing">ING</string>
-    <!-- iDEAL bank name -->
-    <string name="IdealBank__knab">Knab</string>
-    <!-- iDEAL bank name -->
-    <string name="IdealBank__n26">N26</string>
-    <!-- iDEAL bank name -->
-    <string name="IdealBank__rabobank">Rabobank</string>
-    <!-- iDEAL bank name -->
-    <string name="IdealBank__regiobank">RegioBank</string>
-    <!-- iDEAL bank name -->
-    <string name="IdealBank__revolut">Revolut</string>
-    <!-- iDEAL bank name -->
-    <string name="IdealBank__sns_bank">SNS Bank</string>
-    <!-- iDEAL bank name -->
-    <string name="IdealBank__triodos_bank">Triodos Bank</string>
-    <!-- iDEAL bank name -->
-    <string name="IdealBank__van_lanschot">Van Lanschot Kempen</string>
-    <!-- iDEAL bank name -->
-    <string name="IdealBank__yoursafe">Yoursafe</string>
-
     <!-- BankTransferMandateFragment -->
     <!-- Title of screen displaying the bank transfer mandate -->
     <string name="BankTransferMandateFragment__bank_transfer">Banki átutalás</string>
@@ -6870,7 +7221,7 @@
     <!-- Default label for bank selection -->
     <string name="IdealTransferDetailsFragment__choose_your_bank">Válaszd ki a bankot</string>
     <!-- Dialog title shown when using iDEAL payment for setting up a monthly donation -->
-    <string name="IdealTransferDetailsFragment__confirm_your_donation_with_s">Erősítsd meg az adományod a(z) %1$s banknál</string>
+    <string name="IdealTransferDetailsFragment__confirm_your_donation_with_ideal">Erősítsd meg az adományodat az iDEAL-lal</string>
     <!-- Dialog warning shown when using iDEAL payment for setting up a monthly donation. Placeholder is donation amount.Z -->
     <string name="IdealTransferDetailsFragment__to_setup_your_recurring_donation">Az ismétlődő adományozás beállításához koppints a Tovább gombra és erősítsd meg a 0,01 € összegű terhelést a bankodnál. Ez automatikusan visszatérítésre kerül, és lehetővé teszi, hogy a havi %1$s adományodat levonják a számládról.</string>
     <!-- Dialog button shown when using iDEAL payment for setting up a monthly donation to continue with the donation -->
@@ -7139,6 +7490,8 @@
     <string name="CameraControls_capture_button_accessibility_label">Rögzítés gomb</string>
     <!-- Accessibility label describing the continue button on the camera screen -->
     <string name="CameraControls_continue_button_accessibility_label">Folytatás gomb</string>
+    <!-- Accessibility label describing the flash Mode toggle button on the camera screen -->
+    <string name="CameraControls_toggle_flash_mode_accessibility_label">Vaku mód be-/kikapcsolása</string>
 
     <!-- CallPreference -->
     <!-- Generic group call in call info -->
@@ -7245,6 +7598,8 @@
     <string name="CallLinkDetailsFragment__delete_call_link">Híváshivatkozás törlése</string>
     <!-- Displayed whenever a name change, revocation, etc, fails. -->
     <string name="CallLinkDetailsFragment__couldnt_save_changes">Nem sikerült elmenteni a változtatásokat. Ellenőrizd a hálózati kapcsolatot, és próbáld újra!</string>
+    <!-- Displayed whenever an admin update fails with a 409. -->
+    <string name="CallLinkDetailsFragment__couldnt_update_admin_approval">Nem sikerült frissíteni az adminisztrátori jóváhagyási beállításokat. Ellenőrizd, hogy a híváslink jelenleg nincs-e használatban.</string>
     <!-- Displayed when the call link is in use when the user tries to delete it -->
     <string name="CallLinkDetailsFragment__couldnt_delete_call_link">Nem sikerült törölni a híváslinket, mivel jelenleg használatban van.</string>
     <!-- Displayed as title in dialog when user attempts to delete the link -->
@@ -7478,14 +7833,25 @@
     <string name="BackupAlertBottomSheet__your_backups_subscription_failed_to_renew">Nem sikerült megújítani a biztonsági mentésre vonatkozó előfizetésedet</string>
     <!-- Sheet body when user payment failed to process -->
     <string name="BackupAlertBottomSheet__check_to_make_sure_your_payment_method">Ellenőrizd, hogy a megadott fizetési mód naprakész-e. Koppints az „Előfizetés kezelése” elemre, majd a Fizetési módok alatt koppints a Frissítés lehetőségre.</string>
+    <!-- Sheet title for when user falls out of grace period -->
+    <string name="BackupAlertBottomSheet__your_backups_subscription_has_expired">Your backups subscription has expired</string>
+    <!-- Sheet body part 1 for when user falls out of grace period -->
+    <string name="BackupAlertBottomSheet__your_subscription_couldnt_be_renewed">Your subscription couldn\'t be renewed with your payment method. To continue backing up media you need an active subscription.</string>
+    <!-- Sheet body part 2 for when user falls out of grace period -->
+    <string name="BackupAlertBottomSheet__youll_continue_to_have_access_to_the_free">You\'ll continue to have access to the free Signal Backups plan.</string>
     <!-- Sheet title for generic backup error -->
     <string name="BackupAlertBottomSheet__couldnt_complete_backup">Nem sikerült elvégezni a biztonsági mentést</string>
     <!-- Sheet body for generic backup error. Placeholder is days since last backup. -->
-    <string name="BackupAlertBottomSheet__your_device_hasnt">Eszközöd %1$d napja nem végzett biztonsági mentést. Ellenőrizd, hogy az eszközöd csatlakozik-e wifi-hálózathoz, és koppints a „Biztonsági mentés most” lehetőségre. </string>
+    <plurals name="BackupAlertBottomSheet__your_device_hasnt">
+        <item quantity="one">Eszközöd %1$d napja nem végzett biztonsági mentést. Ellenőrizd, hogy az eszközöd csatlakozik-e wifi-hálózathoz, és koppints a „Biztonsági mentés most” lehetőségre. </item>
+        <item quantity="other">Eszközöd %1$d napja nem végzett biztonsági mentést. Ellenőrizd, hogy az eszközöd csatlakozik-e wifi-hálózathoz, és koppints a „Biztonsági mentés most” lehetőségre.</item>
+    </plurals>
     <!-- Clickable text to learn more about the content of this bottom sheet -->
     <string name="BackupAlertBottomSheet__learn_more">Tudj meg többet</string>
     <!-- Secondary action button text when user does not have enough free space to download their backup. -->
     <string name="BackupAlertBottomSheet__skip_restore">Visszaállítás kihagyása</string>
+    <!-- Primary action button to open backups management screen -->
+    <string name="BackupAlertBottomSheet__manage_backups">Manage backups</string>
     <!-- Primary action button to start backup immediately -->
     <string name="BackupAlertBottomSheet__back_up_now">Biztonsági mentés készítése</string>
     <!-- Primary action button when user doesn\'t have enough space -->
@@ -7518,10 +7884,18 @@
     <string name="BackupAlertBottomSheet__if_you_skip_restore_the">Ha kihagyod a visszaállítást, a biztonsági másolatban lévő fennmaradó médiafájlok és mellékletek letölthetők később, amikor tárhely szabadul fel.</string>
     <!-- Dialog title when a backup fails to be created -->
     <string name="BackupAlertBottomSheet__backup_failed">Sikertelen biztonsági mentés</string>
+    <!-- Dialog title when a backup redemption fails -->
+    <string name="BackupAlertBottomSheet__couldnt_redeem_your_backups_subscription">Nem sikerült aktiválni a biztonsági mentésre vonatkozó előfizetésedet</string>
     <!-- Dialog text for when a backup fails to be created and ways to fix it -->
     <string name="BackupAlertBottomSheet__an_error_occurred">Hiba történt, és a biztonsági mentést nem lehetett befejezni. Frissíts a legújabb Signal verzióra és próbáld újra! Ha a probléma továbbra is fennáll, fordulj az ügyfélszolgálathoz.</string>
     <!-- Dialog action button that will allow you to check for any Signal version updates -->
     <string name="BackupAlertBottomSheet__check_for_update">Frissítés keresése</string>
+    <!-- Backup redemption error sheet text line 1 -->
+    <string name="BackupAlertBottomSheet__too_many_devices_have_tried">Ebben a hónapban túl sok eszköz próbálta aktiválni az előfizetésedet. Előfordulhat, hogy:</string>
+    <!-- Backup redemption error sheet bullet point 1 -->
+    <string name="BackupAlertBottomSheet__reregistered_your_signal_account">túl sokszor regisztráltad újra a Signal-fiókodat.</string>
+    <!-- Backup redemption error sheet bullet point 2 -->
+    <string name="BackupAlertBottomSheet__have_too_many_devices_using_the_same_subscription">túl sok eszközöd használja ugyanazt az előfizetést.</string>
 
     <!-- BackupStatus -->
     <!-- Status title when user does not have enough free space to download their media. Placeholder is required disk space. -->
@@ -7529,11 +7903,13 @@
     <!-- Status title for banner when user is actively restoring media from a backup -->
     <string name="BackupStatus__restoring_media">Médiafájl visszaállítása</string>
     <!-- Status title for banner when user has paused restore media from a backup -->
-    <string name="BackupStatus__restore_paused">Visszaállítás szünetel</string>
+    <string name="BackupStatus__restore_paused">Médiafájlok visszaállítása szünetel</string>
     <!-- Status title for banner when user has completed restoring restore media from a backup -->
     <string name="BackupStatus__restore_complete">Visszaállítás kész</string>
     <!-- Status action label for seeing more details about storage space -->
     <string name="BackupStatus__details">Részletek</string>
+    <!-- Status action label for resume restore from a paused state -->
+    <string name="BackupStatus__resume">Folytatás</string>
 
     <!-- Status subtitle for banner when restoring media pauses for Wi-Fi -->
     <string name="BackupStatus__status_waiting_for_wifi">Várakozás a wifi-re…</string>
@@ -7548,13 +7924,13 @@
     <!-- Content description for x icon at the end of the linear progress indicator -->
     <string name="BackupStatusRow__cancel_download">Letöltés megszakítása</string>
     <!-- Backup progress. Placeholders are size restored, size to restore, and percent, i.e. 50MB of 100MB (50%) -->
-    <string name="BackupStatusRow__restoring_s_of_s_s">Restoring: %1$s of %2$s (%3$s%%)</string>
+    <string name="BackupStatusRow__restoring_s_of_s_s">Visszaállítás: %1$s/%2$s (%3$s%%)</string>
     <!-- Text displayed under progress bar when restoring media pauses for Wi-Fi -->
-    <string name="BackupStatusRow__restore_waiting_for_wifi">Restore paused: Waiting for Wi-Fi…</string>
+    <string name="BackupStatusRow__restore_waiting_for_wifi">Visszaállítás szünetel: várakozás a wifire…</string>
     <!-- Text displayed under progress bar when restoring media pauses for internet -->
-    <string name="BackupStatusRow__restore_no_internet">Restore paused: No internet…</string>
+    <string name="BackupStatusRow__restore_no_internet">Visszaállítás szünetel: nincs internet…</string>
     <!-- Text displayed under progress bar when restoring media pauses for low battery -->
-    <string name="BackupStatusRow__restore_device_has_low_battery">Restore paused: Device has low battery</string>
+    <string name="BackupStatusRow__restore_device_has_low_battery">Visszaállítás szünetel: a készülék akkumulátor-töltöttsége alacsony</string>
     <!-- Notice that there is not enough free space to continue restore. Placeholder is required space, for example 1.6GB -->
     <string name="BackupStatusRow__not_enough_space">Nincs elég hely a biztonsági másolat letöltéséhez. A folytatáshoz szabadíts fel %1$s helyet.</string>
     <!-- Text row label to skip download -->
@@ -7565,6 +7941,11 @@
     <string name="BackupStatusRow__your_last_backup_latest_version">Az utolsó biztonsági mentést nem lehetett befejezni. Frissíts a legújabb Signal verzióra és próbáld újra!</string>
     <!-- Text displayed in a row to learn more about why a backup failed -->
     <string name="BackupStatusRow__learn_more">Tudj meg többet</string>
+
+    <!-- Dialog title to prompt resuming media restore over cellular -->
+    <string name="ResumeRestoreCellular_resume_using_cellular_title">Folytatod a mobilinternet használatát?</string>
+    <!-- Dialog message to prompt resuming media restore over cellular -->
+    <string name="ResumeRestoreCellular_resume_using_cellular_message">A médiafájlok mobilinternettel történő visszaállítása adatforgalmi díjakkal járhat. Az automatikus folytatáshoz csatlakozhatsz egy wifi hálózathoz.</string>
 
     <!-- BackupsTypeSettingsFragment -->
     <!-- Displayed as the user\'s payment method as a label in a preference row -->
@@ -7657,14 +8038,18 @@
     <string name="BackupsSettingsFragment_set_up">Beállítás</string>
 
     <!-- RemoteBackupsSettingsFragment -->
+    <!-- Content description for canceling backup upload -->
+    <string name="RemoteBackupsSettingsFragment__cancel_upload">Cancel upload</string>
     <!-- Displayed on the title bar -->
     <string name="RemoteBackupsSettingsFragment__signal_backups">A Signal biztonsági mentései</string>
+    <!-- Text shown in a popup indicating that the user needs to enter their screen lock -->
+    <string name="RemoteBackupsSettingsFragment__authenticatino_required">Hitelesítés szükséges</string>
     <!-- Row label to launch payment history screen -->
     <string name="RemoteBackupsSettingsFragment__payment_history">Fizetési előzmények</string>
     <!-- Section header for backup information -->
     <string name="RemoteBackupsSettingsFragment__backup_details">Biztonsági mentés részletei</string>
-    <!-- Toggle row label to allow the restoration of a backup to occur while on cellular connection -->
-    <string name="RemoteBackupsSettingsFragment__restore_using_cellular">Restore using cellular</string>
+    <!-- Row label to allow the restoration of a backup to occur while on cellular connection -->
+    <string name="RemoteBackupsSettingsFragment__resume_download">Letöltés folytatása</string>
     <!-- Row label for backup size -->
     <string name="RemoteBackupsSettingsFragment__backup_size">Biztonsági mentés mérete</string>
     <!-- Row label for backup frequency -->
@@ -7761,6 +8146,8 @@
     <string name="RemoteBackupsSettingsFragment__downloading_your_backup">A biztonsági másolat letöltése</string>
     <!-- Dialog message for dialog which alerts user their optimized media will be downloaded -->
     <string name="RemoteBackupsSettingsFragment__depending_on_the_size">A biztonsági másolat méretétől függően ez sokáig eltarthat. Letöltés közben a szokásos módon használhatod a telefonodat.</string>
+    <!-- Displayed in card when user has backups enabled but there is otherwise no subscription available. This can happen for example after a device transfer. -->
+    <string name="RemoteBackupsSettingsFragment__your_subscription_was_not_found">Your subscription was not found on this device. Renew to continue using Signal Backups.</string>
     <!-- Displayed in card when user has a signal subscription but the device doesn\'t see a google play billing subscription. Placeholder is days until subscription expiration. -->
     <plurals name="RemoteBackupsSettingsFragment__your_subscription_on_this_device_is_valid">
         <item quantity="one">Előfizetésed ezen az eszközön a következő %1$d napig érvényes. A Signal Biztonsági mentések visszaállítása használatának folytatásához újítsd meg</item>
@@ -7773,17 +8160,19 @@
     <!-- Linear progress dialog text shown when creating a backup -->
     <string name="RemoteBackupsSettingsFragment__processing_backup">Biztonsági mentés feldolgozása…</string>
     <!-- Linear progress dialog text shown when preparing a backup -->
-    <string name="RemoteBackupsSettingsFragment__preparing_backup">Preparing backup…</string>
+    <string name="RemoteBackupsSettingsFragment__preparing_backup">Biztonsági mentés előkészítése…</string>
     <!-- Linear progress dialog text shown when processing messages for backup. First placeholder is completed count, second is approximate total count, third is percent completed. -->
-    <plurals name="RemoteBackupsSettingsFragment__processing_d_of_d_d_messages">
-        <item quantity="one">Processing %1$d of %2$d (%3$d%%) message</item>
-        <item quantity="other">Processing %1$d of %2$d (%3$d%%) messages</item>
+    <plurals name="RemoteBackupsSettingsFragment__processing_messages_progress_text">
+        <item quantity="one">%1$s/%2$s üzenet feldolgozása (%3$d%%)</item>
+        <item quantity="other">kb. %1$s/%2$s üzenet feldolgozása (%3$d%%)</item>
     </plurals>
     <!-- Displayed in row when backup is available for download and users subscription has expired. First placeholder is data size e.g. 12MB, second is days before expiration -->
     <plurals name="RemoteBackupsSettingsFragment__you_have_s_of_backup_data">
         <item quantity="one">%1$s biztonsági mentési adatod van, amely nem található ezen az eszközön. A biztonsági másolatot töröljük, ha az előfizetésed %2$d napon belül lejár.</item>
         <item quantity="other">%1$s biztonsági mentési adatod van, amely nem található ezen az eszközön. A biztonsági másolatot töröljük, ha az előfizetésed %2$d napon belül lejár.</item>
     </plurals>
+    <!-- Display in a row when backup is available for download but the user has canceled the restore. Place holder is data size e.g. 12MB -->
+    <string name="RemoteBackupsSettingsFragment__you_have_s_of_backup_data_not_on_device">%1$s olyan biztonsági mentési adatod van, ami nincs ezen az eszközön. </string>
     <!-- Displayed in row when backup is available for download to let user start download -->
     <string name="RemoteBackupsSettingsFragment__download">Letöltés</string>
     <!-- Dialog title for skipping download of backed up media -->
@@ -7793,6 +8182,10 @@
         <item quantity="one">Ha kihagyod a többi médiafájl és a mellékletek letöltését, a biztonsági másolat %1$d napon belül törlődik.</item>
         <item quantity="other">Ha kihagyod a többi médiafájl és a mellékletek letöltését, a biztonsági másolat %1$d napon belül törlődik.</item>
     </plurals>
+    <!-- Dialog title for skipping download of in progress initial restore of backed up media -->
+    <string name="RemoteBackupsSettingsFragment__skip_restore_question">Visszaállítás kihagyása?</string>
+    <!-- Dialog message for skipping download of in progress initial restore of backed up media -->
+    <string name="RemoteBackupsSettingsFragment__skip_restore_message">Ha kihagyod a visszaállítást, a biztonsági mentésben maradt médiafájlok és mellékletek később letölthetők.</string>
     <!-- Positive dialog action to skip download -->
     <string name="RemoteBackupsSettingsFragment__skip">Kihagyás</string>
     <!-- Dialog title for network error while trying to disable backups -->
@@ -7800,7 +8193,9 @@
     <!-- Dialog body for network error while trying to disable backups -->
     <string name="RemoteBackupsSettingsFragment__a_network_error_occurred">Hálózati hiba történt. Ellenőrizd az internetkapcsolatot, és próbáld újra.</string>
     <!-- Progress message when backup file is being uploaded. First placeholder and second placeholder are formatted byte sizes (2 MB) and third is percent completion. -->
-    <string name="RemoteBackupsSettingsFragment__uploading_s_of_s_d">Uploading: %1$s of %2$s (%3$d%%)</string>
+    <string name="RemoteBackupsSettingsFragment__uploading_s_of_s_d">Feltöltés: %1$s/%2$s (%3$d%%)</string>
+    <!-- Button label to see more details about redemption error -->
+    <string name="RemoteBackupsSettingsFragment__details">Részletek</string>
 
     <!-- SubscriptionNotFoundBottomSheet -->
     <!-- Displayed as a bottom sheet title -->
@@ -7821,6 +8216,10 @@
     <string name="SubscriptionNotFoundBottomSheet__got_it">Rendben</string>
     <!-- Action button label to contact support -->
     <string name="SubscriptionNotFoundBottomSheet__contact_support">Segítségkérés</string>
+
+    <!-- MessageBackupsFlowFragment -->
+    <!-- Body for network failure dialog in message backups checkout flow -->
+    <string name="MessageBackupsFlowFragment__a_network_failure_occurred">Hálózati hiba történt. Kérjük, próbáld újra később.</string>
 
     <!-- MessageBackupsEducationScreen -->
     <!-- Screen subtitle underneath large headline title -->
@@ -7865,6 +8264,19 @@
     <string name="MessageBackupsKeyRecordScreen__continue">Tovább</string>
     <!-- Sheet secondary action button label -->
     <string name="MessageBackupsKeyRecordScreen__see_key_again">Kulcs újbóli megtekintése</string>
+
+    <!-- Confirm key title -->
+    <string name="MessageBackupsKeyVerifyScreen__confirm_your_backup_key">Erősítsd meg a biztonsági kulcsot</string>
+    <!-- Confirm your key subtitle -->
+    <string name="MessageBackupsKeyVerifyScreen__enter_the_backup_key_that_you_just_recorded">Írd be az imént rögzített biztonsági kulcsot</string>
+    <!-- Confirm your key text entry hint text -->
+    <string name="MessageBackupsKeyVerifyScreen__backup_key">Biztonsági kulcs</string>
+    <!-- Confirm your key text entry error text -->
+    <string name="MessageBackupsKeyVerifyScreen__incorrect_backup_key">Helytelen biztonsági kulcs</string>
+    <!-- Confirm your key button text to return to record key screen. -->
+    <string name="MessageBackupsKeyVerifyScreen__see_key_again">Kulcs újbóli megtekintése</string>
+    <!-- Confirm your key button text to move onto next screen in flow -->
+    <string name="MessageBackupsKeyVerifyScreen__next">Tovább</string>
 
     <!-- MessagesBackupsTypeSelectionScreen -->
     <!-- Screen headline -->
@@ -7971,6 +8383,45 @@
     <string name="EnterBackupKey_learn_more">Tudj meg többet</string>
     <!-- Backup key not known bottom sheet button to skip backup key entry and resume normal reregistration -->
     <string name="EnterBackupKey_skip_and_dont_restore">Kihagyás és visszaállítás</string>
+    <!-- Dialog title shown when entered AEP doesn\'t work to register with provided e164 -->
+    <string name="EnterBackupKey_incorrect_backup_key_title">Helytelen biztonsági kulcs</string>
+    <!-- Dialog message shown when entered AEP doesn\'t work to register with provided e164 -->
+    <string name="EnterBackupKey_incorrect_backup_key_message">Győződj meg róla, hogy ugyanazzal a telefonszámmal és 64 karakteres biztonsági kulccsal regisztrálsz, amelyet a biztonsági mentések engedélyezésekor elmentettél. A biztonsági mentések nem állíthatók vissza e kulcs nélkül.</string>
+    <!-- Dialog positive button text to try entering their backup key again -->
+    <string name="EnterBackupKey_try_again">Próbáld újra</string>
+    <!-- Dialog negative button text to get help with backup key -->
+    <string name="EnterBackupKey_backup_key_help">Biztonsági kulcs súgója</string>
+    <!-- Text field error text when the backup key provided has been confirmed invalid -->
+    <string name="EnterBackupKey_incorrect_backup_key_error">Helytelen biztonsági kulcs</string>
+    <!-- Text field error text when the backup key is too long -->
+    <string name="EnterBackupKey_too_long_error">Túl hosszú (%1$d/%2$d)</string>
+    <!-- Text field error when the backup key is invalid -->
+    <string name="EnterBackupKey_invalid_backup_key_error">Érvénytelen biztonsági kulcs</string>
+    <!-- Dialog title shown during registration and trying to restore a remote backup -->
+    <string name="EnterBackupKey_backup_not_found">A biztonsági mentés nem található</string>
+    <!-- Dialog message shown during registration and trying to restore a remote backup -->
+    <string name="EnterBackupKey_backup_key_you_entered_is_correct_but_no_backup">A megadott biztonsági kulcs helyes, de nincs hozzá társítva biztonsági másolat. Ha még mindig megvan a régi telefonod, ellenőrizd, hogy a biztonsági mentések engedélyezve vannak-e, és hogy a biztonsági mentés befejeződött-e, majd próbálja újra.</string>
+    <!-- Dialog button shown during registration and trying to restore a remote backup to instead skip said backup process -->
+    <string name="EnterBackupKey_skip_restore">Visszaállítás kihagyása</string>
+    <!-- Dialog title text when encountering backup restore network error -->
+    <string name="EnterBackupKey_cant_restore_backup">Nem lehet visszaállítani a biztonsági másolatot</string>
+    <!-- Dialog body text when encountering backup restore network error -->
+    <string name="EnterBackupKey_your_backup_cant_be_restored_right_now">A biztonsági másolatot jelenleg nem lehet visszaállítani. Ellenőrizd az internetkapcsolatot, és próbáld újra. </string>
+    <!-- Dialog button text to contact support on network error -->
+    <string name="EnterBackupKey_contact_support">Segítségkérés</string>
+
+    <!-- Email subject when contacting support on a restore backup network issue -->
+    <string name="EnterBackupKey_network_failure_support_email">Signal Android biztonsági mentés visszaállítási hálózati hiba</string>
+  <!-- Removed by excludeNonTranslatables <string name="EnterBackupKey_network_failure_support_email_filter" translatable="false">Signal Android Backup restore network error</string> -->
+
+    <!-- Title of dialog asking to submit debuglogs -->
+    <string name="ContactSupportDialog_submit_debug_log">Hibanapló küldése?</string>
+    <!-- Body of dialog explaining what debug logs are and that they are optional to submit -->
+    <string name="ContactSupportDialog_your_debug_logs">A hibanapló fájlok segítenek a hibák gyorsabb javításában. Beküldésük opcionális.</string>
+    <!-- Button option to submit debug log when contacting support -->
+    <string name="ContactSupportDialog_submit_with_debug">Beküldés hibanaplóval együtt</string>
+    <!-- Button option to not submit debug log when contacting support -->
+    <string name="ContactSupportDialog_submit_without_debug">Beküldés hibanapló nélkül</string>
 
     <!-- Title for restore via qr screen -->
     <string name="RestoreViaQr_title">Olvasd be ezt a kódot a régi telefonoddal</string>
@@ -7987,7 +8438,7 @@
     <!-- Error button text to retry getting a qr code -->
     <string name="RestoreViaQr_retry">Újra</string>
     <!-- Error message shown when register after receiving the provisioning message failed -->
-    <string name="RestoreViaQr_registration_error">An error occurred and your account couldn’t be transferred. Try again by scanning the QR code again.</string>
+    <string name="RestoreViaQr_registration_error">Hiba történt, és a fiókodat nem sikerült áthelyezni. Próbáld újra a QR-kód újbóli beolvasásával.</string>
 
     <!-- Old device Transfer account screen title -->
     <string name="TransferAccount_title">Fiók átvitele</string>
@@ -8029,6 +8480,27 @@
     <string name="NoBackupToRestore_step3">Engedélyezd a biztonsági mentéseket, és várd meg, amíg a biztonsági mentés befejeződik</string>
     <!-- No backup to Restore tonal cta to skip restore -->
     <string name="NoBackupToRestore_skip_restore">Visszaállítás kihagyása</string>
+
+    <!-- Accessibility label for close search button in MainToolbar -->
+    <string name="MainToolbar__close_search_content_description">Keresés bezárása</string>
+    <!-- Accessibility label for clear search query in MainToolbar -->
+    <string name="MainToolbar__clear_search_content_description">Keresés törlése</string>
+    <!-- Accessibility label for more options button in MainToolbar -->
+    <string name="MainToolbar__more_options_content_description">További lehetőségek</string>
+    <!-- Accessibility label for more options button in MainToolbar -->
+    <string name="MainToolbar__notification_profile_content_description">Értesítési profilok</string>
+    <!-- Accessibility label for more options button in MainToolbar -->
+    <string name="MainToolbar__proxy_content_description">Proxy</string>
+
+    <!-- Accessibility label for a button displayed in the toolbar to return to the previous screen. -->
+    <string name="DefaultTopAppBar__navigate_up_content_description">Navigáció fel</string>
+
+    <!-- Accessibility label describing the action that occurs when clicking a checkbox. -->
+    <string name="SignalCheckbox_accessibility_on_click_label">Váltás</string>
+    <!-- Accessibility label describing a checked checkbox. -->
+    <string name="SignalCheckbox_accessibility_checked_description">Kipipálva</string>
+    <!-- Accessibility label describing an unchecked checkbox. -->
+    <string name="SignalCheckbox_accessibility_unchecked_description">Nincs kipipálva</string>
 
     <!-- EOF -->
 </resources>

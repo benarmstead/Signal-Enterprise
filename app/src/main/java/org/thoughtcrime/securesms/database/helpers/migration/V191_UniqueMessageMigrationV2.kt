@@ -1,13 +1,13 @@
 package org.thoughtcrime.securesms.database.helpers.migration
 
 import android.app.Application
-import net.zetetic.database.sqlcipher.SQLiteDatabase
 import org.signal.core.util.SqlUtil
 import org.signal.core.util.Stopwatch
 import org.signal.core.util.logging.Log
 import org.signal.core.util.readToList
 import org.signal.core.util.readToSingleBoolean
 import org.signal.core.util.requireLong
+import org.thoughtcrime.securesms.database.SQLiteDatabase
 
 /**
  * We want to have a unique constraint on message (author, timestamp, thread). Unfortunately, because we haven't had one for all this time, some dupes
@@ -29,6 +29,9 @@ object V191_UniqueMessageMigrationV2 : SignalDatabaseMigration {
     // There was a window where some internal users ran this migration in V190. If it succeeded, they would have this index.
     // We're dropping it to put everyone back on the same playing field.
     db.execSQL("DROP INDEX IF EXISTS message_unique_sent_from_thread")
+
+    // To aid people who may have bad old migration state
+    db.execSQL("INSERT INTO message_fts(message_fts) VALUES ('rebuild')")
 
     val stopwatch = Stopwatch("migration")
 

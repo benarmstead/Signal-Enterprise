@@ -17,6 +17,7 @@ import org.signal.core.util.requireNonNullString
 import org.thoughtcrime.securesms.database.helpers.SignalDatabaseMigrations
 import org.thoughtcrime.securesms.dependencies.AppDependencies
 import org.thoughtcrime.securesms.testing.SignalActivityRule
+import org.thoughtcrime.securesms.database.SQLiteDatabase as SignalSQLiteDatabase
 
 /**
  * A test that guarantees that a freshly-created database looks the same as one that went through the upgrade path.
@@ -112,6 +113,7 @@ class DatabaseConsistencyTest {
       .map { it.trim() }
       .joinToString(separator = " ")
       .replace(Regex.fromLiteral(" ,"), ",")
+      .replace(",([^\\s])".toRegex(), ", $1")
       .replace(Regex("\\s+"), " ")
       .replace(Regex.fromLiteral("( "), "(")
       .replace(Regex.fromLiteral(" )"), ")")
@@ -127,7 +129,7 @@ class DatabaseConsistencyTest {
     }
 
     override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
-      SignalDatabaseMigrations.migrate(application, db, 181, SignalDatabaseMigrations.DATABASE_VERSION)
+      SignalDatabaseMigrations.migrate(application, SignalSQLiteDatabase(db), 181, SignalDatabaseMigrations.DATABASE_VERSION)
     }
 
     /**

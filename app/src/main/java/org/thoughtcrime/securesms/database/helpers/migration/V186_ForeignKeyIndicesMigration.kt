@@ -1,11 +1,11 @@
 package org.thoughtcrime.securesms.database.helpers.migration
 
 import android.app.Application
-import net.zetetic.database.sqlcipher.SQLiteDatabase
 import org.signal.core.util.Stopwatch
 import org.signal.core.util.logging.Log
 import org.signal.core.util.readToList
 import org.signal.core.util.requireNonNullString
+import org.thoughtcrime.securesms.database.SQLiteDatabase
 
 /**
  * We added some foreign keys to the message table (particularly on original_message_id and latest_revision_id)
@@ -63,7 +63,7 @@ object V186_ForeignKeyIndicesMigration : SignalDatabaseMigration {
   }
 
   private fun columnExists(db: SQLiteDatabase, table: String, column: String): Boolean {
-    return db.query("PRAGMA table_info($table)", null)
+    return db.query("PRAGMA table_info($table)", arrayOf())
       .readToList { it.requireNonNullString("name") }
       .any { it == column }
   }

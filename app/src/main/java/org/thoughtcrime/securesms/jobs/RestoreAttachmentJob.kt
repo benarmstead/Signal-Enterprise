@@ -4,15 +4,23 @@
  */
 package org.thoughtcrime.securesms.jobs
 
+import android.app.Notification
+import android.app.PendingIntent
+import android.content.Intent
+import androidx.core.app.NotificationCompat
+import androidx.core.app.NotificationManagerCompat
 import org.greenrobot.eventbus.EventBus
+import org.signal.core.util.PendingIntentFlags
 import org.signal.core.util.logging.Log
 import org.signal.libsignal.protocol.InvalidMacException
 import org.signal.libsignal.protocol.InvalidMessageException
+import org.thoughtcrime.securesms.R
 import org.thoughtcrime.securesms.attachments.AttachmentId
 import org.thoughtcrime.securesms.attachments.DatabaseAttachment
 import org.thoughtcrime.securesms.attachments.InvalidAttachmentException
 import org.thoughtcrime.securesms.backup.v2.BackupRepository
-import org.thoughtcrime.securesms.backup.v2.database.createArchiveAttachmentPointer
+import org.thoughtcrime.securesms.backup.v2.createArchiveAttachmentPointer
+import org.thoughtcrime.securesms.backup.v2.requireMediaName
 import org.thoughtcrime.securesms.database.AttachmentTable
 import org.thoughtcrime.securesms.database.SignalDatabase
 import org.thoughtcrime.securesms.dependencies.AppDependencies
@@ -20,14 +28,16 @@ import org.thoughtcrime.securesms.events.PartProgressEvent
 import org.thoughtcrime.securesms.jobmanager.Job
 import org.thoughtcrime.securesms.jobmanager.JobLogger.format
 import org.thoughtcrime.securesms.jobmanager.impl.BatteryNotLowConstraint
+import org.thoughtcrime.securesms.jobmanager.impl.NetworkConstraint
 import org.thoughtcrime.securesms.jobmanager.impl.RestoreAttachmentConstraint
 import org.thoughtcrime.securesms.jobs.protos.RestoreAttachmentJobData
 import org.thoughtcrime.securesms.keyvalue.SignalStore
+import org.thoughtcrime.securesms.logsubmit.SubmitDebugLogActivity
 import org.thoughtcrime.securesms.mms.MmsException
-import org.thoughtcrime.securesms.notifications.v2.ConversationId.Companion.forConversation
+import org.thoughtcrime.securesms.notifications.NotificationChannels
+import org.thoughtcrime.securesms.notifications.NotificationIds
 import org.thoughtcrime.securesms.transport.RetryLaterException
 import org.thoughtcrime.securesms.util.RemoteConfig
-import org.whispersystems.signalservice.api.backup.MediaName
 import org.whispersystems.signalservice.api.messages.SignalServiceAttachment
 import org.whispersystems.signalservice.api.push.exceptions.MissingConfigurationException
 import org.whispersystems.signalservice.api.push.exceptions.NonSuccessfulResponseCodeException
@@ -108,8 +118,14 @@ class RestoreAttachmentJob private constructor(
   private constructor(messageId: Long, attachmentId: AttachmentId, manual: Boolean, queue: String) : this(
     Parameters.Builder()
       .setQueue(queue)
-      .addConstraint(RestoreAttachmentConstraint.KEY)
-      .addConstraint(BatteryNotLowConstraint.KEY)
+      .apply {
+        if (manual) {
+          addConstraint(NetworkConstraint.KEY)
+        } else {
+          addConstraint(RestoreAttachmentConstraint.KEY)
+          addConstraint(BatteryNotLowConstraint.KEY)
+        }
+      }
       .setLifespan(TimeUnit.DAYS.toMillis(30))
       .build(),
     messageId,
@@ -139,10 +155,6 @@ class RestoreAttachmentJob private constructor(
       } else {
         throw e
       }
-    }
-
-    if (!SignalDatabase.messages.isStory(messageId)) {
-      AppDependencies.messageNotifier.updateNotification(context, forConversation(0))
     }
   }
 
@@ -206,8 +218,8 @@ class RestoreAttachmentJob private constructor(
       }
 
       useArchiveCdn = if (SignalStore.backup.backsUpMedia && !forceTransitTier) {
-        if (attachment.archiveMediaName.isNullOrEmpty()) {
-          throw InvalidAttachmentException("Invalid attachment configuration")
+        if (attachment.archiveTransferState != AttachmentTable.ArchiveTransferState.FINISHED) {
+          throw InvalidAttachmentException("Invalid attachment configuration! backsUpMedia: ${SignalStore.backup.backsUpMedia}, forceTransitTier: $forceTransitTier, archiveTransferState: ${attachment.archiveTransferState}")
         }
         true
       } else {
@@ -233,7 +245,7 @@ class RestoreAttachmentJob private constructor(
 
         messageReceiver
           .retrieveArchivedAttachment(
-            SignalStore.backup.mediaRootBackupKey.deriveMediaSecrets(MediaName(attachment.archiveMediaName!!)),
+            SignalStore.backup.mediaRootBackupKey.deriveMediaSecrets(attachment.requireMediaName()),
             cdnCredentials,
             archiveFile,
             pointer,
@@ -263,12 +275,15 @@ class RestoreAttachmentJob private constructor(
         throw IOException("Failed to delete temp download file following range exception")
       }
     } catch (e: InvalidAttachmentException) {
-      Log.w(TAG, "Experienced exception while trying to download an attachment.", e)
+      Log.w(TAG, e.message)
       markFailed(attachmentId)
     } catch (e: NonSuccessfulResponseCodeException) {
       if (SignalStore.backup.backsUpMedia) {
         if (e.code == 404 && !forceTransitTier && attachment.remoteLocation?.isNotBlank() == true) {
-          Log.i(TAG, "Retrying download from transit CDN")
+          Log.i(TAG, "Failed to download attachment from archive! Should only happen for recent attachments in a narrow window. Retrying download from transit CDN.")
+          if (RemoteConfig.internalUser) {
+            postFailedToDownloadFromArchiveNotification()
+          }
           retrieveAttachment(messageId, attachmentId, attachment, true)
           return
         } else if (e.code == 401 && useArchiveCdn) {
@@ -303,6 +318,17 @@ class RestoreAttachmentJob private constructor(
 
   private fun markPermanentlyFailed(attachmentId: AttachmentId) {
     SignalDatabase.attachments.setRestoreTransferState(attachmentId, AttachmentTable.TRANSFER_PROGRESS_PERMANENT_FAILURE)
+  }
+
+  private fun postFailedToDownloadFromArchiveNotification() {
+    val notification: Notification = NotificationCompat.Builder(context, NotificationChannels.getInstance().FAILURES)
+      .setSmallIcon(R.drawable.ic_notification)
+      .setContentTitle("[Internal-only] Failed to download attachment from archive!")
+      .setContentText("Tap to send a debug log")
+      .setContentIntent(PendingIntent.getActivity(context, 0, Intent(context, SubmitDebugLogActivity::class.java), PendingIntentFlags.mutable()))
+      .build()
+
+    NotificationManagerCompat.from(context).notify(NotificationIds.INTERNAL_ERROR, notification)
   }
 
   class Factory : Job.Factory<RestoreAttachmentJob?> {

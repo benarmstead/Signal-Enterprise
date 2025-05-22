@@ -113,6 +113,7 @@ public final class LiveRecipientCache {
     newRecipients.stream().filter(this::isValidForCache).forEach(recipient -> {
       LiveRecipient live;
       boolean       needsResolve;
+      boolean       needsSet = false;
 
       synchronized (recipients) {
         live = recipients.get(recipient.getId());
@@ -122,11 +123,16 @@ public final class LiveRecipientCache {
           recipients.put(recipient.getId(), live);
           needsResolve = recipient.isResolving();
         } else if (live.get().isResolving() || !recipient.isResolving()) {
-          live.set(recipient);
+          needsSet = true;
           needsResolve = recipient.isResolving();
         } else {
           needsResolve = false;
         }
+      }
+
+      // This requires taking another lock, so we move it out of the critical section above
+      if (needsSet) {
+        live.set(recipient);
       }
 
       if (needsResolve) {
@@ -233,7 +239,7 @@ public final class LiveRecipientCache {
       stopwatch.split("thread");
 
       if (SignalStore.registration().isRegistrationComplete() && SignalStore.account().getAci() != null) {
-        try (Cursor cursor = SignalDatabase.recipients().getNonGroupContacts(false)) {
+        try (Cursor cursor = SignalDatabase.recipients().getNonGroupContacts(RecipientTable.IncludeSelfMode.Exclude.INSTANCE)) {
           int count = 0;
           while (cursor != null && cursor.moveToNext() && count < CONTACT_CACHE_WARM_MAX) {
             RecipientId id = RecipientId.from(CursorUtil.requireLong(cursor, RecipientTable.ID));

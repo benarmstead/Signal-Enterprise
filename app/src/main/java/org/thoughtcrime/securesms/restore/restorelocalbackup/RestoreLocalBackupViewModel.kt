@@ -16,6 +16,10 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.signal.core.util.logging.Log
 import org.thoughtcrime.securesms.backup.BackupEvent
+import org.thoughtcrime.securesms.database.model.databaseprotos.RestoreDecisionState
+import org.thoughtcrime.securesms.dependencies.AppDependencies
+import org.thoughtcrime.securesms.jobs.ReclaimUsernameAndLinkJob
+import org.thoughtcrime.securesms.keyvalue.Completed
 import org.thoughtcrime.securesms.keyvalue.SignalStore
 import org.thoughtcrime.securesms.registration.data.RegistrationRepository
 import org.thoughtcrime.securesms.registration.util.RegistrationUtil
@@ -92,9 +96,11 @@ class RestoreLocalBackupViewModel(fileBackupUri: Uri) : ViewModel() {
           RegistrationRepository.registerAccountLocally(context, it)
           SignalStore.registration.localRegistrationMetadata = null
           RegistrationUtil.maybeMarkRegistrationComplete()
+
+          AppDependencies.jobManager.add(ReclaimUsernameAndLinkJob())
         }
 
-        SignalStore.registration.markRestoreCompleted()
+        SignalStore.registration.restoreDecisionState = RestoreDecisionState.Completed
       }
 
       store.update {

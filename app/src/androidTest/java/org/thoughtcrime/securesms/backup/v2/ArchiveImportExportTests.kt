@@ -77,6 +77,16 @@ class ArchiveImportExportTests {
   }
 
 //  @Test
+  fun chatItemDirectStoryReplyMessage() {
+    runTests { it.startsWith("chat_item_direct_story_reply_") }
+  }
+
+//  @Test
+  fun chatItemDirectStoryReplyMessageWithEdits() {
+    runTests { it.startsWith("chat_item_direct_story_reply_with_edits_") }
+  }
+
+//  @Test
   fun chatItemExpirationTimerUpdate() {
     runTests { it.startsWith("chat_item_expiration_timer_update_") }
   }
@@ -221,6 +231,11 @@ class ArchiveImportExportTests {
     runTests { it.startsWith("recipient_groups_") }
   }
 
+  //  @Test
+  fun recipientSelf() {
+    runTests { it.startsWith("recipient_self_") }
+  }
+
   private fun runTests(predicate: (String) -> Boolean = { true }) {
     val testFiles = InstrumentationRegistry.getInstrumentation().context.resources.assets.list(TESTS_FOLDER)!!.filter(predicate)
     val results: MutableList<TestResult> = mutableListOf()
@@ -296,7 +311,7 @@ class ArchiveImportExportTests {
       length = importData.size.toLong(),
       inputStreamFactory = { ByteArrayInputStream(importData) },
       selfData = BackupRepository.SelfData(SELF_ACI, SELF_PNI, SELF_E164, ProfileKey(SELF_PROFILE_KEY)),
-      plaintext = true
+      backupKey = null
     )
   }
 

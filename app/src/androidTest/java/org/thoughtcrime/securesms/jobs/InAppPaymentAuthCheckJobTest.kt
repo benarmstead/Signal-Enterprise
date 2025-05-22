@@ -1,8 +1,9 @@
 package org.thoughtcrime.securesms.jobs
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import assertk.assertThat
+import assertk.assertions.isEmpty
 import okhttp3.mockwebserver.MockResponse
-import org.hamcrest.Matchers
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -21,7 +22,6 @@ import org.thoughtcrime.securesms.database.model.databaseprotos.InAppPaymentData
 import org.thoughtcrime.securesms.dependencies.InstrumentationApplicationDependencyProvider
 import org.thoughtcrime.securesms.testing.Get
 import org.thoughtcrime.securesms.testing.SignalActivityRule
-import org.thoughtcrime.securesms.testing.assert
 import org.thoughtcrime.securesms.testing.success
 import org.thoughtcrime.securesms.util.TestStripePaths
 import java.math.BigDecimal
@@ -65,31 +65,7 @@ class InAppPaymentAuthCheckJobTest {
     InAppPaymentAuthCheckJob().run()
 
     val receipts = SignalDatabase.donationReceipts.getReceipts(InAppPaymentReceiptRecord.Type.ONE_TIME_DONATION)
-    receipts assert Matchers.empty()
-  }
-
-  @Test
-  fun givenSuccessfulOneTimeAuthRequiredPayment_whenICheck_thenIExpectAReceipt() {
-    initializeMockGetPaymentIntent(status = StripeIntentStatus.SUCCEEDED)
-
-    SignalDatabase.inAppPayments.insert(
-      type = InAppPaymentType.ONE_TIME_DONATION,
-      state = InAppPaymentTable.State.WAITING_FOR_AUTHORIZATION,
-      subscriberId = null,
-      endOfPeriod = null,
-      inAppPaymentData = InAppPaymentData(
-        amount = FiatMoney(BigDecimal.ONE, Currency.getInstance("USD")).toFiatValue(),
-        waitForAuth = InAppPaymentData.WaitingForAuthorizationState(
-          stripeIntentId = TEST_INTENT_ID,
-          stripeClientSecret = TEST_CLIENT_SECRET
-        )
-      )
-    )
-
-    InAppPaymentAuthCheckJob().run()
-
-    val receipts = SignalDatabase.donationReceipts.getReceipts(InAppPaymentReceiptRecord.Type.ONE_TIME_DONATION)
-    receipts assert Matchers.hasSize(1)
+    assertThat(receipts).isEmpty()
   }
 
   private fun initializeMockGetPaymentIntent(status: StripeIntentStatus) {

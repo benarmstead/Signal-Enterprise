@@ -19,7 +19,7 @@
     <uses-feature android:name="android.hardware.touchscreen" android:required="false"/>
     <uses-feature android:name="android.hardware.telephony" android:required="false" />
 
-    <uses-permission android:name="android.permission.USE_FINGERPRINT"/>
+    <uses-permission android:name="android.permission.USE_BIOMETRIC"/>
     <uses-permission android:name="org.thoughtcrime.securesms.ACCESS_SECRETS"/>
     <uses-permission android:name="android.permission.READ_PROFILE"/>
     <uses-permission android:name="android.permission.READ_CONTACTS"/>
@@ -78,7 +78,8 @@
 
     <uses-permission android:name="android.permission.MANAGE_OWN_CALLS"/>
 
-    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM"
+        tools:ignore="ProtectedPermissions" />
 
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
@@ -100,6 +101,7 @@
                  android:supportsRtl="true"
                  android:resizeableActivity="true"
                  android:fullBackupOnly="false"
+                 android:enableOnBackInvokedCallback="false"
                  android:allowBackup="true"
                  android:backupAgent=".absbackup.SignalBackupAgent"
                  android:theme="@style/TextSecure.LightTheme"
@@ -127,7 +129,7 @@
     <meta-data android:name="firebase_messaging_auto_init_enabled" android:value="false" />
     <meta-data android:name="android.webkit.WebView.MetricsOptOut" android:value="true" />
 
-    <activity android:name=".WebRtcCallActivity"
+    <activity android:name=".components.webrtc.v2.WebRtcCallActivity"
               android:theme="@style/TextSecure.DarkTheme.WebRTCCall"
               android:excludeFromRecents="true"
               android:supportsPictureInPicture="true"
@@ -138,34 +140,11 @@
               android:launchMode="singleTask"
               android:exported="false" />
 
-        <activity
-            android:name=".components.webrtc.v2.CallActivity"
-            android:configChanges="screenSize|smallestScreenSize|screenLayout"
-            android:excludeFromRecents="true"
-            android:exported="true"
-            android:launchMode="singleTask"
-            android:resizeableActivity="true"
-            android:supportsPictureInPicture="true"
-            android:taskAffinity=".calling"
-            android:theme="@style/TextSecure.DarkTheme.WebRTCCall"
-            android:windowSoftInputMode="stateAlwaysHidden" />
-
         <activity android:name=".messagerequests.CalleeMustAcceptMessageRequestActivity"
               android:theme="@style/TextSecure.DarkNoActionBar"
               android:noHistory="true"
               android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize"
               android:exported="false" />
-
-    <activity android:name=".InviteActivity"
-              android:theme="@style/Signal.Light.NoActionBar.Invite"
-              android:windowSoftInputMode="stateHidden"
-              android:parentActivityName=".MainActivity"
-              android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize"
-              android:exported="false">
-        <meta-data
-            android:name="android.support.PARENT_ACTIVITY"
-            android:value=".MainActivity" />
-    </activity>
 
     <activity android:name=".DeviceProvisioningActivity"
               android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize"
@@ -219,7 +198,8 @@
 
       <meta-data
           android:name="android.service.chooser.chooser_target_service"
-                android:value="androidx.sharetarget.ChooserTargetServiceCompat" />
+          android:value="androidx.sharetarget.ChooserTargetServiceCompat"
+          tools:targetApi="23" />
 
     </activity>
 
@@ -574,7 +554,7 @@
               android:noHistory="true"
               android:theme="@style/Signal.Transparent">
 
-        <intent-filter android:autoVerify="true">
+        <intent-filter>
             <action android:name="android.intent.action.VIEW" />
             <category android:name="android.intent.category.DEFAULT" />
             <category android:name="android.intent.category.BROWSABLE" />
@@ -612,30 +592,44 @@
             <action android:name="android.intent.action.VIEW" />
             <category android:name="android.intent.category.DEFAULT" />
             <category android:name="android.intent.category.BROWSABLE" />
-            <data android:scheme="https"
-                  android:host="signal.tube" />
-            <data android:scheme="sgnl"
-                  android:host="signal.tube" />
-        </intent-filter>
-
-        <intent-filter android:autoVerify="true">
-            <action android:name="android.intent.action.VIEW" />
-            <category android:name="android.intent.category.DEFAULT" />
-            <category android:name="android.intent.category.BROWSABLE" />
-            <data android:scheme="https"
-                android:host="signal.me" />
-            <data android:scheme="sgnl"
-                android:host="signal.me" />
-        </intent-filter>
-
-        <intent-filter android:autoVerify="true">
-            <action android:name="android.intent.action.VIEW" />
-
-            <category android:name="android.intent.category.DEFAULT" />
-            <category android:name="android.intent.category.BROWSABLE" />
-
-            <data android:scheme="sgnl" />
             <data android:scheme="https" />
+            <data android:host="signal.tube" />
+        </intent-filter>
+        <intent-filter>
+            <action android:name="android.intent.action.VIEW" />
+            <category android:name="android.intent.category.DEFAULT" />
+            <category android:name="android.intent.category.BROWSABLE" />
+            <data android:scheme="sgnl" />
+            <data android:host="signal.tube" />
+        </intent-filter>
+
+        <intent-filter android:autoVerify="true">
+            <action android:name="android.intent.action.VIEW" />
+            <category android:name="android.intent.category.DEFAULT" />
+            <category android:name="android.intent.category.BROWSABLE" />
+            <data android:scheme="https" />
+            <data android:host="signal.me" />
+        </intent-filter>
+        <intent-filter>
+            <action android:name="android.intent.action.VIEW" />
+            <category android:name="android.intent.category.DEFAULT" />
+            <category android:name="android.intent.category.BROWSABLE" />
+            <data android:scheme="sgnl" />
+            <data android:host="signal.me" />
+        </intent-filter>
+
+        <intent-filter android:autoVerify="true">
+            <action android:name="android.intent.action.VIEW" />
+            <category android:name="android.intent.category.DEFAULT" />
+            <category android:name="android.intent.category.BROWSABLE" />
+            <data android:scheme="https" />
+            <data android:host="signal.link" />
+        </intent-filter>
+        <intent-filter>
+            <action android:name="android.intent.action.VIEW" />
+            <category android:name="android.intent.category.DEFAULT" />
+            <category android:name="android.intent.category.BROWSABLE" />
+            <data android:scheme="sgnl" />
             <data android:host="signal.link" />
         </intent-filter>
     </activity>
@@ -871,7 +865,7 @@
     <activity android:name=".restore.RestoreActivity"
               android:launchMode="singleTask"
               android:theme="@style/Theme.Signal.DayNight.NoActionBar"
-              android:windowSoftInputMode="stateHidden"
+              android:windowSoftInputMode="stateHidden|adjustResize"
               android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize"
               android:exported="false"/>
 
@@ -884,11 +878,8 @@
               android:exported="false"/>
 
     <activity android:name=".stickers.StickerManagementActivity"
-              android:launchMode="singleTask"
-              android:theme="@style/TextSecure.LightTheme"
-              android:windowSoftInputMode="stateUnchanged"
-              android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize"
-              android:exported="false"/>
+              android:exported="false"
+              android:theme="@style/Signal.DayNight.NoActionBar" />
 
     <activity android:name=".logsubmit.SubmitDebugLogActivity"
               android:windowSoftInputMode="stateHidden"
@@ -1065,9 +1056,12 @@
               android:exported="false"/>
 
     <activity android:name=".MainActivity"
+              android:enableOnBackInvokedCallback="true"
               android:theme="@style/Theme.Signal.DayNight.NoActionBar"
-              android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize"
+              android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout"
+              android:windowSoftInputMode="stateUnchanged"
               android:resizeableActivity="true"
+              android:launchMode="singleTask"
               android:exported="false"/>
 
     <activity android:name=".pin.PinRestoreActivity"
@@ -1144,6 +1138,10 @@
             android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize"
             android:exported="false"/>
 
+    <activity android:name=".groups.ui.incommon.GroupsInCommonActivity"
+              android:exported="false"
+              android:theme="@style/Signal.DayNight.NoActionBar" />
+
     <service
         android:enabled="true"
         android:exported="false"
@@ -1165,7 +1163,8 @@
         android:name=".service.webrtc.AndroidCallConnectionService"
         android:permission="android.permission.BIND_TELECOM_CONNECTION_SERVICE"
         android:foregroundServiceType="phoneCall"
-        android:exported="true">
+        android:exported="true"
+        tools:targetApi="28">
         <intent-filter>
             <action android:name="android.telecom.ConnectionService" />
         </intent-filter>
@@ -1333,6 +1332,12 @@
     </receiver>
 
     <receiver android:name=".service.LocalBackupListener" android:exported="false">
+        <intent-filter>
+            <action android:name="android.intent.action.BOOT_COMPLETED" />
+        </intent-filter>
+    </receiver>
+
+    <receiver android:name=".service.MessageBackupListener" android:exported="false">
         <intent-filter>
             <action android:name="android.intent.action.BOOT_COMPLETED" />
         </intent-filter>

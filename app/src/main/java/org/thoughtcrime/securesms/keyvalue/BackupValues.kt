@@ -9,6 +9,7 @@ import org.thoughtcrime.securesms.backup.v2.BackupFrequency
 import org.thoughtcrime.securesms.backup.v2.MessageBackupTier
 import org.thoughtcrime.securesms.jobmanager.impl.RestoreAttachmentConstraintObserver
 import org.thoughtcrime.securesms.keyvalue.protos.ArchiveUploadProgressState
+import org.thoughtcrime.securesms.util.RemoteConfig
 import org.thoughtcrime.securesms.util.Util
 import org.whispersystems.signalservice.api.archive.ArchiveServiceCredential
 import org.whispersystems.signalservice.api.archive.GetArchiveCdnCredentialsResponse
@@ -35,10 +36,12 @@ class BackupValues(store: KeyValueStore) : SignalStoreValues(store) {
     private const val KEY_BACKUP_USED_MEDIA_SPACE = "backup.usedMediaSpace"
     private const val KEY_BACKUP_LAST_PROTO_SIZE = "backup.lastProtoSize"
     private const val KEY_BACKUP_TIER = "backup.backupTier"
+    private const val KEY_BACKUP_TIER_INTERNAL_OVERRIDE = "backup.backupTier.internalOverride"
     private const val KEY_BACKUP_TIER_RESTORED = "backup.backupTierRestored"
     private const val KEY_LATEST_BACKUP_TIER = "backup.latestBackupTier"
     private const val KEY_LAST_CHECK_IN_MILLIS = "backup.lastCheckInMilliseconds"
     private const val KEY_LAST_CHECK_IN_SNOOZE_MILLIS = "backup.lastCheckInSnoozeMilliseconds"
+    private const val KEY_FIRST_APP_VERSION = "backup.firstAppVersion"
 
     private const val KEY_NEXT_BACKUP_TIME = "backup.nextBackupTime"
     private const val KEY_LAST_BACKUP_TIME = "backup.lastBackupTime"
@@ -63,8 +66,11 @@ class BackupValues(store: KeyValueStore) : SignalStoreValues(store) {
     private const val KEY_BACKUP_FAIL_ACKNOWLEDGED_SNOOZE_COUNT = "backup.failed.acknowledged.snooze.count"
     private const val KEY_BACKUP_FAIL_SHEET_SNOOZE_TIME = "backup.failed.sheet.snooze"
     private const val KEY_BACKUP_FAIL_SPACE_REMAINING = "backup.failed.space.remaining"
+    private const val KEY_BACKUP_ALREADY_REDEEMED = "backup.already.redeemed"
+    private const val KEY_INVALID_BACKUP_VERSION = "backup.invalid.version"
 
     private const val KEY_USER_MANUALLY_SKIPPED_MEDIA_RESTORE = "backup.user.manually.skipped.media.restore"
+    private const val KEY_BACKUP_EXPIRED_AND_DOWNGRADED = "backup.expired.and.downgraded"
 
     private const val KEY_MEDIA_ROOT_BACKUP_KEY = "backup.mediaRootBackupKey"
 
@@ -102,9 +108,11 @@ class BackupValues(store: KeyValueStore) : SignalStoreValues(store) {
   val daysSinceLastBackup: Int get() = (System.currentTimeMillis().milliseconds - lastBackupTime.milliseconds).inWholeDays.toInt()
 
   var lastMediaSyncTime: Long by longValue(KEY_LAST_BACKUP_MEDIA_SYNC_TIME, -1)
-  var backupFrequency: BackupFrequency by enumValue(KEY_BACKUP_FREQUENCY, BackupFrequency.MANUAL, BackupFrequency.Serializer)
+  var backupFrequency: BackupFrequency by enumValue(KEY_BACKUP_FREQUENCY, BackupFrequency.DAILY, BackupFrequency.Serializer)
 
   var userManuallySkippedMediaRestore: Boolean by booleanValue(KEY_USER_MANUALLY_SKIPPED_MEDIA_RESTORE, false)
+
+  var backupExpiredAndDowngraded: Boolean by booleanValue(KEY_BACKUP_EXPIRED_AND_DOWNGRADED, false)
 
   /**
    * The last time the device notified the server that the archive is still in use.
@@ -118,6 +126,11 @@ class BackupValues(store: KeyValueStore) : SignalStoreValues(store) {
    * Cleared when the system performs a check-in or the user subscribes to backups.
    */
   var lastCheckInSnoozeMillis: Long by longValue(KEY_LAST_CHECK_IN_SNOOZE_MILLIS, 0)
+
+  /**
+   * The first app version to make a backup. Persisted across backup/restores to help indicate backup age.
+   */
+  var firstAppVersion: String by stringValue(KEY_FIRST_APP_VERSION, "")
 
   /**
    * Key used to backup messages.
@@ -156,22 +169,30 @@ class BackupValues(store: KeyValueStore) : SignalStoreValues(store) {
    * be used to display backup tier information to the user in the settings fragments, not to check whether the user
    * currently has backups enabled.
    */
-  val latestBackupTier: MessageBackupTier? by enumValue(KEY_LATEST_BACKUP_TIER, null, MessageBackupTier.Serializer)
+  val latestBackupTier: MessageBackupTier?
+    get() {
+      backupTierInternalOverride?.let { return it }
+      return MessageBackupTier.deserialize(getLong(KEY_LATEST_BACKUP_TIER, -1))
+    }
 
   /**
    * Denotes if there was a mismatch detected between the user's Signal subscription, on-device Google Play subscription,
    * and what zk authorization we think we have.
    */
-  var subscriptionStateMismatchDetected: Boolean by booleanValue(KEY_SUBSCRIPTION_STATE_MISMATCH, false)
+  var subscriptionStateMismatchDetected: Boolean by booleanValue(KEY_SUBSCRIPTION_STATE_MISMATCH, false).withPrecondition { backupTierInternalOverride == null }
 
   /**
-   * When seting the backup tier, we also want to write to the latestBackupTier, as long as
+   * When setting the backup tier, we also want to write to the latestBackupTier, as long as
    * the value is non-null. This gives us a 1-deep history of the selected backup tier for
    * use in the UI
    */
   var backupTier: MessageBackupTier?
-    get() = MessageBackupTier.deserialize(getLong(KEY_BACKUP_TIER, -1))
+    get() {
+      backupTierInternalOverride?.let { return it }
+      return MessageBackupTier.deserialize(getLong(KEY_BACKUP_TIER, -1))
+    }
     set(value) {
+      Log.i(TAG, "Setting backup tier to $value", Throwable(), true)
       val serializedValue = MessageBackupTier.serialize(value)
       if (value != null) {
         store.beginWrite()
@@ -183,6 +204,9 @@ class BackupValues(store: KeyValueStore) : SignalStoreValues(store) {
         putLong(KEY_BACKUP_TIER, serializedValue)
       }
     }
+
+  /** An internal setting that can override the backup tier for a user. */
+  var backupTierInternalOverride: MessageBackupTier? by enumValue(KEY_BACKUP_TIER_INTERNAL_OVERRIDE, null, MessageBackupTier.Serializer).withPrecondition { RemoteConfig.internalUser }
 
   var isBackupTierRestored: Boolean by booleanValue(KEY_BACKUP_TIER_RESTORED, false)
 
@@ -209,6 +233,9 @@ class BackupValues(store: KeyValueStore) : SignalStoreValues(store) {
   val nextBackupFailureSnoozeTime: Duration get() = getLong(KEY_BACKUP_FAIL_ACKNOWLEDGED_SNOOZE_TIME, 0L).milliseconds
   val nextBackupFailureSheetSnoozeTime: Duration get() = getLong(KEY_BACKUP_FAIL_SHEET_SNOOZE_TIME, getNextBackupFailureSheetSnoozeTime(lastBackupTime.milliseconds).inWholeMilliseconds).milliseconds
 
+  var hasBackupAlreadyRedeemedError: Boolean by booleanValue(KEY_BACKUP_ALREADY_REDEEMED, false)
+  var hasInvalidBackupVersion: Boolean by booleanValue(KEY_INVALID_BACKUP_VERSION, false)
+
   /**
    * Denotes how many bytes are still available on the disk for writing. Used to display
    * the disk full error and sheet. Set when we believe there might be an "out of space"
@@ -217,6 +244,11 @@ class BackupValues(store: KeyValueStore) : SignalStoreValues(store) {
    * something bad happened, it can only be utilized as a reference for comparison.
    */
   var spaceAvailableOnDiskBytes: Long by longValue(KEY_BACKUP_FAIL_SPACE_REMAINING, -1L)
+
+  fun internalSetBackupFailedErrorState() {
+    markMessageBackupFailure()
+    putLong(KEY_BACKUP_FAIL_SHEET_SNOOZE_TIME, 0)
+  }
 
   /**
    * Call when the user disables backups. Clears/resets all relevant fields.
@@ -238,7 +270,7 @@ class BackupValues(store: KeyValueStore) : SignalStoreValues(store) {
   val totalRestorableAttachmentSizeFlow: Flow<Long>
     get() = totalRestorableAttachmentSizeValue.toFlow()
 
-  val isRestoreInProgress: Boolean
+  val isMediaRestoreInProgress: Boolean
     get() = totalRestorableAttachmentSize > 0
 
   /** Store that lets you interact with message ZK credentials. */

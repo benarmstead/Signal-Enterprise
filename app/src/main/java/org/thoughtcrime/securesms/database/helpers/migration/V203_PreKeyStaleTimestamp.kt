@@ -7,7 +7,7 @@ package org.thoughtcrime.securesms.database.helpers.migration
 
 import android.app.Application
 import androidx.sqlite.db.SupportSQLiteDatabase
-import net.zetetic.database.sqlcipher.SQLiteDatabase
+import org.thoughtcrime.securesms.database.SQLiteDatabase
 
 /**
  * Keep track of a "stale timestamp" for one-time prekeys so that we can know when it's safe to delete them.
@@ -26,7 +26,7 @@ object V203_PreKeyStaleTimestamp : SignalDatabaseMigration {
   }
 
   private fun columnExists(db: SupportSQLiteDatabase, table: String, column: String): Boolean {
-    db.query("PRAGMA table_info($table)", null).use { cursor ->
+    db.query("PRAGMA table_info($table)", arrayOf()).use { cursor ->
       val nameColumnIndex = cursor.getColumnIndexOrThrow("name")
       while (cursor.moveToNext()) {
         val name = cursor.getString(nameColumnIndex)

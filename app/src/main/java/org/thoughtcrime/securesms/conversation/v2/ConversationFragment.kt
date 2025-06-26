@@ -943,7 +943,7 @@ class ConversationFragment :
             firstRender = false
             binding.conversationItemRecycler.doAfterNextLayout {
               SignalLocalMetrics.ConversationOpen.onRenderFinished()
-              (requireActivity() as? MainActivity)?.onFirstRender()
+              (context as? MainActivity)?.onFirstRender()
               doAfterFirstRender()
             }
           }
@@ -1384,7 +1384,7 @@ class ConversationFragment :
 
   private fun presentNavigationIconForNormal() {
     if (!resources.getWindowSizeClass().isSplitPane()) {
-      binding.toolbar.setNavigationIcon(R.drawable.ic_arrow_left_24)
+      binding.toolbar.setNavigationIcon(R.drawable.symbol_arrow_start_24)
       binding.toolbar.setNavigationContentDescription(R.string.ConversationFragment__content_description_back_button)
       binding.toolbar.setNavigationOnClickListener {
         binding.root.hideKeyboard(composeText)
@@ -1666,7 +1666,7 @@ class ConversationFragment :
       return
     }
 
-    if (editMessage.body == composeText.editableText.toString() &&
+    if (editMessage.body == composeText.editableText.toString().trim() &&
       editMessage.getQuote()?.displayText?.toString() == inputPanel.quote.map { it.text }.orNull() &&
       editMessage.messageRanges == composeText.styling &&
       editMessage.hasLinkPreview() == inputPanel.hasLinkPreview()
@@ -2018,6 +2018,7 @@ class ConversationFragment :
     disposables += send
       .doOnSubscribe {
         if (clearCompose) {
+          AppDependencies.typingStatusSender.onTypingStopped(args.threadId)
           composeTextEventsListener?.typingStatusEnabled = false
           composeText.setText("")
           composeTextEventsListener?.typingStatusEnabled = true
@@ -3220,7 +3221,9 @@ class ConversationFragment :
 
     override fun onItemLongClick(itemView: View, item: MultiselectPart) {
       Log.d(TAG, "onItemLongClick")
-      if (actionMode != null) return
+      if (actionMode != null) { return }
+
+      if (item.getMessageRecord().isInMemoryMessageRecord) { return }
 
       val messageRecord = item.getMessageRecord()
       val recipient = viewModel.recipientSnapshot ?: return

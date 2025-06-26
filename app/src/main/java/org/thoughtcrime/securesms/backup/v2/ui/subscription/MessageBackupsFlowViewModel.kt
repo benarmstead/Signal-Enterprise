@@ -9,6 +9,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
@@ -24,8 +25,11 @@ import org.signal.core.util.billing.BillingPurchaseResult
 import org.signal.core.util.concurrent.SignalDispatchers
 import org.signal.core.util.logging.Log
 import org.signal.donations.InAppPaymentType
+import org.thoughtcrime.securesms.backup.DeletionState
 import org.thoughtcrime.securesms.backup.v2.BackupRepository
 import org.thoughtcrime.securesms.backup.v2.MessageBackupTier
+import org.thoughtcrime.securesms.components.settings.app.backups.remote.BackupKeyCredentialManagerHandler
+import org.thoughtcrime.securesms.components.settings.app.backups.remote.BackupKeySaveState
 import org.thoughtcrime.securesms.components.settings.app.subscription.DonationSerializationHelper.toFiatValue
 import org.thoughtcrime.securesms.components.settings.app.subscription.InAppPaymentsRepository
 import org.thoughtcrime.securesms.components.settings.app.subscription.RecurringInAppPaymentRepository
@@ -40,6 +44,7 @@ import org.thoughtcrime.securesms.dependencies.AppDependencies
 import org.thoughtcrime.securesms.jobs.InAppPaymentPurchaseTokenJob
 import org.thoughtcrime.securesms.keyvalue.SignalStore
 import org.thoughtcrime.securesms.recipients.Recipient
+import org.thoughtcrime.securesms.storage.StorageSyncHelper
 import org.thoughtcrime.securesms.util.RemoteConfig
 import org.whispersystems.signalservice.api.storage.IAPSubscriptionId
 import org.whispersystems.signalservice.internal.push.SubscriptionsConfiguration
@@ -48,7 +53,7 @@ import kotlin.time.Duration.Companion.seconds
 class MessageBackupsFlowViewModel(
   initialTierSelection: MessageBackupTier?,
   startScreen: MessageBackupsStage = if (SignalStore.backup.backupTier == null) MessageBackupsStage.EDUCATION else MessageBackupsStage.TYPE_SELECTION
-) : ViewModel() {
+) : ViewModel(), BackupKeyCredentialManagerHandler {
 
   companion object {
     private val TAG = Log.tag(MessageBackupsFlowViewModel::class)
@@ -63,6 +68,7 @@ class MessageBackupsFlowViewModel(
   )
 
   val stateFlow: StateFlow<MessageBackupsFlowState> = internalStateFlow
+  val deletionState: Flow<DeletionState> = SignalStore.backup.deletionStateFlow
 
   init {
     viewModelScope.launch {
@@ -104,18 +110,6 @@ class MessageBackupsFlowViewModel(
           is BillingPurchaseResult.Success -> {
             Log.d(TAG, "Got successful purchase result for purchase at ${result.purchaseTime}")
             val id = internalStateFlow.value.inAppPayment!!.id
-
-            if (result.isAcknowledged) {
-              Log.w(TAG, "Payment is already acknowledged. Ignoring.")
-
-              internalStateFlow.update {
-                it.copy(
-                  stage = MessageBackupsStage.COMPLETED
-                )
-              }
-
-              return@collect
-            }
 
             try {
               Log.d(TAG, "Attempting to handle successful purchase.")
@@ -243,6 +237,10 @@ class MessageBackupsFlowViewModel(
   private fun validateTypeAndUpdateState(state: MessageBackupsFlowState): MessageBackupsFlowState {
     return when (state.selectedMessageBackupTier!!) {
       MessageBackupTier.FREE -> {
+        viewModelScope.launch(SignalDispatchers.IO) {
+          SignalDatabase.recipients.markNeedsSync(Recipient.self().id)
+          StorageSyncHelper.scheduleSyncForDataChange()
+        }
         SignalStore.backup.backupTier = MessageBackupTier.FREE
         SignalStore.uiHints.markHasEverEnabledRemoteBackups()
 
@@ -338,5 +336,9 @@ class MessageBackupsFlowViewModel(
       Log.d(TAG, "Job chain completed successfully.")
       return
     }
+  }
+
+  override fun updateBackupKeySaveState(newState: BackupKeySaveState?) {
+    internalStateFlow.update { it.copy(backupKeySaveState = newState) }
   }
 }

@@ -14,6 +14,10 @@ import java.util.UUID
 
 class DatabaseAttachment : Attachment {
 
+  companion object {
+    private const val NO_ARCHIVE_CDN = -404
+  }
+
   @JvmField
   val attachmentId: AttachmentId
 
@@ -27,7 +31,7 @@ class DatabaseAttachment : Attachment {
   val dataHash: String?
 
   @JvmField
-  val archiveCdn: Int
+  val archiveCdn: Int?
 
   @JvmField
   val thumbnailRestoreState: AttachmentTable.ThumbnailRestoreState
@@ -50,7 +54,6 @@ class DatabaseAttachment : Attachment {
     cdn: Cdn,
     location: String?,
     key: String?,
-    iv: ByteArray?,
     digest: ByteArray?,
     incrementalDigest: ByteArray?,
     incrementalMacChunkSize: Int,
@@ -69,7 +72,7 @@ class DatabaseAttachment : Attachment {
     displayOrder: Int,
     uploadTimestamp: Long,
     dataHash: String?,
-    archiveCdn: Int,
+    archiveCdn: Int?,
     thumbnailRestoreState: AttachmentTable.ThumbnailRestoreState,
     archiveTransferState: AttachmentTable.ArchiveTransferState,
     uuid: UUID?
@@ -81,7 +84,6 @@ class DatabaseAttachment : Attachment {
     cdn = cdn,
     remoteLocation = location,
     remoteKey = key,
-    remoteIv = iv,
     remoteDigest = digest,
     incrementalDigest = incrementalDigest,
     fastPreflightId = fastPreflightId,
@@ -117,7 +119,7 @@ class DatabaseAttachment : Attachment {
     hasThumbnail = ParcelUtil.readBoolean(parcel)
     mmsId = parcel.readLong()
     displayOrder = parcel.readInt()
-    archiveCdn = parcel.readInt()
+    archiveCdn = parcel.readInt().takeIf { it != NO_ARCHIVE_CDN }
     thumbnailRestoreState = AttachmentTable.ThumbnailRestoreState.deserialize(parcel.readInt())
     archiveTransferState = AttachmentTable.ArchiveTransferState.deserialize(parcel.readInt())
   }
@@ -130,7 +132,7 @@ class DatabaseAttachment : Attachment {
     ParcelUtil.writeBoolean(dest, hasThumbnail)
     dest.writeLong(mmsId)
     dest.writeInt(displayOrder)
-    dest.writeInt(archiveCdn)
+    dest.writeInt(archiveCdn ?: NO_ARCHIVE_CDN)
     dest.writeInt(thumbnailRestoreState.value)
     dest.writeInt(archiveTransferState.value)
   }

@@ -20,12 +20,14 @@ import org.signal.core.util.logging.Log
 import org.thoughtcrime.securesms.backup.v2.BackupRepository
 import org.thoughtcrime.securesms.backup.v2.MessageBackupTier
 import org.thoughtcrime.securesms.backup.v2.RemoteRestoreResult
+import org.thoughtcrime.securesms.backup.v2.RestoreTimestampResult
 import org.thoughtcrime.securesms.backup.v2.RestoreV2Event
 import org.thoughtcrime.securesms.database.model.databaseprotos.RestoreDecisionState
 import org.thoughtcrime.securesms.keyvalue.Completed
 import org.thoughtcrime.securesms.keyvalue.SignalStore
 import org.thoughtcrime.securesms.keyvalue.Skipped
 import org.thoughtcrime.securesms.registrationv3.data.QuickRegistrationRepository
+import org.whispersystems.signalservice.api.NetworkResult
 import org.whispersystems.signalservice.api.provisioning.RestoreMethod
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.days
@@ -54,22 +56,28 @@ class RemoteRestoreViewModel(isOnlyRestoreOption: Boolean) : ViewModel() {
   fun reload() {
     viewModelScope.launch(Dispatchers.IO) {
       store.update { it.copy(loadState = ScreenState.LoadState.LOADING, loadAttempts = it.loadAttempts + 1) }
-      val tier: MessageBackupTier? = BackupRepository.restoreBackupTier(SignalStore.account.requireAci())
+      val result = BackupRepository.restoreBackupFileTimestamp()
       store.update {
-        if (tier != null && SignalStore.backup.lastBackupTime > 0) {
-          it.copy(
-            loadState = ScreenState.LoadState.LOADED,
-            backupTier = SignalStore.backup.backupTier,
-            backupTime = SignalStore.backup.lastBackupTime,
-            backupSize = SignalStore.registration.restoreBackupMediaSize.bytes
-          )
-        } else {
-          if (SignalStore.backup.isBackupTierRestored || SignalStore.backup.lastBackupTime == 0L) {
+        when (result) {
+          is RestoreTimestampResult.Success -> {
+            it.copy(
+              loadState = ScreenState.LoadState.LOADED,
+              backupTier = SignalStore.backup.backupTier,
+              backupTime = SignalStore.backup.lastBackupTime,
+              backupSize = SignalStore.registration.restoreBackupMediaSize.bytes
+            )
+          }
+
+          is RestoreTimestampResult.NotFound -> {
             it.copy(loadState = ScreenState.LoadState.NOT_FOUND)
-          } else if (it.loadState == ScreenState.LoadState.LOADING) {
-            it.copy(loadState = ScreenState.LoadState.FAILURE)
-          } else {
-            it
+          }
+
+          else -> {
+            if (it.loadState == ScreenState.LoadState.LOADING) {
+              it.copy(loadState = ScreenState.LoadState.FAILURE)
+            } else {
+              it
+            }
           }
         }
       }
@@ -77,9 +85,9 @@ class RemoteRestoreViewModel(isOnlyRestoreOption: Boolean) : ViewModel() {
 
     viewModelScope.launch(Dispatchers.IO) {
       val config = BackupRepository.getBackupLevelConfiguration()
-      if (config != null) {
+      if (config is NetworkResult.Success) {
         store.update {
-          it.copy(backupMediaTTL = config.mediaTtlDays.days)
+          it.copy(backupMediaTTL = config.result.mediaTtlDays.days)
         }
       }
     }
@@ -111,6 +119,11 @@ class RemoteRestoreViewModel(isOnlyRestoreOption: Boolean) : ViewModel() {
           RemoteRestoreResult.Failure -> {
             Log.w(TAG, "Restore failed with $result")
             store.update { it.copy(importState = ImportState.Failed) }
+          }
+
+          RemoteRestoreResult.PermanentSvrBFailure -> {
+            Log.w(TAG, "Hit a permanent SVRB error.")
+            store.update { it.copy(importState = ImportState.FailureWithLogPrompt) }
           }
         }
       }
@@ -173,5 +186,6 @@ class RemoteRestoreViewModel(isOnlyRestoreOption: Boolean) : ViewModel() {
     data object Restored : ImportState
     data object NetworkFailure : ImportState
     data object Failed : ImportState
+    data object FailureWithLogPrompt : ImportState
   }
 }

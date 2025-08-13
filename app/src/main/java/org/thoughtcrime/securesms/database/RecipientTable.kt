@@ -508,7 +508,7 @@ open class RecipientTable(context: Context, databaseHelper: SignalDatabase) : Da
       db.runPostSuccessfulTransaction {
         if (result.affectedIds.isNotEmpty()) {
           result.affectedIds.forEach { AppDependencies.databaseObserver.notifyRecipientChanged(it) }
-          RetrieveProfileJob.enqueue(result.affectedIds)
+          RetrieveProfileJob.enqueue(result.affectedIds, skipDebounce = true)
         }
 
         if (result.oldIds.isNotEmpty()) {
@@ -1654,6 +1654,35 @@ open class RecipientTable(context: Context, databaseHelper: SignalDatabase) : Da
   }
 
   /**
+   * Clears the profile key.
+   *
+   * It clears out the profile key credential and resets the unidentified access mode.
+   */
+  fun clearProfileKeyData(id: RecipientId) {
+    val selection = "$ID = ?"
+    val args = arrayOf(id.serialize())
+
+    val valuesToCompare = contentValuesOf(
+      PROFILE_KEY to null
+    )
+
+    val valuesToSet = contentValuesOf(
+      PROFILE_KEY to null,
+      EXPIRING_PROFILE_KEY_CREDENTIAL to null,
+      SEALED_SENDER_MODE to SealedSenderAccessMode.UNKNOWN.mode,
+      LAST_PROFILE_FETCH to 0
+    )
+
+    val updateQuery = SqlUtil.buildTrueUpdateQuery(selection, args, valuesToCompare)
+
+    if (update(updateQuery, valuesToSet)) {
+      rotateStorageId(id)
+      AppDependencies.databaseObserver.notifyRecipientChanged(id)
+      StorageSyncHelper.scheduleSyncForDataChange()
+    }
+  }
+
+  /**
    * Sets the profile key iff currently null.
    *
    * If it sets it, it also clears out the profile key credential and resets the unidentified access mode.
@@ -2374,7 +2403,7 @@ open class RecipientTable(context: Context, databaseHelper: SignalDatabase) : Da
     val record = getRecord(recipientId)
 
     val pni = record.pni
-    val e164 = record.e164?.takeIf { SignalE164Util.isPotentialE164(it) }
+    val e164 = record.e164?.takeIf { SignalE164Util.isPotentialNonShortCodeE164(it) }
 
     if (pni == null && e164 == null) {
       return
@@ -4114,7 +4143,7 @@ open class RecipientTable(context: Context, databaseHelper: SignalDatabase) : Da
     check(e164 != null || pni != null || aci != null) { "Must provide some sort of identifier!" }
 
     val values = contentValuesOf(
-      E164 to e164,
+      E164 to e164.nullIfBlank()?.let { SignalE164Util.formatAsE164(it) },
       ACI_COLUMN to aci?.toString(),
       PNI_COLUMN to pni?.toString(),
       PNI_SIGNATURE_VERIFIED to pniVerified.toInt(),
@@ -4139,7 +4168,7 @@ open class RecipientTable(context: Context, databaseHelper: SignalDatabase) : Da
 
       put(ACI_COLUMN, contact.proto.signalAci?.toString())
       put(PNI_COLUMN, contact.proto.signalPni?.toString())
-      put(E164, contact.proto.e164.nullIfBlank())
+      put(E164, contact.proto.e164.nullIfBlank()?.let { SignalE164Util.formatAsE164(it) })
       put(PROFILE_GIVEN_NAME, profileName.givenName)
       put(PROFILE_FAMILY_NAME, profileName.familyName)
       put(PROFILE_JOINED_NAME, profileName.toString())
@@ -4175,7 +4204,10 @@ open class RecipientTable(context: Context, databaseHelper: SignalDatabase) : Da
         Log.w(TAG, "Contact is marked as registered, but has no serviceId! Can't locally mark registered. (Phone: ${contact.proto.e164.nullIfBlank()}, Username: ${username?.isNotEmpty()})")
       }
 
-      if (isInsert) {
+      if (SignalStore.account.isLinkedDevice) {
+        val avatarColor = StorageSyncModels.remoteToLocalAvatarColor(contact.proto.avatarColor) ?: AvatarColorHash.forAddress(contact.proto.signalAci ?: contact.proto.signalPni, contact.proto.e164)
+        put(AVATAR_COLOR, avatarColor.serialize())
+      } else if (isInsert) {
         put(AVATAR_COLOR, AvatarColorHash.forAddress(contact.proto.signalAci ?: contact.proto.signalPni, contact.proto.e164).serialize())
       }
     }
@@ -4222,7 +4254,10 @@ open class RecipientTable(context: Context, databaseHelper: SignalDatabase) : Da
         putNull(STORAGE_SERVICE_PROTO)
       }
 
-      if (isInsert) {
+      if (SignalStore.account.isLinkedDevice) {
+        val avatarColor = StorageSyncModels.remoteToLocalAvatarColor(groupV2.proto.avatarColor) ?: AvatarColorHash.forGroupId(groupId)
+        put(AVATAR_COLOR, avatarColor.serialize())
+      } else if (isInsert) {
         put(AVATAR_COLOR, AvatarColorHash.forGroupId(groupId).serialize())
       }
     }

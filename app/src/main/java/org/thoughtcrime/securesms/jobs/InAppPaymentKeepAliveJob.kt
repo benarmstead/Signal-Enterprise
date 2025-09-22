@@ -5,6 +5,7 @@
 
 package org.thoughtcrime.securesms.jobs
 
+import androidx.annotation.VisibleForTesting
 import okio.ByteString.Companion.toByteString
 import org.signal.core.util.logging.Log
 import org.signal.core.util.money.FiatMoney
@@ -51,6 +52,7 @@ class InAppPaymentKeepAliveJob private constructor(
     const val KEEP_ALIVE = "keep-alive"
     private const val DATA_TYPE = "type"
 
+    @VisibleForTesting
     fun create(type: InAppPaymentSubscriberRecord.Type): Job {
       return InAppPaymentKeepAliveJob(
         parameters = Parameters.Builder()
@@ -66,6 +68,11 @@ class InAppPaymentKeepAliveJob private constructor(
 
     @JvmStatic
     fun enqueueAndTrackTimeIfNecessary() {
+      if (SignalStore.account.isLinkedDevice) {
+        Log.i(TAG, "Linked device. Skipping.")
+        return
+      }
+
       // TODO -- This should only be enqueued if we are completely drained of old subscription jobs. (No pending, no runnning)
       val lastKeepAliveTime = SignalStore.inAppPayments.getLastKeepAliveLaunchTime().milliseconds
       val now = System.currentTimeMillis().milliseconds
@@ -83,6 +90,11 @@ class InAppPaymentKeepAliveJob private constructor(
 
     @JvmStatic
     fun enqueueAndTrackTime(now: Duration) {
+      if (SignalStore.account.isLinkedDevice) {
+        Log.i(TAG, "Linked device. Skipping.")
+        return
+      }
+
       AppDependencies.jobManager.add(create(InAppPaymentSubscriberRecord.Type.DONATION))
       AppDependencies.jobManager.add(create(InAppPaymentSubscriberRecord.Type.BACKUP))
       SignalStore.inAppPayments.setLastKeepAliveLaunchTime(now.inWholeMilliseconds)
@@ -105,6 +117,8 @@ class InAppPaymentKeepAliveJob private constructor(
       info(type, "Not primary, skipping")
       return
     }
+
+    clearOldPendingPaymentsIfRequired()
 
     if (SignalDatabase.inAppPayments.hasPrePendingRecurringTransaction(type.inAppPaymentType)) {
       info(type, "We are currently processing a transaction for this type. Skipping.")
@@ -211,6 +225,40 @@ class InAppPaymentKeepAliveJob private constructor(
           warn(type, "An unknown server error occurred: ${serviceResponse.status}", error)
           throw InAppPaymentRetryException(error)
         }
+      }
+    }
+  }
+
+  /**
+   * If we have a pending payment that is at least 24 hours old AND we have no jobs
+   * enqueued that are associated with it, then something weird has happened. We should
+   * fail the job and let the keep-alive check create a new one as necessary.
+   */
+  private fun clearOldPendingPaymentsIfRequired() {
+    info(type, "Clearing out old pending payments as required.")
+
+    val inAppPayments = SignalDatabase.inAppPayments.getOldPendingPayments(type.inAppPaymentType)
+
+    inAppPayments.forEach { inAppPayment ->
+      val queue = InAppPaymentsRepository.resolveJobQueueKey(inAppPayment)
+
+      if (AppDependencies.jobManager.isQueueEmpty(queue)) {
+        Log.i(TAG, "User has an aged-out pending in-app payment [${inAppPayment.id}][${inAppPayment.type}]. Marking failed and proceeding with check.")
+        SignalDatabase.inAppPayments.update(
+          inAppPayment = inAppPayment.copy(
+            notified = true,
+            endOfPeriod = 0.seconds,
+            subscriberId = null,
+            state = InAppPaymentTable.State.END,
+            data = inAppPayment.data.newBuilder()
+              .error(
+                InAppPaymentData.Error(
+                  type = InAppPaymentData.Error.Type.REDEMPTION
+                )
+              )
+              .build()
+          )
+        )
       }
     }
   }

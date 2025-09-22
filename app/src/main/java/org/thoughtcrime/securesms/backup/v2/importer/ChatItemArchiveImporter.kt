@@ -76,7 +76,6 @@ import org.thoughtcrime.securesms.recipients.Recipient
 import org.thoughtcrime.securesms.recipients.RecipientId
 import org.thoughtcrime.securesms.stickers.StickerLocator
 import org.thoughtcrime.securesms.util.JsonUtils
-import org.thoughtcrime.securesms.util.MediaUtil
 import org.thoughtcrime.securesms.util.MessageUtil
 import org.whispersystems.signalservice.api.payments.Money
 import org.whispersystems.signalservice.api.push.ServiceId
@@ -132,6 +131,7 @@ class ChatItemArchiveImporter(
       MessageTable.MESSAGE_EXTRAS,
       MessageTable.ORIGINAL_MESSAGE_ID,
       MessageTable.LATEST_REVISION_ID,
+      MessageTable.REVISION_NUMBER,
       MessageTable.PARENT_STORY_ID,
       MessageTable.NOTIFIED
     )
@@ -193,14 +193,18 @@ class ChatItemArchiveImporter(
       val latestRevisionId = originalId + chatItem.revisions.size
       val sortedRevisions = chatItem.revisions.sortedBy { it.dateSent }.map { it.toMessageInsert(fromLocalRecipientId, chatLocalRecipientId, localThreadId) }
       for (revision in sortedRevisions) {
-        revision.contentValues.put(MessageTable.ORIGINAL_MESSAGE_ID, originalId)
+        val revisionNumber = messageId - originalId
+        if (revisionNumber > 0) {
+          revision.contentValues.put(MessageTable.ORIGINAL_MESSAGE_ID, originalId)
+        }
         revision.contentValues.put(MessageTable.LATEST_REVISION_ID, latestRevisionId)
-        revision.contentValues.put(MessageTable.REVISION_NUMBER, (messageId - originalId))
+        revision.contentValues.put(MessageTable.REVISION_NUMBER, revisionNumber)
         buffer.messages += revision
         messageId++
       }
 
       messageInsert.contentValues.put(MessageTable.ORIGINAL_MESSAGE_ID, originalId)
+      messageInsert.contentValues.put(MessageTable.REVISION_NUMBER, (messageId - originalId))
     }
     buffer.messages += messageInsert
     buffer.reactions += chatItem.toReactionContentValues(messageId)
@@ -525,7 +529,7 @@ class ChatItemArchiveImporter(
     contentValues.put(MessageTable.FROM_RECIPIENT_ID, fromRecipientId.serialize())
     contentValues.put(MessageTable.TO_RECIPIENT_ID, toRecipientId.serialize())
     contentValues.put(MessageTable.THREAD_ID, threadId)
-    contentValues.put(MessageTable.DATE_RECEIVED, this.incoming?.dateReceived ?: this.dateSent)
+    contentValues.put(MessageTable.DATE_RECEIVED, this.incoming?.dateReceived ?: this.outgoing?.dateReceived?.takeUnless { it == 0L } ?: this.dateSent)
     contentValues.put(MessageTable.RECEIPT_TIMESTAMP, this.outgoing?.sendStatus?.maxOfOrNull { it.timestamp } ?: 0)
     contentValues.putNull(MessageTable.LATEST_REVISION_ID)
     contentValues.putNull(MessageTable.ORIGINAL_MESSAGE_ID)
@@ -1054,8 +1058,8 @@ class ChatItemArchiveImporter(
               else -> null
             }
           },
-          start = bodyRange.start ?: 0,
-          length = bodyRange.length ?: 0
+          start = bodyRange.start,
+          length = bodyRange.length
         )
       }
     )
@@ -1069,7 +1073,7 @@ class ChatItemArchiveImporter(
       this.read != null -> GroupReceiptTable.STATUS_READ
       this.viewed != null -> GroupReceiptTable.STATUS_VIEWED
       this.skipped != null -> GroupReceiptTable.STATUS_SKIPPED
-      this.failed != null -> GroupReceiptTable.STATUS_UNKNOWN
+      this.failed != null -> GroupReceiptTable.STATUS_FAILED
       else -> GroupReceiptTable.STATUS_UNKNOWN
     }
   }
@@ -1085,11 +1089,11 @@ class ChatItemArchiveImporter(
 
   private fun Quote.toLocalAttachments(): List<Attachment> {
     if (this.type == Quote.Type.VIEW_ONCE) {
-      return listOf(TombstoneAttachment(contentType = MediaUtil.VIEW_ONCE, quote = true))
+      return listOf(TombstoneAttachment.forQuote())
     }
 
-    return attachments.mapNotNull { attachment ->
-      val thumbnail = attachment.thumbnail?.toLocalAttachment(quote = true)
+    return this.attachments.mapNotNull { attachment ->
+      val thumbnail = attachment.thumbnail?.toLocalAttachment(quote = true, quoteTargetContentType = attachment.contentType)
 
       if (thumbnail != null) {
         return@mapNotNull thumbnail
@@ -1136,7 +1140,7 @@ class ChatItemArchiveImporter(
     )
   }
 
-  private fun MessageAttachment.toLocalAttachment(quote: Boolean = false, contentType: String? = pointer?.contentType): Attachment? {
+  private fun MessageAttachment.toLocalAttachment(quote: Boolean = false, quoteTargetContentType: String? = null, contentType: String? = pointer?.contentType): Attachment? {
     return pointer?.toLocalAttachment(
       voiceNote = flag == MessageAttachment.Flag.VOICE_MESSAGE,
       borderless = flag == MessageAttachment.Flag.BORDERLESS,
@@ -1145,7 +1149,8 @@ class ChatItemArchiveImporter(
       contentType = contentType,
       fileName = pointer.fileName,
       uuid = clientUuid,
-      quote = quote
+      quote = quote,
+      quoteTargetContentType = quoteTargetContentType
     )
   }
 

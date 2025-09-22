@@ -90,6 +90,7 @@ import org.thoughtcrime.securesms.payments.MobileCoinPublicAddress
 import org.thoughtcrime.securesms.ratelimit.RateLimitUtil
 import org.thoughtcrime.securesms.recipients.Recipient
 import org.thoughtcrime.securesms.recipients.RecipientId
+import org.thoughtcrime.securesms.recipients.RecipientUtil
 import org.thoughtcrime.securesms.service.webrtc.links.CallLinkCredentials
 import org.thoughtcrime.securesms.service.webrtc.links.CallLinkRoomId
 import org.thoughtcrime.securesms.service.webrtc.links.SignalCallLinkState
@@ -371,7 +372,7 @@ object SyncMessageProcessor {
         messageToEdit = targetMessage.id
       )
 
-      messageId = SignalDatabase.messages.insertMessageOutbox(outgoingMessage, threadId, false, GroupReceiptTable.STATUS_UNKNOWN, null)
+      messageId = SignalDatabase.messages.insertMessageOutbox(outgoingMessage, threadId, false, GroupReceiptTable.STATUS_UNKNOWN, null).messageId
       updateGroupReceiptStatus(sent, messageId, toRecipient.requireGroupId())
     } else {
       val outgoingTextMessage = OutgoingMessage(
@@ -385,7 +386,7 @@ object SyncMessageProcessor {
         bodyRanges = bodyRanges,
         messageToEdit = targetMessage.id
       )
-      messageId = SignalDatabase.messages.insertMessageOutbox(outgoingTextMessage, threadId, false, null)
+      messageId = SignalDatabase.messages.insertMessageOutbox(outgoingTextMessage, threadId, false, null).messageId
       SignalDatabase.messages.markUnidentified(messageId, sent.isUnidentified(toRecipient.serviceId.orNull()))
     }
 
@@ -413,14 +414,14 @@ object SyncMessageProcessor {
     val targetQuote = (targetMessage as? MmsMessageRecord)?.quote
     val quote: QuoteModel? = if (targetQuote != null && message.quote != null) {
       QuoteModel(
-        targetQuote.id,
-        targetQuote.author,
-        targetQuote.displayText.toString(),
-        targetQuote.isOriginalMissing,
-        emptyList(),
-        null,
-        targetQuote.quoteType,
-        null
+        id = targetQuote.id,
+        author = targetQuote.author,
+        text = targetQuote.displayText.toString(),
+        isOriginalMissing = targetQuote.isOriginalMissing,
+        attachment = null,
+        mentions = null,
+        type = targetQuote.quoteType,
+        bodyRanges = null
       )
     } else {
       null
@@ -454,7 +455,7 @@ object SyncMessageProcessor {
       messageToEdit = targetMessage.id
     )
 
-    val messageId: Long = SignalDatabase.messages.insertMessageOutbox(mediaMessage, threadId, false, GroupReceiptTable.STATUS_UNKNOWN, null)
+    val messageId: Long = SignalDatabase.messages.insertMessageOutbox(mediaMessage, threadId, false, GroupReceiptTable.STATUS_UNKNOWN, null).messageId
 
     if (toRecipient.isGroup) {
       updateGroupReceiptStatus(sent, messageId, toRecipient.requireGroupId())
@@ -557,7 +558,7 @@ object SyncMessageProcessor {
     )
 
     val threadId = SignalDatabase.threads.getOrCreateThreadIdFor(recipient)
-    val messageId: Long = SignalDatabase.messages.insertMessageOutbox(mediaMessage, threadId, false, GroupReceiptTable.STATUS_UNDELIVERED, null)
+    val messageId: Long = SignalDatabase.messages.insertMessageOutbox(mediaMessage, threadId, false, GroupReceiptTable.STATUS_UNDELIVERED, null).messageId
 
     if (groupId != null) {
       updateGroupReceiptStatus(sent, messageId, recipient.requireGroupId())
@@ -654,7 +655,7 @@ object SyncMessageProcessor {
         threadId,
         false,
         null
-      )
+      ).messageId
 
       SignalDatabase.messages.markAsSent(messageId, true)
     }
@@ -702,14 +703,14 @@ object SyncMessageProcessor {
     if (sent.message?.expireTimerVersion == null) {
       // TODO [expireVersion] After unsupported builds expire, we can remove this branch
       SignalDatabase.recipients.setExpireMessagesWithoutIncrementingVersion(recipient.id, sent.message!!.expireTimerDuration.inWholeSeconds.toInt())
-      val messageId: Long = SignalDatabase.messages.insertMessageOutbox(expirationUpdateMessage, threadId, false, null)
+      val messageId: Long = SignalDatabase.messages.insertMessageOutbox(expirationUpdateMessage, threadId, false, null).messageId
       SignalDatabase.messages.markAsSent(messageId, true)
     } else if (sent.message!!.expireTimerVersion!! >= recipient.expireTimerVersion) {
       SignalDatabase.recipients.setExpireMessages(recipient.id, sent.message!!.expireTimerDuration.inWholeSeconds.toInt(), sent.message!!.expireTimerVersion!!)
 
       if (sent.message!!.expireTimerDuration != recipient.expiresInSeconds.seconds) {
         log(sent.timestamp!!, "Not inserted update message as timer value did not change")
-        val messageId: Long = SignalDatabase.messages.insertMessageOutbox(expirationUpdateMessage, threadId, false, null)
+        val messageId: Long = SignalDatabase.messages.insertMessageOutbox(expirationUpdateMessage, threadId, false, null).messageId
         SignalDatabase.messages.markAsSent(messageId, true)
       }
     } else {
@@ -761,7 +762,7 @@ object SyncMessageProcessor {
           quoteBody = story.body
           bodyBodyRanges = story.messageRanges
         }
-        quoteModel = QuoteModel(sentTimestamp, storyAuthorRecipient, quoteBody, false, story.slideDeck.asAttachments(), emptyList(), QuoteModel.Type.NORMAL, bodyBodyRanges)
+        quoteModel = QuoteModel(sentTimestamp, storyAuthorRecipient, quoteBody, false, story.slideDeck.asAttachments().firstOrNull(), emptyList(), QuoteModel.Type.NORMAL, bodyBodyRanges)
         expiresInMillis = dataMessage.expireTimerDuration.inWholeMilliseconds
       } else {
         warn(envelopeTimestamp, "Story has replies disabled. Dropping reply.")
@@ -786,7 +787,7 @@ object SyncMessageProcessor {
       }
 
       val threadId = SignalDatabase.threads.getOrCreateThreadIdFor(recipient)
-      val messageId: Long = SignalDatabase.messages.insertMessageOutbox(mediaMessage, threadId, false, GroupReceiptTable.STATUS_UNKNOWN, null)
+      val messageId: Long = SignalDatabase.messages.insertMessageOutbox(mediaMessage, threadId, false, GroupReceiptTable.STATUS_UNKNOWN, null).messageId
 
       if (recipient.isGroup) {
         updateGroupReceiptStatus(sent, messageId, recipient.requireGroupId())
@@ -820,7 +821,7 @@ object SyncMessageProcessor {
 
     val recipient: Recipient = getSyncMessageDestination(sent)
     val dataMessage: DataMessage = sent.message!!
-    val quote: QuoteModel? = DataMessageProcessor.getValidatedQuote(context, envelopeTimestamp, dataMessage, senderRecipient, threadRecipient)
+    val quoteModel: QuoteModel? = DataMessageProcessor.getValidatedQuote(context, envelopeTimestamp, dataMessage, senderRecipient, threadRecipient)
     val sticker: Attachment? = DataMessageProcessor.getStickerAttachment(envelopeTimestamp, dataMessage)
     val sharedContacts: List<Contact> = DataMessageProcessor.getContacts(dataMessage)
     val previews: List<LinkPreview> = DataMessageProcessor.getLinkPreviews(dataMessage.preview, dataMessage.body ?: "", false)
@@ -828,7 +829,7 @@ object SyncMessageProcessor {
     val giftBadge: GiftBadge? = if (dataMessage.giftBadge?.receiptCredentialPresentation != null) GiftBadge.Builder().redemptionToken(dataMessage.giftBadge!!.receiptCredentialPresentation!!).build() else null
     val viewOnce: Boolean = dataMessage.isViewOnce == true
     val bodyRanges: BodyRangeList? = dataMessage.bodyRanges.toBodyRangeList()
-    val syncAttachments: List<Attachment> = listOfNotNull(sticker) + if (viewOnce) listOf<Attachment>(TombstoneAttachment(MediaUtil.VIEW_ONCE, false)) else dataMessage.attachments.toPointersWithinLimit()
+    val syncAttachments: List<Attachment> = listOfNotNull(sticker) + if (viewOnce) listOf<Attachment>(TombstoneAttachment.forNonQuote(MediaUtil.VIEW_ONCE)) else dataMessage.attachments.toPointersWithinLimit()
 
     val mediaMessage = OutgoingMessage(
       recipient = recipient,
@@ -837,7 +838,7 @@ object SyncMessageProcessor {
       timestamp = sent.timestamp!!,
       expiresIn = dataMessage.expireTimerDuration.inWholeMilliseconds,
       viewOnce = viewOnce,
-      quote = quote,
+      quote = quoteModel,
       contacts = sharedContacts,
       previews = previews,
       mentions = mentions,
@@ -851,7 +852,7 @@ object SyncMessageProcessor {
     }
 
     val threadId = SignalDatabase.threads.getOrCreateThreadIdFor(recipient)
-    val messageId: Long = SignalDatabase.messages.insertMessageOutbox(mediaMessage, threadId, false, GroupReceiptTable.STATUS_UNKNOWN, null)
+    val messageId: Long = SignalDatabase.messages.insertMessageOutbox(mediaMessage, threadId, false, GroupReceiptTable.STATUS_UNKNOWN, null).messageId
     log(envelopeTimestamp, "Inserted sync message as messageId $messageId")
 
     if (recipient.isGroup) {
@@ -912,11 +913,11 @@ object SyncMessageProcessor {
         bodyRanges = bodyRanges
       )
 
-      messageId = SignalDatabase.messages.insertMessageOutbox(outgoingMessage, threadId, false, GroupReceiptTable.STATUS_UNKNOWN, null)
+      messageId = SignalDatabase.messages.insertMessageOutbox(outgoingMessage, threadId, false, GroupReceiptTable.STATUS_UNKNOWN, null).messageId
       updateGroupReceiptStatus(sent, messageId, recipient.requireGroupId())
     } else {
       val outgoingTextMessage = OutgoingMessage.text(threadRecipient = recipient, body = body, expiresIn = expiresInMillis, sentTimeMillis = sent.timestamp!!, bodyRanges = bodyRanges)
-      messageId = SignalDatabase.messages.insertMessageOutbox(outgoingTextMessage, threadId, false, null)
+      messageId = SignalDatabase.messages.insertMessageOutbox(outgoingTextMessage, threadId, false, null).messageId
       SignalDatabase.messages.markUnidentified(messageId, sent.isUnidentified(recipient.serviceId.orNull()))
     }
 
@@ -1170,7 +1171,7 @@ object SyncMessageProcessor {
       }
       MessageRequestResponse.Type.BLOCK -> {
         SignalDatabase.recipients.setBlocked(recipient.id, true)
-        SignalDatabase.recipients.setProfileSharing(recipient.id, false)
+        RecipientUtil.updateProfileSharingAfterBlock(recipient, true)
         SignalDatabase.messages.insertMessageOutbox(
           message = OutgoingMessage.blockedMessage(recipient, System.currentTimeMillis(), TimeUnit.SECONDS.toMillis(recipient.expiresInSeconds.toLong())),
           threadId = threadId
@@ -1178,7 +1179,7 @@ object SyncMessageProcessor {
       }
       MessageRequestResponse.Type.BLOCK_AND_DELETE -> {
         SignalDatabase.recipients.setBlocked(recipient.id, true)
-        SignalDatabase.recipients.setProfileSharing(recipient.id, false)
+        RecipientUtil.updateProfileSharingAfterBlock(recipient, true)
         if (threadId > 0) {
           SignalDatabase.threads.deleteConversation(threadId, syncThreadDelete = false)
         }
@@ -1191,7 +1192,7 @@ object SyncMessageProcessor {
       }
       MessageRequestResponse.Type.BLOCK_AND_SPAM -> {
         SignalDatabase.recipients.setBlocked(recipient.id, true)
-        SignalDatabase.recipients.setProfileSharing(recipient.id, false)
+        RecipientUtil.updateProfileSharingAfterBlock(recipient, true)
         SignalDatabase.messages.insertMessageOutbox(
           message = OutgoingMessage.reportSpamMessage(recipient, System.currentTimeMillis(), TimeUnit.SECONDS.toMillis(recipient.expiresInSeconds.toLong())),
           threadId = threadId

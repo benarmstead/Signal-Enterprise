@@ -98,6 +98,7 @@ class InternalConversationSettingsFragment : ComposeFragment(), InternalConversa
       borderless = false,
       videoGif = false,
       quote = false,
+      quoteTargetContentType = null,
       caption = null,
       stickerLocator = null,
       blurHash = null,
@@ -185,7 +186,7 @@ class InternalConversationSettingsFragment : ComposeFragment(), InternalConversa
             val id = SignalDatabase.messages.insertMessageOutbox(
               message = OutgoingMessage(threadRecipient = recipient, sentTimeMillis = time, body = "Outgoing: $i"),
               threadId = targetThread
-            )
+            ).messageId
             SignalDatabase.messages.markAsSent(id, true)
           } else {
             SignalDatabase.messages.insertMessageInbox(
@@ -202,10 +203,10 @@ class InternalConversationSettingsFragment : ComposeFragment(), InternalConversa
     }
   }
 
-  override fun add10Messages(recipientId: RecipientId) {
+  override fun add100MessagesWithAttachments(recipientId: RecipientId) {
     viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO) {
       val recipient = Recipient.live(recipientId).get()
-      val messageCount = 10
+      val messageCount = 100
       val startTime = System.currentTimeMillis() - messageCount
       SignalDatabase.rawDatabase.withinTransaction {
         val targetThread = SignalDatabase.threads.getOrCreateThreadIdFor(recipient)
@@ -215,8 +216,13 @@ class InternalConversationSettingsFragment : ComposeFragment(), InternalConversa
           val id = SignalDatabase.messages.insertMessageOutbox(
             message = OutgoingMessage(threadRecipient = recipient, sentTimeMillis = time, body = "Outgoing: $i", attachments = listOf(attachment)),
             threadId = targetThread
-          )
+          ).messageId
           SignalDatabase.messages.markAsSent(id, true)
+          SignalDatabase.attachments.getAttachmentsForMessage(id).forEach {
+            SignalDatabase.attachments.debugMakeValidForArchive(it.attachmentId)
+            SignalDatabase.attachments.createRemoteKeyIfNecessary(it.attachmentId)
+          }
+          Log.d(TAG, "Created $i/$messageCount")
         }
       }
 
@@ -244,7 +250,7 @@ class InternalConversationSettingsFragment : ComposeFragment(), InternalConversa
       splitThreadId,
       false,
       null
-    )
+    ).messageId
     SignalDatabase.messages.markAsSent(messageId, true)
 
     SignalDatabase.threads.update(splitThreadId, true)

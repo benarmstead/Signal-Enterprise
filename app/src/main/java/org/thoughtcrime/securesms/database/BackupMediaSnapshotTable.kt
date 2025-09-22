@@ -11,6 +11,7 @@ import androidx.annotation.VisibleForTesting
 import androidx.core.content.contentValuesOf
 import org.signal.core.util.SqlUtil
 import org.signal.core.util.delete
+import org.signal.core.util.forEach
 import org.signal.core.util.readToList
 import org.signal.core.util.readToSet
 import org.signal.core.util.readToSingleLong
@@ -128,17 +129,25 @@ class BackupMediaSnapshotTable(context: Context, database: SignalDatabase) : Dat
   }
 
   /**
-   * Writes the set of media items that are slated to be referenced in the next backup, updating their pending sync time.
-   * Will insert multiple rows per object -- one for the main item, and one for the thumbnail.
+   * Writes the set of full-size media items that are slated to be referenced in the next backup, updating their pending sync time.
    */
-  fun writePendingMediaObjects(mediaObjects: Sequence<ArchiveMediaItem>) {
+  fun writeFullSizePendingMediaObjects(mediaObjects: Sequence<ArchiveMediaItem>) {
     mediaObjects
       .chunked(SqlUtil.MAX_QUERY_ARGS)
       .forEach { chunk ->
         writePendingMediaObjectsChunk(
           chunk.map { MediaEntry(it.mediaId, it.cdn, it.plaintextHash, it.remoteKey, isThumbnail = false) }
         )
+      }
+  }
 
+  /**
+   * Writes the set of thumbnail media items that are slated to be referenced in the next backup, updating their pending sync time.
+   */
+  fun writeThumbnailPendingMediaObjects(mediaObjects: Sequence<ArchiveMediaItem>) {
+    mediaObjects
+      .chunked(SqlUtil.MAX_QUERY_ARGS)
+      .forEach { chunk ->
         writePendingMediaObjectsChunk(
           chunk.map { MediaEntry(it.thumbnailMediaId, it.cdn, it.plaintextHash, it.remoteKey, isThumbnail = true) }
         )
@@ -206,6 +215,8 @@ class BackupMediaSnapshotTable(context: Context, database: SignalDatabase) : Dat
       return emptySet()
     }
 
+    val objectsByMediaId: MutableMap<String, ArchivedMediaObject> = objects.associateBy { it.mediaId }.toMutableMap()
+
     val queries: List<SqlUtil.Query> = SqlUtil.buildCollectionQuery(
       column = MEDIA_ID,
       values = objects.map { it.mediaId },
@@ -213,20 +224,45 @@ class BackupMediaSnapshotTable(context: Context, database: SignalDatabase) : Dat
       prefix = "$SNAPSHOT_VERSION = $MAX_VERSION AND "
     )
 
-    val foundObjects: MutableSet<String> = mutableSetOf()
-
     for (query in queries) {
-      foundObjects += readableDatabase
+      readableDatabase
         .select(MEDIA_ID, CDN)
         .from(TABLE_NAME)
         .where(query.where, query.whereArgs)
         .run()
-        .readToSet {
-          it.requireNonNullString(MEDIA_ID)
+        .forEach {
+          val mediaId = it.requireNonNullString(MEDIA_ID)
+          objectsByMediaId.remove(mediaId)
         }
     }
 
-    return objects.filterNot { foundObjects.contains(it.mediaId) }.toSet()
+    return objectsByMediaId.values.toSet()
+  }
+
+  fun getMediaEntriesForObjects(objects: List<ArchivedMediaObject>): Set<MediaEntry> {
+    if (objects.isEmpty()) {
+      return emptySet()
+    }
+
+    val queries: List<SqlUtil.Query> = SqlUtil.buildCollectionQuery(
+      column = MEDIA_ID,
+      values = objects.map { it.mediaId },
+      collectionOperator = SqlUtil.CollectionOperator.IN,
+      prefix = "$SNAPSHOT_VERSION = $MAX_VERSION AND "
+    )
+
+    val entries: MutableSet<MediaEntry> = mutableSetOf()
+
+    for (query in queries) {
+      entries += readableDatabase
+        .select(MEDIA_ID, CDN, PLAINTEXT_HASH, REMOTE_KEY, IS_THUMBNAIL)
+        .from("$TABLE_NAME JOIN ${AttachmentTable.TABLE_NAME}")
+        .where(query.where, query.whereArgs)
+        .run()
+        .readToList { MediaEntry.fromCursor(it) }
+    }
+
+    return entries.toSet()
   }
 
   /**
@@ -291,6 +327,10 @@ class BackupMediaSnapshotTable(context: Context, database: SignalDatabase) : Dat
   }
 
   private fun writePendingMediaObjectsChunk(chunk: List<MediaEntry>) {
+    if (chunk.isEmpty()) {
+      return
+    }
+
     val values = chunk.map {
       contentValuesOf(
         MEDIA_ID to it.mediaId,
@@ -324,7 +364,9 @@ class BackupMediaSnapshotTable(context: Context, database: SignalDatabase) : Dat
     val thumbnailMediaId: String,
     val cdn: Int?,
     val plaintextHash: ByteArray,
-    val remoteKey: ByteArray
+    val remoteKey: ByteArray,
+    val quote: Boolean,
+    val contentType: String?
   )
 
   class CdnMismatchResult(

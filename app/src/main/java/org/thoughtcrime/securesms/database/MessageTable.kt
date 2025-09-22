@@ -396,7 +396,8 @@ open class MessageTable(context: Context?, databaseHelper: SignalDatabase) : Dat
             '${AttachmentTable.ARCHIVE_CDN}', ${AttachmentTable.TABLE_NAME}.${AttachmentTable.ARCHIVE_CDN},
             '${AttachmentTable.THUMBNAIL_RESTORE_STATE}', ${AttachmentTable.TABLE_NAME}.${AttachmentTable.THUMBNAIL_RESTORE_STATE},
             '${AttachmentTable.ARCHIVE_TRANSFER_STATE}', ${AttachmentTable.TABLE_NAME}.${AttachmentTable.ARCHIVE_TRANSFER_STATE},
-            '${AttachmentTable.ATTACHMENT_UUID}', ${AttachmentTable.TABLE_NAME}.${AttachmentTable.ATTACHMENT_UUID}
+            '${AttachmentTable.ATTACHMENT_UUID}', ${AttachmentTable.TABLE_NAME}.${AttachmentTable.ATTACHMENT_UUID},
+            '${AttachmentTable.QUOTE_TARGET_CONTENT_TYPE}', ${AttachmentTable.TABLE_NAME}.${AttachmentTable.QUOTE_TARGET_CONTENT_TYPE}
           )
         ) AS ${AttachmentTable.ATTACHMENT_JSON_ALIAS}
       """.toSingleLine()
@@ -1346,6 +1347,13 @@ open class MessageTable(context: Context?, databaseHelper: SignalDatabase) : Dat
 
   fun ensureMigration() {
     databaseHelper.signalWritableDatabase
+  }
+
+  fun isViewOnce(messageId: Long): Boolean {
+    return readableDatabase
+      .exists(TABLE_NAME)
+      .where("$ID = ? AND $VIEW_ONCE > 0", messageId)
+      .run()
   }
 
   fun isStory(messageId: Long): Boolean {
@@ -2541,11 +2549,11 @@ open class MessageTable(context: Context?, databaseHelper: SignalDatabase) : Dat
       val quoteText = cursor.requireString(QUOTE_BODY)
       val quoteType = cursor.requireInt(QUOTE_TYPE)
       val quoteMissing = cursor.requireBoolean(QUOTE_MISSING)
-      val quoteAttachments: List<Attachment> = associatedAttachments.filter { it.quote }.toList()
+      val quoteAttachment: Attachment? = associatedAttachments.filter { it.quote }.firstOrNull()
       val quoteMentions: List<Mention> = parseQuoteMentions(cursor)
       val quoteBodyRanges: BodyRangeList? = parseQuoteBodyRanges(cursor)
-      val quote: QuoteModel? = if (quoteId != QUOTE_NOT_PRESENT_ID && quoteAuthor > 0 && (!TextUtils.isEmpty(quoteText) || quoteAttachments.isNotEmpty())) {
-        QuoteModel(quoteId, RecipientId.from(quoteAuthor), quoteText ?: "", quoteMissing, quoteAttachments, quoteMentions, QuoteModel.Type.fromCode(quoteType), quoteBodyRanges)
+      val quote: QuoteModel? = if (quoteId != QUOTE_NOT_PRESENT_ID && quoteAuthor > 0 && (!TextUtils.isEmpty(quoteText) || quoteAttachment != null)) {
+        QuoteModel(quoteId, RecipientId.from(quoteAuthor), quoteText ?: "", quoteMissing, quoteAttachment, quoteMentions, QuoteModel.Type.fromCode(quoteType), quoteBodyRanges)
       } else {
         null
       }
@@ -2769,7 +2777,7 @@ open class MessageTable(context: Context?, databaseHelper: SignalDatabase) : Dat
         contentValues.put(QUOTE_BODY_RANGES, quoteBodyRanges.build().encode())
       }
 
-      quoteAttachments += retrieved.quote.attachments
+      retrieved.quote.attachment?.let { quoteAttachments += it }
     } else {
       contentValues.put(QUOTE_ID, 0)
       contentValues.put(QUOTE_AUTHOR, 0)
@@ -2862,7 +2870,8 @@ open class MessageTable(context: Context?, databaseHelper: SignalDatabase) : Dat
         messageId = messageId,
         threadId = threadId,
         threadWasNewlyCreated = threadIdResult.newlyCreated,
-        insertedAttachments = insertedAttachments
+        insertedAttachments = insertedAttachments,
+        quoteAttachmentId = quoteAttachments.firstOrNull()?.let { insertedAttachments?.get(it) }
       )
     )
   }
@@ -2975,7 +2984,7 @@ open class MessageTable(context: Context?, databaseHelper: SignalDatabase) : Dat
     threadId: Long,
     forceSms: Boolean = false,
     insertListener: InsertListener? = null
-  ): Long {
+  ): InsertResult {
     return insertMessageOutbox(
       message = message,
       threadId = threadId,
@@ -2992,7 +3001,7 @@ open class MessageTable(context: Context?, databaseHelper: SignalDatabase) : Dat
     forceSms: Boolean,
     defaultReceiptStatus: Int,
     insertListener: InsertListener?
-  ): Long {
+  ): InsertResult {
     var type = MessageTypes.BASE_SENDING_TYPE
     var hasSpecialType = false
 
@@ -3211,7 +3220,7 @@ open class MessageTable(context: Context?, databaseHelper: SignalDatabase) : Dat
       }
 
       if (editedMessage == null) {
-        quoteAttachments += message.outgoingQuote.attachments
+        message.outgoingQuote.attachment?.let { quoteAttachments += it }
       }
     } else {
       contentValues.put(QUOTE_ID, 0)
@@ -3313,7 +3322,13 @@ open class MessageTable(context: Context?, databaseHelper: SignalDatabase) : Dat
 
     TrimThreadJob.enqueueAsync(threadId)
 
-    return messageId
+    return InsertResult(
+      messageId = messageId,
+      threadId = threadId,
+      threadWasNewlyCreated = false,
+      insertedAttachments = insertedAttachments,
+      quoteAttachmentId = quoteAttachments.firstOrNull()?.let { insertedAttachments?.get(it) }
+    )
   }
 
   private fun hasAudioAttachment(attachments: List<Attachment>): Boolean {
@@ -5248,7 +5263,7 @@ open class MessageTable(context: Context?, databaseHelper: SignalDatabase) : Dat
         timetamp = this.requireLong(DATE_SENT)
       ),
       expirationInfo = null,
-      storyType = StoryType.fromCode(this.requireInt(STORY_TYPE)),
+      storyType = fromCode(this.requireInt(STORY_TYPE)),
       dateReceived = this.requireLong(DATE_RECEIVED)
     )
   }
@@ -5399,7 +5414,8 @@ open class MessageTable(context: Context?, databaseHelper: SignalDatabase) : Dat
     val messageId: Long,
     val threadId: Long,
     val threadWasNewlyCreated: Boolean,
-    val insertedAttachments: Map<Attachment, AttachmentId>? = null
+    val insertedAttachments: Map<Attachment, AttachmentId>? = null,
+    val quoteAttachmentId: AttachmentId? = null
   )
 
   data class MessageReceiptUpdate(

@@ -21,6 +21,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -52,6 +53,7 @@ import org.signal.core.ui.compose.Previews
 import org.signal.core.ui.compose.Scaffolds
 import org.signal.core.ui.compose.SignalPreview
 import org.signal.core.ui.compose.theme.SignalTheme
+import org.signal.core.util.billing.BillingResponseCode
 import org.signal.core.util.bytes
 import org.signal.core.util.money.FiatMoney
 import org.thoughtcrime.securesms.R
@@ -74,12 +76,17 @@ fun MessageBackupsTypeSelectionScreen(
   stage: MessageBackupsStage,
   currentBackupTier: MessageBackupTier?,
   selectedBackupTier: MessageBackupTier?,
-  availableBackupTypes: List<MessageBackupsType>,
+  allBackupTypes: List<MessageBackupsType>,
+  googlePlayServicesAvailability: GooglePlayServicesAvailability,
+  googlePlayBillingAvailability: BillingResponseCode,
   isNextEnabled: Boolean,
   onMessageBackupsTierSelected: (MessageBackupTier) -> Unit,
   onNavigationClick: () -> Unit,
   onReadMoreClicked: () -> Unit,
-  onNextClicked: () -> Unit
+  onNextClicked: () -> Unit,
+  onLearnMoreAboutWhyUserCanNotUpgrade: () -> Unit,
+  onMakeGooglePlayServicesAvailable: () -> Unit,
+  onOpenPlayStore: () -> Unit
 ) {
   Scaffolds.Settings(
     title = "",
@@ -144,7 +151,7 @@ fun MessageBackupsTypeSelectionScreen(
         }
 
         itemsIndexed(
-          availableBackupTypes,
+          allBackupTypes,
           { _, item -> item.tier }
         ) { index, item ->
           MessageBackupsTypeBlock(
@@ -159,9 +166,29 @@ fun MessageBackupsTypeSelectionScreen(
       }
 
       val hasCurrentBackupTier = currentBackupTier != null
+      val paidTierNotAvailableDialogState = remember { PaidTierNotAvailableDialogState() }
+      val onSubscribeButtonClick = remember(googlePlayServicesAvailability, googlePlayBillingAvailability, selectedBackupTier) {
+        {
+          if (selectedBackupTier == MessageBackupTier.PAID && googlePlayServicesAvailability != GooglePlayServicesAvailability.SUCCESS) {
+            paidTierNotAvailableDialogState.displayGooglePlayApiErrorDialog = true
+          } else if (selectedBackupTier == MessageBackupTier.PAID && !googlePlayBillingAvailability.isSuccess) {
+            paidTierNotAvailableDialogState.displayGooglePlayBillingErrorDialog = true
+          } else {
+            onNextClicked()
+          }
+        }
+      }
+
+      PaidTierNotAvailableDialogs(
+        state = paidTierNotAvailableDialogState,
+        onOpenPlayStore = onOpenPlayStore,
+        onLearnMoreAboutWhyUserCanNotUpgrade = onLearnMoreAboutWhyUserCanNotUpgrade,
+        onMakeGooglePlayServicesAvailable = onMakeGooglePlayServicesAvailable,
+        googlePlayServicesAvailability = googlePlayServicesAvailability
+      )
 
       Buttons.LargeTonal(
-        onClick = onNextClicked,
+        onClick = onSubscribeButtonClick,
         enabled = isNextEnabled,
         modifier = Modifier
           .testTag("subscribe-button")
@@ -169,8 +196,10 @@ fun MessageBackupsTypeSelectionScreen(
           .padding(vertical = if (hasCurrentBackupTier) 10.dp else 16.dp)
       ) {
         val text: String = if (currentBackupTier == null) {
-          if (selectedBackupTier == MessageBackupTier.PAID && availableBackupTypes.map { it.tier }.contains(selectedBackupTier)) {
-            val paidTier = availableBackupTypes.first { it.tier == MessageBackupTier.PAID } as MessageBackupsType.Paid
+          if (selectedBackupTier == MessageBackupTier.PAID && (googlePlayServicesAvailability != GooglePlayServicesAvailability.SUCCESS || !googlePlayBillingAvailability.isSuccess)) {
+            stringResource(R.string.MessageBackupsTypeSelectionScreen__more_about_this_plan)
+          } else if (selectedBackupTier == MessageBackupTier.PAID && allBackupTypes.map { it.tier }.contains(selectedBackupTier)) {
+            val paidTier = allBackupTypes.first { it.tier == MessageBackupTier.PAID } as MessageBackupsType.Paid
             val context = LocalContext.current
 
             val price = remember(paidTier) {
@@ -183,6 +212,8 @@ fun MessageBackupsTypeSelectionScreen(
           } else {
             stringResource(R.string.MessageBackupsTypeSelectionScreen__subscribe)
           }
+        } else if (selectedBackupTier == MessageBackupTier.PAID && (googlePlayServicesAvailability != GooglePlayServicesAvailability.SUCCESS || !googlePlayBillingAvailability.isSuccess)) {
+          stringResource(R.string.MessageBackupsTypeSelectionScreen__more_about_this_plan)
         } else {
           stringResource(R.string.MessageBackupsTypeSelectionScreen__change_backup_type)
         }
@@ -200,6 +231,53 @@ fun MessageBackupsTypeSelectionScreen(
   }
 }
 
+@Stable
+class PaidTierNotAvailableDialogState {
+  var displayGooglePlayBillingErrorDialog: Boolean by mutableStateOf(false)
+  var displayGooglePlayApiErrorDialog: Boolean by mutableStateOf(false)
+}
+
+@Composable
+fun PaidTierNotAvailableDialogs(
+  state: PaidTierNotAvailableDialogState,
+  googlePlayServicesAvailability: GooglePlayServicesAvailability,
+  onLearnMoreAboutWhyUserCanNotUpgrade: () -> Unit,
+  onMakeGooglePlayServicesAvailable: () -> Unit,
+  onOpenPlayStore: () -> Unit
+) {
+  if (state.displayGooglePlayApiErrorDialog) {
+    GooglePlayServicesAvailabilityDialog(
+      onDismissRequest = { state.displayGooglePlayApiErrorDialog = false },
+      googlePlayServicesAvailability = googlePlayServicesAvailability,
+      onLearnMoreClick = onLearnMoreAboutWhyUserCanNotUpgrade,
+      onMakeServicesAvailableClick = onMakeGooglePlayServicesAvailable
+    )
+  }
+
+  if (state.displayGooglePlayBillingErrorDialog) {
+    UserNotSignedInDialog(
+      onDismissRequest = { state.displayGooglePlayBillingErrorDialog = false },
+      onOpenPlayStore = onOpenPlayStore
+    )
+  }
+}
+
+@Composable
+private fun UserNotSignedInDialog(
+  onDismissRequest: () -> Unit,
+  onOpenPlayStore: () -> Unit
+) {
+  Dialogs.SimpleAlertDialog(
+    title = stringResource(R.string.GooglePlayServicesAvailability__service_disabled_title),
+    body = "To subscribe to Signal Secure Backups, please sign into the Google Play store.",
+    onConfirm = onOpenPlayStore,
+    onDismiss = onDismissRequest,
+    onDismissRequest = onDismissRequest,
+    confirm = "Open Play Store",
+    dismiss = stringResource(android.R.string.cancel)
+  )
+}
+
 @SignalPreview
 @Composable
 private fun MessageBackupsTypeSelectionScreenPreview() {
@@ -209,12 +287,17 @@ private fun MessageBackupsTypeSelectionScreenPreview() {
     MessageBackupsTypeSelectionScreen(
       stage = MessageBackupsStage.TYPE_SELECTION,
       selectedBackupTier = selectedBackupsType,
-      availableBackupTypes = testBackupTypes(),
+      allBackupTypes = testBackupTypes(),
       onMessageBackupsTierSelected = { selectedBackupsType = it },
       onNavigationClick = {},
       onReadMoreClicked = {},
       onNextClicked = {},
+      onLearnMoreAboutWhyUserCanNotUpgrade = {},
+      onMakeGooglePlayServicesAvailable = {},
+      onOpenPlayStore = {},
       currentBackupTier = null,
+      googlePlayServicesAvailability = GooglePlayServicesAvailability.SUCCESS,
+      googlePlayBillingAvailability = BillingResponseCode.OK,
       isNextEnabled = true
     )
   }
@@ -229,12 +312,17 @@ private fun MessageBackupsTypeSelectionScreenWithCurrentTierPreview() {
     MessageBackupsTypeSelectionScreen(
       stage = MessageBackupsStage.TYPE_SELECTION,
       selectedBackupTier = selectedBackupsType,
-      availableBackupTypes = testBackupTypes(),
+      allBackupTypes = testBackupTypes(),
       onMessageBackupsTierSelected = { selectedBackupsType = it },
       onNavigationClick = {},
       onReadMoreClicked = {},
       onNextClicked = {},
+      onLearnMoreAboutWhyUserCanNotUpgrade = {},
+      onMakeGooglePlayServicesAvailable = {},
+      onOpenPlayStore = {},
       currentBackupTier = MessageBackupTier.PAID,
+      googlePlayServicesAvailability = GooglePlayServicesAvailability.SUCCESS,
+      googlePlayBillingAvailability = BillingResponseCode.OK,
       isNextEnabled = true
     )
   }
@@ -325,8 +413,12 @@ private fun getFormattedPricePerMonth(messageBackupsType: MessageBackupsType): S
   return when (messageBackupsType) {
     is MessageBackupsType.Free -> stringResource(id = R.string.MessageBackupsTypeSelectionScreen__free)
     is MessageBackupsType.Paid -> {
-      val formattedAmount = FiatMoneyUtil.format(LocalContext.current.resources, messageBackupsType.pricePerMonth, FiatMoneyUtil.formatOptions().trimZerosAfterDecimal())
-      stringResource(id = R.string.MessageBackupsTypeSelectionScreen__s_month, formattedAmount)
+      if (messageBackupsType.pricePerMonth.amount == BigDecimal.ZERO) {
+        stringResource(R.string.MessageBackupsTypeSelectionScreen__paid)
+      } else {
+        val formattedAmount = FiatMoneyUtil.format(LocalContext.current.resources, messageBackupsType.pricePerMonth, FiatMoneyUtil.formatOptions().trimZerosAfterDecimal())
+        stringResource(id = R.string.MessageBackupsTypeSelectionScreen__s_month, formattedAmount)
+      }
     }
   }
 }

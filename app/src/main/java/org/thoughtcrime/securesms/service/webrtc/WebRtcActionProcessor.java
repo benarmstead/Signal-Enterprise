@@ -24,7 +24,6 @@ import org.thoughtcrime.securesms.components.webrtc.EglBaseWrapper;
 import org.thoughtcrime.securesms.components.webrtc.GroupCallSafetyNumberChangeNotificationUtil;
 import org.thoughtcrime.securesms.database.CallTable;
 import org.thoughtcrime.securesms.database.SignalDatabase;
-import org.thoughtcrime.securesms.dependencies.AppDependencies;
 import org.thoughtcrime.securesms.events.CallParticipant;
 import org.thoughtcrime.securesms.events.WebRtcViewModel;
 import org.thoughtcrime.securesms.groups.GroupId;
@@ -199,7 +198,6 @@ public abstract class WebRtcActionProcessor {
     NotificationProfile activeProfile = NotificationProfiles.getActiveProfile(SignalDatabase.notificationProfiles().getProfiles());
     if (activeProfile != null && !(activeProfile.isRecipientAllowed(callMetadata.getRemotePeer().getId()) || activeProfile.getAllowAllCalls())) {
       Log.w(tag, "Caller is excluded by notification profile.");
-      currentState = currentState.getActionProcessor().handleSendHangup(currentState, callMetadata, WebRtcData.HangupMetadata.fromType(HangupMessage.Type.BUSY), true);
       webRtcInteractor.insertMissedCall(callMetadata.getRemotePeer(), receivedOfferMetadata.getServerReceivedTimestamp(), offerMetadata.getOfferType() == OfferMessage.Type.VIDEO_CALL, CallTable.Event.MISSED_NOTIFICATION_PROFILE);
       return currentState;
     }
@@ -617,10 +615,6 @@ public abstract class WebRtcActionProcessor {
     for (CallParticipant callParticipant : currentState.getCallInfoState().getRemoteCallParticipants()) {
       callParticipant.getVideoSink().setDeviceOrientationDegrees(sinkRotationDegrees);
     }
-
-    AppDependencies.getSignalCallManager()
-                   .getLockManager()
-                   .updateOrientation(Orientation.fromDegrees(orientationDegrees));
 
     return currentState.builder()
                        .changeLocalDeviceState()

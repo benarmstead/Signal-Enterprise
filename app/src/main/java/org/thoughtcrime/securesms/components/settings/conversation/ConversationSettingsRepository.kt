@@ -10,7 +10,7 @@ import io.reactivex.rxjava3.schedulers.Schedulers
 import kotlinx.coroutines.rx3.asObservable
 import org.signal.core.util.concurrent.SignalExecutors
 import org.signal.core.util.logging.Log
-import org.signal.storageservice.protos.groups.local.DecryptedGroup
+import org.signal.storageservice.storage.protos.groups.local.DecryptedGroup
 import org.thoughtcrime.securesms.contacts.sync.ContactDiscovery
 import org.thoughtcrime.securesms.database.CallTable
 import org.thoughtcrime.securesms.database.MediaTable
@@ -215,16 +215,25 @@ class ConversationSettingsRepository(
 
   @WorkerThread
   fun isMessageRequestAccepted(recipient: Recipient): Boolean {
-    return RecipientUtil.isMessageRequestAccepted(context, recipient)
+    return RecipientUtil.isMessageRequestAccepted(recipient)
   }
 
   fun getMembershipCountDescription(liveGroup: LiveGroup): LiveData<String> {
     return liveGroup.getMembershipCountDescription(context.resources)
   }
 
-  fun getExternalPossiblyMigratedGroupRecipientId(groupId: GroupId, consumer: (RecipientId) -> Unit) {
-    SignalExecutors.BOUNDED.execute {
-      consumer(Recipient.externalPossiblyMigratedGroup(groupId).id)
-    }
+  @WorkerThread
+  fun isArchived(recipientId: RecipientId): Boolean {
+    return SignalDatabase.threads.isArchived(recipientId)
+  }
+
+  @WorkerThread
+  fun setArchived(threadId: Long, archived: Boolean) {
+    SignalDatabase.threads.setArchived(setOf(threadId), archived)
+  }
+
+  @WorkerThread
+  fun deleteChat(threadId: Long) {
+    SignalDatabase.threads.deleteConversation(threadId)
   }
 }

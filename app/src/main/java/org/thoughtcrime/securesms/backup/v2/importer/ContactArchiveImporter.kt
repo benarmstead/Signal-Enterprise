@@ -6,11 +6,15 @@
 package org.thoughtcrime.securesms.backup.v2.importer
 
 import androidx.core.content.contentValuesOf
+import org.signal.archive.proto.Contact
+import org.signal.core.models.ServiceId.ACI
+import org.signal.core.models.ServiceId.PNI
 import org.signal.core.util.Base64
 import org.signal.core.util.insertInto
+import org.signal.core.util.logging.Log
 import org.signal.core.util.toInt
 import org.signal.core.util.update
-import org.thoughtcrime.securesms.backup.v2.proto.Contact
+import org.thoughtcrime.securesms.backup.v2.ImportSkips
 import org.thoughtcrime.securesms.backup.v2.util.toLocal
 import org.thoughtcrime.securesms.database.IdentityTable
 import org.thoughtcrime.securesms.database.RecipientTable
@@ -21,21 +25,27 @@ import org.thoughtcrime.securesms.profiles.ProfileName
 import org.thoughtcrime.securesms.recipients.Recipient
 import org.thoughtcrime.securesms.recipients.RecipientId
 import org.thoughtcrime.securesms.util.SignalE164Util
-import org.whispersystems.signalservice.api.push.ServiceId.ACI
-import org.whispersystems.signalservice.api.push.ServiceId.PNI
 
 /**
  * Handles the importing of [Contact] models into the local database.
  */
 object ContactArchiveImporter {
-  fun import(contact: Contact): RecipientId {
+  private val TAG = Log.tag(ContactArchiveImporter::class)
+
+  fun import(contact: Contact): RecipientId? {
     val aci = ACI.parseOrNull(contact.aci?.toByteArray())
     val pni = PNI.parseOrNull(contact.pni?.toByteArray())
+    val e164 = contact.formattedE164
+
+    if (aci == null && pni == null && e164 == null) {
+      Log.w(TAG, ImportSkips.recipientWithoutId())
+      return null
+    }
 
     val id = SignalDatabase.recipients.getAndPossiblyMergePnpVerified(
       aci = aci,
       pni = pni,
-      e164 = contact.formattedE164
+      e164 = e164
     )
 
     val profileKey = contact.profileKey?.toByteArray()
@@ -56,14 +66,16 @@ object ContactArchiveImporter {
       RecipientTable.SYSTEM_GIVEN_NAME to contact.systemGivenName,
       RecipientTable.SYSTEM_FAMILY_NAME to contact.systemFamilyName,
       RecipientTable.SYSTEM_NICKNAME to contact.systemNickname,
-      RecipientTable.AVATAR_COLOR to contact.avatarColor?.toLocal()?.serialize()
+      RecipientTable.AVATAR_COLOR to contact.avatarColor?.toLocal()?.serialize(),
+      RecipientTable.KEY_TRANSPARENCY_DATA to contact.keyTransparencyData?.toByteArray()
     )
 
+    val notRegistered = contact.notRegistered
     if (contact.registered != null) {
       values.put(RecipientTable.UNREGISTERED_TIMESTAMP, 0L)
       values.put(RecipientTable.REGISTERED, RecipientTable.RegisteredState.REGISTERED.id)
-    } else if (contact.notRegistered != null) {
-      values.put(RecipientTable.UNREGISTERED_TIMESTAMP, contact.notRegistered.unregisteredTimestamp)
+    } else if (notRegistered != null) {
+      values.put(RecipientTable.UNREGISTERED_TIMESTAMP, notRegistered.unregisteredTimestamp)
       values.put(RecipientTable.REGISTERED, RecipientTable.RegisteredState.NOT_REGISTERED.id)
     }
 
@@ -73,12 +85,13 @@ object ContactArchiveImporter {
       .where("${RecipientTable.ID} = ?", id)
       .run()
 
-    if (contact.identityKey != null && (aci != null || pni != null)) {
+    val identityKey = contact.identityKey
+    if (identityKey != null && (aci != null || pni != null)) {
       SignalDatabase.writableDatabase
         .insertInto(IdentityTable.TABLE_NAME)
         .values(
           IdentityTable.ADDRESS to (aci ?: pni).toString(),
-          IdentityTable.IDENTITY_KEY to Base64.encodeWithPadding(contact.identityKey.toByteArray()),
+          IdentityTable.IDENTITY_KEY to Base64.encodeWithPadding(identityKey.toByteArray()),
           IdentityTable.VERIFIED to contact.identityState.toLocal().toInt()
         )
         .run(SQLiteDatabase.CONFLICT_REPLACE)

@@ -1,8 +1,9 @@
 package org.thoughtcrime.securesms.components
 
 import android.content.Context
+import android.content.res.Configuration
+import android.os.Build
 import android.util.AttributeSet
-import android.view.View
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.constraintlayout.widget.Guideline
 import androidx.core.content.withStyledAttributes
@@ -14,7 +15,6 @@ import org.signal.core.util.logging.Log
 import org.thoughtcrime.securesms.R
 import org.thoughtcrime.securesms.keyvalue.SignalStore
 import org.thoughtcrime.securesms.util.ViewUtil
-import org.thoughtcrime.securesms.window.WindowSizeClass.Companion.getWindowSizeClass
 
 /**
  * A specialized [ConstraintLayout] that sets guidelines based on the window insets provided
@@ -60,10 +60,11 @@ open class InsetAwareConstraintLayout @JvmOverloads constructor(
   private val keyboardAnimator = KeyboardInsetAnimator()
   private var overridingKeyboard: Boolean = false
   private var previousKeyboardHeight: Int = 0
-  private var applyRootInsets: Boolean = false
+  private var previousStatusBarInset: Int = 0
 
   private var insets: WindowInsetsCompat? = null
   private var windowTypes: Int = InsetAwareConstraintLayout.windowTypes
+  private var navigationBarInsetOverride: Int? = null
 
   private val windowInsetsListener = androidx.core.view.OnApplyWindowInsetsListener { _, insets ->
     this.insets = insets
@@ -77,37 +78,24 @@ open class InsetAwareConstraintLayout @JvmOverloads constructor(
   override fun onAttachedToWindow() {
     super.onAttachedToWindow()
 
-    ViewCompat.setOnApplyWindowInsetsListener(insetTarget(), windowInsetsListener)
+    ViewCompat.setOnApplyWindowInsetsListener(this, windowInsetsListener)
+    post { ViewCompat.requestApplyInsets(this) }
   }
 
   override fun onDetachedFromWindow() {
     super.onDetachedFromWindow()
 
-    ViewCompat.setOnApplyWindowInsetsListener(insetTarget(), null)
+    ViewCompat.setOnApplyWindowInsetsListener(this, null)
   }
 
   init {
     if (attrs != null) {
       context.withStyledAttributes(attrs, R.styleable.InsetAwareConstraintLayout) {
-        applyRootInsets = getBoolean(R.styleable.InsetAwareConstraintLayout_applyRootInsets, false)
-
         if (getBoolean(R.styleable.InsetAwareConstraintLayout_animateKeyboardChanges, false)) {
-          ViewCompat.setWindowInsetsAnimationCallback(insetTarget(), keyboardAnimator)
+          ViewCompat.setWindowInsetsAnimationCallback(this@InsetAwareConstraintLayout, keyboardAnimator)
         }
       }
     }
-  }
-
-  private fun insetTarget(): View = if (applyRootInsets) rootView else this
-
-  fun setApplyRootInsets(useRootInsets: Boolean) {
-    if (applyRootInsets == useRootInsets) {
-      return
-    }
-
-    ViewCompat.setOnApplyWindowInsetsListener(insetTarget(), null)
-    applyRootInsets = useRootInsets
-    ViewCompat.setOnApplyWindowInsetsListener(insetTarget(), windowInsetsListener)
   }
 
   /**
@@ -122,6 +110,23 @@ open class InsetAwareConstraintLayout @JvmOverloads constructor(
       0
     }
 
+    if (insets != null) {
+      applyInsets(insets!!.getInsets(windowTypes), insets!!.getInsets(keyboardType))
+    }
+  }
+
+  fun setNavigationBarInsetOverride(inset: Int?) {
+    if (navigationBarInsetOverride == inset) return
+    navigationBarInsetOverride = inset
+    if (inset != null) {
+      // Apply immediately so layout is correct before next inset dispatch (important for
+      // Android 15 bubble where insets can arrive late or with different values).
+      navigationBarGuideline?.setGuidelineEnd(inset)
+      if (!isKeyboardShowing) {
+        keyboardGuideline?.setGuidelineEnd(inset)
+      }
+      requestLayout()
+    }
     if (insets != null) {
       applyInsets(insets!!.getInsets(windowTypes), insets!!.getInsets(keyboardType))
     }
@@ -147,16 +152,29 @@ open class InsetAwareConstraintLayout @JvmOverloads constructor(
     val isLtr = ViewUtil.isLtr(this)
 
     val statusBar = windowInsets.top
-    val navigationBar = windowInsets.bottom
+    val navigationBar = navigationBarInsetOverride ?: if (windowInsets.bottom == 0 && Build.VERSION.SDK_INT <= 29 && !ViewUtil.isGestureNavigation(resources, insets)) {
+      ViewUtil.getNavigationBarHeight(resources)
+    } else {
+      windowInsets.bottom
+    }
+
     val parentStart = if (isLtr) windowInsets.left else windowInsets.right
     val parentEnd = if (isLtr) windowInsets.right else windowInsets.left
 
-    statusBarGuideline?.setGuidelineBegin(statusBar)
-    navigationBarGuideline?.setGuidelineEnd(navigationBar)
-    parentStartGuideline?.setGuidelineBegin(parentStart)
-    parentEndGuideline?.setGuidelineEnd(parentEnd)
+    val statusBarShrinking = previousStatusBarInset > 0 && statusBar < previousStatusBarInset
 
-    windowInsetsListeners.forEach { it.onApplyWindowInsets(statusBar, navigationBar, parentStart, parentEnd) }
+    if (!statusBarShrinking) {
+      statusBarGuideline?.setGuidelineBegin(statusBar)
+      navigationBarGuideline?.setGuidelineEnd(navigationBar)
+      parentStartGuideline?.setGuidelineBegin(parentStart)
+      parentEndGuideline?.setGuidelineEnd(parentEnd)
+
+      windowInsetsListeners.forEach {
+        it.onApplyWindowInsets(statusBar, navigationBar, parentStart, parentEnd)
+      }
+
+      previousStatusBarInset = statusBar
+    }
 
     if (keyboardInsets.bottom > 0) {
       setKeyboardHeight(keyboardInsets.bottom)
@@ -169,9 +187,9 @@ open class InsetAwareConstraintLayout @JvmOverloads constructor(
       }
     } else if (!overridingKeyboard) {
       if (!keyboardAnimator.animating) {
-        keyboardGuideline?.setGuidelineEnd(windowInsets.bottom)
+        keyboardGuideline?.setGuidelineEnd(navigationBar)
       } else {
-        keyboardAnimator.endingGuidelineEnd = windowInsets.bottom
+        keyboardAnimator.endingGuidelineEnd = navigationBar
       }
     }
 
@@ -228,7 +246,7 @@ open class InsetAwareConstraintLayout @JvmOverloads constructor(
   }
 
   private fun isLandscape(): Boolean {
-    return resources.getWindowSizeClass().isLandscape()
+    return resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
   }
 
   private val Guideline?.guidelineEnd: Int
@@ -237,6 +255,7 @@ open class InsetAwareConstraintLayout @JvmOverloads constructor(
   interface KeyboardStateListener {
     fun onKeyboardShown()
     fun onKeyboardHidden()
+    fun onKeyboardAnimationEnded() = Unit
   }
 
   interface WindowInsetsListener {
@@ -294,6 +313,10 @@ open class InsetAwareConstraintLayout @JvmOverloads constructor(
     }
 
     override fun onEnd(animation: WindowInsetsAnimationCompat) {
+      keyboardStateListeners.forEach {
+        it.onKeyboardAnimationEnded()
+      }
+
       if (overridingKeyboard) {
         return
       }

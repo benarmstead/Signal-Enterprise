@@ -7,11 +7,11 @@ import androidx.annotation.Nullable;
 import androidx.annotation.WorkerThread;
 
 import org.signal.core.util.Base64;
+import org.signal.core.util.Util;
 import org.signal.core.util.logging.Log;
 import org.signal.libsignal.protocol.IdentityKey;
 import org.signal.libsignal.protocol.IdentityKeyPair;
 import org.signal.libsignal.protocol.InvalidKeyException;
-import org.signal.libsignal.protocol.util.Pair;
 import org.signal.libsignal.zkgroup.InvalidInputException;
 import org.signal.libsignal.zkgroup.profiles.ExpiringProfileKeyCredential;
 import org.signal.libsignal.zkgroup.profiles.ProfileKey;
@@ -20,6 +20,7 @@ import org.thoughtcrime.securesms.crypto.ProfileKeyUtil;
 import org.thoughtcrime.securesms.crypto.SealedSenderAccessUtil;
 import org.thoughtcrime.securesms.database.RecipientTable;
 import org.thoughtcrime.securesms.database.SignalDatabase;
+import org.thoughtcrime.securesms.database.model.IdentityStoreRecord;
 import org.thoughtcrime.securesms.dependencies.AppDependencies;
 import org.thoughtcrime.securesms.jobmanager.Job;
 import org.thoughtcrime.securesms.jobs.GroupV2UpdateSelfProfileKeyJob;
@@ -36,7 +37,7 @@ import org.thoughtcrime.securesms.profiles.AvatarHelper;
 import org.thoughtcrime.securesms.profiles.ProfileName;
 import org.thoughtcrime.securesms.recipients.Recipient;
 import org.thoughtcrime.securesms.recipients.RecipientUtil;
-import org.whispersystems.signalservice.api.NetworkResult;
+import org.signal.network.NetworkResult;
 import org.whispersystems.signalservice.api.NetworkResultUtil;
 import org.whispersystems.signalservice.api.crypto.InvalidCiphertextException;
 import org.whispersystems.signalservice.api.crypto.ProfileCipher;
@@ -44,7 +45,7 @@ import org.whispersystems.signalservice.api.crypto.SealedSenderAccess;
 import org.whispersystems.signalservice.api.profiles.AvatarUploadParams;
 import org.whispersystems.signalservice.api.profiles.ProfileAndCredential;
 import org.whispersystems.signalservice.api.profiles.SignalServiceProfile;
-import org.whispersystems.signalservice.api.push.ServiceId;
+import org.signal.core.models.ServiceId;
 import org.whispersystems.signalservice.api.push.SignalServiceAddress;
 import org.whispersystems.signalservice.api.services.ProfileService;
 import org.whispersystems.signalservice.api.util.StreamDetails;
@@ -56,6 +57,8 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.stream.Collectors;
+
+import kotlin.Pair;
 
 import io.reactivex.rxjava3.core.Single;
 
@@ -74,6 +77,11 @@ public final class ProfileUtil {
    */
   @WorkerThread
   public static void handleSelfProfileKeyChange() {
+    if (SignalStore.account().isLinkedDevice()) {
+      Log.i(TAG, "Linked devices shouldn't rotate self profile key after initial link");
+      return;
+    }
+
     List<Job> gv2UpdateJobs = SignalDatabase.groups()
                                             .getAllGroupV2Ids()
                                             .stream()
@@ -107,7 +115,7 @@ public final class ProfileUtil {
       throws IOException
   {
     Pair<Recipient, ServiceResponse<ProfileAndCredential>> response = retrieveProfile(context, recipient, requestType, allowUnidentifiedAccess).blockingGet();
-    return new ProfileService.ProfileResponseProcessor(response.second()).getResultOrThrow();
+    return new ProfileService.ProfileResponseProcessor(response.getSecond()).getResultOrThrow();
   }
 
   @WorkerThread
@@ -200,11 +208,18 @@ public final class ProfileUtil {
     }
 
     try {
-      IdentityKey             identityKey             = new IdentityKey(Base64.decode(profileAndCredential.getProfile().getIdentityKey()), 0);
+      IdentityKey remoteIdentityKey = new IdentityKey(Base64.decode(profileAndCredential.getProfile().getIdentityKey()), 0);
+      IdentityKey localIdentityKey  = getLocalIdentityKey(recipient);
+
+      if (localIdentityKey != null && !localIdentityKey.equals(remoteIdentityKey)) {
+        Log.w(TAG, "Server-provided identity key does not match locally-stored identity key for " + recipient.getId());
+        throw new PaymentsAddressException(PaymentsAddressException.Code.IDENTITY_MISMATCH);
+      }
+
       ProfileCipher           profileCipher           = new ProfileCipher(profileKey);
       byte[]                  decrypted               = profileCipher.decryptWithLength(encryptedPaymentsAddress);
       PaymentAddress          paymentAddress          = PaymentAddress.ADAPTER.decode(decrypted);
-      byte[]                  bytes                   = MobileCoinPublicAddressProfileUtil.verifyPaymentsAddress(paymentAddress, identityKey);
+      byte[]                  bytes                   = MobileCoinPublicAddressProfileUtil.verifyPaymentsAddress(paymentAddress, localIdentityKey != null ? localIdentityKey : remoteIdentityKey);
       MobileCoinPublicAddress mobileCoinPublicAddress = MobileCoinPublicAddress.fromBytes(bytes);
 
       if (mobileCoinPublicAddress == null) {
@@ -219,6 +234,15 @@ public final class ProfileUtil {
       Log.w(TAG, "Could not verify payments address due to bad identity key " + recipient.getId(), e);
       throw new PaymentsAddressException(PaymentsAddressException.Code.INVALID_ADDRESS_SIGNATURE);
     }
+  }
+
+  private static @Nullable IdentityKey getLocalIdentityKey(@NonNull Recipient recipient) {
+    if (!recipient.getHasServiceId()) {
+      return null;
+    }
+
+    IdentityStoreRecord record = SignalDatabase.identities().getIdentityStoreRecord(recipient.requireServiceId());
+    return record != null ? record.getIdentityKey() : null;
   }
 
   private static ProfileKey getProfileKey(@NonNull Recipient recipient) throws IOException {

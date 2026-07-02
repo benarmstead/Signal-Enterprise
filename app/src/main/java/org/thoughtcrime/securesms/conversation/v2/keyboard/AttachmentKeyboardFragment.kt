@@ -14,18 +14,18 @@ import androidx.fragment.app.viewModels
 import androidx.lifecycle.ViewModelProvider
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
 import io.reactivex.rxjava3.kotlin.subscribeBy
+import org.signal.core.models.media.Media
+import org.signal.core.ui.logging.LoggingFragment
+import org.signal.core.ui.permissions.Permissions
 import org.signal.core.util.concurrent.LifecycleDisposable
 import org.signal.core.util.concurrent.addTo
-import org.thoughtcrime.securesms.LoggingFragment
+import org.signal.core.util.permissions.PermissionCompat
 import org.thoughtcrime.securesms.R
 import org.thoughtcrime.securesms.conversation.AttachmentKeyboard
 import org.thoughtcrime.securesms.conversation.AttachmentKeyboardButton
 import org.thoughtcrime.securesms.conversation.ManageContextMenu
 import org.thoughtcrime.securesms.conversation.v2.ConversationViewModel
 import org.thoughtcrime.securesms.keyvalue.SignalStore
-import org.thoughtcrime.securesms.mediasend.Media
-import org.thoughtcrime.securesms.permissions.PermissionCompat
-import org.thoughtcrime.securesms.permissions.Permissions
 import org.thoughtcrime.securesms.recipients.Recipient
 import java.util.function.Predicate
 
@@ -72,7 +72,7 @@ class AttachmentKeyboardFragment : LoggingFragment(R.layout.attachment_keyboard_
 
     val snapshot = conversationViewModel.recipientSnapshot
     if (snapshot != null) {
-      updatePaymentsAvailable(snapshot)
+      updateButtonsAvailable(snapshot)
     }
 
     conversationViewModel
@@ -80,7 +80,7 @@ class AttachmentKeyboardFragment : LoggingFragment(R.layout.attachment_keyboard_
       .observeOn(AndroidSchedulers.mainThread())
       .subscribeBy {
         attachmentKeyboardView.setWallpaperEnabled(it.hasWallpaper)
-        updatePaymentsAvailable(it)
+        updateButtonsAvailable(it)
       }
       .addTo(lifecycleDisposable)
   }
@@ -126,16 +126,14 @@ class AttachmentKeyboardFragment : LoggingFragment(R.layout.attachment_keyboard_
       .execute()
   }
 
-  private fun updatePaymentsAvailable(recipient: Recipient) {
+  private fun updateButtonsAvailable(recipient: Recipient) {
     val paymentsValues = SignalStore.payments
-    if (paymentsValues.paymentsAvailability.isSendAllowed &&
-      !recipient.isSelf &&
-      !recipient.isGroup &&
-      recipient.isRegistered
-    ) {
-      attachmentKeyboardView.filterAttachmentKeyboardButtons(null)
-    } else {
+    val isPaymentsAvailable = paymentsValues.paymentsAvailability.isSendAllowed && !recipient.isSelf && !recipient.isGroup && recipient.isRegistered
+
+    if (!isPaymentsAvailable) {
       attachmentKeyboardView.filterAttachmentKeyboardButtons(removePaymentFilter)
+    } else {
+      attachmentKeyboardView.filterAttachmentKeyboardButtons(null)
     }
   }
 }

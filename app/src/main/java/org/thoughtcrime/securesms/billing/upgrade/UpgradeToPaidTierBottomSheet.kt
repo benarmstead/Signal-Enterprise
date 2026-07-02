@@ -23,6 +23,7 @@ import com.google.android.gms.common.GoogleApiAvailability
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.rx3.asFlowable
+import org.signal.core.ui.compose.ComposeBottomSheetDialogFragment
 import org.signal.core.ui.compose.Dialogs
 import org.signal.core.util.concurrent.SignalDispatchers
 import org.thoughtcrime.securesms.R
@@ -31,9 +32,9 @@ import org.thoughtcrime.securesms.backup.v2.ui.subscription.MessageBackupsFlowVi
 import org.thoughtcrime.securesms.backup.v2.ui.subscription.MessageBackupsStage
 import org.thoughtcrime.securesms.backup.v2.ui.subscription.MessageBackupsType
 import org.thoughtcrime.securesms.components.settings.app.subscription.donate.InAppPaymentCheckoutDelegate
-import org.thoughtcrime.securesms.compose.ComposeBottomSheetDialogFragment
 import org.thoughtcrime.securesms.database.InAppPaymentTable
 import org.thoughtcrime.securesms.dependencies.AppDependencies
+import org.thoughtcrime.securesms.util.storage.AndroidCredentialRepository
 import org.thoughtcrime.securesms.util.viewModel
 
 /**
@@ -61,6 +62,7 @@ abstract class UpgradeToPaidTierBottomSheet : ComposeBottomSheetDialogFragment()
     MessageBackupsFlowViewModel(
       initialTierSelection = MessageBackupTier.PAID,
       googlePlayApiAvailability = GoogleApiAvailability.getInstance().isGooglePlayServicesAvailable(requireContext()),
+      isCredentialManagerSupported = AndroidCredentialRepository.isCredentialManagerSupported(requireContext()),
       startScreen = MessageBackupsStage.TYPE_SELECTION
     )
   }

@@ -4,10 +4,12 @@
  */
 package org.thoughtcrime.securesms.jobs
 
+import org.signal.core.models.database.AttachmentId
 import org.signal.core.util.logging.Log
 import org.signal.libsignal.protocol.InvalidMessageException
-import org.thoughtcrime.securesms.attachments.AttachmentId
+import org.signal.network.exceptions.NonSuccessfulResponseCodeException
 import org.thoughtcrime.securesms.attachments.InvalidAttachmentException
+import org.thoughtcrime.securesms.backup.v2.ArchiveDatabaseExecutor
 import org.thoughtcrime.securesms.backup.v2.BackupRepository
 import org.thoughtcrime.securesms.backup.v2.createArchiveThumbnailPointer
 import org.thoughtcrime.securesms.backup.v2.requireThumbnailMediaName
@@ -23,7 +25,6 @@ import org.thoughtcrime.securesms.util.RemoteConfig
 import org.whispersystems.signalservice.api.messages.AttachmentTransferProgress
 import org.whispersystems.signalservice.api.messages.SignalServiceAttachment
 import org.whispersystems.signalservice.api.push.exceptions.MissingConfigurationException
-import org.whispersystems.signalservice.api.push.exceptions.NonSuccessfulResponseCodeException
 import java.io.File
 import java.io.IOException
 import java.util.concurrent.TimeUnit
@@ -141,7 +142,9 @@ class RestoreAttachmentThumbnailJob private constructor(
       )
 
     decryptingStream.use { input ->
-      SignalDatabase.attachments.finalizeAttachmentThumbnailAfterDownload(attachmentId, attachment.dataHash, attachment.remoteKey, input, thumbnailTransferFile)
+      ArchiveDatabaseExecutor.runBlocking {
+        SignalDatabase.attachments.finalizeAttachmentThumbnailAfterDownload(attachmentId, attachment.dataHash, attachment.remoteKey, input, thumbnailTransferFile)
+      }
     }
 
     if (!SignalDatabase.messages.isStory(messageId)) {
@@ -152,7 +155,9 @@ class RestoreAttachmentThumbnailJob private constructor(
   override fun onFailure() {
     Log.w(TAG, format(this, "onFailure() thumbnail messageId: $messageId  attachmentId: $attachmentId "))
 
-    SignalDatabase.attachments.setThumbnailRestoreProgressFailed(attachmentId, messageId)
+    ArchiveDatabaseExecutor.runBlocking {
+      SignalDatabase.attachments.setThumbnailRestoreProgressFailed(attachmentId, messageId)
+    }
   }
 
   override fun onShouldRetry(exception: Exception): Boolean {
@@ -163,10 +168,6 @@ class RestoreAttachmentThumbnailJob private constructor(
       }
       if (exception.code == 403) {
         Log.w(TAG, "[$attachmentId-thumbnail] No permission!")
-        return false
-      }
-      if (exception.code == 555) {
-        Log.w(TAG, "[$attachmentId-thumbnail] Syntetic failure!")
         return false
       }
     }

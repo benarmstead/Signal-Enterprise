@@ -2,10 +2,13 @@ package org.thoughtcrime.securesms.mediapreview
 
 import android.annotation.SuppressLint
 import android.content.ActivityNotFoundException
+import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.graphics.PorterDuff
 import android.graphics.PorterDuffColorFilter
+import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.text.Annotation
 import android.text.SpannableString
@@ -40,10 +43,13 @@ import io.reactivex.rxjava3.kotlin.subscribeBy
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import org.signal.core.models.media.Media
+import org.signal.core.ui.logging.LoggingFragment
+import org.signal.core.util.Debouncer
 import org.signal.core.util.concurrent.LifecycleDisposable
 import org.signal.core.util.concurrent.addTo
 import org.signal.core.util.logging.Log
-import org.thoughtcrime.securesms.LoggingFragment
+import org.signal.core.util.requireDrawable
 import org.thoughtcrime.securesms.R
 import org.thoughtcrime.securesms.attachments.AttachmentSaver
 import org.thoughtcrime.securesms.attachments.DatabaseAttachment
@@ -55,22 +61,24 @@ import org.thoughtcrime.securesms.conversation.mutiselect.forward.MultiselectFor
 import org.thoughtcrime.securesms.database.DatabaseObserver
 import org.thoughtcrime.securesms.database.MediaTable
 import org.thoughtcrime.securesms.database.SignalDatabase
+import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.databinding.FragmentMediaPreviewV2Binding
 import org.thoughtcrime.securesms.dependencies.AppDependencies
+import org.thoughtcrime.securesms.keyvalue.SignalStore
 import org.thoughtcrime.securesms.mediapreview.caption.ExpandingCaptionView
 import org.thoughtcrime.securesms.mediapreview.mediarail.CenterDecoration
 import org.thoughtcrime.securesms.mediapreview.mediarail.MediaRailAdapter
 import org.thoughtcrime.securesms.mediapreview.mediarail.MediaRailAdapter.ImageLoadingListener
-import org.thoughtcrime.securesms.mediasend.Media
 import org.thoughtcrime.securesms.mediasend.v2.MediaSelectionActivity
 import org.thoughtcrime.securesms.mms.PartAuthority
 import org.thoughtcrime.securesms.recipients.Recipient
-import org.thoughtcrime.securesms.util.ContextUtil
+import org.thoughtcrime.securesms.recipients.RecipientId
+import org.thoughtcrime.securesms.sharing.v2.ShareActivity
 import org.thoughtcrime.securesms.util.DateUtils
-import org.thoughtcrime.securesms.util.Debouncer
 import org.thoughtcrime.securesms.util.FullscreenHelper
 import org.thoughtcrime.securesms.util.MediaUtil
 import org.thoughtcrime.securesms.util.MessageConstraintsUtil
+import org.thoughtcrime.securesms.util.OffloadedMediaDialogUtil
 import org.thoughtcrime.securesms.util.SaveAttachmentUtil
 import org.thoughtcrime.securesms.util.SpanUtil
 import org.thoughtcrime.securesms.util.ViewUtil
@@ -78,6 +86,7 @@ import org.thoughtcrime.securesms.util.visible
 import java.util.Locale
 import java.util.concurrent.TimeUnit
 import kotlin.math.roundToInt
+import org.signal.core.ui.R as CoreUiR
 
 class MediaPreviewV2Fragment :
   LoggingFragment(R.layout.fragment_media_preview_v2),
@@ -89,6 +98,7 @@ class MediaPreviewV2Fragment :
     requireActivity()
   })
   private val debouncer = Debouncer(2, TimeUnit.SECONDS)
+  private val args: MediaIntentFactory.MediaPreviewArgs by lazy { MediaIntentFactory.requireArguments(requireArguments()) }
 
   private lateinit var pagerAdapter: MediaPreviewV2Adapter
   private lateinit var albumRailAdapter: MediaRailAdapter
@@ -111,9 +121,11 @@ class MediaPreviewV2Fragment :
   override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
     super.onViewCreated(view, savedInstanceState)
 
-    val args = MediaIntentFactory.requireArguments(requireArguments())
     initializeViewModel(args)
     initializeToolbar(binding.toolbar)
+    bindToolbar(args.fromRecipientId, args.threadRecipientId, args.outgoing, args.showThread, args.date, args.messageId)
+    bindInitialPlaybackControls(args)
+    bindInitialCaption(args)
     initializeViewPager()
     initializeAlbumRail()
     initializeFullScreenUi()
@@ -152,8 +164,9 @@ class MediaPreviewV2Fragment :
     val sorting = MediaTable.Sorting.deserialize(args.sorting.ordinal)
     val startingAttachmentId = PartAuthority.requireAttachmentId(args.initialMediaUri)
     val threadId = args.threadId
-    viewModel.fetchAttachments(requireContext(), startingAttachmentId, threadId, sorting)
-    val dbObserver = DatabaseObserver.Observer { viewModel.refetchAttachments(requireContext(), startingAttachmentId, threadId, sorting) }
+    val appContext = requireContext().applicationContext
+    viewModel.fetchAttachments(appContext, startingAttachmentId, threadId, sorting)
+    val dbObserver = DatabaseObserver.Observer { viewModel.refetchAttachments(appContext, startingAttachmentId, threadId, sorting) }
     AppDependencies.databaseObserver.registerAttachmentUpdatedObserver(dbObserver)
     this.dbChangeObserver = dbObserver
   }
@@ -164,8 +177,8 @@ class MediaPreviewV2Fragment :
       requireActivity().onBackPressedDispatcher.onBackPressed()
     }
 
-    toolbar.setTitleTextAppearance(requireContext(), R.style.Signal_Text_TitleMedium)
-    toolbar.setSubtitleTextAppearance(requireContext(), R.style.Signal_Text_BodyMedium)
+    toolbar.setTitleTextAppearance(requireContext(), CoreUiR.style.Signal_Text_TitleMedium)
+    toolbar.setSubtitleTextAppearance(requireContext(), CoreUiR.style.Signal_Text_BodyMedium)
     (binding.toolbar.menu as? MenuBuilder)?.setOptionalIconsVisible(true)
     binding.toolbar.inflateMenu(R.menu.media_preview)
   }
@@ -236,6 +249,10 @@ class MediaPreviewV2Fragment :
     if (binding.mediaPager.currentItem != currentPosition) {
       binding.mediaPager.setCurrentItem(currentPosition, false)
     }
+
+    val currentItem: MediaTable.MediaRecord = currentState.mediaRecords[currentPosition]
+    bindTextViews(currentItem, currentState.showThread, currentState.messageBodies)
+    bindMenuItems(currentItem)
   }
 
   /**
@@ -274,10 +291,46 @@ class MediaPreviewV2Fragment :
   }
 
   private fun bindTextViews(currentItem: MediaTable.MediaRecord, showThread: Boolean, messageBodies: Map<Long, SpannableString>) {
-    binding.toolbar.title = getTitleText(currentItem, showThread)
-    binding.toolbar.subtitle = getSubTitleText(currentItem)
-    val messageId: Long? = currentItem.attachment?.mmsId
-    if (messageId != null) {
+    bindToolbar(currentItem.recipientId, currentItem.threadRecipientId, currentItem.isOutgoing, showThread, currentItem.date, currentItem.attachment?.mmsId)
+
+    val caption = currentItem.attachment?.caption
+    val messageId = currentItem.attachment?.mmsId
+    if (caption != null) {
+      bindCaptionView(SpannableString(caption))
+    } else {
+      bindCaptionView(messageBodies[messageId] ?: initialBodyForMessage(messageId))
+    }
+  }
+
+  /**
+   * The body passed in via arguments for the initially-opened message. Used as a fallback until the background
+   * body resolution populates [MediaPreviewV2State.messageBodies], so the caption never blanks out after the
+   * instant render.
+   */
+  private fun initialBodyForMessage(messageId: Long?): SpannableString? {
+    return if (messageId != null && messageId == args.messageId) {
+      args.initialMessageBody?.let { SpannableString(it) }
+    } else {
+      null
+    }
+  }
+
+  private fun bindInitialCaption(args: MediaIntentFactory.MediaPreviewArgs) {
+    val caption = args.initialCaption
+    if (caption != null) {
+      bindCaptionView(SpannableString(caption))
+    } else {
+      bindCaptionView(args.initialMessageBody?.let { SpannableString(it) })
+    }
+  }
+
+  private fun bindToolbar(fromRecipientId: RecipientId, threadRecipientId: RecipientId, isOutgoing: Boolean, showThread: Boolean, date: Long, messageId: Long?) {
+    val title = getTitleText(fromRecipientId, threadRecipientId, isOutgoing, showThread)
+    val (subtitle, subtitleContentDesc) = getSubTitleText(date)
+    binding.toolbar.title = title
+    binding.toolbar.subtitle = subtitle
+    binding.toolbar.contentDescription = "$title $subtitleContentDesc"
+    if (messageId != null && messageId > 0) {
       binding.toolbar.setOnClickListener { v ->
         lifecycleDisposable += viewModel.jumpToFragment(v.context, messageId).subscribeBy(
           onSuccess = {
@@ -290,13 +343,6 @@ class MediaPreviewV2Fragment :
           }
         )
       }
-    }
-
-    val caption = currentItem.attachment?.caption
-    if (caption != null) {
-      bindCaptionView(SpannableString(caption))
-    } else {
-      bindCaptionView(messageBodies[messageId])
     }
   }
 
@@ -334,6 +380,20 @@ class MediaPreviewV2Fragment :
     }
   }
 
+  private fun bindInitialPlaybackControls(args: MediaIntentFactory.MediaPreviewArgs) {
+    if (!isContentTypeSupported(args.initialMediaType)) {
+      return
+    }
+    val mediaMode: MediaPreviewPlayerControlView.MediaMode = if (args.isVideoGif) {
+      MediaPreviewPlayerControlView.MediaMode.IMAGE
+    } else {
+      MediaPreviewPlayerControlView.MediaMode.fromString(args.initialMediaType)
+    }
+    binding.mediaPreviewPlaybackControls.setMediaMode(mediaMode)
+    bindShareAndForwardButtons(args.threadId, args.initialMediaDataUri, args.initialMediaType)
+    crossfadeViewIn(binding.mediaPreviewDetailsContainer)
+  }
+
   private fun bindMediaPreviewPlaybackControls(currentItem: MediaTable.MediaRecord, currentFragment: MediaPreviewFragment?) {
     val mediaType: MediaPreviewPlayerControlView.MediaMode = if (currentItem.attachment?.videoGif == true) {
       MediaPreviewPlayerControlView.MediaMode.IMAGE
@@ -341,17 +401,29 @@ class MediaPreviewV2Fragment :
       MediaPreviewPlayerControlView.MediaMode.fromString(currentItem.contentType)
     }
     binding.mediaPreviewPlaybackControls.setMediaMode(mediaType)
-    val videoMediaPreviewFragment: VideoMediaPreviewFragment? = currentFragment as? VideoMediaPreviewFragment
-    binding.mediaPreviewPlaybackControls.setShareButtonListener {
-      videoMediaPreviewFragment?.pause()
-      share(currentItem)
-    }
-    binding.mediaPreviewPlaybackControls.setForwardButtonListener {
-      videoMediaPreviewFragment?.pause()
-      forward(currentItem)
-    }
+    bindShareAndForwardButtons(currentItem.threadId, currentItem.attachment?.uri, currentItem.contentType)
     currentFragment?.setBottomButtonControls(binding.mediaPreviewPlaybackControls)
     currentFragment?.autoPlayIfNeeded()
+  }
+
+  private fun bindShareAndForwardButtons(threadId: Long, uri: Uri?, contentType: String?) {
+    if (uri == null) {
+      binding.mediaPreviewPlaybackControls.setShareButtonListener(null)
+      binding.mediaPreviewPlaybackControls.setForwardButtonListener(null)
+      return
+    }
+    binding.mediaPreviewPlaybackControls.setShareButtonListener {
+      pauseCurrentMediaIfVideo()
+      share(uri, contentType)
+    }
+    binding.mediaPreviewPlaybackControls.setForwardButtonListener {
+      pauseCurrentMediaIfVideo()
+      forward(threadId, uri, contentType)
+    }
+  }
+
+  private fun pauseCurrentMediaIfVideo() {
+    (getMediaPreviewFragmentFromChildFragmentManager(binding.mediaPager.currentItem) as? VideoMediaPreviewFragment)?.pause()
   }
 
   private fun tryBindMediaPreviewPlaybackControls(
@@ -442,9 +514,9 @@ class MediaPreviewV2Fragment :
     binding.mediaPager.setCurrentItem(position, true)
   }
 
-  private fun getTitleText(mediaRecord: MediaTable.MediaRecord, showThread: Boolean): String {
-    val recipient: Recipient = Recipient.live(mediaRecord.recipientId).get()
-    val defaultFromString: String = if (mediaRecord.isOutgoing) {
+  private fun getTitleText(fromRecipientId: RecipientId, threadRecipientId: RecipientId, isOutgoing: Boolean, showThread: Boolean): String {
+    val recipient: Recipient = Recipient.live(fromRecipientId).get()
+    val defaultFromString: String = if (isOutgoing) {
       getString(R.string.MediaPreviewActivity_you)
     } else {
       recipient.getDisplayName(requireContext())
@@ -453,8 +525,8 @@ class MediaPreviewV2Fragment :
       return defaultFromString
     }
 
-    val threadRecipient = Recipient.live(mediaRecord.threadRecipientId).get()
-    return if (mediaRecord.isOutgoing) {
+    val threadRecipient = Recipient.live(threadRecipientId).get()
+    return if (isOutgoing) {
       if (threadRecipient.isSelf) {
         getString(R.string.note_to_self)
       } else {
@@ -469,20 +541,20 @@ class MediaPreviewV2Fragment :
     }
   }
 
-  private fun getSubTitleText(mediaRecord: MediaTable.MediaRecord): CharSequence {
-    val text = if (mediaRecord.date > 0) {
-      DateUtils.getExtendedRelativeTimeSpanString(requireContext(), Locale.getDefault(), mediaRecord.date)
+  private fun getSubTitleText(date: Long): Pair<CharSequence, CharSequence> {
+    val (text, contentDesc) = if (date > 0) {
+      DateUtils.getExtendedRelativeTimeSpanString(requireContext(), Locale.getDefault(), date)
     } else {
-      getString(R.string.MediaPreviewActivity_draft)
+      Pair(getString(R.string.MediaPreviewActivity_draft), getString(R.string.MediaPreviewActivity_draft))
     }
     val builder = SpannableStringBuilder(text)
 
-    val onSurfaceColor = ContextCompat.getColor(requireContext(), R.color.signal_colorOnSurface)
-    val chevron = ContextUtil.requireDrawable(requireContext(), R.drawable.ic_chevron_end_24)
+    val onSurfaceColor = ContextCompat.getColor(requireContext(), CoreUiR.color.signal_colorOnSurface)
+    val chevron = requireContext().requireDrawable(R.drawable.ic_chevron_end_24)
     chevron.colorFilter = PorterDuffColorFilter(onSurfaceColor, PorterDuff.Mode.SRC_IN)
 
     SpanUtil.appendCenteredImageSpan(builder, chevron, 10, 10)
-    return builder
+    return Pair(builder, contentDesc)
   }
 
   private fun anchorMarginsToBottomInsets(viewToAnchor: View) {
@@ -505,8 +577,9 @@ class MediaPreviewV2Fragment :
   }
 
   override fun onMediaNotAvailable() {
-    Toast.makeText(requireContext(), R.string.MediaPreviewActivity_media_no_longer_available, Toast.LENGTH_LONG).show()
-    requireActivity().finish()
+    val context = context ?: return
+    Toast.makeText(context, R.string.MediaPreviewActivity_media_no_longer_available, Toast.LENGTH_LONG).show()
+    activity?.finish()
   }
 
   override fun onMediaReady() {
@@ -537,55 +610,58 @@ class MediaPreviewV2Fragment :
   }
 
   override fun unableToPlayMedia() {
-    Toast.makeText(requireContext(), R.string.MediaPreviewActivity_unable_to_play_media, Toast.LENGTH_LONG).show()
-    requireActivity().finish()
+    val context = context ?: return
+    Toast.makeText(context, R.string.MediaPreviewActivity_unable_to_play_media, Toast.LENGTH_LONG).show()
+    activity?.finish()
   }
 
-  private fun forward(mediaItem: MediaTable.MediaRecord) {
-    val attachment = mediaItem.attachment
-    val uri = attachment?.uri
-    if (attachment != null && uri != null) {
-      MultiselectForwardFragmentArgs.create(
-        context = requireContext(),
-        threadId = mediaItem.threadId,
-        mediaUri = uri,
-        contentType = attachment.contentType
-      ) { args: MultiselectForwardFragmentArgs ->
-        MultiselectForwardFragment.showBottomSheet(childFragmentManager, args)
-      }
+  private fun forward(threadId: Long, uri: Uri, contentType: String?) {
+    MultiselectForwardFragmentArgs.create(
+      context = requireContext(),
+      threadId = threadId,
+      mediaUri = uri,
+      contentType = contentType
+    ) { args: MultiselectForwardFragmentArgs ->
+      MultiselectForwardFragment.showBottomSheet(childFragmentManager, args)
     }
   }
 
-  private fun share(mediaItem: MediaTable.MediaRecord) {
-    val attachment = mediaItem.attachment
-    val uri = attachment?.uri
-    if (attachment != null && uri != null) {
-      val publicUri = PartAuthority.getAttachmentPublicUri(uri)
-      val mimeType = Intent.normalizeMimeType(attachment.contentType)
-      val shareIntent = ShareCompat.IntentBuilder(requireActivity())
-        .setStream(publicUri)
-        .setType(mimeType)
-        .createChooserIntent()
-        .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+  private fun share(uri: Uri, contentType: String?) {
+    val publicUri = PartAuthority.getAttachmentPublicUri(uri)
+    val mimeType = Intent.normalizeMimeType(contentType)
+    val shareIntent = ShareCompat.IntentBuilder(requireActivity())
+      .setStream(publicUri)
+      .setType(mimeType)
+      .createChooserIntent()
+      .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
 
-      try {
-        startActivity(shareIntent)
-      } catch (e: ActivityNotFoundException) {
-        Log.w(TAG, "No activity existed to share the media.", e)
-        Toast.makeText(requireContext(), R.string.MediaPreviewActivity_cant_find_an_app_able_to_share_this_media, Toast.LENGTH_LONG).show()
-      }
+    if (Build.VERSION.SDK_INT < 34) {
+      shareIntent.putExtra(Intent.EXTRA_EXCLUDE_COMPONENTS, arrayOf(ComponentName(requireContext(), ShareActivity::class.java)))
+    }
+
+    try {
+      startActivity(shareIntent)
+    } catch (e: ActivityNotFoundException) {
+      Log.w(TAG, "No activity existed to share the media.", e)
+      Toast.makeText(requireContext(), R.string.MediaPreviewActivity_cant_find_an_app_able_to_share_this_media, Toast.LENGTH_LONG).show()
     }
   }
 
   private fun saveToDisk(mediaItem: MediaTable.MediaRecord) {
-    val uri = mediaItem.attachment?.uri
-    val contentType = mediaItem.attachment?.contentType
+    val attachment = mediaItem.attachment
+    if (attachment != null && !attachment.hasData && SignalStore.backup.optimizeStorage) {
+      OffloadedMediaDialogUtil.showAllOffloaded(requireContext())
+      return
+    }
+
+    val uri = attachment?.uri
+    val contentType = attachment?.contentType
     if (uri == null || contentType == null) {
       Log.w(TAG, "Unable to save attachment with null URI or contentType.")
       return
     }
 
-    val attachment = SaveAttachmentUtil.SaveAttachment(
+    val saveAttachment = SaveAttachmentUtil.SaveAttachment(
       uri = uri,
       contentType = contentType,
       date = if (mediaItem.date > 0) mediaItem.date else System.currentTimeMillis(),
@@ -593,7 +669,7 @@ class MediaPreviewV2Fragment :
     )
 
     lifecycleScope.launch {
-      AttachmentSaver(this@MediaPreviewV2Fragment).saveAttachments(setOf(attachment))
+      AttachmentSaver(this@MediaPreviewV2Fragment).saveAttachments(setOf(saveAttachment))
     }
   }
 
@@ -609,13 +685,23 @@ class MediaPreviewV2Fragment :
       return
     }
 
+    val messageRecord = SignalDatabase.messages.getMessageRecord(attachment.mmsId)
+    val isNoteToSelf = messageRecord.isOutgoing && messageRecord.toRecipient.isSelf
+
     MaterialAlertDialogBuilder(requireContext()).apply {
       setIcon(R.drawable.symbol_error_triangle_fill_24)
       setTitle(R.string.MediaPreviewActivity_media_delete_confirmation_title)
       setMessage(R.string.MediaPreviewActivity_media_delete_confirmation_message)
       setCancelable(true)
       setNegativeButton(android.R.string.cancel, null)
-      setPositiveButton(R.string.ConversationFragment_delete_for_me) { _, _ ->
+
+      val deleteButtonLabel = if (isNoteToSelf) {
+        R.string.ConversationFragment_delete
+      } else {
+        R.string.ConversationFragment_delete_for_me
+      }
+
+      setPositiveButton(deleteButtonLabel) { _, _ ->
         lifecycleDisposable += viewModel.localDelete(requireContext(), attachment)
           .observeOn(AndroidSchedulers.mainThread())
           .subscribeBy(
@@ -630,7 +716,7 @@ class MediaPreviewV2Fragment :
           )
       }
 
-      if (canRemotelyDelete(attachment)) {
+      if (canRemotelyDelete(attachment, messageRecord) && !isNoteToSelf) {
         setNeutralButton(R.string.ConversationFragment_delete_for_everyone) { _, _ ->
           lifecycleDisposable += viewModel.remoteDelete(attachment)
             .observeOn(AndroidSchedulers.mainThread())
@@ -649,10 +735,10 @@ class MediaPreviewV2Fragment :
     }.show()
   }
 
-  private fun canRemotelyDelete(attachment: DatabaseAttachment): Boolean {
+  private fun canRemotelyDelete(attachment: DatabaseAttachment, messageRecord: MessageRecord): Boolean {
     val mmsId = attachment.mmsId
     val attachmentCount = SignalDatabase.attachments.getAttachmentsForMessage(mmsId).size
-    return attachmentCount <= 1 && MessageConstraintsUtil.isValidRemoteDeleteSend(listOf(SignalDatabase.messages.getMessageRecord(mmsId)), System.currentTimeMillis())
+    return attachmentCount <= 1 && MessageConstraintsUtil.isValidRemoteDeleteSend(listOf(messageRecord), System.currentTimeMillis())
   }
 
   private fun editMediaItem(currentItem: MediaTable.MediaRecord) {

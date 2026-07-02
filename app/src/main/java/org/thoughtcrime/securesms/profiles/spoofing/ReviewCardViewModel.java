@@ -1,6 +1,6 @@
 package org.thoughtcrime.securesms.profiles.spoofing;
 
-import android.util.Pair;
+import kotlin.Pair;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -10,7 +10,7 @@ import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 import androidx.lifecycle.ViewModelProvider;
 
-import com.annimon.stream.Stream;
+import java.util.stream.Collectors;
 
 import org.thoughtcrime.securesms.groups.GroupId;
 import org.thoughtcrime.securesms.groups.LiveGroup;
@@ -46,7 +46,7 @@ public class ReviewCardViewModel extends ViewModel {
 
     LiveData<Pair<Boolean, List<ReviewRecipient>>> adminStatusAndReviewRecipients = LiveDataUtil.combineLatest(isSelfGroupAdmin, reviewRecipients, Pair::new);
 
-    this.reviewCards      = LiveDataUtil.mapAsync(adminStatusAndReviewRecipients, pair -> transformReviewRecipients(pair.first, pair.second));
+    this.reviewCards      = LiveDataUtil.mapAsync(adminStatusAndReviewRecipients, pair -> transformReviewRecipients(pair.getFirst(), pair.getSecond()));
     this.reviewEvents     = new SingleLiveEvent<>();
 
     repository.loadRecipients(new OnRecipientsLoadedListener());
@@ -86,14 +86,13 @@ public class ReviewCardViewModel extends ViewModel {
 
   @WorkerThread
   private @NonNull List<ReviewCard> transformReviewRecipients(boolean isSelfGroupAdmin, @NonNull List<ReviewRecipient> reviewRecipients) {
-    return Stream.of(reviewRecipients)
-                 .filter(r -> repository.loadGroupsInCommonCount(r) > 0)
-                 .map(r -> new ReviewCard(r,
+    return reviewRecipients.stream()
+                           .filter(r -> repository.loadGroupsInCommonCount(r) > 0)
+                           .map(r -> new ReviewCard(r,
                                           repository.loadGroupsInCommonCount(r) - (isGroupThread ? 1 : 0),
                                           getCardType(r),
                                           getPrimaryAction(r, isSelfGroupAdmin),
-                                          getSecondaryAction(r)))
-                 .toList();
+                                          getSecondaryAction(r))).collect(Collectors.toList());
 
   }
 

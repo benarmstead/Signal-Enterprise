@@ -2,12 +2,15 @@ package org.thoughtcrime.securesms.components.settings.app
 
 import android.content.Context
 import android.content.Intent
+import android.os.Build
 import android.os.Bundle
+import android.os.Process
 import androidx.navigation.NavDirections
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import io.reactivex.rxjava3.subjects.PublishSubject
 import io.reactivex.rxjava3.subjects.Subject
 import org.signal.core.util.getParcelableExtraCompat
+import org.signal.core.util.logging.Log
 import org.signal.donations.InAppPaymentType
 import org.thoughtcrime.securesms.MainActivity
 import org.thoughtcrime.securesms.R
@@ -23,6 +26,7 @@ import org.thoughtcrime.securesms.recipients.Recipient
 import org.thoughtcrime.securesms.service.KeyCachingService
 import org.thoughtcrime.securesms.util.CachedInflater
 import org.thoughtcrime.securesms.util.DynamicTheme
+import org.thoughtcrime.securesms.util.Environment
 import org.thoughtcrime.securesms.util.SignalE164Util
 import org.thoughtcrime.securesms.util.navigation.safeNavigate
 
@@ -33,25 +37,32 @@ private const val EXTRA_PERFORM_ACTION_ON_CREATE = "extra_perform_action_on_crea
 
 class AppSettingsActivity : DSLSettingsActivity(), GooglePayComponent {
 
+  private val TAG = Log.tag(AppSettingsActivity::class)
+
   private var wasConfigurationUpdated = false
 
   override val googlePayRepository: GooglePayRepository by lazy { GooglePayRepository(this) }
   override val googlePayResultPublisher: Subject<GooglePayComponent.GooglePayResult> = PublishSubject.create()
 
   override fun onCreate(savedInstanceState: Bundle?, ready: Boolean) {
-    if (intent?.hasExtra(ARG_NAV_GRAPH) != true) {
-      intent?.putExtra(ARG_NAV_GRAPH, R.navigation.app_settings_with_change_number)
-    }
-
     super.onCreate(savedInstanceState, ready)
 
     val startingAction: NavDirections? = if (intent?.categories?.contains(NOTIFICATION_CATEGORY) == true) {
       AppSettingsFragmentDirections.actionDirectToNotificationsSettingsFragment()
+    } else if (Build.VERSION.SDK_INT >= 34 && getLaunchedFromUid() != Process.myUid()) {
+      Log.w(TAG, "Settings was launched by an external process. Ignoring starting route.")
+      null
     } else {
-      val appSettingsRoute: AppSettingsRoute? = intent?.getParcelableExtraCompat(START_ROUTE, AppSettingsRoute::class.java)
-      when (appSettingsRoute) {
+      when (val appSettingsRoute: AppSettingsRoute? = intent?.getParcelableExtraCompat(START_ROUTE, AppSettingsRoute::class.java)) {
         AppSettingsRoute.Empty -> null
-        AppSettingsRoute.BackupsRoute.Local -> AppSettingsFragmentDirections.actionDirectToBackupsPreferenceFragment()
+        is AppSettingsRoute.BackupsRoute.Local -> {
+          if (SignalStore.backup.newLocalBackupsEnabled || (Environment.Backups.isNewFormatSupportedForLocalBackup() && (!SignalStore.settings.isBackupEnabled || appSettingsRoute.triggerUpdateFlow))) {
+            AppSettingsFragmentDirections.actionDirectToLocalBackupsFragment()
+              .setTriggerUpdateFlow(appSettingsRoute.triggerUpdateFlow)
+          } else {
+            AppSettingsFragmentDirections.actionDirectToBackupsPreferenceFragment()
+          }
+        }
         is AppSettingsRoute.HelpRoute.Settings -> AppSettingsFragmentDirections.actionDirectToHelpFragment()
           .setStartCategoryIndex(appSettingsRoute.startCategoryIndex)
         AppSettingsRoute.DataAndStorageRoute.Proxy -> AppSettingsFragmentDirections.actionDirectToEditProxyFragment()
@@ -68,16 +79,18 @@ class AppSettingsActivity : DSLSettingsActivity(), GooglePayComponent {
         AppSettingsRoute.LinkDeviceRoute.LinkDevice -> AppSettingsFragmentDirections.actionDirectToDevices()
         AppSettingsRoute.UsernameLinkRoute.UsernameLink -> AppSettingsFragmentDirections.actionDirectToUsernameLinkSettings()
         is AppSettingsRoute.AccountRoute.Username -> AppSettingsFragmentDirections.actionDirectToUsernameRecovery()
-        is AppSettingsRoute.BackupsRoute.Remote -> AppSettingsFragmentDirections.actionDirectToRemoteBackupsSettingsFragment()
+        is AppSettingsRoute.BackupsRoute.Remote -> AppSettingsFragmentDirections.actionDirectToRemoteBackupsSettingsFragment().setForQuickRestore(appSettingsRoute.forQuickRestore)
         AppSettingsRoute.ChatFoldersRoute.ChatFolders -> AppSettingsFragmentDirections.actionDirectToChatFoldersFragment()
         is AppSettingsRoute.ChatFoldersRoute.CreateChatFolders -> AppSettingsFragmentDirections.actionDirectToCreateFoldersFragment(
           appSettingsRoute.folderId,
           appSettingsRoute.threadIds
         )
 
-        AppSettingsRoute.BackupsRoute.Backups -> AppSettingsFragmentDirections.actionDirectToBackupsSettingsFragment()
+        AppSettingsRoute.ChatsRoute.Chats -> AppSettingsFragmentDirections.actionDirectToChatsSettingsFragment()
+        is AppSettingsRoute.BackupsRoute.Backups -> AppSettingsFragmentDirections.actionDirectToBackupsSettingsFragment().setLaunchCheckoutFlow(appSettingsRoute.launchCheckoutFlow)
         AppSettingsRoute.Invite -> AppSettingsFragmentDirections.actionDirectToInviteFragment()
         AppSettingsRoute.DataAndStorageRoute.DataAndStorage -> AppSettingsFragmentDirections.actionDirectToStoragePreferenceFragment()
+        AppSettingsRoute.AccountRoute.Account -> AppSettingsFragmentDirections.actionDirectToAccountSettingsFragment()
         else -> error("Unsupported start location: ${appSettingsRoute?.javaClass?.name}")
       }
     }
@@ -135,6 +148,10 @@ class AppSettingsActivity : DSLSettingsActivity(), GooglePayComponent {
     }
   }
 
+  override fun resolveNavGraphId(): Int = R.navigation.app_settings_with_change_number
+
+  override fun resolveStartBundle(): Bundle? = null
+
   @Suppress("DEPRECATION")
   override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
     super.onActivityResult(requestCode, resultCode, data)
@@ -152,7 +169,7 @@ class AppSettingsActivity : DSLSettingsActivity(), GooglePayComponent {
     }
 
     @JvmStatic
-    fun backups(context: Context): Intent = getIntentForStartLocation(context, AppSettingsRoute.BackupsRoute.Local)
+    fun backups(context: Context): Intent = getIntentForStartLocation(context, AppSettingsRoute.BackupsRoute.Local())
 
     @JvmStatic
     fun help(context: Context, startCategoryIndex: Int = 0): Intent {
@@ -168,6 +185,9 @@ class AppSettingsActivity : DSLSettingsActivity(), GooglePayComponent {
 
     @JvmStatic
     fun changeNumber(context: Context): Intent = getIntentForStartLocation(context, AppSettingsRoute.ChangeNumberRoute.Start)
+
+    @JvmStatic
+    fun account(context: Context): Intent = getIntentForStartLocation(context, AppSettingsRoute.AccountRoute.Account)
 
     @JvmStatic
     fun subscriptions(context: Context): Intent = getIntentForStartLocation(context, AppSettingsRoute.DonationsRoute.Donations(directToCheckoutType = InAppPaymentType.RECURRING_DONATION))
@@ -204,7 +224,11 @@ class AppSettingsActivity : DSLSettingsActivity(), GooglePayComponent {
     fun usernameRecovery(context: Context): Intent = getIntentForStartLocation(context, AppSettingsRoute.AccountRoute.Username(mode = UsernameEditMode.RECOVERY))
 
     @JvmStatic
-    fun remoteBackups(context: Context): Intent = getIntentForStartLocation(context, AppSettingsRoute.BackupsRoute.Remote())
+    @JvmOverloads
+    fun remoteBackups(context: Context, forQuickRestore: Boolean = false): Intent = getIntentForStartLocation(context, AppSettingsRoute.BackupsRoute.Remote(forQuickRestore = forQuickRestore))
+
+    @JvmStatic
+    fun chats(context: Context): Intent = getIntentForStartLocation(context, AppSettingsRoute.ChatsRoute.Chats)
 
     @JvmStatic
     fun chatFolders(context: Context): Intent = getIntentForStartLocation(context, AppSettingsRoute.ChatFoldersRoute.ChatFolders)
@@ -221,10 +245,14 @@ class AppSettingsActivity : DSLSettingsActivity(), GooglePayComponent {
     }
 
     @JvmStatic
-    fun backupsSettings(context: Context): Intent = getIntentForStartLocation(context, AppSettingsRoute.BackupsRoute.Backups)
+    @JvmOverloads
+    fun backupsSettings(context: Context, launchCheckoutFlow: Boolean = false): Intent = getIntentForStartLocation(context, AppSettingsRoute.BackupsRoute.Backups(launchCheckoutFlow = launchCheckoutFlow))
 
     @JvmStatic
     fun invite(context: Context): Intent = getIntentForStartLocation(context, AppSettingsRoute.Invite)
+
+    @JvmStatic
+    fun upgradeLocalBackups(context: Context): Intent = getIntentForStartLocation(context, AppSettingsRoute.BackupsRoute.Local(triggerUpdateFlow = true))
 
     private fun getIntentForStartLocation(context: Context, startRoute: AppSettingsRoute): Intent {
       return Intent(context, AppSettingsActivity::class.java)

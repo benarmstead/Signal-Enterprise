@@ -11,17 +11,15 @@ import android.view.WindowManager;
 import androidx.annotation.ColorInt;
 import androidx.annotation.NonNull;
 
+import org.signal.core.ui.util.ThemeUtil;
+
 public final class WindowUtil {
 
   private WindowUtil() {
   }
 
   public static void initializeScreenshotSecurity(@NonNull Context context, @NonNull Window window) {
-    if (TextSecurePreferences.isScreenSecurityEnabled(context)) {
-      window.addFlags(WindowManager.LayoutParams.FLAG_SECURE);
-    } else {
-      window.clearFlags(WindowManager.LayoutParams.FLAG_SECURE);
-    }
+    org.signal.core.ui.WindowExtensionsKt.initializeScreenshotSecurity(window);
   }
 
   public static void setLightNavigationBarFromTheme(@NonNull Activity activity) {
@@ -62,8 +60,6 @@ public final class WindowUtil {
   }
 
   public static void setLightStatusBarFromTheme(@NonNull Activity activity) {
-    if (Build.VERSION.SDK_INT < 23) return;
-
     final boolean isLightStatusBar = ThemeUtil.getThemedBoolean(activity, android.R.attr.windowLightStatusBar);
 
     if (isLightStatusBar) setLightStatusBar(activity.getWindow());
@@ -71,14 +67,10 @@ public final class WindowUtil {
   }
 
   public static void clearLightStatusBar(@NonNull Window window) {
-    if (Build.VERSION.SDK_INT < 23) return;
-
     clearSystemUiFlags(window, View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR);
   }
 
   public static void setLightStatusBar(@NonNull Window window) {
-    if (Build.VERSION.SDK_INT < 23) return;
-
     setSystemUiFlags(window, View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR);
   }
 

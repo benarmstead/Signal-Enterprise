@@ -6,6 +6,7 @@ import androidx.annotation.VisibleForTesting;
 import com.google.i18n.phonenumbers.NumberParseException;
 import com.google.i18n.phonenumbers.PhoneNumberUtil;
 
+import org.signal.core.util.Util;
 import org.signal.core.util.logging.Log;
 import org.thoughtcrime.securesms.mms.PushMediaConstraints;
 import org.thoughtcrime.securesms.notifications.DeviceSpecificNotificationConfig;
@@ -17,6 +18,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import org.signal.core.util.BucketingUtil;
 
 /**
  * Provide access to locale-specific values within remote config, following the locale CSV-Colon format.
@@ -82,6 +84,10 @@ public final class LocaleRemoteConfig {
     return isEnabledPartsPerMillion(RemoteConfig.DEVICE_SPECIFIC_NOTIFICATION_CONFIG, DeviceSpecificNotificationConfig.getCurrentConfig().getLocalePercent());
   }
 
+  public static long  getCallQualitySurveyPartsPerMillion() {
+    return getPartsPerMillion(RemoteConfig.callQualitySurveyPPM());
+  }
+
   /**
    * Parses a comma-separated list of country codes and area codes to check if self's e164 starts with
    * one of them. For example, "33,1555" will return turn for e164's that start with 33 or look like 1-555-xxx-xxx.
@@ -104,6 +110,17 @@ public final class LocaleRemoteConfig {
     return countryAndAreaCodes.stream().anyMatch(e164Numbers::startsWith);
   }
 
+  private static long getPartsPerMillion(@NonNull String serialized) {
+    Map<String, Integer> countryCodeValues = parseCountryValues(serialized, 0);
+    Recipient            self              = Recipient.self();
+
+    if (countryCodeValues.isEmpty() || !self.getE164().isPresent() || !self.getServiceId().isPresent()) {
+      return 0L;
+    }
+
+    return getCountryValue(countryCodeValues, self.getE164().orElse(""), 0);
+  }
+
   /**
    * Parses a comma-separated list of country codes colon-separated from how many buckets out of 1 million
    * should be enabled to see this megaphone in that country code. At the end of the list, an optional
@@ -112,15 +129,9 @@ public final class LocaleRemoteConfig {
    * the world should see the megaphone.
    */
   private static boolean isEnabledPartsPerMillion(@NonNull String flag, @NonNull String serialized) {
-    Map<String, Integer> countryCodeValues = parseCountryValues(serialized, 0);
-    Recipient            self              = Recipient.self();
-
-    if (countryCodeValues.isEmpty() || !self.getE164().isPresent() || !self.getServiceId().isPresent()) {
-      return false;
-    }
-
-    long countEnabled      = getCountryValue(countryCodeValues, self.getE164().orElse(""), 0);
-    long currentUserBucket = BucketingUtil.bucket(flag, self.requireAci().getRawUuid(), 1_000_000);
+    Recipient self              = Recipient.self();
+    long      countEnabled      = getPartsPerMillion(serialized);
+    long      currentUserBucket = BucketingUtil.bucket(flag, self.requireAci().getRawUuid(), 1_000_000);
 
     return countEnabled > currentUserBucket;
   }

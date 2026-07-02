@@ -18,7 +18,6 @@ import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
 import io.reactivex.rxjava3.kotlin.subscribeBy
 import org.signal.core.util.concurrent.LifecycleDisposable
 import org.signal.core.util.logging.Log
-import org.signal.ringrtc.CallLinkEpoch
 import org.signal.ringrtc.CallLinkRootKey
 import org.thoughtcrime.securesms.R
 import org.thoughtcrime.securesms.components.ViewBinderDelegate
@@ -31,7 +30,7 @@ import org.thoughtcrime.securesms.conversation.ConversationItem
 import org.thoughtcrime.securesms.conversation.ConversationMessage
 import org.thoughtcrime.securesms.conversation.colors.ChatColors
 import org.thoughtcrime.securesms.conversation.colors.ChatColorsPalette
-import org.thoughtcrime.securesms.conversation.colors.Colorizer
+import org.thoughtcrime.securesms.conversation.colors.ColorizerV2
 import org.thoughtcrime.securesms.conversation.colors.RecyclerViewColorizer
 import org.thoughtcrime.securesms.conversation.mutiselect.MultiselectPart
 import org.thoughtcrime.securesms.conversation.v2.ConversationAdapterV2
@@ -44,6 +43,8 @@ import org.thoughtcrime.securesms.groups.GroupId
 import org.thoughtcrime.securesms.groups.GroupMigrationMembershipChange
 import org.thoughtcrime.securesms.linkpreview.LinkPreview
 import org.thoughtcrime.securesms.mediapreview.MediaIntentFactory
+import org.thoughtcrime.securesms.polls.PollOption
+import org.thoughtcrime.securesms.polls.PollRecord
 import org.thoughtcrime.securesms.recipients.Recipient
 import org.thoughtcrime.securesms.recipients.RecipientId
 import org.thoughtcrime.securesms.stickers.StickerLocator
@@ -66,7 +67,7 @@ class InternalConversationTestFragment : Fragment(R.layout.conversation_test_fra
       requestManager = Glide.with(this),
       clickListener = ClickListener(),
       hasWallpaper = springboardViewModel.hasWallpaper.value,
-      colorizer = Colorizer(),
+      colorizer = ColorizerV2(),
       startExpirationTimeout = {},
       chatColorsDataProvider = { ChatColorsDrawable.ChatColorsData(null, null) },
       displayDialogFragment = {}
@@ -293,7 +294,7 @@ class InternalConversationTestFragment : Fragment(R.layout.conversation_test_fra
       Toast.makeText(requireContext(), "Can't touch this.", Toast.LENGTH_SHORT).show()
     }
 
-    override fun onJoinCallLink(callLinkRootKey: CallLinkRootKey, callLinkEpoch: CallLinkEpoch?) {
+    override fun onJoinCallLink(callLinkRootKey: CallLinkRootKey) {
       Toast.makeText(requireContext(), "Can't touch this.", Toast.LENGTH_SHORT).show()
     }
 
@@ -334,6 +335,30 @@ class InternalConversationTestFragment : Fragment(R.layout.conversation_test_fra
     }
 
     override fun onUpdateSignalClicked() {
+      Toast.makeText(requireContext(), "Can't touch this.", Toast.LENGTH_SHORT).show()
+    }
+
+    override fun onViewResultsClicked(pollId: Long) {
+      Toast.makeText(requireContext(), "Can't touch this.", Toast.LENGTH_SHORT).show()
+    }
+
+    override fun onViewPollClicked(messageId: Long) {
+      Toast.makeText(requireContext(), "Can't touch this.", Toast.LENGTH_SHORT).show()
+    }
+
+    override fun onToggleVote(poll: PollRecord, pollOption: PollOption, isChecked: Boolean) {
+      Toast.makeText(requireContext(), "Can't touch this.", Toast.LENGTH_SHORT).show()
+    }
+
+    override fun onViewPinnedMessage(messageId: Long) {
+      Toast.makeText(requireContext(), "Can't touch this.", Toast.LENGTH_SHORT).show()
+    }
+
+    override fun onExpandEvents(messageId: Long, itemView: View, collapsedSize: Int) {
+      Toast.makeText(requireContext(), "Can't touch this.", Toast.LENGTH_SHORT).show()
+    }
+
+    override fun onCollapseEvents(messageId: Long, itemView: View, collapsedSize: Int) {
       Toast.makeText(requireContext(), "Can't touch this.", Toast.LENGTH_SHORT).show()
     }
   }

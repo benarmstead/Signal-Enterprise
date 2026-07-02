@@ -23,20 +23,19 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import org.signal.core.ui.compose.BottomSheets
 import org.signal.core.ui.compose.Buttons
+import org.signal.core.ui.compose.DayNightPreviews
 import org.signal.core.ui.compose.Previews
 import org.signal.core.ui.compose.Scaffolds
-import org.signal.core.ui.compose.SignalPreview
+import org.signal.core.ui.compose.SignalIcons
 import org.signal.core.ui.compose.theme.SignalTheme
 import org.thoughtcrime.securesms.R
 import org.thoughtcrime.securesms.keyvalue.SignalStore
@@ -61,7 +60,7 @@ fun MessageBackupsKeyVerifyScreen(
 
   Scaffolds.Settings(
     title = stringResource(R.string.MessageBackupsKeyVerifyScreen__confirm_your_backup_key),
-    navigationIcon = ImageVector.vectorResource(R.drawable.symbol_arrow_start_24),
+    navigationIcon = SignalIcons.ArrowStart.imageVector,
     onNavigationClick = onNavigationClick
   ) { paddingValues ->
 
@@ -192,7 +191,7 @@ private fun BottomSheetContent(
   }
 }
 
-@SignalPreview
+@DayNightPreviews
 @Composable
 private fun MessageBackupsKeyRecordScreenPreview() {
   Previews.Preview {
@@ -202,10 +201,10 @@ private fun MessageBackupsKeyRecordScreenPreview() {
   }
 }
 
-@SignalPreview
+@DayNightPreviews
 @Composable
 private fun BottomSheetContentPreview() {
-  Previews.BottomSheetPreview {
+  Previews.BottomSheetContentPreview {
     BottomSheetContent({}, {})
   }
 }

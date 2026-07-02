@@ -19,6 +19,7 @@ import androidx.annotation.Nullable;
 
 import com.pnikosis.materialishprogress.ProgressWheel;
 
+import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
 import org.signal.core.util.ByteSize;
@@ -27,6 +28,7 @@ import org.thoughtcrime.securesms.R;
 import org.thoughtcrime.securesms.attachments.DatabaseAttachment;
 import org.thoughtcrime.securesms.database.AttachmentTable;
 import org.thoughtcrime.securesms.events.PartProgressEvent;
+import org.thoughtcrime.securesms.jobs.AttachmentBackfill;
 import org.thoughtcrime.securesms.keyvalue.SignalStore;
 import org.thoughtcrime.securesms.mms.Slide;
 import org.thoughtcrime.securesms.mms.SlideClickListener;
@@ -34,6 +36,9 @@ import org.thoughtcrime.securesms.mms.SlidesClickedListener;
 import org.whispersystems.signalservice.api.util.OptionalUtil;
 
 import java.util.Collections;
+
+import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
+import io.reactivex.rxjava3.disposables.Disposable;
 
 public class DocumentView extends FrameLayout {
 
@@ -54,6 +59,9 @@ public class DocumentView extends FrameLayout {
   private @Nullable SlidesClickedListener cancelTransferClickListener;
   private @Nullable SlidesClickedListener resendTransferClickListener;
   private @Nullable Slide                 documentSlide;
+  private           boolean               showControls;
+
+  private Disposable awaitingDisposable = Disposable.disposed();
 
   public DocumentView(@NonNull Context context) {
     this(context, null);
@@ -91,6 +99,27 @@ public class DocumentView extends FrameLayout {
     }
   }
 
+  @Override
+  protected void onAttachedToWindow() {
+    super.onAttachedToWindow();
+    if (!EventBus.getDefault().isRegistered(this)) {
+      EventBus.getDefault().register(this);
+    }
+
+    awaitingDisposable = AttachmentBackfill.awaitingChanges()
+                                           .observeOn(AndroidSchedulers.mainThread())
+                                           .subscribe(ignored -> {
+                                             if (documentSlide != null) presentTransferControls(documentSlide, showControls);
+                                           }, t -> Log.w(TAG, "Error observing backfill awaiting state.", t));
+  }
+
+  @Override
+  protected void onDetachedFromWindow() {
+    super.onDetachedFromWindow();
+    EventBus.getDefault().unregister(this);
+    awaitingDisposable.dispose();
+  }
+
   public void setDownloadClickListener(@Nullable SlideClickListener listener) {
     this.downloadListener = listener;
   }
@@ -111,22 +140,8 @@ public class DocumentView extends FrameLayout {
                           final boolean showControls,
                           final boolean showSingleLineFilename)
   {
-    if (showControls && documentSlide.getTransferState() == AttachmentTable.TRANSFER_PROGRESS_STARTED) {
-      controlToggle.displayQuick(stopUploadButton);
-      downloadProgress.spin();
-      stopUploadButton.setOnClickListener(new CancelTransferListener(documentSlide));
-    } else if (showControls && documentSlide.getUri() != null && documentSlide.isPendingDownload()) {
-      controlToggle.displayQuick(uploadButton);
-      uploadButton.setOnClickListener(new ResendTransferClickListener(documentSlide));
-      if (downloadProgress.isSpinning()) downloadProgress.stopSpinning();
-    } else if (showControls && documentSlide.getUri() == null && documentSlide.isPendingDownload()) {
-      controlToggle.displayQuick(downloadButton);
-      downloadButton.setOnClickListener(new DownloadClickedListener(documentSlide));
-      if (downloadProgress.isSpinning()) downloadProgress.stopSpinning();
-    } else {
-      controlToggle.displayQuick(iconContainer);
-      if (downloadProgress.isSpinning()) downloadProgress.stopSpinning();
-    }
+    this.showControls = showControls;
+    presentTransferControls(documentSlide, showControls);
 
     this.documentSlide = documentSlide;
 
@@ -154,6 +169,33 @@ public class DocumentView extends FrameLayout {
         case TEMPORARY_FAILURE -> mediaArchive.setBackgroundTintList(ColorStateList.valueOf(Color.YELLOW));
         case PERMANENT_FAILURE -> mediaArchive.setBackgroundTintList(ColorStateList.valueOf(Color.RED));
       }
+    }
+  }
+
+  private void presentTransferControls(@NonNull Slide documentSlide, boolean showControls) {
+    DatabaseAttachment dbAttachment = documentSlide.asAttachment() instanceof DatabaseAttachment ? (DatabaseAttachment) documentSlide.asAttachment() : null;
+
+    if (dbAttachment != null && dbAttachment.transferState == AttachmentTable.TRANSFER_PROGRESS_DONE && AttachmentBackfill.isAwaitingBackfill(dbAttachment.attachmentId)) {
+      AttachmentBackfill.onAttachmentTerminal(dbAttachment.attachmentId, dbAttachment.mmsId);
+    }
+
+    boolean awaitingBackfill = dbAttachment != null && AttachmentBackfill.isAwaitingBackfill(dbAttachment.attachmentId);
+
+    if (showControls && (documentSlide.getTransferState() == AttachmentTable.TRANSFER_PROGRESS_STARTED || awaitingBackfill)) {
+      controlToggle.displayQuick(stopUploadButton);
+      if (!downloadProgress.isSpinning()) downloadProgress.spin();
+      stopUploadButton.setOnClickListener(awaitingBackfill ? null : new CancelTransferListener(documentSlide));
+    } else if (showControls && documentSlide.getUri() != null && documentSlide.isPendingDownload()) {
+      controlToggle.displayQuick(uploadButton);
+      uploadButton.setOnClickListener(new ResendTransferClickListener(documentSlide));
+      if (downloadProgress.isSpinning()) downloadProgress.stopSpinning();
+    } else if (showControls && documentSlide.getUri() == null && documentSlide.isPendingDownload()) {
+      controlToggle.displayQuick(downloadButton);
+      downloadButton.setOnClickListener(new DownloadClickedListener(documentSlide));
+      if (downloadProgress.isSpinning()) downloadProgress.stopSpinning();
+    } else {
+      controlToggle.displayQuick(iconContainer);
+      if (downloadProgress.isSpinning()) downloadProgress.stopSpinning();
     }
   }
 

@@ -8,13 +8,13 @@ import android.view.Window
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
+import org.signal.core.ui.util.ThemeUtil
 import org.thoughtcrime.securesms.R
 import org.thoughtcrime.securesms.components.InputAwareConstraintLayout
 import org.thoughtcrime.securesms.components.emoji.MediaKeyboard
 import org.thoughtcrime.securesms.keyboard.emoji.EmojiKeyboardPageFragment
 import org.thoughtcrime.securesms.keyboard.gif.GifKeyboardPageFragment
 import org.thoughtcrime.securesms.keyboard.sticker.StickerKeyboardPageFragment
-import org.thoughtcrime.securesms.util.ThemeUtil
 import org.thoughtcrime.securesms.util.ThemedFragment.themeResId
 import org.thoughtcrime.securesms.util.ThemedFragment.themedInflate
 import org.thoughtcrime.securesms.util.ThemedFragment.withTheme
@@ -25,6 +25,10 @@ import kotlin.reflect.KClass
 
 class KeyboardPagerFragment : Fragment(), InputAwareConstraintLayout.InputFragment {
 
+  companion object {
+    val ARG_SET_NAV_COLOR = "args.setNavColor"
+  }
+
   private lateinit var emojiButton: View
   private lateinit var stickerButton: View
   private lateinit var gifButton: View
@@ -32,6 +36,9 @@ class KeyboardPagerFragment : Fragment(), InputAwareConstraintLayout.InputFragme
 
   private val fragments: MutableMap<KClass<*>, Fragment> = mutableMapOf()
   private var currentFragment: Fragment? = null
+
+  private val shouldSetNavColor: Boolean
+    get() = arguments?.getBoolean(ARG_SET_NAV_COLOR) ?: true
 
   override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
     return themedInflate(R.layout.keyboard_pager_fragment, inflater, container)
@@ -59,11 +66,13 @@ class KeyboardPagerFragment : Fragment(), InputAwareConstraintLayout.InputFragme
   }
 
   override fun onHiddenChanged(hidden: Boolean) {
-    getWindow()?.let { window ->
-      if (hidden) {
-        WindowUtil.setNavigationBarColor(requireContext(), window, ThemeUtil.getThemedColor(requireContext(), android.R.attr.navigationBarColor))
-      } else {
-        WindowUtil.setNavigationBarColor(requireContext(), window, ThemeUtil.getThemedColor(requireContext(), R.attr.mediaKeyboardBottomBarBackgroundColor))
+    if (shouldSetNavColor) {
+      getWindow()?.let { window ->
+        if (hidden) {
+          WindowUtil.setNavigationBarColor(requireContext(), window, ThemeUtil.getThemedColor(requireContext(), android.R.attr.navigationBarColor))
+        } else {
+          WindowUtil.setNavigationBarColor(requireContext(), window, ThemeUtil.getThemedColor(requireContext(), R.attr.mediaKeyboardBottomBarBackgroundColor))
+        }
       }
     }
   }

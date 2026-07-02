@@ -4,7 +4,6 @@ import android.animation.Animator;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
-import android.os.Parcelable;
 import android.text.InputType;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -23,23 +22,22 @@ import com.airbnb.lottie.SimpleColorFilter;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 
+import org.signal.core.models.media.Media;
+import org.signal.core.ui.logging.LoggingFragment;
 import org.signal.core.util.EditTextUtil;
 import org.signal.core.util.StreamUtil;
 import org.signal.core.util.concurrent.SimpleTask;
 import org.signal.core.util.logging.Log;
-import org.thoughtcrime.securesms.LoggingFragment;
 import org.thoughtcrime.securesms.R;
 import org.thoughtcrime.securesms.avatar.Avatars;
 import org.thoughtcrime.securesms.avatar.picker.AvatarPickerFragment;
 import org.thoughtcrime.securesms.databinding.CreateProfileFragmentBinding;
+import org.thoughtcrime.securesms.dependencies.AppDependencies;
 import org.thoughtcrime.securesms.groups.GroupId;
-import org.thoughtcrime.securesms.groups.ParcelableGroupId;
 import org.thoughtcrime.securesms.keyvalue.PhoneNumberPrivacyValues;
 import org.thoughtcrime.securesms.keyvalue.SignalStore;
-import org.thoughtcrime.securesms.mediasend.Media;
 import org.thoughtcrime.securesms.profiles.edit.pnp.WhoCanFindMeByPhoneNumberFragment;
 import org.thoughtcrime.securesms.profiles.manage.EditProfileNameFragment;
-import org.thoughtcrime.securesms.providers.BlobProvider;
 import org.thoughtcrime.securesms.util.CommunicationActions;
 import org.thoughtcrime.securesms.util.RemoteConfig;
 import org.thoughtcrime.securesms.util.ViewUtil;
@@ -119,7 +117,7 @@ public class CreateProfileFragment extends LoggingFragment {
   private void handleMediaFromResult(@NonNull Media media) {
     SimpleTask.run(() -> {
       try {
-        InputStream stream = BlobProvider.getInstance().getStream(requireContext(), media.getUri());
+        InputStream stream = AppDependencies.getBlobs().getStream(requireContext(), media.getUri());
 
         return StreamUtil.readFully(stream);
       } catch (IOException ioException) {
@@ -213,7 +211,7 @@ public class CreateProfileFragment extends LoggingFragment {
                                                                        }));
       binding.groupDescriptionText.setVisibility(View.GONE);
       binding.profileDescriptionText.setLearnMoreVisible(true);
-      binding.profileDescriptionText.setLinkColor(ContextCompat.getColor(requireContext(), R.color.signal_colorPrimary));
+      binding.profileDescriptionText.setLinkColor(ContextCompat.getColor(requireContext(), org.signal.core.ui.R.color.signal_colorPrimary));
       binding.profileDescriptionText.setOnLinkClickListener(v -> CommunicationActions.openBrowserLink(requireContext(), getString(R.string.EditProfileFragment__support_link)));
 
       getParentFragmentManager().setFragmentResultListener(WhoCanFindMeByPhoneNumberFragment.REQUEST_KEY, getViewLifecycleOwner(), (requestKey, result) -> {
@@ -298,7 +296,7 @@ public class CreateProfileFragment extends LoggingFragment {
         binding.whoCanFindMeDescription.setText(R.string.PhoneNumberPrivacy_everyone);
         break;
       case NOT_DISCOVERABLE:
-        binding.whoCanFindMeIcon.setImageResource(R.drawable.symbol_lock_24);
+        binding.whoCanFindMeIcon.setImageResource(org.signal.core.ui.R.drawable.symbol_lock_24);
         binding.whoCanFindMeDescription.setText(R.string.PhoneNumberPrivacy_nobody);
         break;
     }
@@ -306,8 +304,7 @@ public class CreateProfileFragment extends LoggingFragment {
 
   private void startAvatarSelection() {
     if (viewModel.isGroup()) {
-      Parcelable groupId = ParcelableGroupId.from(viewModel.getGroupId());
-      SafeNavigation.safeNavigate(Navigation.findNavController(requireView()), CreateProfileFragmentDirections.actionCreateProfileFragmentToAvatarPicker((ParcelableGroupId) groupId, viewModel.getAvatarMedia()));
+      SafeNavigation.safeNavigate(Navigation.findNavController(requireView()), CreateProfileFragmentDirections.actionCreateProfileFragmentToAvatarPicker(viewModel.getGroupId(), viewModel.getAvatarMedia()));
     } else {
       SafeNavigation.safeNavigate(Navigation.findNavController(requireView()), CreateProfileFragmentDirections.actionCreateProfileFragmentToAvatarPicker(null, null));
     }
@@ -324,6 +321,7 @@ public class CreateProfileFragment extends LoggingFragment {
         }
       } else {
         Toast.makeText(requireContext(), R.string.CreateProfileActivity_problem_setting_profile, Toast.LENGTH_LONG).show();
+        binding.finishButton.cancelSpinning();
       }
     });
 

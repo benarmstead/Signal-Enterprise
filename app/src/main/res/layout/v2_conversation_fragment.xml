@@ -5,8 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:clipChildren="false"
-    app:animateKeyboardChanges="true"
-    app:applyRootInsets="true">
+    app:animateKeyboardChanges="true">
 
     <include layout="@layout/system_ui_guidelines" />
 
@@ -139,6 +138,16 @@
 
     </org.thoughtcrime.securesms.util.views.DarkOverflowToolbar>
 
+    <org.thoughtcrime.securesms.components.compose.ActionModeTopBarView
+        android:id="@+id/action_mode_top_bar"
+        android:layout_width="0dp"
+        android:layout_height="@dimen/signal_m3_toolbar_height"
+        android:visibility="gone"
+        app:layout_constraintEnd_toEndOf="@id/parent_end_guideline"
+        app:layout_constraintHeight_min="@dimen/signal_m3_toolbar_height"
+        app:layout_constraintStart_toStartOf="@id/parent_start_guideline"
+        app:layout_constraintTop_toTopOf="@id/status_bar_guideline" />
+
     <FrameLayout
         android:id="@+id/conversation_banner_frame"
         android:layout_width="0dp"
@@ -152,6 +161,14 @@
             android:id="@+id/conversation_banner"
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
+
+            <ViewStub
+                android:id="@+id/pinned_message_stub"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:visibility="gone"
+                android:inflatedId="@+id/pinned_message_compose_view"
+                android:layout="@layout/pinned_message_stub" />
 
             <ViewStub
                 android:id="@+id/voice_note_player_stub"
@@ -275,6 +292,24 @@
         app:layout_constraintEnd_toEndOf="@id/parent_end_guideline"
         app:layout_constraintStart_toStartOf="@id/parent_start_guideline" />
 
+    <TextView
+        android:id="@+id/conversation_release_notes_floating_label"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="24dp"
+        android:layout_marginBottom="12dp"
+        android:background="@drawable/release_notes_input_pill_background"
+        android:elevation="6dp"
+        android:paddingHorizontal="24dp"
+        android:paddingVertical="10dp"
+        android:text="@string/ConversationFragment_the_only_official_chat_from_signal"
+        android:textAppearance="@style/Signal.Text.BodyMedium"
+        android:textColor="@color/signal_text_primary"
+        android:visibility="gone"
+        app:layout_constraintBottom_toTopOf="@id/keyboard_guideline"
+        app:layout_constraintEnd_toEndOf="@id/parent_end_guideline"
+        app:layout_constraintStart_toStartOf="@id/parent_start_guideline" />
+
     <androidx.constraintlayout.widget.Barrier
         android:id="@+id/conversation_input_panel_barrier"
         android:layout_width="wrap_content"
@@ -330,6 +365,14 @@
         app:layout_constraintEnd_toEndOf="@id/parent_end_guideline"
         app:layout_constraintStart_toStartOf="@id/parent_start_guideline" />
 
+    <androidx.fragment.app.FragmentContainerView
+        android:id="@+id/polls_create"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        app:layout_constraintBottom_toBottomOf="@id/keyboard_guideline"
+        app:layout_constraintEnd_toEndOf="@id/parent_end_guideline"
+        app:layout_constraintStart_toStartOf="@id/parent_start_guideline" />
+
     <FrameLayout
         android:id="@+id/reactions_shade"
         android:layout_width="match_parent"
@@ -340,7 +383,7 @@
 
     <org.thoughtcrime.securesms.components.menu.SignalBottomActionBar
         android:id="@+id/conversation_bottom_action_bar"
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginHorizontal="16dp"
         android:layout_marginBottom="16dp"

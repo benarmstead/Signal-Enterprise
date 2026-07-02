@@ -5,15 +5,15 @@
 
 package org.thoughtcrime.securesms.backup.v2.processor
 
+import org.signal.archive.proto.ChatItem
+import org.signal.archive.proto.Frame
+import org.signal.archive.stream.BackupFrameEmitter
 import org.signal.core.util.logging.Log
 import org.thoughtcrime.securesms.backup.v2.ExportState
 import org.thoughtcrime.securesms.backup.v2.ImportState
 import org.thoughtcrime.securesms.backup.v2.database.createChatItemInserter
 import org.thoughtcrime.securesms.backup.v2.database.getMessagesForBackup
 import org.thoughtcrime.securesms.backup.v2.importer.ChatItemArchiveImporter
-import org.thoughtcrime.securesms.backup.v2.proto.ChatItem
-import org.thoughtcrime.securesms.backup.v2.proto.Frame
-import org.thoughtcrime.securesms.backup.v2.stream.BackupFrameEmitter
 import org.thoughtcrime.securesms.database.SignalDatabase
 import org.thoughtcrime.securesms.recipients.RecipientId
 
@@ -23,8 +23,8 @@ import org.thoughtcrime.securesms.recipients.RecipientId
 object ChatItemArchiveProcessor {
   val TAG = Log.tag(ChatItemArchiveProcessor::class.java)
 
-  fun export(db: SignalDatabase, exportState: ExportState, selfRecipientId: RecipientId, cancellationSignal: () -> Boolean, emitter: BackupFrameEmitter) {
-    db.messageTable.getMessagesForBackup(db, exportState.backupTime, selfRecipientId, exportState).use { chatItems ->
+  fun export(db: SignalDatabase, exportState: ExportState, selfRecipientId: RecipientId, messageInclusionCutoffTime: Long, cancellationSignal: () -> Boolean, emitter: BackupFrameEmitter) {
+    db.messageTable.getMessagesForBackup(db, exportState.backupTime, selfRecipientId, messageInclusionCutoffTime, exportState).use { chatItems ->
       var count = 0
       while (chatItems.hasNext()) {
         if (count % 1000 == 0 && cancellationSignal()) {

@@ -15,8 +15,8 @@ import org.thoughtcrime.securesms.keyvalue.EmojiValues;
 import org.thoughtcrime.securesms.keyvalue.SignalStore;
 import org.thoughtcrime.securesms.s3.S3;
 import org.thoughtcrime.securesms.util.dynamiclanguage.DynamicLanguageContextWrapper;
-import org.whispersystems.signalservice.api.push.exceptions.NonSuccessfulResponseCodeException;
-import org.whispersystems.signalservice.internal.util.JsonUtil;
+import org.signal.network.exceptions.NonSuccessfulResponseCodeException;
+import org.signal.network.util.JsonUtil;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -59,6 +59,13 @@ public final class EmojiSearchIndexDownloadJob extends BaseJob {
   public static void scheduleIfNecessary() {
     long    timeSinceCheck = System.currentTimeMillis() - SignalStore.emoji().getLastSearchIndexCheck();
     boolean needsCheck     = false;
+
+    if (SignalStore.emoji().hasSearchIndex() && !SignalDatabase.emojiSearch().hasSearchIndexData()) {
+      Log.w(TAG, "Emoji search data missing with metadata, clearing version to redownload.");
+      SignalStore.emoji().clearSearchIndexVersion();
+      scheduleImmediately();
+      return;
+    }
 
     if (SignalStore.emoji().hasSearchIndex()) {
       needsCheck = timeSinceCheck > INTERVAL_WITH_INDEX;

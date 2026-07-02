@@ -7,8 +7,10 @@ package org.thoughtcrime.securesms.jobs
 
 import androidx.annotation.VisibleForTesting
 import androidx.annotation.WorkerThread
+import okio.ByteString
 import okio.ByteString.Companion.toByteString
 import org.signal.core.util.Base64
+import org.signal.core.util.UuidUtil
 import org.signal.core.util.logging.Log
 import org.signal.core.util.orNull
 import org.thoughtcrime.securesms.attachments.DatabaseAttachment
@@ -18,6 +20,7 @@ import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.dependencies.AppDependencies
 import org.thoughtcrime.securesms.jobmanager.Job
 import org.thoughtcrime.securesms.jobmanager.impl.NetworkConstraint
+import org.thoughtcrime.securesms.jobmanager.impl.SealedSenderConstraint
 import org.thoughtcrime.securesms.jobs.protos.DeleteSyncJobData
 import org.thoughtcrime.securesms.jobs.protos.DeleteSyncJobData.AttachmentDelete
 import org.thoughtcrime.securesms.jobs.protos.DeleteSyncJobData.ThreadDelete
@@ -26,7 +29,6 @@ import org.thoughtcrime.securesms.messages.SignalServiceProtoUtil.pad
 import org.thoughtcrime.securesms.recipients.Recipient
 import org.thoughtcrime.securesms.recipients.RecipientId
 import org.whispersystems.signalservice.api.crypto.UntrustedIdentityException
-import org.whispersystems.signalservice.api.util.UuidUtil
 import org.whispersystems.signalservice.internal.push.AddressableMessage
 import org.whispersystems.signalservice.internal.push.Content
 import org.whispersystems.signalservice.internal.push.ConversationIdentifier
@@ -43,6 +45,7 @@ class MultiDeviceDeleteSyncJob private constructor(
   private var data: DeleteSyncJobData,
   parameters: Parameters = Parameters.Builder()
     .addConstraint(NetworkConstraint.KEY)
+    .addConstraint(SealedSenderConstraint.KEY)
     .setMaxAttempts(Parameters.UNLIMITED)
     .setLifespan(1.days.inWholeMilliseconds)
     .build()
@@ -374,8 +377,8 @@ class MultiDeviceDeleteSyncJob private constructor(
   private fun Recipient.toDeleteSyncConversationId(): ConversationIdentifier? {
     return when {
       isGroup -> ConversationIdentifier(threadGroupId = requireGroupId().decodedId.toByteString())
-      hasAci -> ConversationIdentifier(threadServiceId = requireAci().toString())
-      hasPni -> ConversationIdentifier(threadServiceId = requirePni().toString())
+      hasAci -> ConversationIdentifier(threadServiceIdBinary = requireAci().toByteString())
+      hasPni -> ConversationIdentifier(threadServiceIdBinary = requirePni().toByteString())
       hasE164 -> ConversationIdentifier(threadE164 = requireE164())
       else -> null
     }
@@ -383,7 +386,8 @@ class MultiDeviceDeleteSyncJob private constructor(
 
   private fun DeleteSyncJobData.AddressableMessage.toDeleteSyncMessage(): AddressableMessage? {
     val author: Recipient = Recipient.resolved(RecipientId.from(authorRecipientId))
-    val authorServiceId: String? = author.aci.orNull()?.toString() ?: author.pni.orNull()?.toString()
+    val authorServiceId: ByteString? = author.aci.orNull()?.toByteString() ?: author.pni.orNull()?.toByteString()
+
     val authorE164: String? = if (authorServiceId == null) {
       author.e164.orNull()
     } else {
@@ -395,7 +399,7 @@ class MultiDeviceDeleteSyncJob private constructor(
       null
     } else {
       AddressableMessage(
-        authorServiceId = authorServiceId,
+        authorServiceIdBinary = authorServiceId,
         authorE164 = authorE164,
         sentTimestamp = sentTimestamp
       )

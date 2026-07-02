@@ -26,6 +26,7 @@ import org.thoughtcrime.securesms.util.adapter.mapping.PagingMappingAdapter
 import org.thoughtcrime.securesms.util.setRelativeDrawables
 import org.thoughtcrime.securesms.util.visible
 import java.util.Locale
+import org.signal.core.ui.R as CoreUiR
 
 /**
  * RecyclerView Adapter for the Call Log screen
@@ -92,6 +93,7 @@ class CallLogAdapter(
   fun submitCallRows(
     rows: List<CallLogRow?>,
     selectionState: CallLogSelectionState,
+    activeCallLogRowId: CallLogRow.Id?,
     localCallRecipientId: RecipientId,
     onCommit: () -> Unit
   ): Int {
@@ -99,8 +101,19 @@ class CallLogAdapter(
       .filterNotNull()
       .map {
         when (it) {
-          is CallLogRow.Call -> CallModel(it, selectionState, itemCount, it.peer.id == localCallRecipientId)
-          is CallLogRow.CallLink -> CallLinkModel(it, selectionState, itemCount, it.recipient.id == localCallRecipientId)
+          is CallLogRow.Call -> CallModel(
+            call = it,
+            selectionState = selectionState,
+            itemCount = itemCount,
+            isLocalDeviceInCall = it.peer.id == localCallRecipientId
+          )
+          is CallLogRow.CallLink -> CallLinkModel(
+            callLink = it,
+            selectionState = selectionState,
+            activeCallLogRowId = activeCallLogRowId,
+            itemCount = itemCount,
+            isLocalDeviceInCall = it.recipient.id == localCallRecipientId
+          )
           is CallLogRow.ClearFilter -> ClearFilterModel()
           is CallLogRow.ClearFilterEmpty -> ClearFilterEmptyModel()
           is CallLogRow.CreateCallLink -> CreateCallLinkModel()
@@ -148,6 +161,7 @@ class CallLogAdapter(
   private class CallLinkModel(
     val callLink: CallLogRow.CallLink,
     val selectionState: CallLogSelectionState,
+    val activeCallLogRowId: CallLogRow.Id?,
     val itemCount: Int,
     val isLocalDeviceInCall: Boolean
   ) : MappingModel<CallLinkModel> {
@@ -159,12 +173,13 @@ class CallLogAdapter(
     override fun areContentsTheSame(newItem: CallLinkModel): Boolean {
       return callLink == newItem.callLink &&
         isSelectionStateTheSame(newItem) &&
+        isActiveIdStateTheSame(newItem) &&
         isItemCountTheSame(newItem) &&
         isLocalDeviceInCall == newItem.isLocalDeviceInCall
     }
 
     override fun getChangePayload(newItem: CallLinkModel): Any? {
-      return if (callLink == newItem.callLink && (!isSelectionStateTheSame(newItem) || !isItemCountTheSame(newItem))) {
+      return if (callLink == newItem.callLink && (!isSelectionStateTheSame(newItem) || !isItemCountTheSame(newItem) || !isActiveIdStateTheSame(newItem))) {
         PAYLOAD_SELECTION_STATE
       } else {
         null
@@ -174,6 +189,13 @@ class CallLogAdapter(
     private fun isSelectionStateTheSame(newItem: CallLinkModel): Boolean {
       return selectionState.contains(callLink.id) == newItem.selectionState.contains(newItem.callLink.id) &&
         selectionState.isNotEmpty(itemCount) == newItem.selectionState.isNotEmpty(newItem.itemCount)
+    }
+
+    private fun isActiveIdStateTheSame(newItem: CallLinkModel): Boolean {
+      val isOldItemActive = activeCallLogRowId == callLink.id
+      val isNewItemActive = newItem.activeCallLogRowId == newItem.callLink.id
+
+      return (isOldItemActive && isNewItemActive) || (!isOldItemActive && !isNewItemActive)
     }
 
     private fun isItemCountTheSame(newItem: CallLinkModel): Boolean {
@@ -201,7 +223,7 @@ class CallLogAdapter(
     binding: CallLogAdapterItemBinding,
     private val onCallLinkClicked: (CallLogRow.CallLink) -> Unit,
     private val onCallLinkLongClicked: (View, CallLogRow.CallLink) -> Boolean,
-    private val onStartVideoCallClicked: (Recipient, Boolean) -> Unit
+    private val onStartVideoCallClicked: (Recipient, CallLogRow.CanStartCall) -> Unit
   ) : BindingViewHolder<CallLinkModel, CallLogAdapterItemBinding>(binding) {
     override fun bind(model: CallLinkModel) {
       if (payload.size == 1 && payload.contains(PAYLOAD_TIMESTAMP)) {
@@ -220,6 +242,8 @@ class CallLogAdapter(
       binding.callSelected.isChecked = model.selectionState.contains(model.callLink.id)
       binding.callSelected.visible = model.selectionState.isNotEmpty(model.itemCount)
 
+      itemView.isActivated = model.activeCallLogRowId == model.callLink.id
+
       if (payload.isNotEmpty()) {
         return
       }
@@ -231,7 +255,7 @@ class CallLogAdapter(
 
       binding.callRecipientName.text = SearchUtil.getHighlightedSpan(
         Locale.getDefault(),
-        { arrayOf(TextAppearanceSpan(context, R.style.Signal_Text_TitleSmall)) },
+        { arrayOf(TextAppearanceSpan(context, CoreUiR.style.Signal_Text_TitleSmall)) },
         callLinkName,
         model.callLink.searchQuery,
         SearchUtil.MATCH_ALL
@@ -243,7 +267,7 @@ class CallLogAdapter(
       TextViewCompat.setCompoundDrawableTintList(
         binding.callInfo,
         ColorStateList.valueOf(
-          ContextCompat.getColor(context, R.color.signal_colorOnSurfaceVariant)
+          ContextCompat.getColor(context, CoreUiR.color.signal_colorOnSurfaceVariant)
         )
       )
 
@@ -256,7 +280,7 @@ class CallLogAdapter(
           }
         )
         binding.groupCallButton.setOnClickListener {
-          onStartVideoCallClicked(model.callLink.recipient, true)
+          onStartVideoCallClicked(model.callLink.recipient, CallLogRow.CanStartCall.ALLOWED)
         }
         binding.callType.visible = false
         binding.groupCallButton.visible = true
@@ -264,7 +288,7 @@ class CallLogAdapter(
         binding.callType.setImageResource(R.drawable.symbol_video_24)
         binding.callType.contentDescription = context.getString(R.string.CallLogAdapter__start_a_video_call)
         binding.callType.setOnClickListener {
-          onStartVideoCallClicked(model.callLink.recipient, true)
+          onStartVideoCallClicked(model.callLink.recipient, CallLogRow.CanStartCall.ALLOWED)
         }
         binding.callType.visible = true
         binding.groupCallButton.visible = false
@@ -277,7 +301,7 @@ class CallLogAdapter(
     private val onCallClicked: (CallLogRow.Call) -> Unit,
     private val onCallLongClicked: (View, CallLogRow.Call) -> Boolean,
     private val onStartAudioCallClicked: (Recipient) -> Unit,
-    private val onStartVideoCallClicked: (Recipient, Boolean) -> Unit
+    private val onStartVideoCallClicked: (Recipient, CallLogRow.CanStartCall) -> Unit
   ) : BindingViewHolder<CallModel, CallLogAdapterItemBinding>(binding) {
     override fun bind(model: CallModel) {
       itemView.setOnClickListener {
@@ -300,18 +324,21 @@ class CallLogAdapter(
         return
       }
 
-      presentRecipientDetails(model.call.peer, model.call.searchQuery)
+      presentRecipientDetails(model.call)
       presentCallInfo(model.call, model.call.date)
       presentCallType(model)
     }
 
-    private fun presentRecipientDetails(recipient: Recipient, searchQuery: String?) {
-      binding.callRecipientAvatar.setAvatar(Glide.with(binding.callRecipientAvatar), recipient, true)
+    private fun presentRecipientDetails(call: CallLogRow.Call) {
+      val recipient = call.peer
+      val searchQuery = call.searchQuery
+      binding.callRecipientAvatar.setAvatar(Glide.with(binding.callRecipientAvatar), recipient, false)
+      binding.callRecipientAvatar.setOnClickListener { onCallClicked(call) }
       binding.callRecipientBadge.setBadgeFromRecipient(recipient)
       binding.callRecipientName.text = if (searchQuery != null) {
         SearchUtil.getHighlightedSpan(
           Locale.getDefault(),
-          { arrayOf(TextAppearanceSpan(context, R.style.Signal_Text_TitleSmall)) },
+          { arrayOf(TextAppearanceSpan(context, CoreUiR.style.Signal_Text_TitleSmall)) },
           recipient.getDisplayName(context),
           searchQuery,
           SearchUtil.MATCH_ALL
@@ -322,7 +349,8 @@ class CallLogAdapter(
     }
 
     private fun presentCallInfo(call: CallLogRow.Call, date: Long) {
-      val callState = context.getString(getCallStateStringRes(call.record))
+      val callState = context.getString(getCallStateStringRes(call.record, call.children.size))
+      val (dateString, dateContentDescription) = DateUtils.getBriefRelativeTimeSpanString(context, Locale.getDefault(), date)
       binding.callInfo.text = context.getString(
         R.string.CallLogAdapter__s_dot_s,
         if (call.children.size > 1) {
@@ -330,7 +358,16 @@ class CallLogAdapter(
         } else {
           callState
         },
-        DateUtils.getBriefRelativeTimeSpanString(context, Locale.getDefault(), date)
+        dateString
+      )
+      binding.callInfo.contentDescription = context.getString(
+        R.string.CallLogAdapter__s_dot_s,
+        if (call.children.size > 1) {
+          context.getString(R.string.CallLogAdapter__d_s, call.children.size, callState)
+        } else {
+          callState
+        },
+        dateContentDescription
       )
 
       binding.callInfo.setRelativeDrawables(
@@ -340,9 +377,9 @@ class CallLogAdapter(
       val color = ContextCompat.getColor(
         context,
         if (call.record.isDisplayedAsMissedCallInUi) {
-          R.color.signal_colorError
+          CoreUiR.color.signal_colorError
         } else {
-          R.color.signal_colorOnSurfaceVariant
+          CoreUiR.color.signal_colorOnSurfaceVariant
         }
       )
 
@@ -357,7 +394,7 @@ class CallLogAdapter(
     private fun presentCallType(model: CallModel) {
       when (model.call.record.type) {
         CallTable.Type.AUDIO_CALL -> {
-          binding.callType.setImageResource(R.drawable.symbol_phone_24)
+          binding.callType.setImageResource(CoreUiR.drawable.symbol_phone_24)
           binding.callType.contentDescription = context.getString(R.string.CallLogAdapter__start_a_voice_call)
           binding.callType.setOnClickListener { onStartAudioCallClicked(model.call.peer) }
           binding.callType.visible = true
@@ -367,7 +404,7 @@ class CallLogAdapter(
         CallTable.Type.VIDEO_CALL -> {
           binding.callType.setImageResource(R.drawable.symbol_video_24)
           binding.callType.contentDescription = context.getString(R.string.CallLogAdapter__start_a_video_call)
-          binding.callType.setOnClickListener { onStartVideoCallClicked(model.call.peer, true) }
+          binding.callType.setOnClickListener { onStartVideoCallClicked(model.call.peer, CallLogRow.CanStartCall.ALLOWED) }
           binding.callType.visible = true
           binding.groupCallButton.visible = false
         }
@@ -444,14 +481,15 @@ class CallLogAdapter(
     }
 
     @StringRes
-    private fun getCallStateStringRes(call: CallTable.Call): Int {
+    private fun getCallStateStringRes(call: CallTable.Call, missedCalls: Int): Int {
       return when (call.messageType) {
         MessageTypes.MISSED_VIDEO_CALL_TYPE, MessageTypes.MISSED_AUDIO_CALL_TYPE -> if (call.event == CallTable.Event.MISSED) R.string.CallLogAdapter__missed else R.string.CallLogAdapter__missed_notification_profile
         MessageTypes.OUTGOING_AUDIO_CALL_TYPE -> R.string.CallLogAdapter__outgoing
         MessageTypes.OUTGOING_VIDEO_CALL_TYPE -> R.string.CallLogAdapter__outgoing
         MessageTypes.GROUP_CALL_TYPE -> when {
           call.type == CallTable.Type.AD_HOC_CALL -> R.string.CallLogAdapter__call_link
-          call.event == CallTable.Event.MISSED_NOTIFICATION_PROFILE -> R.string.CallLogAdapter__missed_notification_profile
+          call.event == CallTable.Event.MISSED_NOTIFICATION_PROFILE && missedCalls == 1 -> R.string.CallLogAdapter__missed_notification_profile
+          call.event == CallTable.Event.MISSED_NOTIFICATION_PROFILE -> R.string.CallLogAdapter__missed_notification_profile_multiple
           call.isDisplayedAsMissedCallInUi -> R.string.CallLogAdapter__missed
           call.event == CallTable.Event.GENERIC_GROUP_CALL || call.event == CallTable.Event.JOINED -> R.string.CallPreference__group_call
           call.direction == CallTable.Direction.INCOMING -> R.string.CallLogAdapter__incoming
@@ -539,6 +577,6 @@ class CallLogAdapter(
     /**
      * Invoked when user presses the video icon
      */
-    fun onStartVideoCallClicked(recipient: Recipient, canUserBeginCall: Boolean)
+    fun onStartVideoCallClicked(recipient: Recipient, canUserBeginCall: CallLogRow.CanStartCall)
   }
 }

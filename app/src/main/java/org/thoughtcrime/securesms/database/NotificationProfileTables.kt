@@ -8,6 +8,7 @@ import android.database.Cursor
 import androidx.core.content.contentValuesOf
 import org.signal.core.util.Base64
 import org.signal.core.util.SqlUtil
+import org.signal.core.util.UuidUtil
 import org.signal.core.util.exists
 import org.signal.core.util.hasUnknownFields
 import org.signal.core.util.insertInto
@@ -37,7 +38,6 @@ import org.thoughtcrime.securesms.storage.StorageSyncModels.toLocal
 import org.thoughtcrime.securesms.util.RemoteConfig
 import org.whispersystems.signalservice.api.storage.SignalNotificationProfileRecord
 import org.whispersystems.signalservice.api.storage.StorageId
-import org.whispersystems.signalservice.api.util.UuidUtil
 import java.time.DayOfWeek
 
 /**
@@ -185,10 +185,6 @@ class NotificationProfileTables(context: Context, databaseHelper: SignalDatabase
   }
 
   fun updateProfile(profileId: Long, name: String, emoji: String): NotificationProfileChangeResult {
-    if (isDuplicateName(name, profileId)) {
-      return NotificationProfileChangeResult.DuplicateName
-    }
-
     val profileValues = ContentValues().apply {
       put(NotificationProfileTable.NAME, name)
       put(NotificationProfileTable.EMOJI, emoji)
@@ -205,10 +201,6 @@ class NotificationProfileTables(context: Context, databaseHelper: SignalDatabase
   }
 
   fun updateProfile(profile: NotificationProfile): NotificationProfileChangeResult {
-    if (isDuplicateName(profile.name, profile.id)) {
-      return NotificationProfileChangeResult.DuplicateName
-    }
-
     val db = writableDatabase
 
     db.beginTransaction()

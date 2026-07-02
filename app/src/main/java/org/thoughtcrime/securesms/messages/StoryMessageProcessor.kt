@@ -2,6 +2,7 @@ package org.thoughtcrime.securesms.messages
 
 import android.graphics.Color
 import org.signal.core.util.Base64
+import org.signal.core.util.UuidUtil
 import org.signal.core.util.orNull
 import org.thoughtcrime.securesms.database.MessageTable.InsertResult
 import org.thoughtcrime.securesms.database.MessageType
@@ -25,26 +26,27 @@ import org.whispersystems.signalservice.internal.push.Content
 import org.whispersystems.signalservice.internal.push.Envelope
 import org.whispersystems.signalservice.internal.push.StoryMessage
 import org.whispersystems.signalservice.internal.push.TextAttachment
+import org.whispersystems.signalservice.internal.util.Util
 
 object StoryMessageProcessor {
 
   fun process(envelope: Envelope, content: Content, metadata: EnvelopeMetadata, senderRecipient: Recipient, threadRecipient: Recipient) {
     val storyMessage = content.storyMessage!!
 
-    log(envelope.timestamp!!, "Story message.")
+    log(envelope.clientTimestamp!!, "Story message.")
 
     if (threadRecipient.isInactiveGroup) {
-      warn(envelope.timestamp!!, "Dropping a group story from a group we're no longer in.")
+      warn(envelope.clientTimestamp!!, "Dropping a group story from a group we're no longer in.")
       return
     }
 
     if (threadRecipient.isGroup && !SignalDatabase.groups.isCurrentMember(threadRecipient.requireGroupId().requirePush(), senderRecipient.id)) {
-      warn(envelope.timestamp!!, "Dropping a group story from a user who's no longer a member.")
+      warn(envelope.clientTimestamp!!, "Dropping a group story from a user who's no longer a member.")
       return
     }
 
     if (!threadRecipient.isGroup && !(senderRecipient.isProfileSharing || senderRecipient.isSystemContact)) {
-      warn(envelope.timestamp!!, "Dropping story from an untrusted source.")
+      warn(envelope.clientTimestamp!!, "Dropping story from an untrusted source.")
       return
     }
 
@@ -62,7 +64,7 @@ object StoryMessageProcessor {
       val mediaMessage = IncomingMessage(
         type = MessageType.NORMAL,
         from = senderRecipient.id,
-        sentTimeMillis = envelope.timestamp!!,
+        sentTimeMillis = envelope.clientTimestamp!!,
         serverTimeMillis = envelope.serverTimestamp!!,
         receivedTimeMillis = System.currentTimeMillis(),
         storyType = storyType,
@@ -75,8 +77,8 @@ object StoryMessageProcessor {
           body = "",
           isStoryEmbed = true
         ),
-        serverGuid = envelope.serverGuid,
-        messageRanges = storyMessage.bodyRanges.filter { it.mentionAci == null }.toBodyRangeList()
+        serverGuid = UuidUtil.getStringUUID(envelope.serverGuid, envelope.serverGuidBinary),
+        messageRanges = storyMessage.bodyRanges.filter { Util.allAreNull(it.mentionAci, it.mentionAciBinary) }.toBodyRangeList()
       )
 
       insertResult = SignalDatabase.messages.insertMessageInbox(mediaMessage, -1).orNull()

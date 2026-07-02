@@ -4,6 +4,7 @@ package org.thoughtcrime.securesms.components;
 import android.content.Context;
 import android.content.res.TypedArray;
 import android.graphics.Canvas;
+import android.text.SpannableStringBuilder;
 import android.text.TextUtils;
 import android.util.AttributeSet;
 import android.view.View;
@@ -21,8 +22,11 @@ import com.google.android.material.imageview.ShapeableImageView;
 import com.google.android.material.shape.CornerFamily;
 import com.google.android.material.shape.ShapeAppearanceModel;
 
+import org.signal.core.ui.view.Stub;
 import org.signal.core.util.DimensionUnit;
+import org.signal.core.util.Util;
 import org.signal.core.util.logging.Log;
+import org.signal.glide.decryptableuri.DecryptableUri;
 import org.thoughtcrime.securesms.R;
 import org.thoughtcrime.securesms.attachments.Attachment;
 import org.thoughtcrime.securesms.components.emoji.EmojiImageView;
@@ -30,9 +34,11 @@ import org.thoughtcrime.securesms.components.emoji.EmojiTextView;
 import org.thoughtcrime.securesms.components.mention.MentionAnnotation;
 import org.thoughtcrime.securesms.components.quotes.QuoteViewColorTheme;
 import org.thoughtcrime.securesms.conversation.MessageStyler;
+import org.thoughtcrime.securesms.conversation.v2.items.SenderNameWithLabelView;
 import org.thoughtcrime.securesms.database.model.Mention;
 import org.thoughtcrime.securesms.database.model.databaseprotos.BodyRangeList;
-import org.thoughtcrime.securesms.mms.DecryptableUri;
+import org.thoughtcrime.securesms.fonts.SignalSymbols;
+import org.thoughtcrime.securesms.groups.memberlabel.MemberLabel;
 import org.thoughtcrime.securesms.mms.QuoteModel;
 import org.thoughtcrime.securesms.mms.Slide;
 import org.thoughtcrime.securesms.mms.SlideDeck;
@@ -42,8 +48,6 @@ import org.thoughtcrime.securesms.recipients.RecipientForeverObserver;
 import org.thoughtcrime.securesms.stories.StoryTextPostModel;
 import org.thoughtcrime.securesms.util.MediaUtil;
 import org.thoughtcrime.securesms.util.Projection;
-import org.thoughtcrime.securesms.util.Util;
-import org.thoughtcrime.securesms.util.views.Stub;
 
 import java.io.IOException;
 import java.util.List;
@@ -79,28 +83,29 @@ public class QuoteView extends ConstraintLayout implements RecipientForeverObser
     }
   }
 
-  private TextView           authorView;
-  private EmojiTextView      bodyView;
-  private View               quoteBarView;
-  private ShapeableImageView thumbnailView;
-  private Stub<View>         attachmentVideoOVerlayStub;
-  private Stub<TextView>     attachmentNameViewStub;
-  private Stub<ImageView>    dismissStub;
-  private EmojiImageView     missingStoryReaction;
-  private EmojiImageView     storyReactionEmoji;
+  private SenderNameWithLabelView authorView;
+  private EmojiTextView           bodyView;
+  private View                    quoteBarView;
+  private ShapeableImageView      thumbnailView;
+  private Stub<View>              attachmentVideoOVerlayStub;
+  private Stub<TextView>          attachmentNameViewStub;
+  private Stub<ImageView>         dismissStub;
+  private EmojiImageView          missingStoryReaction;
+  private EmojiImageView          storyReactionEmoji;
 
-  private long            id;
-  private LiveRecipient   author;
-  private CharSequence    body;
-  private TextView        mediaDescriptionText;
-  private Stub<TextView>  missingLinkTextStub;
-  private SlideDeck       attachments;
-  private MessageType     messageType;
-  private int             largeCornerRadius;
-  private int             smallCornerRadius;
-  private CornerMask      cornerMask;
-  private QuoteModel.Type quoteType;
-  private boolean         isWallpaperEnabled;
+  private           long            id;
+  private           LiveRecipient   author;
+  private           CharSequence    body;
+  private           TextView        mediaDescriptionText;
+  private           Stub<TextView>  missingLinkTextStub;
+  private           SlideDeck       attachments;
+  private           MessageType     messageType;
+  private           int             largeCornerRadius;
+  private           int             smallCornerRadius;
+  private           CornerMask      cornerMask;
+  private           QuoteModel.Type quoteType;
+  private           boolean         isWallpaperEnabled;
+  @Nullable private MemberLabel     memberLabel;
 
   private int thumbHeight;
   private int thumbWidth;
@@ -179,13 +184,13 @@ public class QuoteView extends ConstraintLayout implements RecipientForeverObser
       cornerMask.setTopLeftRadius(radius);
       cornerMask.setTopRightRadius(radius);
     } else if (isStoryReply()) {
-      thumbWidth = getResources().getDimensionPixelOffset(R.dimen.quote_story_thumb_width);
+      thumbWidth  = getResources().getDimensionPixelOffset(R.dimen.quote_story_thumb_width);
       thumbHeight = getResources().getDimensionPixelOffset(R.dimen.quote_story_thumb_height);
     }
 
     ViewGroup.LayoutParams params = thumbnailView.getLayoutParams();
     params.height = thumbHeight;
-    params.width = thumbWidth;
+    params.width  = thumbWidth;
 
     thumbnailView.setLayoutParams(params);
     dismissStub.setVisibility(messageType == MessageType.PREVIEW ? View.VISIBLE : View.GONE);
@@ -202,7 +207,8 @@ public class QuoteView extends ConstraintLayout implements RecipientForeverObser
                        @NonNull SlideDeck attachments,
                        @Nullable String storyReaction,
                        @NonNull QuoteModel.Type quoteType,
-                       boolean composeMode)
+                       boolean composeMode,
+                       @Nullable MemberLabel memberLabel)
   {
     if (this.author != null) this.author.removeForeverObserver(this);
 
@@ -211,6 +217,7 @@ public class QuoteView extends ConstraintLayout implements RecipientForeverObser
     this.body        = body;
     this.attachments = attachments;
     this.quoteType   = quoteType;
+    this.memberLabel = memberLabel;
 
     this.author.observeForever(this);
 
@@ -231,7 +238,14 @@ public class QuoteView extends ConstraintLayout implements RecipientForeverObser
   }
 
   private @Nullable CharSequence resolveBody(@Nullable CharSequence body, @NonNull QuoteModel.Type quoteType) {
-    return quoteType == QuoteModel.Type.GIFT_BADGE ? getContext().getString(R.string.QuoteView__donation_for_a_friend) : body;
+    switch (quoteType) {
+      case GIFT_BADGE:
+        return getContext().getString(R.string.QuoteView__donation_for_a_friend);
+      case POLL:
+        return getContext().getString(R.string.Poll__poll_question, body);
+      default:
+        return body;
+    }
   }
 
   public void setTopCornerSizes(boolean topLeftLarge, boolean topRightLarge) {
@@ -258,18 +272,24 @@ public class QuoteView extends ConstraintLayout implements RecipientForeverObser
   public void onRecipientChanged(@NonNull Recipient recipient) {
     setQuoteAuthor(recipient);
   }
+
   public @NonNull Projection.Corners getCorners() {
     return new Projection.Corners(cornerMask.getRadii());
   }
 
   private void setQuoteAuthor(@NonNull Recipient author) {
+    String name;
     if (isStoryReply()) {
-      authorView.setText(author.isSelf() ? getContext().getString(R.string.QuoteView_your_story)
-                                         : getContext().getString(R.string.QuoteView_s_story, author.getDisplayName(getContext())));
+      name = author.isSelf() ? getContext().getString(R.string.QuoteView_your_story)
+                             : getContext().getString(R.string.QuoteView_s_story, author.getDisplayName(getContext()));
     } else {
-      authorView.setText(author.isSelf() ? getContext().getString(R.string.QuoteView_you)
-                                         : author.getDisplayName(getContext()));
+      name = author.isSelf() ? getContext().getString(R.string.QuoteView_you)
+                             : author.getDisplayName(getContext());
     }
+
+    QuoteViewColorTheme colorTheme      = getColorTheme();
+    int                 foregroundColor = colorTheme.getForegroundColor(getContext());
+    authorView.bind(name, foregroundColor, memberLabel, foregroundColor, colorTheme.getLabelBackgroundColor(getContext()));
   }
 
   private boolean isStoryReply() {
@@ -317,6 +337,14 @@ public class QuoteView extends ConstraintLayout implements RecipientForeverObser
           Log.w(TAG, "Could not parse body of text post.", e);
           bodyView.setText("");
         }
+      } else if (quoteType == QuoteModel.Type.POLL) {
+        CharSequence glyph = SignalSymbols.getSpannedString(getContext(), SignalSymbols.Weight.REGULAR, SignalSymbols.Glyph.POLL, -1);
+        // TODO(michelle): Update with RTL poll icon
+        SpannableStringBuilder builder = new SpannableStringBuilder()
+            .append(glyph)
+            .append(" ")
+            .append(body);
+        bodyView.setText(body == null ? "" : builder);
       } else {
         bodyView.setText(body == null ? "" : body);
       }
@@ -379,10 +407,10 @@ public class QuoteView extends ConstraintLayout implements RecipientForeverObser
       attachmentNameViewStub.setVisibility(GONE);
       thumbnailView.setVisibility(VISIBLE);
       requestManager.load(model)
-                   .centerCrop()
-                   .override(thumbWidth, thumbHeight)
-                   .diskCacheStrategy(DiskCacheStrategy.RESOURCE)
-                   .into(thumbnailView);
+                    .centerCrop()
+                    .override(thumbWidth, thumbHeight)
+                    .diskCacheStrategy(DiskCacheStrategy.RESOURCE)
+                    .into(thumbnailView);
       return;
     }
 
@@ -397,15 +425,16 @@ public class QuoteView extends ConstraintLayout implements RecipientForeverObser
       attachmentNameViewStub.setVisibility(GONE);
       thumbnailView.setVisibility(VISIBLE);
       requestManager.load(R.drawable.ic_gift_thumbnail)
-                   .centerCrop()
-                   .override(thumbWidth, thumbHeight)
-                   .diskCacheStrategy(DiskCacheStrategy.RESOURCE)
-                   .into(thumbnailView);
+                    .centerCrop()
+                    .override(thumbWidth, thumbHeight)
+                    .diskCacheStrategy(DiskCacheStrategy.RESOURCE)
+                    .into(thumbnailView);
       return;
     }
 
-    if (TextUtils.isEmpty(quoteTargetContentType) || slide == null || slide.getUri() == null) {
+    if (TextUtils.isEmpty(quoteTargetContentType)) {
       thumbnailView.setVisibility(GONE);
+      attachmentVideoOVerlayStub.setVisibility(GONE);
       attachmentNameViewStub.setVisibility(GONE);
 
       if (dismissStub.resolved()) {
@@ -431,12 +460,12 @@ public class QuoteView extends ConstraintLayout implements RecipientForeverObser
         attachmentVideoOVerlayStub.setVisibility(VISIBLE);
       }
 
-      requestManager.load(new DecryptableUri(slide.getUri()))
+      requestManager.load(slide.getUri() != null ? new DecryptableUri(slide.getUri()) : null)
                     .centerCrop()
                     .override(thumbWidth, thumbHeight)
                     .diskCacheStrategy(DiskCacheStrategy.RESOURCE)
                     .into(thumbnailView);
-    } else if (MediaUtil.isAudioType(quoteTargetContentType)) {
+    } else if (MediaUtil.isAudioType(quoteTargetContentType) || MediaUtil.isLongTextType(quoteTargetContentType)) {
       thumbnailView.setVisibility(GONE);
       attachmentNameViewStub.setVisibility(GONE);
 
@@ -519,14 +548,14 @@ public class QuoteView extends ConstraintLayout implements RecipientForeverObser
   }
 
   private void applyColorTheme() {
-    boolean isOutgoing = messageType != MessageType.INCOMING && messageType != MessageType.STORY_REPLY_INCOMING;
-    boolean isPreview  = messageType == MessageType.PREVIEW || messageType == MessageType.STORY_REPLY_PREVIEW;
-
-    QuoteViewColorTheme quoteViewColorTheme = QuoteViewColorTheme.resolveTheme(isOutgoing, isPreview, isWallpaperEnabled);
+    QuoteViewColorTheme quoteViewColorTheme = getColorTheme();
 
     quoteBarView.setBackgroundColor(quoteViewColorTheme.getBarColor(getContext()));
     setBackgroundColor(quoteViewColorTheme.getBackgroundColor(getContext()));
-    authorView.setTextColor(quoteViewColorTheme.getForegroundColor(getContext()));
+    authorView.updateColors(
+        quoteViewColorTheme.getForegroundColor(getContext()),
+        quoteViewColorTheme.getLabelBackgroundColor(getContext())
+    );
     bodyView.setTextColor(quoteViewColorTheme.getForegroundColor(getContext()));
 
     if (attachmentNameViewStub.resolved()) {
@@ -538,5 +567,11 @@ public class QuoteView extends ConstraintLayout implements RecipientForeverObser
       missingLinkTextStub.get().setTextColor(quoteViewColorTheme.getForegroundColor(getContext()));
       missingLinkTextStub.get().setBackgroundColor(quoteViewColorTheme.getBackgroundColor(getContext()));
     }
+  }
+
+  private @NonNull QuoteViewColorTheme getColorTheme() {
+    boolean isOutgoing = messageType != MessageType.INCOMING && messageType != MessageType.STORY_REPLY_INCOMING;
+    boolean isPreview  = messageType == MessageType.PREVIEW || messageType == MessageType.STORY_REPLY_PREVIEW;
+    return QuoteViewColorTheme.resolveTheme(isOutgoing, isPreview, isWallpaperEnabled);
   }
 }

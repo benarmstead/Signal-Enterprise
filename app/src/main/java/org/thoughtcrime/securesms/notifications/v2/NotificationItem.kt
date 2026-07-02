@@ -8,8 +8,11 @@ import android.text.SpannableStringBuilder
 import android.text.TextUtils
 import androidx.annotation.StringRes
 import androidx.core.graphics.drawable.IconCompat
+import org.signal.core.ui.permissions.Permissions
+import org.signal.core.util.Util
 import org.signal.core.util.logging.Log
 import org.thoughtcrime.securesms.R
+import org.thoughtcrime.securesms.components.emoji.EmojiStrings
 import org.thoughtcrime.securesms.contactshare.Contact
 import org.thoughtcrime.securesms.contactshare.ContactUtil
 import org.thoughtcrime.securesms.database.MentionUtil
@@ -23,15 +26,16 @@ import org.thoughtcrime.securesms.database.model.databaseprotos.BodyRangeList
 import org.thoughtcrime.securesms.keyvalue.SignalStore
 import org.thoughtcrime.securesms.mms.Slide
 import org.thoughtcrime.securesms.mms.SlideDeck
-import org.thoughtcrime.securesms.permissions.Permissions
+import org.thoughtcrime.securesms.polls.PollVote
 import org.thoughtcrime.securesms.recipients.Recipient
 import org.thoughtcrime.securesms.recipients.RecipientUtil
 import org.thoughtcrime.securesms.service.KeyCachingService
 import org.thoughtcrime.securesms.util.AvatarUtil
 import org.thoughtcrime.securesms.util.MediaUtil
 import org.thoughtcrime.securesms.util.SpanUtil
-import org.thoughtcrime.securesms.util.Util
 import org.thoughtcrime.securesms.util.hasGiftBadge
+import org.thoughtcrime.securesms.util.hasPoll
+import org.thoughtcrime.securesms.util.hasPollTerminate
 import org.thoughtcrime.securesms.util.hasSharedContact
 import org.thoughtcrime.securesms.util.hasSticker
 import org.thoughtcrime.securesms.util.isMediaMessage
@@ -135,7 +139,7 @@ sealed class NotificationItem(val threadRecipient: Recipient, protected val reco
 
   fun getPrimaryText(context: Context): CharSequence {
     return if (SignalStore.settings.messageNotificationsPrivacy.isDisplayMessage) {
-      if (RecipientUtil.isMessageRequestAccepted(context, thread.threadId)) {
+      if (RecipientUtil.isMessageRequestAccepted(thread.threadId)) {
         getPrimaryTextActual(context)
       } else {
         SpanUtil.italic(context.getString(R.string.SingleRecipientNotificationBuilder_message_request))
@@ -216,7 +220,7 @@ class MessageNotification(threadRecipient: Recipient, record: MessageRecord) : N
   override val timestamp: Long = record.timestamp
   override val authorRecipient: Recipient = record.fromRecipient.resolve()
   override val isNewNotification: Boolean = notifiedTimestamp == 0L && !record.isEditMessage
-  val hasSelfMention = record.hasSelfMention()
+  val hasSelfMention = record.hasSelfMention() || (record is MmsMessageRecord && record.quote?.author == Recipient.self().id)
 
   private var thumbnailInfo: ThumbnailInfo = NotificationThumbnails.getWithoutModifying(this)
 
@@ -240,6 +244,10 @@ class MessageNotification(threadRecipient: Recipient, record: MessageRecord) : N
       ThreadBodyUtil.getFormattedBodyForNotification(context, record, null)
     } else if (record.isPaymentNotification || record.isPaymentTombstone) {
       ThreadBodyUtil.getFormattedBodyForNotification(context, record, null)
+    } else if (record.hasPoll()) {
+      ThreadBodyUtil.getFormattedBodyForPollNotification(context, record as MmsMessageRecord)
+    } else if (record.hasPollTerminate()) {
+      ThreadBodyUtil.getFormattedBodyForPollEndNotification(context, record as MmsMessageRecord)
     } else {
       getBodyWithMentionsAndStyles(context, record)
     }
@@ -294,7 +302,7 @@ class MessageNotification(threadRecipient: Recipient, record: MessageRecord) : N
     }
 
     if (record is MmsMessageRecord) {
-      return (record.isMmsNotification || record.slideDeck.slides.isEmpty()) && record.sharedContacts.isEmpty()
+      return record.sharedContacts.isEmpty()
     }
 
     return true
@@ -378,5 +386,35 @@ class ReactionNotification(threadRecipient: Recipient, record: MessageRecord, va
 
   override fun toString(): String {
     return "ReactionNotification(timestamp=$timestamp, isNewNotification=$isNewNotification)"
+  }
+}
+
+/**
+ * Represents a notification associated with a new vote.
+ */
+class VoteNotification(threadRecipient: Recipient, record: MessageRecord, val vote: PollVote) : NotificationItem(threadRecipient, record) {
+  override val timestamp: Long = vote.dateReceived
+  override val authorRecipient: Recipient = Recipient.resolved(vote.voterId)
+  override val isNewNotification: Boolean = timestamp > notifiedTimestamp
+
+  override fun getPrimaryTextActual(context: Context): CharSequence {
+    return if (KeyCachingService.isLocked(context)) {
+      SpanUtil.italic(context.getString(R.string.MessageNotifier_locked_message))
+    } else {
+      context.getString(R.string.MessageNotifier_s_voted_in_poll, EmojiStrings.POLL, authorRecipient.getDisplayName(context), vote.question)
+    }
+  }
+
+  override fun getStartingPosition(context: Context): Int {
+    return SignalDatabase.messages.getMessagePositionInConversation(threadId = thread.threadId, groupStoryId = 0L, receivedTimestamp = record.dateReceived)
+  }
+
+  override fun getLargeIconUri(): Uri? = null
+  override fun getBigPictureUri(): Uri? = null
+  override fun getThumbnailInfo(context: Context): ThumbnailInfo = ThumbnailInfo()
+  override fun canReply(context: Context): Boolean = false
+
+  override fun toString(): String {
+    return "VoteNotification(timestamp=$timestamp, isNewNotification=$isNewNotification)"
   }
 }

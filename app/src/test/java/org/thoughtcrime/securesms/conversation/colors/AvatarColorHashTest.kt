@@ -7,10 +7,10 @@ package org.thoughtcrime.securesms.conversation.colors
 
 import org.junit.Assert.assertEquals
 import org.junit.Test
+import org.signal.core.models.ServiceId.ACI
+import org.signal.core.models.ServiceId.PNI
 import org.signal.core.util.Base64
 import org.thoughtcrime.securesms.groups.GroupId
-import org.whispersystems.signalservice.api.push.ServiceId.ACI
-import org.whispersystems.signalservice.api.push.ServiceId.PNI
 
 class AvatarColorHashTest {
 
@@ -31,6 +31,6 @@ class AvatarColorHashTest {
 
   @Test
   fun `hash test vector - GroupId`() {
-    assertEquals(AvatarColor.A130, AvatarColorHash.forGroupId(GroupId.V2.push(Base64.decode("BwJRIdomqOSOckHjnJsknNCibCZKJFt+RxLIpa9CWJ4="))))
+    assertEquals(AvatarColor.A130, AvatarColorHash.forGroupId(GroupId.push(Base64.decode("BwJRIdomqOSOckHjnJsknNCibCZKJFt+RxLIpa9CWJ4="))))
   }
 }

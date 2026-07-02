@@ -8,6 +8,7 @@ import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.text.Annotation;
 import android.text.Layout;
+import android.text.PrecomputedText;
 import android.text.Spannable;
 import android.text.SpannableString;
 import android.text.SpannableStringBuilder;
@@ -16,6 +17,7 @@ import android.text.TextDirectionHeuristic;
 import android.text.TextDirectionHeuristics;
 import android.text.TextUtils;
 import android.text.method.TransformationMethod;
+import android.text.TextPaint;
 import android.text.style.CharacterStyle;
 import android.util.AttributeSet;
 import android.util.TypedValue;
@@ -29,10 +31,12 @@ import androidx.annotation.Nullable;
 import androidx.annotation.Px;
 import androidx.appcompat.widget.AppCompatTextView;
 import androidx.core.content.ContextCompat;
+import androidx.core.text.PrecomputedTextCompat;
 import androidx.core.view.GestureDetectorCompat;
 import androidx.core.view.ViewKt;
 import androidx.core.widget.TextViewCompat;
 
+import org.signal.core.util.concurrent.SignalExecutors;
 import org.thoughtcrime.securesms.R;
 import org.thoughtcrime.securesms.components.emoji.parsing.EmojiParser;
 import org.thoughtcrime.securesms.components.mention.MentionAnnotation;
@@ -41,11 +45,15 @@ import org.thoughtcrime.securesms.components.spoiler.SpoilerRendererDelegate;
 import org.thoughtcrime.securesms.conversation.MessageStyler;
 import org.thoughtcrime.securesms.emoji.JumboEmoji;
 import org.thoughtcrime.securesms.keyvalue.SignalStore;
-import org.thoughtcrime.securesms.util.Util;
+import org.signal.core.util.Util;
+import org.thoughtcrime.securesms.util.concurrent.SerialMonoLifoExecutor;
 
+import java.lang.ref.Reference;
+import java.lang.ref.WeakReference;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.Executor;
 
 import kotlin.Unit;
 
@@ -85,6 +93,12 @@ public class EmojiTextView extends AppCompatTextView {
   private int                    lastSizeChangedWidth  = -1;
   private int                    lastSizeChangedHeight = -1;
 
+  // Utilized for async text loading when a large number of emoji is present.
+  private int          taskNumber         = 0;
+  private Executor     backgroundExecutor = new SerialMonoLifoExecutor(SignalExecutors.UNBOUNDED);
+  private CharSequence requestedText      = null;
+  private BufferType   requestedType      = null;
+
   private MentionRendererDelegate mentionRendererDelegate;
   private SpoilerRendererDelegate spoilerRendererDelegate;
 
@@ -121,14 +135,24 @@ public class EmojiTextView extends AppCompatTextView {
       spoilerRendererDelegate = new SpoilerRendererDelegate(this);
     }
 
-    textDirection = getLayoutDirection() == LAYOUT_DIRECTION_LTR ? TextDirectionHeuristics.FIRSTSTRONG_RTL : TextDirectionHeuristics.ANYRTL_LTR;
+    if (getLayoutDirection() == LAYOUT_DIRECTION_LTR) {
+      textDirection = TextDirectionHeuristics.FIRSTSTRONG_RTL;
+      if (getTextDirection() == TEXT_DIRECTION_INHERIT) {
+        setTextDirection(TEXT_DIRECTION_FIRST_STRONG_RTL);
+      }
+    } else {
+      textDirection = TextDirectionHeuristics.ANYRTL_LTR;
+      if (getTextDirection() == TEXT_DIRECTION_INHERIT) {
+        setTextDirection(TEXT_DIRECTION_ANY_RTL);
+      }
+    }
 
     setEmojiCompatEnabled(useSystemEmoji());
   }
 
   public void setMaxLength(int maxLength) {
     this.maxLength = maxLength;
-    setText(getText());
+    setTextAsync(getText());
   }
 
   @Override
@@ -162,8 +186,121 @@ public class EmojiTextView extends AppCompatTextView {
     }
   }
 
+  /**
+   * Recommended method for calling through to reset the text flow within this file.
+   * Doing so will ensure we call setTextAsync with the requested arguments as necessary.
+   */
+  private void resetText() {
+    if (requestedText == null || requestedType == null) {
+      return;
+    }
+
+    setTextAsync(requestedText, requestedType);
+  }
+
+  public void setTextAsync(@Nullable CharSequence text) {
+    setTextAsync(text, BufferType.SPANNABLE);
+  }
+
+  /**
+   * Sets the text. If there are more than 100 emoji candidates, we utilize PrecomputedTextCompat.
+   */
+  public void setTextAsync(@Nullable CharSequence text, BufferType type) {
+    taskNumber++;
+    final int number = taskNumber;
+
+    EmojiParser.CandidateList candidates = isInEditMode() ? null : EmojiProvider.getCandidates(text);
+    if (candidates == null || candidates.size() <= 100) {
+      setText(text, type);
+
+      if (sizeChangeInProgress) {
+        sizeChangeInProgress = false;
+      }
+
+      return;
+    }
+
+    final PrecomputedTextCompat.Params params = getTextMetricsParamsCompat();
+    final Reference<EmojiTextView> ref = new WeakReference<>(this);
+
+    backgroundExecutor.execute(() -> {
+      EmojiTextView textView = ref.get();
+      if (textView != null) {
+
+        final CharSequence textToSet;
+        synchronized (textView) {
+          textToSet = getTextToSet(text, type);
+        }
+
+        if (textToSet == null) {
+          return;
+        }
+
+        final PrecomputedTextCompat precomputedTextCompat = PrecomputedTextCompat.create(textToSet, params);
+
+        textView.post(() -> {
+          if (textView.taskNumber != number) {
+            return;
+          }
+
+          try {
+            textView.setPrecomputedText(precomputedTextCompat);
+          } catch (IllegalArgumentException e) {
+            textView.setText(text, type);
+          }
+
+          if (textView.sizeChangeInProgress) {
+            textView.sizeChangeInProgress = false;
+          }
+        });
+      }
+    });
+  }
+
+  /**
+   * Note if you aren't sure how many emoji are going to be displayed, it may be better to utilize [setTextAsync]
+   */
   @Override
   public void setText(@Nullable CharSequence text, BufferType type) {
+    boolean isPrecomputed = (text instanceof PrecomputedTextCompat || (Build.VERSION.SDK_INT >= 28 && text instanceof PrecomputedText));
+    if (!isPrecomputed) {
+      text = getTextToSet(text, type);
+    }
+
+    if (text == null) {
+      return;
+    }
+
+    super.setText(text, BufferType.SPANNABLE);
+
+    previousText                 = text;
+    previousBufferType           = type;
+    previousOverflowText         = overflowText;
+    useSystemEmoji               = useSystemEmoji();
+    previousTransformationMethod = getTransformationMethod();
+    lastSizeChangedWidth         = -1;
+    lastSizeChangedHeight        = -1;
+
+    // Android fails to ellipsize spannable strings. (https://issuetracker.google.com/issues/36991688)
+    // We ellipsize them ourselves by manually truncating the appropriate section.
+    if (getText() != null && getText().length() > 0 && isEllipsizedAtEnd()) {
+      if (getMaxLines() > 0 && getMaxLines() != Integer.MAX_VALUE) {
+        ellipsizeEmojiTextForMaxLines();
+      } else if (maxLength > 0) {
+        ellipsizeAnyTextForMaxLength();
+      }
+    }
+
+    if (getLayoutParams() != null && getLayoutParams().width == ViewGroup.LayoutParams.WRAP_CONTENT) {
+      requestLayout();
+    }
+  }
+
+  private @Nullable CharSequence getTextToSet(@Nullable CharSequence text, BufferType type) {
+    if (text == null) {
+      return "";
+    }
+
     EmojiParser.CandidateList candidates = isInEditMode() ? null : EmojiProvider.getCandidates(text);
 
     if (scaleEmojis &&
@@ -187,14 +324,8 @@ public class EmojiTextView extends AppCompatTextView {
     }
 
     if (unchanged(text, overflowText, type)) {
-      return;
+      return null;
     }
-
-    previousText                 = text;
-    previousOverflowText         = overflowText;
-    previousBufferType           = type;
-    useSystemEmoji               = useSystemEmoji();
-    previousTransformationMethod = getTransformationMethod();
 
     Spannable textToSet;
     if (useSystemEmoji || candidates == null || candidates.size() == 0) {
@@ -203,21 +334,7 @@ public class EmojiTextView extends AppCompatTextView {
       textToSet = new SpannableStringBuilder(EmojiProvider.emojify(candidates, text, this, isJumbomoji || forceJumboEmoji));
     }
 
-    super.setText(textToSet, BufferType.SPANNABLE);
-
-    // Android fails to ellipsize spannable strings. (https://issuetracker.google.com/issues/36991688)
-    // We ellipsize them ourselves by manually truncating the appropriate section.
-    if (getText() != null && getText().length() > 0 && isEllipsizedAtEnd()) {
-      if (getMaxLines() > 0 && getMaxLines() != Integer.MAX_VALUE) {
-        ellipsizeEmojiTextForMaxLines();
-      } else if (maxLength > 0) {
-        ellipsizeAnyTextForMaxLength();
-      }
-    }
-
-    if (getLayoutParams() != null && getLayoutParams().width == ViewGroup.LayoutParams.WRAP_CONTENT) {
-      requestLayout();
-    }
+    return textToSet;
   }
 
   /**
@@ -288,13 +405,16 @@ public class EmojiTextView extends AppCompatTextView {
       CharSequence text = getText();
       if (text != null) {
         int widthSpecMode = MeasureSpec.getMode(widthMeasureSpec);
-        int widthSpecSize = MeasureSpec.getSize(widthMeasureSpec);
+        if (widthSpecMode != MeasureSpec.AT_MOST) {
+          return widthMeasureSpec;
+        }
 
+        int   widthSpecSize     = MeasureSpec.getSize(widthMeasureSpec);
         float measuredTextWidth = hasMetricAffectingSpan(text) ? Layout.getDesiredWidth(text, getPaint()) : getLongestLineWidth(text);
         int   desiredWidth      = (int) measuredTextWidth + getPaddingLeft() + getPaddingRight();
 
-        if (widthSpecMode == MeasureSpec.AT_MOST && desiredWidth < widthSpecSize) {
-          return MeasureSpec.makeMeasureSpec(desiredWidth + 1, MeasureSpec.EXACTLY);
+        if (desiredWidth < widthSpecSize) {
+          return MeasureSpec.makeMeasureSpec(desiredWidth + 3, MeasureSpec.EXACTLY);
         }
       }
     }
@@ -338,7 +458,8 @@ public class EmojiTextView extends AppCompatTextView {
 
   public void setOverflowText(@Nullable CharSequence overflowText) {
     this.overflowText = overflowText;
-    setText(previousText, BufferType.SPANNABLE);
+    this.requestedType = BufferType.SPANNABLE;
+    resetText();
   }
 
   @SuppressLint("ClickableViewAccessibility")
@@ -368,7 +489,7 @@ public class EmojiTextView extends AppCompatTextView {
     }
   }
 
-  private void ellipsizeEmojiTextForMaxLines() {
+  public void ellipsizeEmojiTextForMaxLines() {
     Runnable ellipsize = () -> {
       int maxLines = TextViewCompat.getMaxLines(EmojiTextView.this);
       if (maxLines <= 0 && maxLength < 0) {
@@ -386,7 +507,7 @@ public class EmojiTextView extends AppCompatTextView {
 
         int          overflowEnd = getLayout().getLineEnd(maxLines);
         CharSequence overflow    = new SpannableString(getText().subSequence(overflowStart, overflowEnd).toString());
-        float        adjust      = overflowText != null ? getPaint().measureText(overflowText, 0, overflowText.length()) : 0f;
+        float        adjust      = overflowText != null ? measureWithSpans(overflowText) : 0f;
         CharSequence ellipsized  = TextUtils.ellipsize(overflow, getPaint(), getWidth() - adjust, TextUtils.TruncateAt.END);
 
         SpannableStringBuilder newContent = new SpannableStringBuilder();
@@ -420,6 +541,21 @@ public class EmojiTextView extends AppCompatTextView {
         return Unit.INSTANCE;
       });
     }
+  }
+
+  /**
+   * Measures the width of the given text, applying any {@link CharacterStyle} spans to the paint
+   * so that typeface changes (e.g. bold) are reflected in the measurement.
+   */
+  private float measureWithSpans(@NonNull CharSequence text) {
+    TextPaint measurePaint = new TextPaint(getPaint());
+    if (text instanceof Spanned) {
+      CharacterStyle[] spans = ((Spanned) text).getSpans(0, text.length(), CharacterStyle.class);
+      for (CharacterStyle span : spans) {
+        span.updateDrawState(measurePaint);
+      }
+    }
+    return measurePaint.measureText(text, 0, text.length());
   }
 
   /** Get text but truncated to maxLength, adjusts for end mentions and converts style spans to be exclusive on start and end. */
@@ -470,10 +606,9 @@ public class EmojiTextView extends AppCompatTextView {
     lastSizeChangedWidth  = w;
     lastSizeChangedHeight = h;
 
-    if (!sizeChangeInProgress) {
+    if (!sizeChangeInProgress && getMaxLines() > 0 && getMaxLines() < Integer.MAX_VALUE) {
       sizeChangeInProgress = true;
-      setText(previousText, previousBufferType);
-      sizeChangeInProgress = false;
+      resetText();
     }
   }
 
@@ -505,6 +640,13 @@ public class EmojiTextView extends AppCompatTextView {
   public void setMentionBackgroundTint(@ColorInt int mentionBackgroundTint) {
     if (renderMentions) {
       mentionRendererDelegate.setTint(mentionBackgroundTint);
+    }
+  }
+
+  public void enableRenderSpoilers() {
+    if (spoilerRendererDelegate == null) {
+      renderSpoilers          = true;
+      spoilerRendererDelegate = new SpoilerRendererDelegate(this);
     }
   }
 

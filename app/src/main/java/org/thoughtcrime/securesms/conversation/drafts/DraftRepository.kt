@@ -6,6 +6,7 @@ import android.text.Spannable
 import android.text.SpannableString
 import io.reactivex.rxjava3.core.Maybe
 import io.reactivex.rxjava3.schedulers.Schedulers
+import org.signal.core.models.media.Media
 import org.signal.core.util.Base64
 import org.signal.core.util.StreamUtil
 import org.signal.core.util.concurrent.MaybeCompat
@@ -13,7 +14,7 @@ import org.signal.core.util.concurrent.SignalExecutors
 import org.signal.core.util.logging.Log
 import org.thoughtcrime.securesms.components.location.SignalPlace
 import org.thoughtcrime.securesms.components.mention.MentionAnnotation
-import org.thoughtcrime.securesms.conversation.ConversationIntents
+import org.thoughtcrime.securesms.conversation.ConversationArgs
 import org.thoughtcrime.securesms.conversation.ConversationMessage
 import org.thoughtcrime.securesms.conversation.ConversationMessage.ConversationMessageFactory
 import org.thoughtcrime.securesms.conversation.MessageStyler
@@ -29,9 +30,9 @@ import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.database.model.MmsMessageRecord
 import org.thoughtcrime.securesms.database.model.databaseprotos.BodyRangeList
+import org.thoughtcrime.securesms.database.withAttachments
 import org.thoughtcrime.securesms.dependencies.AppDependencies
 import org.thoughtcrime.securesms.keyboard.KeyboardUtil
-import org.thoughtcrime.securesms.mediasend.Media
 import org.thoughtcrime.securesms.mms.GifSlide
 import org.thoughtcrime.securesms.mms.ImageSlide
 import org.thoughtcrime.securesms.mms.PartAuthority
@@ -39,7 +40,6 @@ import org.thoughtcrime.securesms.mms.QuoteId
 import org.thoughtcrime.securesms.mms.Slide
 import org.thoughtcrime.securesms.mms.SlideFactory
 import org.thoughtcrime.securesms.mms.StickerSlide
-import org.thoughtcrime.securesms.providers.BlobProvider
 import org.thoughtcrime.securesms.recipients.Recipient
 import org.thoughtcrime.securesms.util.MediaUtil
 import org.thoughtcrime.securesms.util.concurrent.SerialMonoLifoExecutor
@@ -53,7 +53,7 @@ class DraftRepository(
   private val threadTable: ThreadTable = SignalDatabase.threads,
   private val draftTable: DraftTable = SignalDatabase.drafts,
   private val saveDraftsExecutor: Executor = SerialMonoLifoExecutor(SignalExecutors.BOUNDED),
-  private val conversationArguments: ConversationIntents.Args? = null
+  private val conversationArguments: ConversationArgs? = null
 ) {
 
   companion object {
@@ -160,7 +160,7 @@ class DraftRepository(
   fun deleteVoiceNoteDraftData(draft: DraftTable.Draft?) {
     if (draft != null) {
       SignalExecutors.BOUNDED.execute {
-        BlobProvider.getInstance().delete(context, Uri.parse(draft.value).buildUpon().clearQuery().build())
+        AppDependencies.blobs.delete(context, Uri.parse(draft.value).buildUpon().clearQuery().build())
       }
     }
   }
@@ -219,7 +219,8 @@ class DraftRepository(
 
   private fun loadDraftMessageEditInternal(serialized: String): ConversationMessage? {
     val messageId = MessageId.deserialize(serialized)
-    val messageRecord: MessageRecord = SignalDatabase.messages.getMessageRecordOrNull(messageId.id) ?: return null
+    var messageRecord: MessageRecord = SignalDatabase.messages.getMessageRecordOrNull(messageId.id) ?: return null
+    messageRecord = messageRecord.withAttachments()
     val threadRecipient: Recipient = requireNotNull(SignalDatabase.threads.getRecipientForThreadId(messageRecord.threadId))
     if (messageRecord.hasTextSlide()) {
       val textSlide = messageRecord.requireTextSlide()

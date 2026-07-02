@@ -8,9 +8,11 @@ import org.signal.spinner.Spinner
 import org.signal.spinner.Spinner.DatabaseConfig
 import org.signal.spinner.SpinnerLogger
 import org.thoughtcrime.securesms.database.AttachmentTransformer
+import org.thoughtcrime.securesms.database.CollapsedStateTransformer
 import org.thoughtcrime.securesms.database.DatabaseMonitor
 import org.thoughtcrime.securesms.database.GV2Transformer
 import org.thoughtcrime.securesms.database.GV2UpdateTransformer
+import org.thoughtcrime.securesms.database.IdPopupTransformer
 import org.thoughtcrime.securesms.database.IsStoryTransformer
 import org.thoughtcrime.securesms.database.JobDatabase
 import org.thoughtcrime.securesms.database.KeyValueDatabase
@@ -20,6 +22,7 @@ import org.thoughtcrime.securesms.database.LogDatabase
 import org.thoughtcrime.securesms.database.MegaphoneDatabase
 import org.thoughtcrime.securesms.database.MessageBitmaskColumnTransformer
 import org.thoughtcrime.securesms.database.MessageRangesTransformer
+import org.thoughtcrime.securesms.database.PollTransformer
 import org.thoughtcrime.securesms.database.ProfileKeyCredentialTransformer
 import org.thoughtcrime.securesms.database.QueryMonitor
 import org.thoughtcrime.securesms.database.RecipientTransformer
@@ -70,7 +73,10 @@ class SpinnerApplicationContext : ApplicationContext() {
             MessageRangesTransformer,
             KyberKeyTransformer,
             RecipientTransformer,
-            AttachmentTransformer
+            AttachmentTransformer,
+            PollTransformer,
+            IdPopupTransformer,
+            CollapsedStateTransformer
           )
         ),
         "jobmanager" to DatabaseConfig(db = { JobDatabase.getInstance(this).sqlCipherDatabase }, columnTransformers = listOf(TimestampTransformer)),
@@ -83,7 +89,10 @@ class SpinnerApplicationContext : ApplicationContext() {
         )
       ),
       linkedMapOf(
-        StorageServicePlugin.PATH to StorageServicePlugin()
+        StorageServicePlugin.PATH to StorageServicePlugin(),
+        AttachmentPlugin.PATH to AttachmentPlugin(),
+        BackupPlugin.PATH to BackupPlugin(),
+        ApiPlugin.PATH to ApiPlugin()
       )
     )
 

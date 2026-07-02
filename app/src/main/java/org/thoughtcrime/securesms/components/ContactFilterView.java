@@ -21,12 +21,18 @@ import androidx.core.widget.TextViewCompat;
 
 import org.thoughtcrime.securesms.R;
 import org.thoughtcrime.securesms.util.EditTextExtensionsKt;
-import org.thoughtcrime.securesms.util.ServiceUtil;
+import org.signal.core.util.ServiceUtil;
 import org.thoughtcrime.securesms.util.TextSecurePreferences;
 import org.thoughtcrime.securesms.util.ViewUtil;
 
+/**
+ * A search input field for finding recipients.
+ *
+ * @deprecated Use the RecipientSearchBar composable instead.
+ */
+@Deprecated
 public final class ContactFilterView extends FrameLayout {
-  private   OnFilterChangedListener listener;
+  private OnFilterChangedListener listener;
 
   private final EditText        searchText;
   private final AnimatingToggle toggle;

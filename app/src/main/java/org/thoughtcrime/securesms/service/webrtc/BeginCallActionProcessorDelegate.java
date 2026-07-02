@@ -4,15 +4,24 @@ import androidx.annotation.NonNull;
 
 import org.signal.core.util.logging.Log;
 import org.signal.ringrtc.CallException;
+import org.signal.ringrtc.CallId;
 import org.signal.ringrtc.CallManager;
 import org.thoughtcrime.securesms.components.webrtc.BroadcastVideoSink;
+import org.thoughtcrime.securesms.database.CallTable;
+import org.thoughtcrime.securesms.database.SignalDatabase;
 import org.thoughtcrime.securesms.events.CallParticipant;
 import org.thoughtcrime.securesms.events.CallParticipantId;
 import org.thoughtcrime.securesms.events.WebRtcViewModel;
 import org.thoughtcrime.securesms.keyvalue.SignalStore;
+import org.thoughtcrime.securesms.notifications.DoNotDisturbUtil;
+import org.thoughtcrime.securesms.recipients.Recipient;
 import org.thoughtcrime.securesms.ringrtc.RemotePeer;
 import org.thoughtcrime.securesms.service.webrtc.state.WebRtcServiceState;
+import org.signal.core.util.Util;
 import org.whispersystems.signalservice.api.messages.calls.OfferMessage;
+import org.whispersystems.signalservice.api.messages.calls.SignalServiceCallMessage;
+
+import java.nio.ByteBuffer;
 
 import static org.thoughtcrime.securesms.webrtc.CallNotificationBuilder.TYPE_INCOMING_CONNECTING;
 
@@ -31,6 +40,39 @@ public class BeginCallActionProcessorDelegate extends WebRtcActionProcessor {
                                                            @NonNull RemotePeer remotePeer,
                                                            @NonNull OfferMessage.Type offerType)
   {
+    if (!remotePeer.getRecipient().getHasAci()) {
+      Log.w(tag, "1:1 outgoing recipient is PNI only, send pseudo-call offer and terminate call");
+
+      remotePeer.setCallId(new CallId(ByteBuffer.wrap(Util.getSecretBytes(8)).getLong()));
+
+      currentState = currentState.builder()
+                                 .actionProcessor(new IdleActionProcessor(webRtcInteractor))
+                                 .changeCallInfoState()
+                                 .callRecipient(remotePeer.getRecipient())
+                                 .callState(WebRtcViewModel.State.CALL_NEEDS_PERMISSION)
+                                 .putParticipant(remotePeer.getRecipient(), CallParticipant.EMPTY)
+                                 .build();
+
+      boolean isVideoOffer = OfferMessage.Type.VIDEO_CALL == offerType;
+
+      SignalDatabase.calls().insertOneToOneCall(remotePeer.getCallId().longValue(),
+                                                System.currentTimeMillis(),
+                                                remotePeer.getId(),
+                                                isVideoOffer ? CallTable.Type.VIDEO_CALL : CallTable.Type.AUDIO_CALL,
+                                                CallTable.Direction.OUTGOING,
+                                                CallTable.Event.ONGOING,
+                                                false);
+
+      webRtcInteractor.insertMissedCall(remotePeer, System.currentTimeMillis(), isVideoOffer, CallTable.Event.NOT_ACCEPTED);
+      webRtcInteractor.postStateUpdate(currentState);
+      webRtcInteractor.sendCallMessage(remotePeer, SignalServiceCallMessage.forOffer(new OfferMessage(remotePeer.getCallId().longValue(),
+                                                                                                      offerType,
+                                                                                                      new byte[0]),
+                                                                                     null));
+
+      return terminate(currentState, remotePeer);
+    }
+
     remotePeer.setCallStartTimestamp(System.currentTimeMillis());
 
     currentState = currentState.builder()
@@ -60,7 +102,6 @@ public class BeginCallActionProcessorDelegate extends WebRtcActionProcessor {
                                .build();
 
     CallManager.CallMediaType callMediaType = WebRtcUtil.getCallMediaTypeFromOfferType(offerType);
-
     try {
       webRtcInteractor.getCallManager().call(remotePeer, callMediaType, SignalStore.account().getDeviceId());
     } catch (CallException e) {
@@ -78,10 +119,13 @@ public class BeginCallActionProcessorDelegate extends WebRtcActionProcessor {
 
 
     boolean    isRemoteVideoOffer = currentState.getCallSetupState(remotePeer).isRemoteVideoOffer();
+    Recipient  recipient          = remotePeer.getRecipient();
 
-    webRtcInteractor.setCallInProgressNotification(TYPE_INCOMING_CONNECTING, remotePeer, isRemoteVideoOffer);
+    if (DoNotDisturbUtil.shouldDisturbUserWithCall(context.getApplicationContext(), recipient)) {
+      webRtcInteractor.setCallInProgressNotification(TYPE_INCOMING_CONNECTING, remotePeer, isRemoteVideoOffer);
+    }
     webRtcInteractor.retrieveTurnServers(remotePeer);
-    webRtcInteractor.initializeAudioForCall();
+    webRtcInteractor.initializeAudioForCall(false);
 
     if (!webRtcInteractor.addNewIncomingCall(remotePeer.getId(), remotePeer.getCallId().longValue(), offerType == OfferMessage.Type.VIDEO_CALL)) {
       Log.i(tag, "Unable to add new incoming call");

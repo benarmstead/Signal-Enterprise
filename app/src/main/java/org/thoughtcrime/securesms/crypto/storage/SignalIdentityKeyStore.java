@@ -11,7 +11,7 @@ import org.thoughtcrime.securesms.database.identity.IdentityRecordList;
 import org.thoughtcrime.securesms.database.model.IdentityRecord;
 import org.thoughtcrime.securesms.recipients.Recipient;
 import org.thoughtcrime.securesms.recipients.RecipientId;
-import org.whispersystems.signalservice.api.push.ServiceId;
+import org.signal.core.models.ServiceId;
 
 import java.util.List;
 import java.util.Optional;
@@ -73,6 +73,10 @@ public class SignalIdentityKeyStore implements IdentityKeyStore {
 
   public @NonNull Optional<IdentityRecord> getIdentityRecord(@NonNull RecipientId recipientId) {
     return baseStore.getIdentityRecord(recipientId);
+  }
+
+  public @NonNull Optional<IdentityRecord> getIdentityRecord(@NonNull Recipient recipient) {
+    return baseStore.getIdentityRecord(recipient);
   }
 
   public @NonNull IdentityRecordList getIdentityRecords(@NonNull List<Recipient> recipients) {

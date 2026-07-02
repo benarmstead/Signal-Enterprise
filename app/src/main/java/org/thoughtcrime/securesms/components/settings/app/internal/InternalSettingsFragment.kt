@@ -4,16 +4,29 @@ import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
 import android.content.DialogInterface
+import android.os.Build
 import android.os.Bundle
+import android.view.MenuItem
 import android.view.View
 import android.widget.EditText
 import android.widget.Toast
+import androidx.appcompat.widget.SearchView
+import androidx.appcompat.widget.Toolbar
+import androidx.fragment.app.setFragmentResultListener
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import org.signal.core.ui.BottomSheetUtil
+import org.signal.core.ui.permissions.PermissionDeniedBottomSheet
+import org.signal.core.ui.permissions.RationaleDialog
 import org.signal.core.util.AppUtil
 import org.signal.core.util.ThreadUtil
+import org.signal.core.util.Util
 import org.signal.core.util.concurrent.SignalExecutors
 import org.signal.core.util.concurrent.SimpleTask
 import org.signal.core.util.logging.Log
@@ -21,14 +34,18 @@ import org.signal.core.util.readToList
 import org.signal.core.util.requireLong
 import org.signal.core.util.requireString
 import org.signal.ringrtc.CallManager
+import org.signal.storageservice.protos.calls.quality.SubmitCallQualitySurveyRequest
 import org.thoughtcrime.securesms.BuildConfig
 import org.thoughtcrime.securesms.R
+import org.thoughtcrime.securesms.calls.quality.CallQualityBottomSheetFragment
 import org.thoughtcrime.securesms.components.settings.DSLConfiguration
 import org.thoughtcrime.securesms.components.settings.DSLSettingsFragment
 import org.thoughtcrime.securesms.components.settings.DSLSettingsText
 import org.thoughtcrime.securesms.components.settings.app.privacy.advanced.AdvancedPrivacySettingsRepository
 import org.thoughtcrime.securesms.components.settings.app.subscription.InAppPaymentsRepository
 import org.thoughtcrime.securesms.components.settings.configure
+import org.thoughtcrime.securesms.components.snackbars.SnackbarState
+import org.thoughtcrime.securesms.components.snackbars.makeSnackbar
 import org.thoughtcrime.securesms.conversation.ConversationIntents
 import org.thoughtcrime.securesms.database.JobDatabase
 import org.thoughtcrime.securesms.database.LocalMetricsDatabase
@@ -40,6 +57,8 @@ import org.thoughtcrime.securesms.database.model.InAppPaymentSubscriberRecord
 import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.dependencies.AppDependencies
 import org.thoughtcrime.securesms.jobmanager.JobTracker
+import org.thoughtcrime.securesms.jobs.BackfillCollapsedMessageJob
+import org.thoughtcrime.securesms.jobs.CheckKeyTransparencyJob
 import org.thoughtcrime.securesms.jobs.DownloadLatestEmojiDataJob
 import org.thoughtcrime.securesms.jobs.EmojiSearchIndexDownloadJob
 import org.thoughtcrime.securesms.jobs.InAppPaymentKeepAliveJob
@@ -55,11 +74,13 @@ import org.thoughtcrime.securesms.megaphone.Megaphones
 import org.thoughtcrime.securesms.payments.DataExportUtil
 import org.thoughtcrime.securesms.recipients.Recipient
 import org.thoughtcrime.securesms.recipients.RecipientId
+import org.thoughtcrime.securesms.registration.data.QuickstartCredentialExporter
 import org.thoughtcrime.securesms.storage.StorageSyncHelper
 import org.thoughtcrime.securesms.util.ConversationUtil
-import org.thoughtcrime.securesms.util.Util
+import org.thoughtcrime.securesms.util.TextSecurePreferences
 import org.thoughtcrime.securesms.util.adapter.mapping.MappingAdapter
 import org.thoughtcrime.securesms.util.navigation.safeNavigate
+import org.thoughtcrime.securesms.util.setIncognitoKeyboardEnabled
 import org.whispersystems.signalservice.api.push.UsernameLinkComponents
 import java.util.Optional
 import java.util.UUID
@@ -67,15 +88,15 @@ import java.util.concurrent.TimeUnit
 import kotlin.math.max
 import kotlin.random.Random
 import kotlin.time.Duration.Companion.milliseconds
-import kotlin.time.Duration.Companion.seconds
 
-class InternalSettingsFragment : DSLSettingsFragment(R.string.preferences__internal_preferences) {
+class InternalSettingsFragment : DSLSettingsFragment(R.string.preferences__internal_preferences, R.menu.internal_settings) {
 
   companion object {
     private val TAG = Log.tag(InternalSettingsFragment::class.java)
   }
 
   private lateinit var viewModel: InternalSettingsViewModel
+  private var searchMenuItem: MenuItem? = null
 
   private var scrollToPosition: Int = 0
   private val layoutManager: LinearLayoutManager?
@@ -92,6 +113,17 @@ class InternalSettingsFragment : DSLSettingsFragment(R.string.preferences__inter
   override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
     super.onViewCreated(view, savedInstanceState)
     scrollToPosition = SignalStore.internal.lastScrollPosition
+    initializeSearch(view)
+
+    setFragmentResultListener(CallQualityBottomSheetFragment.REQUEST_KEY) { _, bundle ->
+      if (bundle.getBoolean(CallQualityBottomSheetFragment.REQUEST_KEY, false)) {
+        makeSnackbar(
+          SnackbarState(
+            message = getString(R.string.CallQualitySheet__thanks_for_your_feedback)
+          )
+        )
+      }
+    }
   }
 
   override fun bindAdapter(adapter: MappingAdapter) {
@@ -100,12 +132,65 @@ class InternalSettingsFragment : DSLSettingsFragment(R.string.preferences__inter
     viewModel = ViewModelProvider(this, factory)[InternalSettingsViewModel::class.java]
 
     viewModel.state.observe(viewLifecycleOwner) {
-      adapter.submitList(getConfiguration(it).toMappingModelList()) {
-        if (scrollToPosition != 0) {
+      val mappingModelList = getConfiguration(it).toMappingModelList()
+      val filteredList = viewModel.filterPreferences(requireContext(), mappingModelList, it.searchQuery)
+
+      adapter.submitList(filteredList) {
+        if (scrollToPosition != 0 && it.searchQuery.isBlank()) {
           layoutManager?.scrollToPositionWithOffset(scrollToPosition, 0)
           scrollToPosition = 0
         }
       }
+    }
+  }
+
+  override fun onToolbarNavigationClicked() {
+    if (searchMenuItem?.isActionViewExpanded == true) {
+      searchMenuItem?.collapseActionView()
+    } else {
+      super.onToolbarNavigationClicked()
+    }
+  }
+
+  private fun initializeSearch(view: View) {
+    val toolbar: Toolbar = view.findViewById(R.id.toolbar)
+    searchMenuItem = toolbar.menu.findItem(R.id.menu_search)
+
+    val searchView: SearchView = searchMenuItem?.actionView as? SearchView ?: return
+    val queryListener = object : SearchView.OnQueryTextListener {
+      override fun onQueryTextSubmit(query: String?): Boolean {
+        searchView.clearFocus()
+        viewModel.setSearchQuery(query.orEmpty())
+        return true
+      }
+
+      override fun onQueryTextChange(newText: String?): Boolean {
+        viewModel.setSearchQuery(newText.orEmpty())
+        return true
+      }
+    }
+
+    searchView.maxWidth = Integer.MAX_VALUE
+    searchView.queryHint = getString(R.string.CameraContacts__menu_search)
+
+    searchMenuItem?.setOnActionExpandListener(object : MenuItem.OnActionExpandListener {
+      override fun onMenuItemActionExpand(item: MenuItem): Boolean {
+        searchView.setIncognitoKeyboardEnabled(TextSecurePreferences.isIncognitoKeyboardEnabled(requireContext()))
+        searchView.setOnQueryTextListener(queryListener)
+        return true
+      }
+
+      override fun onMenuItemActionCollapse(item: MenuItem): Boolean {
+        searchView.setOnQueryTextListener(null)
+        searchView.setQuery("", false)
+        viewModel.setSearchQuery("")
+        return true
+      }
+    })
+
+    val currentQuery = viewModel.state.value?.searchQuery.orEmpty()
+    if (currentQuery.isNotBlank() && searchMenuItem?.expandActionView() == true) {
+      searchView.setQuery(currentQuery, false)
     }
   }
 
@@ -145,6 +230,16 @@ class InternalSettingsFragment : DSLSettingsFragment(R.string.preferences__inter
         }
       )
 
+      if (BuildConfig.DEBUG) {
+        clickPref(
+          title = DSLSettingsText.from("Export quickstart credentials"),
+          summary = DSLSettingsText.from("Export registration credentials to a JSON file for quickstart builds."),
+          onClick = {
+            exportQuickstartCredentials()
+          }
+        )
+      }
+
       clickPref(
         title = DSLSettingsText.from("Unregister"),
         summary = DSLSettingsText.from("This will unregister your account without deleting it."),
@@ -160,29 +255,25 @@ class InternalSettingsFragment : DSLSettingsFragment(R.string.preferences__inter
           promptUserForSentTimestamp()
         }
       )
+
+      clickPref(
+        title = DSLSettingsText.from("App Issues"),
+        summary = DSLSettingsText.from("View recorded app issues, like slow reads and writes."),
+        onClick = {
+          findNavController().safeNavigate(InternalSettingsFragmentDirections.actionInternalSettingsFragmentToInternalIssuesFragment())
+        }
+      )
+
+      switchPref(
+        title = DSLSettingsText.from("Disable internal user flag"),
+        summary = DSLSettingsText.from("Experience life as a non-internal user. Force-stop the app to be an internal user again."),
+        isChecked = state.disableInternalUser,
+        onClick = {
+          viewModel.setDisableInternalUser(!state.disableInternalUser)
+        }
+      )
+
       dividerPref()
-
-      sectionHeaderPref(DSLSettingsText.from("App UI"))
-
-      switchPref(
-        title = DSLSettingsText.from("Enable new split pane UI."),
-        summary = DSLSettingsText.from("Warning: Some bugs and non functional buttons are expected. App will restart."),
-        isChecked = state.largeScreenUi,
-        onClick = {
-          viewModel.setUseLargeScreenUi(!state.largeScreenUi)
-          AppUtil.restart(requireContext())
-        }
-      )
-
-      switchPref(
-        isEnabled = state.largeScreenUi,
-        title = DSLSettingsText.from("Force split pane UI on landscape phones."),
-        summary = DSLSettingsText.from("This setting requires split pane UI to be enabled."),
-        isChecked = state.forceSplitPaneOnCompactLandscape,
-        onClick = {
-          viewModel.setForceSplitPaneOnCompactLandscape(!state.forceSplitPaneOnCompactLandscape)
-        }
-      )
 
       sectionHeaderPref(DSLSettingsText.from("Playgrounds"))
 
@@ -223,6 +314,54 @@ class InternalSettingsFragment : DSLSettingsFragment(R.string.preferences__inter
         summary = DSLSettingsText.from("Seed conversations with media files from a folder."),
         onClick = {
           findNavController().safeNavigate(InternalSettingsFragmentDirections.actionInternalSettingsFragmentToDataSeedingPlaygroundFragment())
+        }
+      )
+
+      dividerPref()
+
+      sectionHeaderPref(DSLSettingsText.from("App UI"))
+
+      switchPref(
+        title = DSLSettingsText.from("Force split pane UI on phones."),
+        isEnabled = !state.forceSinglePane,
+        isChecked = state.forceSplitPane,
+        onClick = {
+          viewModel.setForceSplitPane(!state.forceSplitPane)
+        }
+      )
+
+      switchPref(
+        title = DSLSettingsText.from("Force single-pane on newer devices."),
+        isChecked = state.forceSinglePane,
+        onClick = {
+          viewModel.setForceSinglePane(!state.forceSinglePane)
+        }
+      )
+
+      clickPref(
+        title = DSLSettingsText.from("Display enable permission sheet"),
+        onClick = {
+          PermissionDeniedBottomSheet.showPermissionFragment(
+            titleRes = R.string.app_name,
+            subtitleRes = R.string.app_name,
+            useExtended = true
+          ).show(parentFragmentManager, null)
+        }
+      )
+
+      clickPref(
+        title = DSLSettingsText.from("Display permission rationale dialog"),
+        onClick = {
+          RationaleDialog.createFor(requireContext(), "Title", "Details", R.drawable.symbol_key_24).show()
+        }
+      )
+
+      clickPref(
+        title = DSLSettingsText.from("Collapse chat updates"),
+        summary = DSLSettingsText.from("Collapses certain consecutive chat updates - cannot be undone."),
+        onClick = {
+          SignalStore.misc.completedCollapsedEventsMigration = false
+          AppDependencies.jobManager.add(BackfillCollapsedMessageJob())
         }
       )
 
@@ -300,6 +439,22 @@ class InternalSettingsFragment : DSLSettingsFragment(R.string.preferences__inter
             }
             .setNegativeButton(android.R.string.cancel, null)
             .show()
+        }
+      )
+
+      clickPref(
+        title = DSLSettingsText.from("Run self-check key transparency"),
+        summary = DSLSettingsText.from("Automatically enqueues a job to run KT against yourself without waiting for the elapsed time."),
+        onClick = {
+          CheckKeyTransparencyJob.enqueueIfNecessary(addDelay = false, force = true)
+        }
+      )
+
+      switchPref(
+        title = DSLSettingsText.from("Enable ANR-induced crashing"),
+        isChecked = SignalStore.internal.anrDetectionCrashes,
+        onClick = {
+          SignalStore.internal.anrDetectionCrashes = !SignalStore.internal.anrDetectionCrashes
         }
       )
 
@@ -421,25 +576,6 @@ class InternalSettingsFragment : DSLSettingsFragment(R.string.preferences__inter
       dividerPref()
 
       sectionHeaderPref(DSLSettingsText.from("Network"))
-
-      switchPref(
-        title = DSLSettingsText.from("Force websocket mode"),
-        summary = DSLSettingsText.from("Pretend you have no Play Services. Ignores websocket messages and keeps the websocket open in a foreground service. You have to manually force-stop the app for changes to take effect."),
-        isChecked = state.forceWebsocketMode,
-        onClick = {
-          viewModel.setForceWebsocketMode(!state.forceWebsocketMode)
-          SimpleTask.run({
-            val jobState = AppDependencies.jobManager.runSynchronously(RefreshAttributesJob(), 10.seconds.inWholeMilliseconds)
-            return@run jobState.isPresent && jobState.get().isComplete
-          }, { success ->
-            if (success) {
-              Toast.makeText(context, "Successfully refreshed attributes. Force-stop the app for changes to take effect.", Toast.LENGTH_SHORT).show()
-            } else {
-              Toast.makeText(context, "Failed to refresh attributes.", Toast.LENGTH_SHORT).show()
-            }
-          })
-        }
-      )
 
       switchPref(
         title = DSLSettingsText.from("Allow censorship circumvention toggle"),
@@ -575,11 +711,12 @@ class InternalSettingsFragment : DSLSettingsFragment(R.string.preferences__inter
 
       sectionHeaderPref(DSLSettingsText.from("Calling options"))
 
-      switchPref(
-        title = DSLSettingsText.from("Use new calling UI"),
-        isChecked = state.newCallingUi,
+      clickPref(
+        title = DSLSettingsText.from("Display call quality survey"),
         onClick = {
-          viewModel.setUseNewCallingUi(!state.newCallingUi)
+          CallQualityBottomSheetFragment
+            .create(SubmitCallQualitySurveyRequest())
+            .show(parentFragmentManager, BottomSheetUtil.STANDARD_BOTTOM_SHEET_FRAGMENT_TAG)
         }
       )
 
@@ -753,6 +890,13 @@ class InternalSettingsFragment : DSLSettingsFragment(R.string.preferences__inter
       )
 
       clickPref(
+        title = DSLSettingsText.from("Add remote backups note"),
+        onClick = {
+          viewModel.addSampleReleaseNote("remote_backups")
+        }
+      )
+
+      clickPref(
         title = DSLSettingsText.from("Add remote donate megaphone"),
         onClick = {
           viewModel.addRemoteDonateMegaphone()
@@ -908,6 +1052,14 @@ class InternalSettingsFragment : DSLSettingsFragment(R.string.preferences__inter
           viewModel.setUseConversationItemV2Media(!state.useConversationItemV2ForMedia)
         }
       )
+
+      switchPref(
+        title = DSLSettingsText.from("Use new media activity"),
+        isChecked = state.useNewMediaActivity,
+        onClick = {
+          viewModel.setUseNewMediaActivity(!state.useNewMediaActivity)
+        }
+      )
     }
   }
 
@@ -992,14 +1144,26 @@ class InternalSettingsFragment : DSLSettingsFragment(R.string.preferences__inter
   }
 
   private fun refreshRemoteValues() {
-    Toast.makeText(context, "Running remote config refresh, app will restart after completion.", Toast.LENGTH_LONG).show()
-    SignalExecutors.BOUNDED.execute {
+    val starterToast = Toast.makeText(context, "Running remote config refresh, app will restart after completion.", Toast.LENGTH_LONG).apply { show() }
+    lifecycleScope.launch(Dispatchers.IO) {
+      SignalStore.remoteConfig.eTag = ""
       val result: Optional<JobTracker.JobState> = AppDependencies.jobManager.runSynchronously(RemoteConfigRefreshJob(), TimeUnit.SECONDS.toMillis(10))
 
-      if (result.isPresent && result.get() == JobTracker.JobState.SUCCESS) {
-        AppUtil.restart(requireContext())
-      } else {
-        Toast.makeText(context, "Failed to refresh config remote config.", Toast.LENGTH_SHORT).show()
+      withContext(Dispatchers.Main) {
+        starterToast.cancel()
+        if (result.isPresent && result.get() == JobTracker.JobState.SUCCESS) {
+          val toast = Toast.makeText(context, "Refresh successful. Restarting...", Toast.LENGTH_SHORT)
+          if (Build.VERSION.SDK_INT >= 30) {
+            toast.addCallback(object : Toast.Callback() {
+              override fun onToastHidden() {
+                AppUtil.restart(requireContext())
+              }
+            })
+          }
+          toast.show()
+        } else {
+          Toast.makeText(context, "Failed to refresh config remote config.", Toast.LENGTH_SHORT).show()
+        }
       }
     }
   }
@@ -1098,6 +1262,21 @@ class InternalSettingsFragment : DSLSettingsFragment(R.string.preferences__inter
     }) {
       Toast.makeText(requireContext(), "Dumped to logs", Toast.LENGTH_SHORT).show()
     }
+  }
+
+  private fun exportQuickstartCredentials() {
+    MaterialAlertDialogBuilder(requireContext())
+      .setTitle("Export quickstart credentials?")
+      .setMessage("This will export your account's private keys and credentials to an unencrypted file on disk. This is very dangerous! Only use it with test accounts.")
+      .setPositiveButton("Export") { _, _ ->
+        SimpleTask.run({
+          QuickstartCredentialExporter.export(requireContext())
+        }) { file ->
+          Toast.makeText(requireContext(), "Exported to ${file.absolutePath}", Toast.LENGTH_LONG).show()
+        }
+      }
+      .setNegativeButton(android.R.string.cancel, null)
+      .show()
   }
 
   private fun promptUserForSentTimestamp() {

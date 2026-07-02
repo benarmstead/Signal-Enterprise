@@ -18,7 +18,6 @@ import com.bumptech.glide.RequestManager
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
-import org.signal.ringrtc.CallLinkEpoch
 import org.signal.ringrtc.CallLinkRootKey
 import org.thoughtcrime.securesms.components.voice.VoiceNotePlaybackState
 import org.thoughtcrime.securesms.contactshare.Contact
@@ -27,6 +26,7 @@ import org.thoughtcrime.securesms.conversation.ConversationItem
 import org.thoughtcrime.securesms.conversation.ConversationItemDisplayMode
 import org.thoughtcrime.securesms.conversation.ConversationMessage
 import org.thoughtcrime.securesms.conversation.colors.Colorizer
+import org.thoughtcrime.securesms.conversation.colors.ColorizerV2
 import org.thoughtcrime.securesms.conversation.mutiselect.MultiselectPart
 import org.thoughtcrime.securesms.database.FakeMessageRecords
 import org.thoughtcrime.securesms.database.model.InMemoryMessageRecord
@@ -36,6 +36,8 @@ import org.thoughtcrime.securesms.groups.GroupId
 import org.thoughtcrime.securesms.groups.GroupMigrationMembershipChange
 import org.thoughtcrime.securesms.linkpreview.LinkPreview
 import org.thoughtcrime.securesms.mediapreview.MediaIntentFactory
+import org.thoughtcrime.securesms.polls.PollOption
+import org.thoughtcrime.securesms.polls.PollRecord
 import org.thoughtcrime.securesms.recipients.Recipient
 import org.thoughtcrime.securesms.recipients.RecipientId
 import org.thoughtcrime.securesms.stickers.StickerLocator
@@ -207,7 +209,7 @@ class V2ConversationItemShapeTest {
     private val nextMessage: MessageRecord? = null
   ) : V2ConversationContext {
 
-    private val colorizer = Colorizer()
+    private val colorizer = ColorizerV2()
 
     override val lifecycleOwner: LifecycleOwner = object : LifecycleOwner {
       override val lifecycle: Lifecycle = LifecycleRegistry(this)
@@ -327,7 +329,7 @@ class V2ConversationItemShapeTest {
 
     override fun onShowGroupDescriptionClicked(groupName: String, description: String, shouldLinkifyWebLinks: Boolean) = Unit
 
-    override fun onJoinCallLink(callLinkRootKey: CallLinkRootKey, callLinkEpoch: CallLinkEpoch?) = Unit
+    override fun onJoinCallLink(callLinkRootKey: CallLinkRootKey) = Unit
 
     override fun onItemClick(item: MultiselectPart?) = Unit
 
@@ -348,5 +350,17 @@ class V2ConversationItemShapeTest {
     override fun onShowUnverifiedProfileSheet(forGroup: Boolean) = Unit
 
     override fun onUpdateSignalClicked() = Unit
+
+    override fun onViewResultsClicked(pollId: Long) = Unit
+
+    override fun onViewPollClicked(messageId: Long) = Unit
+
+    override fun onToggleVote(poll: PollRecord, pollOption: PollOption, isChecked: Boolean) = Unit
+
+    override fun onViewPinnedMessage(messageId: Long) = Unit
+
+    override fun onExpandEvents(messageId: Long, itemView: View, collapsedSize: Int) = Unit
+
+    override fun onCollapseEvents(messageId: Long, itemView: View, collapsedSize: Int) = Unit
   }
 }

@@ -6,7 +6,7 @@ import androidx.annotation.Nullable;
 
 import org.signal.core.util.concurrent.SignalExecutors;
 import org.signal.core.util.logging.Log;
-import org.signal.storageservice.protos.groups.local.DecryptedMember;
+import org.signal.storageservice.storage.protos.groups.local.DecryptedMember;
 import org.thoughtcrime.securesms.database.SignalDatabase;
 import org.thoughtcrime.securesms.database.model.GroupRecord;
 import org.thoughtcrime.securesms.dependencies.AppDependencies;
@@ -23,7 +23,7 @@ import org.thoughtcrime.securesms.jobmanager.impl.NetworkConstraint;
 import org.thoughtcrime.securesms.keyvalue.SignalStore;
 import org.thoughtcrime.securesms.recipients.Recipient;
 import org.whispersystems.signalservice.api.groupsv2.NoCredentialForRedemptionTimeException;
-import org.whispersystems.signalservice.api.push.exceptions.PushNetworkException;
+import org.signal.network.exceptions.PushNetworkException;
 
 import java.io.IOException;
 import java.util.Optional;
@@ -88,6 +88,11 @@ public final class GroupV2UpdateSelfProfileKeyJob extends BaseJob {
       return;
     }
 
+    if (SignalStore.account().isLinkedDevice()) {
+      Log.i(TAG, "Linked device, skipping");
+      return;
+    }
+
     byte[] rawProfileKey = Recipient.self().getProfileKey();
 
     if (rawProfileKey == null) {
@@ -115,6 +120,10 @@ public final class GroupV2UpdateSelfProfileKeyJob extends BaseJob {
         Optional<GroupRecord> group = SignalDatabase.groups().getGroup(id);
         if (!group.isPresent()) {
           Log.w(TAG, "Group " + group + " no longer exists?");
+          continue;
+        }
+
+        if (Recipient.externalGroupExact(id).isBlocked()) {
           continue;
         }
 
@@ -160,6 +169,27 @@ public final class GroupV2UpdateSelfProfileKeyJob extends BaseJob {
   public void onRun()
       throws IOException, GroupNotAMemberException, GroupChangeFailedException, GroupInsufficientRightsException, GroupChangeBusyException
   {
+    if (SignalStore.account().isLinkedDevice()) {
+      Log.i(TAG, "Linked device, skipping");
+      return;
+    }
+
+    Optional<GroupRecord> group = SignalDatabase.groups().getGroup(groupId);
+    if (!group.isPresent()) {
+      Log.w(TAG, "Group " + group + " no longer exists?");
+      return;
+    }
+
+    if (Recipient.externalGroupExact(groupId).isBlocked()) {
+      Log.i(TAG, "Not updating blocked group " + groupId);
+      return;
+    }
+
+    if (!group.get().isActive()) {
+      Log.i(TAG, "Group is not active, skipping update.");
+      return;
+    }
+
     Log.i(TAG, "Ensuring profile key up to date on group " + groupId);
     GroupManager.updateSelfProfileKeyInGroup(context, groupId);
   }

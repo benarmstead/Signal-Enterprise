@@ -18,6 +18,7 @@ package org.thoughtcrime.securesms;
 
 import android.app.Application;
 import android.content.Context;
+import android.content.Intent;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -27,12 +28,18 @@ import androidx.annotation.WorkerThread;
 import com.bumptech.glide.Glide;
 import com.google.android.gms.security.ProviderInstaller;
 
+import net.zetetic.database.Logger;
+
 import org.conscrypt.ConscryptSignal;
 import org.greenrobot.eventbus.EventBus;
 import org.signal.aesgcmprovider.AesGcmProvider;
+import org.signal.core.util.AppForegroundObserver;
+import org.signal.core.util.DiskUtil;
 import org.signal.core.util.MemoryTracker;
+import org.signal.core.util.Util;
 import org.signal.core.util.concurrent.AnrDetector;
 import org.signal.core.util.concurrent.SignalExecutors;
+import org.signal.core.util.crypto.AttachmentSecretProvider;
 import org.signal.core.util.logging.AndroidLogger;
 import org.signal.core.util.logging.Log;
 import org.signal.core.util.logging.Scrubber;
@@ -40,11 +47,14 @@ import org.signal.core.util.tracing.Tracer;
 import org.signal.glide.SignalGlideCodecs;
 import org.signal.libsignal.net.ChatServiceException;
 import org.signal.libsignal.protocol.logging.SignalProtocolLoggerProvider;
+import org.signal.registration.RegistrationDependencies;
 import org.signal.ringrtc.CallManager;
 import org.thoughtcrime.securesms.apkupdate.ApkUpdateRefreshListener;
 import org.thoughtcrime.securesms.avatar.AvatarPickerStorage;
 import org.thoughtcrime.securesms.backup.v2.BackupRepository;
-import org.thoughtcrime.securesms.crypto.AttachmentSecretProvider;
+import org.thoughtcrime.securesms.components.settings.app.AppSettingsActivity;
+import org.thoughtcrime.securesms.conversation.drafts.DraftBlobs;
+import org.thoughtcrime.securesms.crypto.AppAttachmentSecretStore;
 import org.thoughtcrime.securesms.crypto.DatabaseSecretProvider;
 import org.thoughtcrime.securesms.database.LogDatabase;
 import org.thoughtcrime.securesms.database.SignalDatabase;
@@ -55,10 +65,13 @@ import org.thoughtcrime.securesms.emoji.EmojiSource;
 import org.thoughtcrime.securesms.emoji.JumboEmoji;
 import org.thoughtcrime.securesms.gcm.FcmFetchManager;
 import org.thoughtcrime.securesms.glide.SignalGlideComponents;
+import org.thoughtcrime.securesms.jobmanager.impl.SealedSenderConstraint;
 import org.thoughtcrime.securesms.jobs.AccountConsistencyWorkerJob;
 import org.thoughtcrime.securesms.jobs.BackupRefreshJob;
 import org.thoughtcrime.securesms.jobs.BackupSubscriptionCheckJob;
 import org.thoughtcrime.securesms.jobs.BuildExpirationConfirmationJob;
+import org.thoughtcrime.securesms.jobs.CallingAssetsDownloadJob;
+import org.thoughtcrime.securesms.jobs.CheckKeyTransparencyJob;
 import org.thoughtcrime.securesms.jobs.CheckServiceReachabilityJob;
 import org.thoughtcrime.securesms.jobs.DownloadLatestEmojiDataJob;
 import org.thoughtcrime.securesms.jobs.EmojiSearchIndexDownloadJob;
@@ -69,26 +82,30 @@ import org.thoughtcrime.securesms.jobs.GroupV2UpdateSelfProfileKeyJob;
 import org.thoughtcrime.securesms.jobs.InAppPaymentAuthCheckJob;
 import org.thoughtcrime.securesms.jobs.InAppPaymentKeepAliveJob;
 import org.thoughtcrime.securesms.jobs.LinkedDeviceInactiveCheckJob;
+import org.thoughtcrime.securesms.jobs.MessageSendLogCleanupJob;
 import org.thoughtcrime.securesms.jobs.MultiDeviceContactUpdateJob;
 import org.thoughtcrime.securesms.jobs.PreKeysSyncJob;
 import org.thoughtcrime.securesms.jobs.ProfileUploadJob;
+import org.thoughtcrime.securesms.jobs.RefreshAttributesJob;
 import org.thoughtcrime.securesms.jobs.RefreshSvrCredentialsJob;
 import org.thoughtcrime.securesms.jobs.RestoreOptimizedMediaJob;
 import org.thoughtcrime.securesms.jobs.RetrieveProfileJob;
 import org.thoughtcrime.securesms.jobs.RetrieveRemoteAnnouncementsJob;
-import org.thoughtcrime.securesms.jobs.RetryPendingSendsJob;
 import org.thoughtcrime.securesms.jobs.StoryOnboardingDownloadJob;
 import org.thoughtcrime.securesms.keyvalue.KeepMessagesDuration;
 import org.thoughtcrime.securesms.keyvalue.SignalStore;
 import org.thoughtcrime.securesms.logging.CustomSignalProtocolLogger;
 import org.thoughtcrime.securesms.logging.PersistentLogger;
+import org.thoughtcrime.securesms.logsubmit.SubmitDebugLogActivity;
 import org.thoughtcrime.securesms.messageprocessingalarm.RoutineMessageFetchReceiver;
+import org.thoughtcrime.securesms.messages.IncomingMessageObserver;
 import org.thoughtcrime.securesms.migrations.ApplicationMigrations;
 import org.thoughtcrime.securesms.mms.SignalGlideModule;
-import org.thoughtcrime.securesms.providers.BlobProvider;
 import org.thoughtcrime.securesms.ratelimit.RateLimitUtil;
 import org.thoughtcrime.securesms.recipients.Recipient;
 import org.thoughtcrime.securesms.registration.util.RegistrationUtil;
+import org.thoughtcrime.securesms.registration.v2.AppRegistrationNetworkController;
+import org.thoughtcrime.securesms.registration.v2.AppRegistrationStorageController;
 import org.thoughtcrime.securesms.ringrtc.RingRtcLogger;
 import org.thoughtcrime.securesms.service.AnalyzeDatabaseAlarmListener;
 import org.thoughtcrime.securesms.service.DirectoryRefreshListener;
@@ -100,14 +117,19 @@ import org.thoughtcrime.securesms.service.RotateSignedPreKeyListener;
 import org.thoughtcrime.securesms.service.webrtc.ActiveCallManager;
 import org.thoughtcrime.securesms.service.webrtc.AndroidTelecomUtil;
 import org.thoughtcrime.securesms.storage.StorageSyncHelper;
-import org.thoughtcrime.securesms.util.AppForegroundObserver;
 import org.thoughtcrime.securesms.util.AppStartup;
+import org.thoughtcrime.securesms.util.BatterySnapshotTracker;
+import org.thoughtcrime.securesms.util.CommunicationActions;
+import org.thoughtcrime.securesms.util.DeviceProperties;
 import org.thoughtcrime.securesms.util.DynamicTheme;
+import org.thoughtcrime.securesms.util.Environment;
+import org.signal.core.util.PlayServicesUtil;
 import org.thoughtcrime.securesms.util.RemoteConfig;
 import org.thoughtcrime.securesms.util.SignalLocalMetrics;
 import org.thoughtcrime.securesms.util.SignalUncaughtExceptionHandler;
+import org.thoughtcrime.securesms.util.SqlCipherLogTarget;
+import org.thoughtcrime.securesms.util.SupportEmailUtil;
 import org.thoughtcrime.securesms.util.TextSecurePreferences;
-import org.thoughtcrime.securesms.util.Util;
 import org.thoughtcrime.securesms.util.VersionTracker;
 import org.thoughtcrime.securesms.util.dynamiclanguage.DynamicLanguageContextWrapper;
 import org.whispersystems.signalservice.api.websocket.SignalWebSocket;
@@ -156,7 +178,8 @@ public class ApplicationContext extends Application implements AppForegroundObse
                 SqlCipherLibraryLoader.load();
                 SignalDatabase.init(this,
                                     DatabaseSecretProvider.getOrCreateDatabaseSecret(this),
-                                    AttachmentSecretProvider.getInstance(this).getOrCreateAttachmentSecret());
+                                    AttachmentSecretProvider.getInstance(this, AppAttachmentSecretStore.INSTANCE).getOrCreateAttachmentSecret());
+                Logger.setTarget(SqlCipherLogTarget.INSTANCE);
               })
               .addBlocking("signal-store", () -> SignalStore.init(this))
               .addBlocking("logging", () -> {
@@ -198,6 +221,7 @@ public class ApplicationContext extends Application implements AppForegroundObse
               .addNonBlocking(this::initializeCircumvention)
               .addNonBlocking(this::initializeCleanup)
               .addNonBlocking(this::initializeGlideCodecs)
+              .addNonBlocking(SealedSenderConstraint::checkAndSetValidity)
               .addNonBlocking(StorageSyncHelper::scheduleRoutineSync)
               .addNonBlocking(this::beginJobLoop)
               .addNonBlocking(EmojiSource::refresh)
@@ -213,11 +237,12 @@ public class ApplicationContext extends Application implements AppForegroundObse
               .addPostRender(RefreshSvrCredentialsJob::enqueueIfNecessary)
               .addPostRender(() -> DownloadLatestEmojiDataJob.scheduleIfNecessary(this))
               .addPostRender(EmojiSearchIndexDownloadJob::scheduleIfNecessary)
-              .addPostRender(() -> SignalDatabase.messageLog().trimOldMessages(System.currentTimeMillis(), RemoteConfig.retryRespondMaxAge()))
+              .addPostRender(MessageSendLogCleanupJob::enqueue)
               .addPostRender(() -> JumboEmoji.updateCurrentVersion(this))
               .addPostRender(RetrieveRemoteAnnouncementsJob::enqueue)
-              .addPostRender(() -> AndroidTelecomUtil.registerPhoneAccount())
+              .addPostRender(AndroidTelecomUtil::registerPhoneAccount)
               .addPostRender(() -> AppDependencies.getJobManager().add(new FontDownloaderJob()))
+              .addPostRender(() -> AppDependencies.getJobManager().add(new CallingAssetsDownloadJob()))
               .addPostRender(CheckServiceReachabilityJob::enqueueIfNecessary)
               .addPostRender(GroupV2UpdateSelfProfileKeyJob::enqueueForGroupsIfNecessary)
               .addPostRender(StoryOnboardingDownloadJob.Companion::enqueueIfNeeded)
@@ -228,7 +253,7 @@ public class ApplicationContext extends Application implements AppForegroundObse
               .addPostRender(LinkedDeviceInactiveCheckJob::enqueueIfNecessary)
               .addPostRender(() -> ActiveCallManager.clearNotifications(this))
               .addPostRender(RestoreOptimizedMediaJob::enqueueIfNecessary)
-              .addPostRender(RetryPendingSendsJob::enqueueForAll)
+              .addPostRender(() -> AppDependencies.getPinnedMessageManager().scheduleIfNecessary())
               .execute();
 
     Log.d(TAG, "onCreate() took " + (System.currentTimeMillis() - startTime) + " ms");
@@ -239,7 +264,9 @@ public class ApplicationContext extends Application implements AppForegroundObse
   @Override
   public void onForeground() {
     long startTime = System.currentTimeMillis();
-    Log.i(TAG, "App is now visible.");
+    Log.i(TAG, "App is now visible. Battery: " + DeviceProperties.getBatteryLevel(this) + "% (charging: " + DeviceProperties.isCharging(this) + ")");
+
+    BatterySnapshotTracker.emit(this, "foreground");
 
     AppDependencies.getFrameRateTracker().start();
     AppDependencies.getMegaphoneRepository().onAppForegrounded();
@@ -260,6 +287,7 @@ public class ApplicationContext extends Application implements AppForegroundObse
       checkFreeDiskSpace();
       MemoryTracker.start();
       BackupSubscriptionCheckJob.enqueueIfAble();
+      CheckKeyTransparencyJob.enqueueIfNecessary(true, false);
       AppDependencies.getAuthWebSocket().registerKeepAliveToken(SignalWebSocket.FOREGROUND_KEEPALIVE);
       AppDependencies.getUnauthWebSocket().registerKeepAliveToken(SignalWebSocket.FOREGROUND_KEEPALIVE);
 
@@ -280,6 +308,7 @@ public class ApplicationContext extends Application implements AppForegroundObse
   @Override
   public void onBackground() {
     Log.i(TAG, "App is no longer visible.");
+    BatterySnapshotTracker.emit(this, "background");
     KeyCachingService.onAppBackgrounded(this);
     AppDependencies.getMessageNotifier().clearVisibleThread();
     AppDependencies.getFrameRateTracker().stop();
@@ -299,10 +328,8 @@ public class ApplicationContext extends Application implements AppForegroundObse
   }
 
   public void checkFreeDiskSpace() {
-    if (RemoteConfig.messageBackups()) {
-      long availableBytes = BackupRepository.INSTANCE.getFreeStorageSpace().getBytes();
-      SignalStore.backup().setSpaceAvailableOnDiskBytes(availableBytes);
-    }
+    long availableBytes = DiskUtil.getAvailableSpace(getApplicationContext()).getBytes();
+    SignalStore.backup().setSpaceAvailableOnDiskBytes(availableBytes);
   }
 
   /**
@@ -310,7 +337,7 @@ public class ApplicationContext extends Application implements AppForegroundObse
    * This is so we can capture ANR's that happen on boot before the foreground event.
    */
   private void startAnrDetector() {
-    AnrDetector.start(TimeUnit.SECONDS.toMillis(5), RemoteConfig::internalUser, (dumps) -> {
+    AnrDetector.start(TimeUnit.SECONDS.toMillis(5), () -> RemoteConfig.internalUser() && SignalStore.internal().getAnrDetectionCrashes(), (dumps) -> {
       LogDatabase.getInstance(this).anrs().save(System.currentTimeMillis(), dumps);
       return Unit.INSTANCE;
     });
@@ -393,6 +420,34 @@ public class ApplicationContext extends Application implements AppForegroundObse
       AppDependencies.init(this, new ApplicationDependencyProvider(this));
     }
     AppForegroundObserver.begin();
+
+    if (Environment.USE_NEW_REGISTRATION) {
+      initializeRegistrationDependencies();
+    }
+  }
+
+  private void initializeRegistrationDependencies() {
+    RegistrationDependencies.provide(
+      new RegistrationDependencies(
+        new AppRegistrationNetworkController(this, AppDependencies.getPushServiceSocket()),
+        new AppRegistrationStorageController(this),
+        Environment.IS_LINK_AND_SYNC_AVAILABLE,
+        null,
+        context -> {
+          context.startActivity(new Intent(context, SubmitDebugLogActivity.class));
+          return Unit.INSTANCE;
+        },
+        context -> {
+          context.startActivity(AppSettingsActivity.proxy(context));
+          return Unit.INSTANCE;
+        },
+        (context, subject) -> {
+          String body = SupportEmailUtil.generateSupportEmailBody(context, subject, null, null);
+          CommunicationActions.openEmail(context, SupportEmailUtil.getSupportEmailAddress(context), subject, body);
+          return Unit.INSTANCE;
+        }
+      )
+    );
   }
 
   private void initializeFirstEverAppLaunch() {
@@ -414,14 +469,38 @@ public class ApplicationContext extends Application implements AppForegroundObse
   }
 
   private void initializeFcmCheck() {
-    if (SignalStore.account().isRegistered()) {
+    if (!SignalStore.account().isRegistered()) {
+      return;
+    }
+
+    PlayServicesUtil.PlayServicesStatus playServicesStatus = PlayServicesUtil.getPlayServicesStatus(this);
+
+    if (playServicesStatus == PlayServicesUtil.PlayServicesStatus.SUCCESS && !SignalStore.account().isFcmEnabled()) {
+      Log.w(TAG, "Play Services are newly-available. Enabling FCM and updating server.");
+      SignalStore.account().setFcmEnabled(true);
+      AppDependencies.getJobManager().startChain(new FcmRefreshJob())
+                                      .then(new RefreshAttributesJob())
+                                      .enqueue();
+      AppDependencies.resetNetwork();
+      AppDependencies.startNetwork();
+      IncomingMessageObserver.stopForegroundService(this);
+    } else if (playServicesStatus == PlayServicesUtil.PlayServicesStatus.MISSING && SignalStore.account().isFcmEnabled()) {
+      Log.w(TAG, "Play Services are no longer available. Attempting to get an FCM token anyway.");
+      AppDependencies.getJobManager().add(new FcmRefreshJob());
+    } else if (playServicesStatus == PlayServicesUtil.PlayServicesStatus.MISSING && (System.currentTimeMillis() - SignalStore.misc().getLastMissingPlayServicesFcmVerificationTime()) > TimeUnit.DAYS.toMillis(3)) {
+      Log.i(TAG, "Play Services are unavailable, but it's been long enough that we should check and see if we can get an FCM token anyway.");
+      AppDependencies.getJobManager().add(new FcmRefreshJob());
+    } else if (SignalStore.account().isFcmEnabled()) {
       long lastSetTime = SignalStore.account().getFcmTokenLastSetTime();
       long nextSetTime = lastSetTime + TimeUnit.HOURS.toMillis(6);
       long now         = System.currentTimeMillis();
 
       if (SignalStore.account().getFcmToken() == null || nextSetTime <= now || lastSetTime > now) {
+        Log.i(TAG, "Time for routine FCM token refresh.");
         AppDependencies.getJobManager().add(new FcmRefreshJob());
       }
+    } else {
+      Log.d(TAG, "Play Services status: " + playServicesStatus + ", fcmEnabled: false. Skipping FCM check.");
     }
   }
 
@@ -492,7 +571,7 @@ public class ApplicationContext extends Application implements AppForegroundObse
   }
 
   private void ensureProfileUploaded() {
-    if (SignalStore.account().isRegistered() && !SignalStore.registration().hasUploadedProfile() && !Recipient.self().getProfileName().isEmpty()) {
+    if (SignalStore.account().isRegistered() && !SignalStore.registration().hasUploadedProfile() && !Recipient.self().getProfileName().isEmpty() && SignalStore.account().isPrimaryDevice()) {
       Log.w(TAG, "User has a profile, but has not uploaded one. Uploading now.");
       AppDependencies.getJobManager().add(new ProfileUploadJob());
     }
@@ -511,7 +590,7 @@ public class ApplicationContext extends Application implements AppForegroundObse
 
   @WorkerThread
   private void initializeBlobProvider() {
-    BlobProvider.getInstance().initialize(this);
+    AppDependencies.getBlobs().initialize(this, DraftBlobs.INSTANCE::deleteOrphanedDraftFiles);
   }
 
   @WorkerThread

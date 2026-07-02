@@ -17,6 +17,7 @@ import org.thoughtcrime.securesms.conversation.v2.ConversationRecipientRepositor
 import org.thoughtcrime.securesms.database.GroupTable
 import org.thoughtcrime.securesms.database.model.GroupRecord
 import org.thoughtcrime.securesms.dependencies.AppDependencies
+import org.thoughtcrime.securesms.groups.GroupAccessControl
 import org.thoughtcrime.securesms.groups.GroupId
 import org.thoughtcrime.securesms.groups.ui.GroupChangeFailureReason
 import org.thoughtcrime.securesms.groups.v2.GroupBlockJoinRequestResult
@@ -53,7 +54,7 @@ class ConversationGroupViewModel(
   init {
     disposables += _groupRecord.subscribe { groupRecord ->
       _groupActiveState.onNext(ConversationGroupActiveState(groupRecord.isActive, groupRecord.isV2Group))
-      _memberLevel.onNext(ConversationGroupMemberLevel(groupRecord.memberLevel(Recipient.self()), groupRecord.isAnnouncementGroup))
+      _memberLevel.onNext(ConversationGroupMemberLevel(groupRecord.memberLevel(Recipient.self()), groupRecord.isAnnouncementGroup, groupRecord.attributesAccessControl == GroupAccessControl.ALL_MEMBERS))
     }
   }
 
@@ -61,9 +62,18 @@ class ConversationGroupViewModel(
     disposables.clear()
   }
 
+  fun isAdmin(): Boolean {
+    return _memberLevel.value?.groupTableMemberLevel == GroupTable.MemberLevel.ADMINISTRATOR
+  }
+
   fun isNonAdminInAnnouncementGroup(): Boolean {
     val memberLevel = _memberLevel.value ?: return false
     return memberLevel.groupTableMemberLevel != GroupTable.MemberLevel.ADMINISTRATOR && memberLevel.isAnnouncementGroup
+  }
+
+  fun canEditGroupInfo(): Boolean {
+    val memberLevel = _memberLevel.value ?: return true
+    return groupRecordSnapshot?.isActive == true && (memberLevel.groupTableMemberLevel == GroupTable.MemberLevel.ADMINISTRATOR || memberLevel.allMembersCanEditGroupInfo)
   }
 
   fun blockJoinRequests(recipient: Recipient): Single<GroupBlockJoinRequestResult> {

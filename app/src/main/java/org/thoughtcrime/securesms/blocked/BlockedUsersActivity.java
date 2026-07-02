@@ -21,6 +21,7 @@ import org.thoughtcrime.securesms.R;
 import org.thoughtcrime.securesms.components.ContactFilterView;
 import org.thoughtcrime.securesms.contacts.ContactSelectionDisplayMode;
 import org.thoughtcrime.securesms.contacts.paged.ChatType;
+import org.thoughtcrime.securesms.contacts.selection.ContactSelectionArguments;
 import org.thoughtcrime.securesms.database.SignalDatabase;
 import org.thoughtcrime.securesms.recipients.Recipient;
 import org.thoughtcrime.securesms.recipients.RecipientId;
@@ -123,7 +124,7 @@ public class BlockedUsersActivity extends PassphraseRequiredActivity implements 
 
     if (resolvedRecipient.isPresent() && resolvedRecipient.get().isGroup()) {
       Recipient recipient = resolvedRecipient.get();
-      if (SignalDatabase.groups().isActive(recipient.requireGroupId())) {
+      if (SignalDatabase.groups().isMember(recipient.requireGroupId())) {
         builder.setTitle(getString(R.string.BlockUnblockDialog_block_and_leave_s, displayName));
         builder.setMessage(R.string.BlockUnblockDialog_you_will_no_longer_receive_messages_or_updates);
       } else {
@@ -172,10 +173,9 @@ public class BlockedUsersActivity extends PassphraseRequiredActivity implements 
     ContactSelectionListFragment fragment = new ContactSelectionListFragment();
     Intent                       intent   = getIntent();
 
-    intent.putExtra(ContactSelectionListFragment.REFRESHABLE, false);
-    intent.putExtra(ContactSelectionListFragment.SELECTION_LIMITS, 1);
-    intent.putExtra(ContactSelectionListFragment.HIDE_COUNT, true);
-    intent.putExtra(ContactSelectionListFragment.DISPLAY_MODE,
+    intent.putExtra(ContactSelectionArguments.REFRESHABLE, false);
+    intent.putExtra(ContactSelectionArguments.SELECTION_LIMITS, 1);
+    intent.putExtra(ContactSelectionArguments.DISPLAY_MODE,
                     ContactSelectionDisplayMode.FLAG_PUSH |
                     ContactSelectionDisplayMode.FLAG_SMS |
                     ContactSelectionDisplayMode.FLAG_ACTIVE_GROUPS |

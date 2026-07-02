@@ -3,17 +3,15 @@ package org.thoughtcrime.securesms.video;
 import android.media.MediaDataSource;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.RequiresApi;
 
-import org.thoughtcrime.securesms.crypto.AttachmentSecret;
-import org.thoughtcrime.securesms.crypto.ClassicDecryptingPartInputStream;
-import org.thoughtcrime.securesms.util.Util;
+import org.signal.core.util.crypto.AttachmentSecret;
+import org.signal.core.util.crypto.ClassicDecryptingPartInputStream;
+import org.signal.core.util.Util;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 
-@RequiresApi(23)
 final class ClassicEncryptedMediaDataSource extends MediaDataSource {
 
   private final AttachmentSecret attachmentSecret;

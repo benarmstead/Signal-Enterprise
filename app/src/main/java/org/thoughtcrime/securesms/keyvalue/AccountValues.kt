@@ -4,14 +4,20 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.content.SharedPreferences
 import android.preference.PreferenceManager
+import kotlinx.coroutines.flow.Flow
+import org.signal.core.models.AccountEntropyPool
+import org.signal.core.models.ServiceId.ACI
+import org.signal.core.models.ServiceId.PNI
 import org.signal.core.util.Base64
+import org.signal.core.util.Util
+import org.signal.core.util.UuidUtil
 import org.signal.core.util.logging.Log
 import org.signal.core.util.nullIfBlank
+import org.signal.core.util.toByteArray
 import org.signal.libsignal.protocol.IdentityKey
 import org.signal.libsignal.protocol.IdentityKeyPair
 import org.signal.libsignal.protocol.ecc.ECPrivateKey
 import org.signal.libsignal.protocol.util.Medium
-import org.thoughtcrime.securesms.crypto.IdentityKeyUtil
 import org.thoughtcrime.securesms.crypto.MasterCipher
 import org.thoughtcrime.securesms.crypto.ProfileKeyUtil
 import org.thoughtcrime.securesms.crypto.storage.PreKeyMetadataStore
@@ -22,15 +28,9 @@ import org.thoughtcrime.securesms.jobs.PreKeysSyncJob
 import org.thoughtcrime.securesms.recipients.Recipient
 import org.thoughtcrime.securesms.service.KeyCachingService
 import org.thoughtcrime.securesms.util.TextSecurePreferences
-import org.thoughtcrime.securesms.util.Util
-import org.whispersystems.signalservice.api.AccountEntropyPool
-import org.whispersystems.signalservice.api.push.ServiceId.ACI
-import org.whispersystems.signalservice.api.push.ServiceId.PNI
 import org.whispersystems.signalservice.api.push.ServiceIds
 import org.whispersystems.signalservice.api.push.SignalServiceAddress
 import org.whispersystems.signalservice.api.push.UsernameLinkComponents
-import org.whispersystems.signalservice.api.util.UuidUtil
-import org.whispersystems.signalservice.api.util.toByteArray
 import java.security.SecureRandom
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
@@ -85,10 +85,14 @@ class AccountValues internal constructor(store: KeyValueStore, context: Context)
     private const val KEY_ACCOUNT_REGISTERED_AT = "account.registered_at"
 
     private const val KEY_HAS_LINKED_DEVICES = "account.has_linked_devices"
+    private const val KEY_HAS_INACTIVE_PRIMARY_DEVICE_ALERT = "account.has_inactive_primary_device_alert"
+
+    private const val KEY_VERIFICATION_CODE_REQUESTED_AT = "account.verification_code_requested_at"
 
     private const val KEY_ACCOUNT_ENTROPY_POOL = "account.account_entropy_pool"
     private const val KEY_RESTORED_ACCOUNT_ENTROPY_KEY = "account.restored_account_entropy_pool"
     private const val KEY_RESTORED_ACCOUNT_ENTROPY_KEY_FROM_PRIMARY = "account.restore_account_entropy_pool_primary"
+    private const val KEY_KT_DISTINGUISHED_HEAD = "account.key_transparency_distinguished_head"
 
     private val AEP_LOCK = ReentrantLock()
   }
@@ -142,6 +146,15 @@ class AccountValues internal constructor(store: KeyValueStore, context: Context)
       }
     }
 
+  /**
+   * The locally-stored [AccountEntropyPool], or null if one has not yet been generated or restored.
+   * Unlike [accountEntropyPool], reading this never generates and persists a new AEP as a side effect.
+   */
+  val accountEntropyPoolOrNull: AccountEntropyPool?
+    get() = AEP_LOCK.withLock {
+      getString(KEY_ACCOUNT_ENTROPY_POOL, null)?.let { AccountEntropyPool(it) }
+    }
+
   fun rotateAccountEntropyPool(aep: AccountEntropyPool) {
     AEP_LOCK.withLock {
       Log.i(TAG, "Rotating Account Entropy Pool (AEP)...", Throwable(), true)
@@ -165,6 +178,7 @@ class AccountValues internal constructor(store: KeyValueStore, context: Context)
 
   fun restoreAccountEntropyPool(aep: AccountEntropyPool) {
     AEP_LOCK.withLock {
+      Log.i(TAG, "Restoring AEP from registration source", Throwable())
       store
         .beginWrite()
         .putString(KEY_ACCOUNT_ENTROPY_POOL, aep.value)
@@ -281,7 +295,7 @@ class AccountValues internal constructor(store: KeyValueStore, context: Context)
 
       Log.i(TAG, "Generating a new ACI identity key pair.")
 
-      val key: IdentityKeyPair = IdentityKeyUtil.generateIdentityKeyPair()
+      val key: IdentityKeyPair = IdentityKeyPair.generate()
       store
         .beginWrite()
         .putBlob(KEY_ACI_IDENTITY_PUBLIC_KEY, key.publicKey.serialize())
@@ -304,7 +318,7 @@ class AccountValues internal constructor(store: KeyValueStore, context: Context)
 
       Log.i(TAG, "Generating a new PNI identity key pair.")
 
-      val key: IdentityKeyPair = IdentityKeyUtil.generateIdentityKeyPair()
+      val key: IdentityKeyPair = IdentityKeyPair.generate()
       store
         .beginWrite()
         .putBlob(KEY_PNI_IDENTITY_PUBLIC_KEY, key.publicKey.serialize())
@@ -313,15 +327,17 @@ class AccountValues internal constructor(store: KeyValueStore, context: Context)
     }
   }
 
-  /** Set an identity key pair for the PNI identity via change number. */
-  fun setPniIdentityKeyAfterChangeNumber(key: IdentityKeyPair) {
+  fun setNumberAndPniIdentity(e164: String, pni: PNI, pniRegistrationId: Int, pniIdentityKeyPair: IdentityKeyPair) {
     synchronized(this) {
-      Log.i(TAG, "Setting a new PNI identity key pair.")
+      Log.i(TAG, "Setting the E164, PNI, PNI registration ID, and PNI identity key pair.")
 
       store
         .beginWrite()
-        .putBlob(KEY_PNI_IDENTITY_PUBLIC_KEY, key.publicKey.serialize())
-        .putBlob(KEY_PNI_IDENTITY_PRIVATE_KEY, key.privateKey.serialize())
+        .putString(KEY_E164, e164)
+        .putString(KEY_PNI, pni.toString())
+        .putInteger(KEY_PNI_REGISTRATION_ID, pniRegistrationId)
+        .putBlob(KEY_PNI_IDENTITY_PUBLIC_KEY, pniIdentityKeyPair.publicKey.serialize())
+        .putBlob(KEY_PNI_IDENTITY_PRIVATE_KEY, pniIdentityKeyPair.privateKey.serialize())
         .commit()
     }
   }
@@ -432,7 +448,7 @@ class AccountValues internal constructor(store: KeyValueStore, context: Context)
   val isRegistered: Boolean
     get() = getBoolean(KEY_IS_REGISTERED, false)
 
-  fun setRegistered(registered: Boolean) {
+  fun setRegistered(registered: Boolean, isAciChanged: Boolean = false) {
     Log.i(TAG, "Setting push registered: $registered", Throwable())
 
     val previous = isRegistered
@@ -449,7 +465,11 @@ class AccountValues internal constructor(store: KeyValueStore, context: Context)
       clearLocalCredentials()
     }
 
-    if (!previous && registered) {
+    if ((previous && !registered) || isAciChanged) {
+      AppDependencies.donationPermitsRepository.clearPermits()
+    }
+
+    if (registered && (!previous || isAciChanged)) {
       registeredAtTimestamp = System.currentTimeMillis()
     } else if (!registered) {
       registeredAtTimestamp = -1
@@ -486,6 +506,9 @@ class AccountValues internal constructor(store: KeyValueStore, context: Context)
   val isLinkedDevice: Boolean
     get() = !isPrimaryDevice
 
+  @get:JvmName("hasInactivePrimaryDeviceAlert")
+  var hasInactivePrimaryDeviceAlert: Boolean by booleanValue(KEY_HAS_INACTIVE_PRIMARY_DEVICE_ALERT, false)
+
   /** The local user's full username (nickname.discriminator), if set. */
   var username: String?
     get() {
@@ -517,6 +540,17 @@ class AccountValues internal constructor(store: KeyValueStore, context: Context)
         .apply()
     }
 
+  var distinguishedHead: ByteArray?
+    get() {
+      return getBlob(KEY_KT_DISTINGUISHED_HEAD, null)
+    }
+    set(value) {
+      store
+        .beginWrite()
+        .putBlob(KEY_KT_DISTINGUISHED_HEAD, value)
+        .apply()
+    }
+
   /**
    * There are some cases where our username may fall out of sync with the service. In particular, we may get a new value for our username from
    * storage service but then find that it doesn't match what's on the service.
@@ -545,6 +579,11 @@ class AccountValues internal constructor(store: KeyValueStore, context: Context)
    */
   @get:JvmName("isMultiDevice")
   var isMultiDevice by booleanValue(KEY_HAS_LINKED_DEVICES, false)
+
+  /** Server has indicated a verification code was requested for the account at this timestamp (ms since epoch) */
+  private val verificationCodeRequestedAtMsValue = longValue(KEY_VERIFICATION_CODE_REQUESTED_AT, 0)
+  var verificationCodeRequestedAtMs: Long by verificationCodeRequestedAtMsValue
+  val verificationCodeRequestedAtMsFlow: Flow<Long> by lazy { verificationCodeRequestedAtMsValue.toFlow() }
 
   /** Do not alter. If you need to migrate more stuff, create a new method. */
   private fun migrateFromSharedPrefsV1(context: Context) {

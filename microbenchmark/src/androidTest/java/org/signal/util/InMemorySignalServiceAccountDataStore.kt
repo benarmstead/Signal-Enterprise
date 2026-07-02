@@ -3,6 +3,7 @@ package org.signal.util
 import org.signal.libsignal.protocol.IdentityKey
 import org.signal.libsignal.protocol.IdentityKeyPair
 import org.signal.libsignal.protocol.SignalProtocolAddress
+import org.signal.libsignal.protocol.ecc.ECPublicKey
 import org.signal.libsignal.protocol.groups.state.SenderKeyRecord
 import org.signal.libsignal.protocol.state.IdentityKeyStore
 import org.signal.libsignal.protocol.state.IdentityKeyStore.IdentityChange
@@ -135,14 +136,14 @@ class InMemorySignalServiceAccountDataStore : SignalServiceAccountDataStore {
   }
 
   override fun storeKyberPreKey(kyberPreKeyId: Int, record: KyberPreKeyRecord?) {
-    error("Not used")
+    kyberPreKeys[kyberPreKeyId] = record!!
   }
 
   override fun containsKyberPreKey(kyberPreKeyId: Int): Boolean {
     return kyberPreKeys.containsKey(kyberPreKeyId)
   }
 
-  override fun markKyberPreKeyUsed(kyberPreKeyId: Int) {
+  override fun markKyberPreKeyUsed(kyberPreKeyId: Int, signedPreKeyId: Int, baseKey: ECPublicKey) {
     kyberPreKeys.remove(kyberPreKeyId)
   }
 
@@ -202,7 +203,7 @@ class InMemorySignalServiceAccountDataStore : SignalServiceAccountDataStore {
   }
 
   private fun SessionRecord.isValid(): Boolean {
-    return this.hasSenderChain()
+    return this.hasSenderChain(0.0)
   }
 
   private data class SenderKeyLocator(val address: SignalProtocolAddress, val distributionId: UUID)

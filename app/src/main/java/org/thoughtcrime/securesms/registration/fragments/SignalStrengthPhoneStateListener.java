@@ -17,7 +17,7 @@ import androidx.lifecycle.LifecycleOwner;
 
 import org.signal.core.util.logging.Log;
 import org.thoughtcrime.securesms.dependencies.AppDependencies;
-import org.thoughtcrime.securesms.util.Debouncer;
+import org.signal.core.util.Debouncer;
 
 // TODO [nicholas]: move to v2 package and make package-private. convert to Kotlin
 public final class SignalStrengthPhoneStateListener extends PhoneStateListener
@@ -55,12 +55,7 @@ public final class SignalStrengthPhoneStateListener extends PhoneStateListener
   }
 
   private boolean isLowLevel(@NonNull SignalStrength signalStrength) {
-    if (Build.VERSION.SDK_INT >= 23) {
-      return signalStrength.getLevel() == 0;
-    } else {
-      //noinspection deprecation: False lint warning, deprecated by 29, but this else block is for < 23
-      return signalStrength.getGsmSignalStrength() == 0;
-    }
+    return signalStrength.getLevel() == 0;
   }
 
   public interface Callback {

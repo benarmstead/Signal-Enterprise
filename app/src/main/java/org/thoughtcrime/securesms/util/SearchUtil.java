@@ -9,10 +9,10 @@ import android.text.style.CharacterStyle;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import com.annimon.stream.Stream;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.signal.core.util.StringUtil;
-import org.signal.libsignal.protocol.util.Pair;
 import org.thoughtcrime.securesms.components.spoiler.SpoilerAnnotation;
 
 import java.security.InvalidParameterException;
@@ -20,6 +20,8 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
+
+import kotlin.Pair;
 
 public class SearchUtil {
 
@@ -73,9 +75,9 @@ public class SearchUtil {
     for (Pair<Integer, Integer> range : ranges) {
       CharacterStyle[] styles = styleFactory.createStyles();
       for (CharacterStyle style : styles) {
-        List<Annotation> annotations = SpoilerAnnotation.getSpoilerAnnotations(spanned, range.first(), range.second());
+        List<Annotation> annotations = SpoilerAnnotation.getSpoilerAnnotations(spanned, range.getFirst(), range.getSecond());
         if (annotations.isEmpty()) {
-          spanned.setSpan(style, range.first(), range.second(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+          spanned.setSpan(style, range.getFirst(), range.getSecond(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
         }
       }
     }
@@ -89,8 +91,7 @@ public class SearchUtil {
     String       normalizedText      = text.toLowerCase(locale);
     String       normalizedHighlight = highlight.toLowerCase(locale);
     List<String> highlightTokens     = Stream.of(normalizedHighlight.split("\\s"))
-                                             .filter(s -> !s.trim().isEmpty())
-                                             .toList();
+                                             .filter(s -> !s.trim().isEmpty()).collect(Collectors.toList());
 
     int[]                        indexMap = buildIndexMap(text, normalizedText, locale);
     List<Pair<Integer, Integer>> ranges   = new LinkedList<>();
@@ -151,8 +152,7 @@ public class SearchUtil {
     String       normalizedText      = text.toLowerCase(locale);
     String       normalizedHighlight = highlight.toLowerCase(locale);
     List<String> highlightTokens     = Stream.of(normalizedHighlight.split("\\s"))
-                                             .filter(s -> !s.trim().isEmpty())
-                                             .toList();
+                                             .filter(s -> !s.trim().isEmpty()).collect(Collectors.toList());
 
     int[] indexMap = buildIndexMap(text, normalizedText, locale);
 

@@ -6,22 +6,12 @@ import androidx.annotation.VisibleForTesting
 import androidx.sqlite.db.SupportSQLiteDatabase
 import net.zetetic.database.sqlcipher.SQLiteOpenHelper
 import org.signal.core.util.SqlUtil
+import org.signal.core.util.crypto.AttachmentSecret
 import org.signal.core.util.logging.Log
 import org.signal.core.util.withinTransaction
-import org.thoughtcrime.securesms.crypto.AttachmentSecret
 import org.thoughtcrime.securesms.crypto.DatabaseSecret
-import org.thoughtcrime.securesms.crypto.MasterSecret
-import org.thoughtcrime.securesms.database.helpers.ClassicOpenHelper
-import org.thoughtcrime.securesms.database.helpers.PreKeyMigrationHelper
-import org.thoughtcrime.securesms.database.helpers.SQLCipherMigrationHelper
-import org.thoughtcrime.securesms.database.helpers.SessionStoreMigrationHelper
 import org.thoughtcrime.securesms.database.helpers.SignalDatabaseMigrations
 import org.thoughtcrime.securesms.database.model.AvatarPickerDatabase
-import org.thoughtcrime.securesms.jobs.PreKeysSyncJob
-import org.thoughtcrime.securesms.migrations.LegacyMigrationJob
-import org.thoughtcrime.securesms.migrations.LegacyMigrationJob.DatabaseUpgradeListener
-import org.thoughtcrime.securesms.service.KeyCachingService
-import org.thoughtcrime.securesms.util.TextSecurePreferences
 import java.io.File
 import org.thoughtcrime.securesms.database.SQLiteDatabase as SignalSQLiteDatabase
 
@@ -80,6 +70,9 @@ open class SignalDatabase(private val context: Application, databaseSecret: Data
   val inAppPaymentSubscriberTable: InAppPaymentSubscriberTable = InAppPaymentSubscriberTable(context, this)
   val chatFoldersTable: ChatFolderTables = ChatFolderTables(context, this)
   val backupMediaSnapshotTable: BackupMediaSnapshotTable = BackupMediaSnapshotTable(context, this)
+  val pollTable: PollTables = PollTables(context, this)
+  val lastResortKeyTuples: LastResortKeyTupleTable = LastResortKeyTupleTable(context, this)
+  val attachmentMetadataTable: AttachmentMetadataTable = AttachmentMetadataTable(context, this)
 
   override fun onOpen(db: net.zetetic.database.sqlcipher.SQLiteDatabase) {
     db.setForeignKeyConstraintsEnabled(true)
@@ -92,19 +85,6 @@ open class SignalDatabase(private val context: Application, databaseSecret: Data
     // Requires FTS5
     executeStatements(signalDb, SearchTable.CREATE_TABLE)
     executeStatements(signalDb, SearchTable.CREATE_TRIGGERS)
-
-    if (context.getDatabasePath(ClassicOpenHelper.NAME).exists()) {
-      val legacyHelper = ClassicOpenHelper(context)
-      val legacyDb = legacyHelper.writableDatabase
-      SQLCipherMigrationHelper.migratePlaintext(context, legacyDb, db)
-      val masterSecret = KeyCachingService.getMasterSecret(context)
-      if (masterSecret != null) SQLCipherMigrationHelper.migrateCiphertext(context, masterSecret, legacyDb, db, null) else TextSecurePreferences.setNeedsSqlCipherMigration(context, true)
-      if (!PreKeyMigrationHelper.migratePreKeys(context, db)) {
-        PreKeysSyncJob.enqueue()
-      }
-      SessionStoreMigrationHelper.migrateSessions(context, db)
-      PreKeyMigrationHelper.cleanUpPreKeys(context)
-    }
   }
 
   @VisibleForTesting
@@ -147,7 +127,10 @@ open class SignalDatabase(private val context: Application, databaseSecret: Data
     executeStatements(db, NotificationProfileTables.CREATE_TABLE)
     executeStatements(db, DistributionListTables.CREATE_TABLE)
     executeStatements(db, ChatFolderTables.CREATE_TABLE)
+    executeStatements(db, PollTables.CREATE_TABLE)
     db.execSQL(BackupMediaSnapshotTable.CREATE_TABLE)
+    db.execSQL(LastResortKeyTupleTable.CREATE_TABLE)
+    db.execSQL(AttachmentMetadataTable.CREATE_TABLE)
 
     executeStatements(db, RecipientTable.CREATE_INDEXS)
     executeStatements(db, MessageTable.CREATE_INDEXS)
@@ -172,6 +155,7 @@ open class SignalDatabase(private val context: Application, databaseSecret: Data
     executeStatements(db, ChatFolderTables.CREATE_INDEXES)
     executeStatements(db, NameCollisionTables.CREATE_INDEXES)
     executeStatements(db, BackupMediaSnapshotTable.CREATE_INDEXES)
+    executeStatements(db, PollTables.CREATE_INDEXES)
 
     executeStatements(db, MessageSendLogTables.CREATE_TRIGGERS)
 
@@ -341,41 +325,27 @@ open class SignalDatabase(private val context: Application, databaseSecret: Data
       instance!!.signalWritableDatabase
     }
 
-    @Deprecated("Only used for a legacy migration.")
-    @JvmStatic
-    fun onApplicationLevelUpgrade(
-      context: Context,
-      masterSecret: MasterSecret,
-      fromVersion: Int,
-      listener: DatabaseUpgradeListener?
-    ) {
-      instance!!.signalWritableDatabase
-      var legacyOpenHelper: ClassicOpenHelper? = null
-      if (fromVersion < LegacyMigrationJob.ASYMMETRIC_MASTER_SECRET_FIX_VERSION) {
-        legacyOpenHelper = ClassicOpenHelper(context)
-        legacyOpenHelper.onApplicationLevelUpgrade(context, masterSecret, fromVersion, listener)
-      }
-
-      if (fromVersion < LegacyMigrationJob.SQLCIPHER && TextSecurePreferences.getNeedsSqlCipherMigration(context)) {
-        if (legacyOpenHelper == null) {
-          legacyOpenHelper = ClassicOpenHelper(context)
-        }
-
-        SQLCipherMigrationHelper.migrateCiphertext(
-          context,
-          masterSecret,
-          legacyOpenHelper.writableDatabase,
-          instance!!.rawWritableDatabase,
-          listener
-        )
-      }
-    }
-
     @JvmStatic
     fun <T> runInTransaction(block: (SignalSQLiteDatabase) -> T): T {
       return instance!!.signalWritableDatabase.withinTransaction {
         block(it)
       }
+    }
+
+    /**
+     * Mirrors [runInTransaction] but instead of returning the result of calling block it returns
+     * whether the transaction completed successfully.
+     */
+    @JvmStatic
+    fun tryRunInTransaction(block: (SignalSQLiteDatabase) -> Unit): Boolean {
+      var committed = false
+
+      instance!!.signalWritableDatabase.withinTransaction {
+        block(it)
+        it.runPostSuccessfulTransaction { committed = true }
+      }
+
+      return committed
     }
 
     @get:JvmStatic
@@ -582,5 +552,20 @@ open class SignalDatabase(private val context: Application, databaseSecret: Data
     @get:JvmName("backupMediaSnapshots")
     val backupMediaSnapshots: BackupMediaSnapshotTable
       get() = instance!!.backupMediaSnapshotTable
+
+    @get:JvmStatic
+    @get:JvmName("polls")
+    val polls: PollTables
+      get() = instance!!.pollTable
+
+    @get:JvmStatic
+    @get:JvmName("lastResortKeyTuples")
+    val lastResortKeyTuples: LastResortKeyTupleTable
+      get() = instance!!.lastResortKeyTuples
+
+    @get:JvmStatic
+    @get:JvmName("attachmentMetadata")
+    val attachmentMetadata: AttachmentMetadataTable
+      get() = instance!!.attachmentMetadataTable
   }
 }

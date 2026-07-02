@@ -31,8 +31,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import org.signal.core.ui.compose.BottomSheets
 import org.signal.core.ui.compose.Buttons
+import org.signal.core.ui.compose.DayNightPreviews
 import org.signal.core.ui.compose.Previews
-import org.signal.core.ui.compose.SignalPreview
+import org.signal.core.ui.compose.SignalIcons
 import org.thoughtcrime.securesms.R
 import org.signal.core.ui.R as CoreUiR
 
@@ -118,7 +119,7 @@ fun BackupAlertImage() {
         .padding(2.dp)
     )
     Icon(
-      imageVector = ImageVector.vectorResource(R.drawable.symbol_error_circle_fill_24),
+      imageVector = SignalIcons.ErrorCircle.imageVector,
       contentDescription = null,
       tint = MaterialTheme.colorScheme.error,
       modifier = Modifier.align(Alignment.TopEnd)
@@ -201,10 +202,10 @@ private fun BackupAlertSecondaryActionButton(
   }
 }
 
-@SignalPreview
+@DayNightPreviews
 @Composable
 private fun BackupAlertBottomSheetContainerPreview() {
-  Previews.BottomSheetPreview {
+  Previews.BottomSheetContentPreview {
     BackupAlertBottomSheetContainer(
       icon = { BackupAlertIcon(iconColors = BackupsIconColors.Warning) },
       title = "Test backup alert",

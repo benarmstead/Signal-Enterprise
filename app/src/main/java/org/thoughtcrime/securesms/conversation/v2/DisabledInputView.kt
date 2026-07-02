@@ -16,12 +16,14 @@ import android.widget.TextView
 import androidx.core.content.ContextCompat
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import org.signal.core.util.logging.Log
 import org.thoughtcrime.securesms.R
 import org.thoughtcrime.securesms.messagerequests.MessageRequestState
 import org.thoughtcrime.securesms.messagerequests.MessageRequestsBottomView
 import org.thoughtcrime.securesms.recipients.Recipient
 import org.thoughtcrime.securesms.util.SpanUtil
 import org.thoughtcrime.securesms.util.visible
+import org.signal.core.ui.R as CoreUiR
 
 /**
  * A one-stop-view for all your conversation input disabled needs.
@@ -38,15 +40,20 @@ class DisabledInputView @JvmOverloads constructor(
   defStyleAttr: Int = 0
 ) : FrameLayout(context, attrs, defStyleAttr) {
 
+  companion object {
+    private val TAG = Log.tag(DisabledInputView::class.java)
+  }
+
   private val inflater: LayoutInflater by lazy { LayoutInflater.from(context) }
 
   private var expiredOrUnauthorized: View? = null
   private var messageRequestView: MessageRequestsBottomView? = null
   private var noLongerAMember: View? = null
+  private var terminatedGroup: View? = null
   private var requestingGroup: View? = null
   private var announcementGroupOnly: TextView? = null
   private var inviteToSignal: View? = null
-  private var releaseNoteChannel: View? = null
+  private var incognitoView: View? = null
 
   private var currentView: View? = null
 
@@ -75,6 +82,13 @@ class DisabledInputView @JvmOverloads constructor(
     )
   }
 
+  fun showAsIncognito() {
+    incognitoView = show(
+      existingView = incognitoView,
+      create = { inflater.inflate(R.layout.conversation_incognito_mode, this, false) }
+    )
+  }
+
   fun showAsMessageRequest(recipient: Recipient, messageRequestState: MessageRequestState) {
     messageRequestView = show(
       existingView = messageRequestView,
@@ -84,28 +98,51 @@ class DisabledInputView @JvmOverloads constructor(
         setWallpaperEnabled(recipient.hasWallpaper)
 
         setAcceptOnClickListener {
-          if (messageRequestState.isFewConnectionsIndividual) {
+          Log.i(TAG, "[message-request] Accept tapped. isIndividual: ${messageRequestState.isIndividual}, isGroupV2Add: ${messageRequestState.isGroupV2Add}, listener present: ${listener != null}")
+          if (messageRequestState.isIndividual) {
+            val signalWillNever = context.getString(R.string.MessageRequestBottomView_signal_will_never)
+            val body = context.getString(R.string.MessageRequestBottomView_accept_request_body, signalWillNever)
             MaterialAlertDialogBuilder(context)
               .setTitle(R.string.MessageRequestBottomView_accept_request)
-              .setMessage(R.string.MessageRequestBottomView_review_requests_carefully)
-              .setPositiveButton(R.string.MessageRequestBottomView_accept) { _, _ -> listener?.onAcceptMessageRequestClicked() }
-              .setNegativeButton(android.R.string.cancel, null)
+              .setMessage(SpanUtil.boldSubstring(body, signalWillNever))
+              .setCancelable(false)
+              .setPositiveButton(R.string.MessageRequestBottomView_accept) { _, _ ->
+                Log.i(TAG, "[message-request] Individual request confirmed. listener present: ${listener != null}")
+                listener?.onAcceptMessageRequestClicked()
+              }
+              .setNegativeButton(android.R.string.cancel) { _, _ -> Log.i(TAG, "[message-request] Individual request canceled.") }
               .show()
           } else if (messageRequestState.isGroupV2Add) {
             MaterialAlertDialogBuilder(context)
               .setTitle(R.string.MessageRequestBottomView_join_group)
               .setMessage(R.string.MessageRequestBottomView_review_requests_carefully_groups)
-              .setPositiveButton(R.string.MessageRequestBottomView_join) { _, _ -> listener?.onAcceptMessageRequestClicked() }
-              .setNegativeButton(android.R.string.cancel, null)
+              .setCancelable(false)
+              .setPositiveButton(R.string.MessageRequestBottomView_join) { _, _ ->
+                Log.i(TAG, "[message-request] Group join confirmed. listener present: ${listener != null}")
+                listener?.onAcceptMessageRequestClicked()
+              }
+              .setNegativeButton(android.R.string.cancel) { _, _ -> Log.i(TAG, "[message-request] Group join canceled.") }
               .show()
           } else {
             listener?.onAcceptMessageRequestClicked()
           }
         }
-        setDeleteOnClickListener { listener?.onDeleteClicked() }
-        setBlockOnClickListener { listener?.onBlockClicked() }
-        setUnblockOnClickListener { listener?.onUnblockClicked() }
-        setReportOnClickListener { listener?.onReportSpamClicked() }
+        setDeleteOnClickListener {
+          Log.i(TAG, "[message-request] Delete tapped. listener present: ${listener != null}")
+          listener?.onDeleteClicked()
+        }
+        setBlockOnClickListener {
+          Log.i(TAG, "[message-request] Block tapped. listener present: ${listener != null}")
+          listener?.onBlockClicked()
+        }
+        setUnblockOnClickListener {
+          Log.i(TAG, "[message-request] Unblock tapped. listener present: ${listener != null}")
+          listener?.onUnblockClicked()
+        }
+        setReportOnClickListener {
+          Log.i(TAG, "[message-request] Report tapped. listener present: ${listener != null}")
+          listener?.onReportSpamClicked()
+        }
       }
     )
   }
@@ -114,6 +151,13 @@ class DisabledInputView @JvmOverloads constructor(
     noLongerAMember = show(
       existingView = noLongerAMember,
       create = { inflater.inflate(R.layout.conversation_no_longer_a_member, this, false) }
+    )
+  }
+
+  fun showAsTerminatedGroup() {
+    terminatedGroup = show(
+      existingView = terminatedGroup,
+      create = { inflater.inflate(R.layout.conversation_group_terminated, this, false) }
     )
   }
 
@@ -168,23 +212,8 @@ class DisabledInputView @JvmOverloads constructor(
     )
   }
 
-  fun showAsReleaseNotesChannel(recipient: Recipient) {
-    releaseNoteChannel = show(
-      existingView = releaseNoteChannel,
-      create = { inflater.inflate(R.layout.conversation_activity_unmute, this, false) },
-      bind = {
-        if (recipient.isMuted) {
-          visible = true
-          findViewById<View>(R.id.conversation_activity_unmute_button).setOnClickListener { listener?.onUnmuteReleaseNotesChannel() }
-        } else {
-          visible = false
-        }
-      }
-    )
-  }
-
   fun setWallpaperEnabled(wallpaperEnabled: Boolean) {
-    color = ContextCompat.getColor(context, if (wallpaperEnabled) R.color.wallpaper_bubble_color else R.color.signal_colorBackground)
+    color = ContextCompat.getColor(context, if (wallpaperEnabled) R.color.wallpaper_bubble_color else CoreUiR.color.signal_colorBackground)
     setBackgroundColor(color)
   }
 
@@ -207,8 +236,10 @@ class DisabledInputView @JvmOverloads constructor(
     messageRequestView?.hideBusy()
     messageRequestView = null
     noLongerAMember = null
+    terminatedGroup = null
     requestingGroup = null
     announcementGroupOnly = null
+    incognitoView = null
   }
 
   private fun <V : View> show(existingView: V?, create: () -> V, bind: V.() -> Unit = {}): V {
@@ -251,7 +282,6 @@ class DisabledInputView @JvmOverloads constructor(
     fun onBlockClicked()
     fun onUnblockClicked()
     fun onInviteToSignal(recipient: Recipient)
-    fun onUnmuteReleaseNotesChannel()
     fun onReportSpamClicked()
   }
 }

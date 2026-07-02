@@ -25,7 +25,8 @@ class ContactChipViewModel : ViewModel() {
     .distinctUntilChanged()
     .observeOn(AndroidSchedulers.mainThread())
 
-  val count = store.state.size
+  val count: Int
+    get() = store.state.size
 
   private val disposables = CompositeDisposable()
   private val disposableMap: MutableMap<RecipientId, Disposable> = mutableMapOf()
@@ -69,6 +70,12 @@ class ContactChipViewModel : ViewModel() {
     store.update { list ->
       list.filterNot { it.selectedContact.matches(selectedContact) }
     }
+  }
+
+  fun isSelf(selectedContact: SelectedContact): Single<Boolean> {
+    return Single.fromCallable { Recipient.self().id == selectedContact.getOrCreateRecipientId() }
+      .subscribeOn(Schedulers.io())
+      .observeOn(AndroidSchedulers.mainThread())
   }
 
   private fun getOrCreateRecipientId(selectedContact: SelectedContact): Single<RecipientId> {

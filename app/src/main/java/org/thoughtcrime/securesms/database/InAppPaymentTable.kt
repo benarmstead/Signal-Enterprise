@@ -14,7 +14,7 @@ import androidx.core.content.contentValuesOf
 import kotlinx.parcelize.IgnoredOnParcel
 import kotlinx.parcelize.Parcelize
 import kotlinx.parcelize.TypeParceler
-import org.signal.core.util.DatabaseId
+import org.signal.core.models.database.DatabaseId
 import org.signal.core.util.DatabaseSerializer
 import org.signal.core.util.Serializer
 import org.signal.core.util.delete
@@ -236,40 +236,54 @@ class InAppPaymentTable(context: Context, databaseHelper: SignalDatabase) : Data
    * Retrieves all InAppPayment objects for donations that have been marked NOTIFIED = 0, and then marks them
    * all as notified.
    */
-  fun consumeDonationPaymentsToNotifyUser(): List<InAppPayment> {
-    return writableDatabase.withinTransaction { db ->
-      val payments = db.select()
-        .from(TABLE_NAME)
-        .where("$NOTIFIED = ? AND $TYPE != ?", 0, InAppPaymentType.serialize(InAppPaymentType.RECURRING_BACKUP))
-        .run()
-        .readToList(mapper = { InAppPayment.deserialize(it) })
-
-      db.update(TABLE_NAME).values(NOTIFIED to 1)
-        .where("$TYPE != ?", InAppPaymentType.serialize(InAppPaymentType.RECURRING_BACKUP))
-        .run()
-
-      payments
-    }
-  }
+  fun consumeDonationPaymentsToNotifyUser(): List<InAppPayment> = consumePaymentsToNotifyUser(
+    where = "$NOTIFIED = ? AND $TYPE != ?",
+    args = arrayOf(0, InAppPaymentType.serialize(InAppPaymentType.RECURRING_BACKUP))
+  )
 
   /**
    * Retrieves all InAppPayment objects for backups that have been marked NOTIFIED = 0, and then marks them
    * all as notified.
    */
-  fun consumeBackupPaymentsToNotifyUser(): List<InAppPayment> {
+  fun consumeBackupPaymentsToNotifyUser(): List<InAppPayment> = consumePaymentsToNotifyUser(
+    where = "$NOTIFIED = ? AND $TYPE = ?",
+    args = arrayOf(0, InAppPaymentType.serialize(InAppPaymentType.RECURRING_BACKUP))
+  )
+
+  private fun consumePaymentsToNotifyUser(where: String, args: Array<Any>): List<InAppPayment> {
     return writableDatabase.withinTransaction { db ->
-      val payments = db.select()
+      val notifiable = db.select()
         .from(TABLE_NAME)
-        .where("$NOTIFIED = ? AND $TYPE = ?", 0, InAppPaymentType.serialize(InAppPaymentType.RECURRING_BACKUP))
+        .where(where, *args)
         .run()
         .readToList(mapper = { InAppPayment.deserialize(it) })
+        .filter { it.isInUserNotifiableState() }
 
-      db.update(TABLE_NAME).values(NOTIFIED to 1)
-        .where("$TYPE = ?", InAppPaymentType.serialize(InAppPaymentType.RECURRING_BACKUP))
-        .run()
+      for (payment in notifiable) {
+        db.update(TABLE_NAME).values(NOTIFIED to 1)
+          .where(ID_WHERE, payment.id)
+          .run()
+      }
 
-      payments
+      notifiable
     }
+  }
+
+  /**
+   * A payment is only worth notifying the user about once it has reached a state we have something to
+   * display for. That is either:
+   *
+   *  - [State.END]: the pipeline is complete (success when there's no error, a terminal failure or
+   *    cancellation when there is), or
+   *  - [State.PENDING] with an error: the long-running "your payment is processing" case. Per
+   *    [validateInAppPayment] a PENDING payment may only carry the keep-alive error.
+   *
+   * Payments still moving through the pipeline (CREATED, TRANSACTING, REQUIRES_ACTION,
+   * REQUIRED_ACTION_COMPLETED, WAITING_FOR_AUTHORIZATION, or PENDING without an error) have nothing to
+   * show yet and must not be consumed/marked notified, or the eventual terminal sheet would be suppressed.
+   */
+  private fun InAppPayment.isInUserNotifiableState(): Boolean {
+    return state == State.END || (state == State.PENDING && data.error != null)
   }
 
   fun getById(id: InAppPaymentId): InAppPayment? {
@@ -355,10 +369,8 @@ class InAppPaymentTable(context: Context, databaseHelper: SignalDatabase) : Data
     return readableDatabase.select()
       .from(TABLE_NAME)
       .where(
-        "($STATE = ? OR $STATE = ? OR $STATE = ?) AND $TYPE = ?",
-        State.serialize(State.PENDING),
-        State.serialize(State.WAITING_FOR_AUTHORIZATION),
-        State.serialize(State.END),
+        "$STATE != ? AND $TYPE = ?",
+        State.serialize(State.CREATED),
         InAppPaymentType.serialize(type)
       )
       .orderBy("$INSERTED_AT DESC")

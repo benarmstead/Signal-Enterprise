@@ -1,0 +1,77 @@
+/*
+ * Copyright 2025 Signal Messenger, LLC
+ * SPDX-License-Identifier: AGPL-3.0-only
+ */
+
+syntax = "proto3";
+
+package signal;
+
+option java_package = "org.signal.registration.proto";
+
+message RegistrationData {
+  bytes aciIdentityKeyPair = 1;
+  bytes pniIdentityKeyPair = 2;
+  bytes aciSignedPreKey = 3;
+  bytes pniSignedPreKey = 4;
+  bytes aciLastResortKyberPreKey = 5;
+  bytes pniLastResortKyberPreKey = 6;
+  int32 aciRegistrationId = 7;
+  int32 pniRegistrationId = 8;
+
+  string aci = 9;
+  string pni = 10;
+  string e164 = 11;
+  string servicePassword = 12;
+  string accountEntropyPool = 13;
+
+  string pin = 14;
+  bool pinOptedOut = 15;
+  bool registrationLockEnabled = 16;
+
+  bytes profileKey = 17;
+  bytes unidentifiedAccessKey = 18;
+  bytes temporaryMasterKey = 19;
+
+  repeated SvrCredential svrCredentials = 20;
+  ProvisioningData provisioningData = 21;
+  LinkedDeviceData linkedDeviceData = 22;
+  bool fetchesMessages = 23;
+
+  string flowStateJson = 24;
+  // Next: 25
+}
+
+message SvrCredential {
+  string username = 1;
+  string password = 2;
+}
+
+message ProvisioningData {
+  enum Platform {
+    UNKNOWN = 0;
+    ANDROID = 1;
+    IOS = 2;
+  }
+
+  enum Tier {
+    TIER_UNKNOWN = 0;
+    FREE = 1;
+    PAID = 2;
+  }
+
+  string restoreMethodToken = 1;
+  Platform platform = 2;
+  Tier tier = 3;
+  int64 backupTimestampMs = 4;
+  int64 backupSizeBytes = 5;
+  int64 backupVersion = 6;
+}
+
+message LinkedDeviceData {
+  uint32 deviceId = 1;
+  string deviceName = 2;
+  optional bytes ephemeralBackupKey = 3;
+  optional bytes mediaRootBackupKey = 4;
+  optional bool readReceipts = 5;
+}

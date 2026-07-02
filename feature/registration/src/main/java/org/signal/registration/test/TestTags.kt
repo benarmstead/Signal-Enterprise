@@ -1,0 +1,79 @@
+/*
+ * Copyright 2025 Signal Messenger, LLC
+ * SPDX-License-Identifier: AGPL-3.0-only
+ */
+
+package org.signal.registration.test
+
+/**
+ * Test tags for Compose UI testing.
+ */
+object TestTags {
+
+  // Welcome Screen
+  const val WELCOME_SCREEN = "welcome_screen"
+  const val WELCOME_HEADLINE = "welcome_headline"
+  const val WELCOME_GET_STARTED_BUTTON = "welcome_get_started_button"
+  const val WELCOME_LINK_DEVICE_BUTTON = "welcome_link_device_button"
+  const val WELCOME_RESTORE_OR_TRANSFER_BUTTON = "welcome_restore_or_transfer_button"
+  const val WELCOME_RESTORE_HAS_OLD_PHONE_BUTTON = "welcome_restore_has_old_phone_button"
+  const val WELCOME_RESTORE_NO_OLD_PHONE_BUTTON = "welcome_restore_no_old_phone_button"
+
+  // Permissions Screen
+  const val PERMISSIONS_SCREEN = "permissions_screen"
+  const val PERMISSIONS_NEXT_BUTTON = "permissions_next_button"
+  const val PERMISSIONS_NOT_NOW_BUTTON = "permissions_not_now_button"
+
+  // Allow Notifications Screen
+  const val ALLOW_NOTIFICATIONS_SCREEN = "allow_notifications_screen"
+  const val ALLOW_NOTIFICATIONS_NEXT_BUTTON = "allow_notifications_next_button"
+  const val ALLOW_NOTIFICATIONS_NOT_NOW_BUTTON = "allow_notifications_not_now_button"
+
+  // Link Account Screen
+  const val LINK_ACCOUNT_SCREEN = "link_account_screen"
+  const val LINK_ACCOUNT_GET_HELP_BUTTON = "link_account_get_help_button"
+  const val LINK_ACCOUNT_CREATE_ACCOUNT_LINK = "link_account_create_account_link"
+  const val LINK_ACCOUNT_DISPLAY_OVERLAY_BUTTON = "link_account_display_overlay_button"
+  const val LINK_ACCOUNT_HIDE_OVERLAY_BUTTON = "link_account_hide_overlay_button"
+
+  // Message Sync Screen
+  const val MESSAGE_SYNC_SCREEN = "message_sync_screen"
+  const val MESSAGE_SYNC_LEARN_MORE_LINK = "message_sync_learn_more_link"
+  const val MESSAGE_SYNC_CANCEL_BUTTON = "message_sync_cancel_button"
+
+  // Phone Number Screen
+  const val PHONE_NUMBER_SCREEN = "phone_number_screen"
+  const val PHONE_NUMBER_COUNTRY_PICKER = "phone_number_country_picker"
+  const val PHONE_NUMBER_COUNTRY_CODE_FIELD = "phone_number_country_code_field"
+  const val PHONE_NUMBER_PHONE_FIELD = "phone_number_phone_field"
+  const val PHONE_NUMBER_NEXT_BUTTON = "phone_number_next_button"
+
+  // Verification Code Screen
+  const val VERIFICATION_CODE_INPUT = "verification_code_input"
+  const val VERIFICATION_CODE_DIGIT_0 = "verification_code_digit_0"
+  const val VERIFICATION_CODE_DIGIT_1 = "verification_code_digit_1"
+  const val VERIFICATION_CODE_DIGIT_2 = "verification_code_digit_2"
+  const val VERIFICATION_CODE_DIGIT_3 = "verification_code_digit_3"
+  const val VERIFICATION_CODE_DIGIT_4 = "verification_code_digit_4"
+  const val VERIFICATION_CODE_DIGIT_5 = "verification_code_digit_5"
+  const val VERIFICATION_CODE_WRONG_NUMBER_BUTTON = "verification_code_wrong_number_button"
+  const val VERIFICATION_CODE_RESEND_SMS_BUTTON = "verification_code_resend_sms_button"
+  const val VERIFICATION_CODE_CALL_ME_BUTTON = "verification_code_call_me_button"
+  const val VERIFICATION_CODE_HAVING_TROUBLE_BUTTON = "verification_code_having_trouble_button"
+
+  // Archive Restore Selection Screen
+  const val ARCHIVE_RESTORE_SELECTION_SCREEN = "archive_restore_selection_screen"
+  const val ARCHIVE_RESTORE_SELECTION_FROM_SIGNAL_BACKUPS = "archive_restore_selection_from_signal_backups"
+  const val ARCHIVE_RESTORE_SELECTION_FROM_BACKUP_FOLDER = "archive_restore_selection_from_backup_folder"
+  const val ARCHIVE_RESTORE_SELECTION_FROM_BACKUP_FILE = "archive_restore_selection_from_backup_file"
+  const val ARCHIVE_RESTORE_SELECTION_DEVICE_TRANSFER = "archive_restore_selection_device_transfer"
+  const val ARCHIVE_RESTORE_SELECTION_SKIP = "archive_restore_selection_skip"
+
+  // Local Backup Restore Screen
+  const val LOCAL_BACKUP_RESTORE_SCREEN = "local_backup_restore_screen"
+  const val LOCAL_BACKUP_RESTORE_SELECT_FOLDER_BUTTON = "local_backup_restore_select_folder_button"
+  const val LOCAL_BACKUP_RESTORE_BACKUP_INFO_CARD = "local_backup_restore_backup_info_card"
+  const val LOCAL_BACKUP_RESTORE_RESTORE_BUTTON = "local_backup_restore_restore_button"
+  const val LOCAL_BACKUP_RESTORE_PROGRESS_BAR = "local_backup_restore_progress_bar"
+  const val LOCAL_BACKUP_RESTORE_CONTINUE_BUTTON = "local_backup_restore_continue_button"
+}

@@ -5,8 +5,8 @@
 
 package org.thoughtcrime.securesms.avatar
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -14,10 +14,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalInspectionMode
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.viewinterop.AndroidView
+import org.signal.core.ui.compose.DayNightPreviews
+import org.signal.core.ui.compose.Previews
+import org.thoughtcrime.securesms.R
 import org.thoughtcrime.securesms.components.AvatarImageView
+import org.thoughtcrime.securesms.conversation.colors.AvatarColor
 import org.thoughtcrime.securesms.database.model.ProfileAvatarFileDetails
 import org.thoughtcrime.securesms.recipients.Recipient
+import org.thoughtcrime.securesms.recipients.RecipientId
 import org.thoughtcrime.securesms.recipients.rememberRecipientField
 
 @Composable
@@ -27,14 +33,31 @@ fun AvatarImage(
   useProfile: Boolean = true,
   contentDescription: String? = null
 ) {
+  AvatarImage(
+    recipientId = recipient.id,
+    modifier = modifier,
+    useProfile = useProfile,
+    contentDescription = contentDescription
+  )
+}
+
+@Composable
+fun AvatarImage(
+  recipientId: RecipientId,
+  modifier: Modifier = Modifier,
+  useProfile: Boolean = true,
+  contentDescription: String? = null
+) {
   if (LocalInspectionMode.current) {
-    Spacer(
+    Image(
+      painter = painterResource(R.drawable.ic_avatar_abstract_02),
+      contentDescription = null,
       modifier = modifier
-        .background(color = Color.Red, shape = CircleShape)
+        .background(color = Color(AvatarColor.random().colorInt()), CircleShape)
     )
   } else {
     val context = LocalContext.current
-    val avatarImageState by rememberRecipientField(recipient) {
+    val avatarImageState by rememberRecipientField(recipientId) {
       AvatarImageState(
         getDisplayName(context),
         this,
@@ -57,6 +80,16 @@ fun AvatarImage(
         it.setAvatar(avatarImageState.self)
       }
     }
+  }
+}
+
+@DayNightPreviews
+@Composable
+private fun AvatarImagePreview() {
+  Previews.Preview {
+    AvatarImage(
+      recipientId = RecipientId.from(1)
+    )
   }
 }
 

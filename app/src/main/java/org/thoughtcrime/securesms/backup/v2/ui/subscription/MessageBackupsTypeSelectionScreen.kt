@@ -30,14 +30,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.ExperimentalTextApi
 import androidx.compose.ui.text.LinkAnnotation
 import androidx.compose.ui.text.SpanStyle
@@ -48,11 +46,13 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import kotlinx.collections.immutable.persistentListOf
 import org.signal.core.ui.compose.Buttons
+import org.signal.core.ui.compose.DayNightPreviews
 import org.signal.core.ui.compose.Dialogs
 import org.signal.core.ui.compose.Previews
 import org.signal.core.ui.compose.Scaffolds
-import org.signal.core.ui.compose.SignalPreview
+import org.signal.core.ui.compose.SignalIcons
 import org.signal.core.ui.compose.theme.SignalTheme
+import org.signal.core.util.ByteUnit
 import org.signal.core.util.billing.BillingResponseCode
 import org.signal.core.util.bytes
 import org.signal.core.util.money.FiatMoney
@@ -61,7 +61,6 @@ import org.thoughtcrime.securesms.backup.v2.MessageBackupTier
 import org.thoughtcrime.securesms.fonts.SignalSymbols
 import org.thoughtcrime.securesms.fonts.SignalSymbols.signalSymbolText
 import org.thoughtcrime.securesms.payments.FiatMoneyUtil
-import org.thoughtcrime.securesms.util.ByteUnit
 import java.math.BigDecimal
 import java.util.Currency
 import kotlin.time.Duration.Companion.days
@@ -91,7 +90,7 @@ fun MessageBackupsTypeSelectionScreen(
   Scaffolds.Settings(
     title = "",
     onNavigationClick = onNavigationClick,
-    navigationIcon = ImageVector.vectorResource(id = R.drawable.symbol_arrow_start_24)
+    navigationIcon = SignalIcons.ArrowStart.imageVector
   ) { paddingValues ->
     Column(
       modifier = Modifier
@@ -165,7 +164,6 @@ fun MessageBackupsTypeSelectionScreen(
         }
       }
 
-      val hasCurrentBackupTier = currentBackupTier != null
       val paidTierNotAvailableDialogState = remember { PaidTierNotAvailableDialogState() }
       val onSubscribeButtonClick = remember(googlePlayServicesAvailability, googlePlayBillingAvailability, selectedBackupTier) {
         {
@@ -193,7 +191,7 @@ fun MessageBackupsTypeSelectionScreen(
         modifier = Modifier
           .testTag("subscribe-button")
           .fillMaxWidth()
-          .padding(vertical = if (hasCurrentBackupTier) 10.dp else 16.dp)
+          .padding(vertical = 16.dp)
       ) {
         val text: String = if (currentBackupTier == null) {
           if (selectedBackupTier == MessageBackupTier.PAID && (googlePlayServicesAvailability != GooglePlayServicesAvailability.SUCCESS || !googlePlayBillingAvailability.isSuccess)) {
@@ -278,7 +276,7 @@ private fun UserNotSignedInDialog(
   )
 }
 
-@SignalPreview
+@DayNightPreviews
 @Composable
 private fun MessageBackupsTypeSelectionScreenPreview() {
   var selectedBackupsType by remember { mutableStateOf(MessageBackupTier.FREE) }
@@ -303,7 +301,7 @@ private fun MessageBackupsTypeSelectionScreenPreview() {
   }
 }
 
-@SignalPreview
+@DayNightPreviews
 @Composable
 private fun MessageBackupsTypeSelectionScreenWithCurrentTierPreview() {
   var selectedBackupsType by remember { mutableStateOf(MessageBackupTier.FREE) }

@@ -2,11 +2,14 @@ package org.thoughtcrime.securesms.storage
 
 import okio.ByteString
 import okio.ByteString.Companion.toByteString
+import org.signal.core.models.ServiceId.ACI
+import org.signal.core.models.ServiceId.PNI
 import org.signal.core.util.isEmpty
 import org.signal.core.util.isNotEmpty
 import org.signal.core.util.logging.Log
 import org.signal.core.util.nullIfBlank
 import org.signal.core.util.nullIfEmpty
+import org.thoughtcrime.securesms.crypto.ProfileKeyUtil
 import org.thoughtcrime.securesms.database.RecipientTable
 import org.thoughtcrime.securesms.database.SignalDatabase
 import org.thoughtcrime.securesms.database.model.RecipientRecord
@@ -15,8 +18,6 @@ import org.thoughtcrime.securesms.keyvalue.SignalStore
 import org.thoughtcrime.securesms.recipients.Recipient.Companion.trustedPush
 import org.thoughtcrime.securesms.recipients.RecipientId
 import org.thoughtcrime.securesms.storage.StorageSyncModels.localToRemoteRecord
-import org.whispersystems.signalservice.api.push.ServiceId.ACI
-import org.whispersystems.signalservice.api.push.ServiceId.PNI
 import org.whispersystems.signalservice.api.storage.SignalContactRecord
 import org.whispersystems.signalservice.api.storage.StorageId
 import org.whispersystems.signalservice.api.storage.signalAci
@@ -101,7 +102,9 @@ class ContactRecordProcessor(
     if (!hasAci && !hasPni) {
       Log.w(TAG, "Found a ContactRecord with neither an ACI nor a PNI -- marking as invalid.")
       return true
-    } else if (selfAci != null && selfAci == remote.proto.signalAci ||
+    } else if (
+      selfAci != null &&
+      selfAci == remote.proto.signalAci ||
       (selfPni != null && selfPni == remote.proto.signalPni) ||
       (selfE164 != null && remote.proto.e164.isNotBlank() && remote.proto.e164 == selfE164)
     ) {
@@ -195,15 +198,27 @@ class ContactRecordProcessor(
       local.proto.e164 != remote.proto.e164
 
     if (e164sMatchButPnisDont) {
-      Log.w(TAG, "Matching E164s, but the PNIs differ! Trusting our local pair.")
-      // TODO [pnp] Schedule CDS fetch?
-      mergedPni = localPni
-      mergedE164 = local.proto.e164
+      if (SignalStore.account.isPrimaryDevice) {
+        Log.w(TAG, "Matching E164s, but the PNIs differ! Trusting our local pair.")
+        // TODO [pnp] Schedule CDS fetch?
+        mergedPni = localPni
+        mergedE164 = local.proto.e164
+      } else {
+        Log.w(TAG, "Matching E164s, but the PNIs differ! Linked device — trusting the remote pair.")
+        mergedPni = remotePni
+        mergedE164 = remote.proto.e164
+      }
     } else if (pnisMatchButE164sDont) {
-      Log.w(TAG, "Matching PNIs, but the E164s differ! Trusting our local pair.")
-      // TODO [pnp] Schedule CDS fetch?
-      mergedPni = localPni
-      mergedE164 = local.proto.e164
+      if (SignalStore.account.isPrimaryDevice) {
+        Log.w(TAG, "Matching PNIs, but the E164s differ! Trusting our local pair.")
+        // TODO [pnp] Schedule CDS fetch?
+        mergedPni = localPni
+        mergedE164 = local.proto.e164
+      } else {
+        Log.w(TAG, "Matching PNIs, but the E164s differ! Linked device — trusting the remote pair.")
+        mergedPni = remotePni
+        mergedE164 = remote.proto.e164
+      }
     } else {
       mergedPni = remotePni ?: localPni
       mergedE164 = remote.proto.e164.nullIfBlank() ?: local.proto.e164.nullIfBlank()
@@ -211,11 +226,13 @@ class ContactRecordProcessor(
 
     val merged = SignalContactRecord.newBuilder(remote.serializedUnknowns).apply {
       e164 = mergedE164 ?: ""
-      aci = local.proto.aci.nullIfBlank() ?: remote.proto.aci
-      pni = mergedPni?.toStringWithoutPrefix() ?: ""
+      aciBinary = local.proto.aciBinary.nullIfEmpty() ?: remote.proto.aciBinary
+      aci = ""
+      pniBinary = mergedPni?.toByteStringWithoutPrefix() ?: byteArrayOf().toByteString()
+      pni = ""
       givenName = mergedProfileGivenName
       familyName = mergedProfileFamilyName
-      profileKey = remote.proto.profileKey.nullIfEmpty() ?: local.proto.profileKey
+      profileKey = remote.proto.profileKey.nullIfEmpty()?.takeIf { ProfileKeyUtil.profileKeyOrNull(it.toByteArray()) != null } ?: local.proto.profileKey
       username = remote.proto.username.nullIfBlank() ?: local.proto.username
       identityState = mergedIdentityState
       identityKey = mergedIdentityKey?.toByteString() ?: ByteString.EMPTY
@@ -264,9 +281,9 @@ class ContactRecordProcessor(
 
   override fun compare(lhs: SignalContactRecord, rhs: SignalContactRecord): Int {
     return if (
-      (lhs.proto.signalAci != null && lhs.proto.aci == rhs.proto.aci) ||
+      (lhs.proto.signalAci != null && lhs.proto.aci == rhs.proto.aci && lhs.proto.aciBinary == rhs.proto.aciBinary) ||
       (lhs.proto.e164.isNotBlank() && lhs.proto.e164 == rhs.proto.e164) ||
-      (lhs.proto.signalPni != null && lhs.proto.pni == rhs.proto.pni)
+      (lhs.proto.signalPni != null && lhs.proto.pni == rhs.proto.pni && lhs.proto.pniBinary == rhs.proto.pniBinary)
     ) {
       0
     } else {

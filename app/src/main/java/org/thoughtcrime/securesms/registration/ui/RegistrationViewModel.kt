@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Signal Messenger, LLC
+ * Copyright 2025 Signal Messenger, LLC
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
@@ -11,28 +11,46 @@ import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.asLiveData
 import androidx.lifecycle.viewModelScope
+import com.google.i18n.phonenumbers.PhoneNumberUtil
 import com.google.i18n.phonenumbers.Phonenumber
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.flow.updateAndGet
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.signal.core.models.AccountEntropyPool
+import org.signal.core.models.MasterKey
+import org.signal.core.models.backup.MessageBackupKey
+import org.signal.core.ui.permissions.Permissions
 import org.signal.core.util.Base64
-import org.signal.core.util.Stopwatch
+import org.signal.core.util.Util
 import org.signal.core.util.isNotNullOrBlank
 import org.signal.core.util.logging.Log
+import org.signal.libsignal.protocol.IdentityKey
+import org.signal.libsignal.protocol.IdentityKeyPair
+import org.signal.libsignal.protocol.ecc.ECPrivateKey
+import org.signal.libsignal.zkgroup.profiles.ProfileKey
+import org.signal.network.NetworkResult
+import org.signal.registration.proto.RegistrationProvisionMessage
+import org.thoughtcrime.securesms.backup.v2.BackupRepository
+import org.thoughtcrime.securesms.backup.v2.RestoreTimestampResult
+import org.thoughtcrime.securesms.database.model.databaseprotos.LinkedDeviceInfo
+import org.thoughtcrime.securesms.database.model.databaseprotos.RestoreDecisionState
 import org.thoughtcrime.securesms.dependencies.AppDependencies
-import org.thoughtcrime.securesms.jobs.MultiDeviceProfileContentUpdateJob
-import org.thoughtcrime.securesms.jobs.MultiDeviceProfileKeyUpdateJob
-import org.thoughtcrime.securesms.jobs.ProfileUploadJob
 import org.thoughtcrime.securesms.jobs.ReclaimUsernameAndLinkJob
-import org.thoughtcrime.securesms.jobs.StorageAccountRestoreJob
-import org.thoughtcrime.securesms.jobs.StorageSyncJob
+import org.thoughtcrime.securesms.keyvalue.NewAccount
 import org.thoughtcrime.securesms.keyvalue.SignalStore
-import org.thoughtcrime.securesms.permissions.Permissions
+import org.thoughtcrime.securesms.keyvalue.Skipped
+import org.thoughtcrime.securesms.keyvalue.Start
+import org.thoughtcrime.securesms.keyvalue.intendToRestore
+import org.thoughtcrime.securesms.keyvalue.isDecisionPending
+import org.thoughtcrime.securesms.keyvalue.isTerminal
+import org.thoughtcrime.securesms.keyvalue.isWantingManualRemoteRestore
 import org.thoughtcrime.securesms.pin.SvrRepository
 import org.thoughtcrime.securesms.pin.SvrWrongPinException
 import org.thoughtcrime.securesms.registration.data.AccountRegistrationResult
@@ -62,20 +80,28 @@ import org.thoughtcrime.securesms.registration.data.network.VerificationCodeRequ
 import org.thoughtcrime.securesms.registration.data.network.VerificationCodeRequestResult.Success
 import org.thoughtcrime.securesms.registration.data.network.VerificationCodeRequestResult.TokenNotAccepted
 import org.thoughtcrime.securesms.registration.data.network.VerificationCodeRequestResult.UnknownError
+import org.thoughtcrime.securesms.registration.ui.link.RegisterLinkDeviceResult
+import org.thoughtcrime.securesms.registration.ui.restore.StorageServiceRestore
 import org.thoughtcrime.securesms.registration.util.RegistrationUtil
 import org.thoughtcrime.securesms.registration.viewmodel.SvrAuthCredentialSet
 import org.thoughtcrime.securesms.util.RemoteConfig
-import org.thoughtcrime.securesms.util.Util
+import org.thoughtcrime.securesms.util.TextSecurePreferences
 import org.thoughtcrime.securesms.util.dualsim.MccMncProducer
 import org.whispersystems.signalservice.api.SvrNoDataException
-import org.whispersystems.signalservice.api.kbs.MasterKey
+import org.whispersystems.signalservice.api.messages.multidevice.RequestMessage
+import org.whispersystems.signalservice.api.messages.multidevice.SignalServiceSyncMessage
 import org.whispersystems.signalservice.api.svr.Svr3Credentials
+import org.whispersystems.signalservice.api.websocket.WebSocketUnavailableException
 import org.whispersystems.signalservice.internal.push.AuthCredentials
+import org.whispersystems.signalservice.internal.push.ProvisionMessage
+import org.whispersystems.signalservice.internal.push.SyncMessage
 import java.io.IOException
+import java.net.ProtocolException
 import java.nio.charset.StandardCharsets
-import java.util.concurrent.TimeUnit
 import kotlin.jvm.optionals.getOrNull
+import kotlin.math.max
 import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Duration.Companion.seconds
 
 /**
  * ViewModel shared across all of registration.
@@ -89,6 +115,8 @@ class RegistrationViewModel : ViewModel() {
     Log.w(TAG, "CoroutineExceptionHandler invoked!")
     handleGenericError(exception)
   }
+
+  val state: StateFlow<RegistrationState> = store
 
   val uiState = store.asLiveData()
 
@@ -123,6 +151,8 @@ class RegistrationViewModel : ViewModel() {
         it.copy(nationalNumber = value)
       }
     }
+
+  var registrationProvisioningMessage: RegistrationProvisionMessage? = null
 
   @SuppressLint("MissingPermission")
   fun maybePrefillE164(context: Context) {
@@ -209,20 +239,32 @@ class RegistrationViewModel : ViewModel() {
     store.update {
       it.copy(fcmToken = fcmToken)
     }
-    Log.d(TAG, "FCM token fetched.")
+    Log.d(TAG, "FCM token fetched.", true)
     return fcmToken
   }
 
   fun togglePinKeyboardType() {
-    store.update { previousState ->
-      previousState.copy(pinKeyboardType = previousState.pinKeyboardType.other)
+    store.update {
+      it.copy(pinKeyboardType = it.pinKeyboardType.other)
+    }
+  }
+
+  fun clearPreviousRegistrationState() {
+    store.update {
+      it.copy(
+        sessionId = null,
+        captchaToken = null,
+        challengesRequested = emptyList(),
+        challengeInProgress = false,
+        fcmToken = null
+      )
     }
   }
 
   fun onBackupSuccessfullyRestored() {
     val recoveryPassword = SignalStore.svr.recoveryPassword
     store.update {
-      it.copy(registrationCheckpoint = RegistrationCheckpoint.BACKUP_RESTORED_OR_SKIPPED, canSkipSms = recoveryPassword != null, isReRegister = true)
+      it.copy(registrationCheckpoint = RegistrationCheckpoint.BACKUP_RESTORED_OR_SKIPPED, recoveryPassword = SignalStore.svr.recoveryPassword, canSkipSms = recoveryPassword != null, isReRegister = true)
     }
   }
 
@@ -233,7 +275,7 @@ class RegistrationViewModel : ViewModel() {
     val e164 = state.phoneNumber?.toE164() ?: return bail { Log.i(TAG, "Phone number was null after confirmation.") }
 
     if (!state.userSkippedReregistration) {
-      if (SignalStore.svr.recoveryPassword != null && matchesSavedE164(e164)) {
+      if (hasRecoveryPassword() && matchesSavedE164(e164)) {
         // Re-registration when the local database is intact.
         Log.d(TAG, "Has recovery password, and therefore can skip SMS verification.")
         store.update {
@@ -416,8 +458,8 @@ class RegistrationViewModel : ViewModel() {
   }
 
   fun submitCaptchaToken(context: Context) {
-    val e164 = getCurrentE164() ?: throw IllegalStateException("Can't submit captcha token if no phone number is set!")
-    val captchaToken = store.value.captchaToken ?: throw IllegalStateException("Can't submit captcha token if no captcha token is set!")
+    val e164 = getCurrentE164() ?: return clearChallengesAndBail { Log.w(TAG, "Phone number was null when trying to submit captcha token.") }
+    val captchaToken = store.value.captchaToken ?: return bail { Log.w(TAG, "Captcha token was null when trying to submit captcha token.") }
 
     store.update {
       it.copy(captchaToken = null, challengeInProgress = true, inProgress = true)
@@ -425,9 +467,9 @@ class RegistrationViewModel : ViewModel() {
 
     viewModelScope.launch {
       val session = getOrCreateValidSession(context) ?: return@launch bail { Log.i(TAG, "Could not create valid session for submitting a captcha token.") }
-      Log.d(TAG, "Submitting captcha token…")
+      Log.d(TAG, "Submitting captcha token…", true)
       val captchaSubmissionResult = RegistrationRepository.submitCaptchaToken(context, e164, password, session.sessionId, captchaToken)
-      Log.d(TAG, "Captcha token submitted.")
+      Log.d(TAG, "Captcha token submitted.", true)
 
       handleSessionStateResult(context, captchaSubmissionResult)
 
@@ -444,7 +486,7 @@ class RegistrationViewModel : ViewModel() {
   fun requestAndSubmitPushToken(context: Context) {
     Log.v(TAG, "validatePushToken()")
 
-    val e164 = getCurrentE164() ?: throw IllegalStateException("Can't submit captcha token if no phone number is set!")
+    val e164 = getCurrentE164() ?: return clearChallengesAndBail { Log.w(TAG, "Phone number was null when trying to submit push token.") }
 
     viewModelScope.launch {
       Log.d(TAG, "Getting session in order to perform push token verification…")
@@ -456,8 +498,15 @@ class RegistrationViewModel : ViewModel() {
 
       Log.d(TAG, "Requesting push challenge token…")
       val pushSubmissionResult = RegistrationRepository.requestAndVerifyPushToken(context, session.sessionId, e164, password)
-      Log.d(TAG, "Push challenge token submitted.")
-      handleSessionStateResult(context, pushSubmissionResult)
+      Log.d(TAG, "Push challenge token submitted.", true)
+      val success = handleSessionStateResult(context, pushSubmissionResult)
+
+      if (!success) {
+        Log.i(TAG, "Push challenge was not successful, removing from challenge list to allow fallback.")
+        store.update {
+          it.copy(challengesRequested = it.challengesRequested.minus(Challenge.PUSH), inProgress = false)
+        }
+      }
     }
   }
 
@@ -487,7 +536,7 @@ class RegistrationViewModel : ViewModel() {
       }
 
       is ChallengeRequired -> {
-        Log.d(TAG, "[${sessionResult.challenges.joinToString()}] registration challenges received.")
+        Log.d(TAG, "[${sessionResult.challenges.joinToString()}] registration challenges received.", true)
         store.update {
           it.copy(
             challengesRequested = sessionResult.challenges
@@ -519,7 +568,7 @@ class RegistrationViewModel : ViewModel() {
             )
           }
         } else {
-          Log.w(TAG, "Request verification code rate limit is forever, need to start new session")
+          Log.w(TAG, "Request verification code rate limit is forever, need to start new session", true)
           SignalStore.registration.sessionId = null
           store.update { RegistrationState() }
         }
@@ -558,7 +607,7 @@ class RegistrationViewModel : ViewModel() {
     var stayInProgress = false
     when (registrationResult) {
       is RegisterAccountResult.Success -> {
-        Log.i(TAG, "Register account result: Success! Registration lock: $reglockEnabled")
+        Log.i(TAG, "Register account result: Success! Registration lock: $reglockEnabled", true)
         store.update {
           it.copy(
             registrationCheckpoint = RegistrationCheckpoint.SERVICE_REGISTRATION_COMPLETED
@@ -574,7 +623,7 @@ class RegistrationViewModel : ViewModel() {
       }
 
       is RegisterAccountResult.RegistrationLocked -> {
-        Log.i(TAG, "Account is registration locked!", registrationResult.getCause())
+        Log.i(TAG, "Account is registration locked!", registrationResult.getCause(), true)
         stayInProgress = true
       }
 
@@ -607,6 +656,17 @@ class RegistrationViewModel : ViewModel() {
     }
   }
 
+  /** Clears the recovery password from state, e.g. when a backup-key-based registration attempt fails and the stale password must not be retried. */
+  fun clearRecoveryPassword() {
+    setRecoveryPassword(null)
+  }
+
+  private fun setRecoveryPassword(recoveryPassword: String?) {
+    store.update {
+      it.copy(recoveryPassword = recoveryPassword)
+    }
+  }
+
   private fun updateSvrTriesRemaining(remainingTries: Int) {
     store.update {
       it.copy(svrTriesRemaining = remainingTries)
@@ -634,6 +694,7 @@ class RegistrationViewModel : ViewModel() {
           SignalStore.svr.masterKeyForInitialDataRestore = masterKey
           SignalStore.svr.setPin(pin)
 
+          setRecoveryPassword(masterKey.deriveRegistrationRecoveryPassword())
           updateSvrTriesRemaining(10)
           verifyReRegisterInternal(context, pin, masterKey)
         } catch (rejectedPin: SvrWrongPinException) {
@@ -644,6 +705,14 @@ class RegistrationViewModel : ViewModel() {
           Log.w(TAG, "SVR has no data for these credentials. Aborting skip SMS flow.", noData)
           updateSvrTriesRemaining(0)
           setUserSkippedReRegisterFlow(true)
+        } catch (ioe: IOException) {
+          if (ioe.cause is ProtocolException) {
+            Log.w(TAG, "Network error attempting to communicate with SVR, likely web socket http protocol exception. Skipping re-reg", ioe)
+            setUserSkippedReRegisterFlow(true)
+          } else {
+            Log.w(TAG, "Network error attempting to communicate with SVR.", ioe)
+            handleGenericError(ioe)
+          }
         }
       }
       return
@@ -654,7 +723,9 @@ class RegistrationViewModel : ViewModel() {
       if (RegistrationRepository.doesPinMatchLocalHash(pin)) {
         Log.d(TAG, "Found recovery password, attempting to re-register.")
         viewModelScope.launch(context = coroutineExceptionHandler) {
-          verifyReRegisterInternal(context, pin, SignalStore.svr.masterKey)
+          val masterKey = SignalStore.svr.masterKey
+          setRecoveryPassword(masterKey.deriveRegistrationRecoveryPassword())
+          verifyReRegisterInternal(context, pin, masterKey)
         }
       } else {
         Log.d(TAG, "Entered PIN did not match local PIN hash.")
@@ -669,8 +740,8 @@ class RegistrationViewModel : ViewModel() {
     }
   }
 
-  private suspend fun verifyReRegisterInternal(context: Context, pin: String, masterKey: MasterKey) {
-    Log.v(TAG, "verifyReRegisterInternal()")
+  private suspend fun verifyReRegisterInternal(context: Context, pin: String?, masterKey: MasterKey) {
+    Log.v(TAG, "verifyReRegisterInternal(hasPin=${pin != null})")
     updateFcmToken(context)
 
     val registrationData = getRegistrationData()
@@ -687,7 +758,7 @@ class RegistrationViewModel : ViewModel() {
    */
   private suspend fun registerAccountInternal(context: Context, sessionId: String?, registrationData: RegistrationData, pin: String?, masterKey: MasterKey): Pair<RegisterAccountResult, Boolean> {
     Log.v(TAG, "registerAccountInternal()")
-    var registrationResult: RegisterAccountResult = RegistrationRepository.registerAccount(context = context, sessionId = sessionId, registrationData = registrationData, recoveryPassword = masterKey.deriveRegistrationRecoveryPassword(), pin = pin)
+    var registrationResult: RegisterAccountResult = RegistrationRepository.registerAccount(context = context, sessionId = sessionId, registrationData = registrationData, pin = pin)
 
     // Check if reg lock is enabled
     if (registrationResult !is RegisterAccountResult.RegistrationLocked) {
@@ -695,11 +766,11 @@ class RegistrationViewModel : ViewModel() {
         registrationResult = RegisterAccountResult.Success(registrationResult.accountRegistrationResult.copy(masterKey = masterKey))
       }
 
-      Log.i(TAG, "Received a non-registration lock response to registration. Assuming registration lock as DISABLED")
+      Log.i(TAG, "Received a non-registration lock response to registration. Assuming registration lock as DISABLED", true)
       return Pair(registrationResult, false)
     }
 
-    Log.i(TAG, "Received a registration lock response when trying to register an account. Retrying with master key.")
+    Log.i(TAG, "Received a registration lock response when trying to register an account. Retrying with master key.", true)
     store.update {
       it.copy(
         svr2AuthCredentials = registrationResult.svr2Credentials,
@@ -707,7 +778,7 @@ class RegistrationViewModel : ViewModel() {
       )
     }
 
-    return Pair(RegistrationRepository.registerAccount(context = context, sessionId = sessionId, registrationData = registrationData, recoveryPassword = masterKey.deriveRegistrationRecoveryPassword(), pin = pin) { masterKey }, true)
+    return Pair(RegistrationRepository.registerAccount(context = context, sessionId = sessionId, registrationData = registrationData, pin = pin) { masterKey }, true)
   }
 
   fun verifyCodeWithoutRegistrationLock(context: Context, code: String) {
@@ -739,7 +810,7 @@ class RegistrationViewModel : ViewModel() {
         registrationCheckpoint = RegistrationCheckpoint.PIN_ENTERED
       )
     }
-    viewModelScope.launch {
+    viewModelScope.launch(context = coroutineExceptionHandler) {
       verifyCodeInternal(
         context = context,
         registrationLocked = true,
@@ -764,14 +835,14 @@ class RegistrationViewModel : ViewModel() {
     if (session.verified) {
       Log.i(TAG, "Session is already verified, registering account.")
     } else {
-      Log.d(TAG, "Submitting verification code…")
+      Log.d(TAG, "Submitting verification code…", true)
 
       val verificationResponse = RegistrationRepository.submitVerificationCode(context, sessionId, registrationData)
 
       val submissionSuccessful = verificationResponse is Success
       val alreadyVerified = verificationResponse is AlreadyVerified
 
-      Log.d(TAG, "Verification code submission network call completed. Submission successful? $submissionSuccessful Account already verified? $alreadyVerified")
+      Log.d(TAG, "Verification code submission network call completed. Submission successful? $submissionSuccessful Account already verified? $alreadyVerified", true)
 
       if (!submissionSuccessful && !alreadyVerified) {
         handleSessionStateResult(context, verificationResponse)
@@ -786,7 +857,7 @@ class RegistrationViewModel : ViewModel() {
 
     if (!reglock) {
       Log.d(TAG, "Registration lock not enabled, attempting to register account without master key producer.")
-      result = RegistrationRepository.registerAccount(context = context, sessionId = sessionId, registrationData = registrationData, recoveryPassword = null, pin = pin)
+      result = RegistrationRepository.registerAccount(context, sessionId, registrationData, pin)
     }
 
     if (result is RegisterAccountResult.RegistrationLocked) {
@@ -796,13 +867,10 @@ class RegistrationViewModel : ViewModel() {
         it.copy(lockedTimeRemaining = timeRemaining)
       }
       reglock = true
-
       if (pin == null && SignalStore.svr.registrationLockToken != null) {
         Log.d(TAG, "Retrying registration with stored credentials.")
-        result = RegistrationRepository.registerAccount(context = context, sessionId = sessionId, registrationData = registrationData, recoveryPassword = null, pin = SignalStore.svr.pin) { SignalStore.svr.masterKey }
-      }
-
-      if (result is RegisterAccountResult.RegistrationLocked && (result.svr2Credentials != null || result.svr3Credentials != null)) {
+        result = RegistrationRepository.registerAccount(context, sessionId, registrationData, SignalStore.svr.pin) { SignalStore.svr.masterKey }
+      } else if (result.svr2Credentials != null || result.svr3Credentials != null) {
         Log.d(TAG, "Retrying registration with received credentials (svr2: ${result.svr2Credentials != null}, svr3: ${result.svr3Credentials != null}).")
         val svr2Credentials = result.svr2Credentials
         val svr3Credentials = result.svr3Credentials
@@ -814,7 +882,7 @@ class RegistrationViewModel : ViewModel() {
 
     if (reglock && pin.isNotNullOrBlank()) {
       Log.d(TAG, "Registration lock enabled, attempting to register account restore master key from SVR (svr2: ${state.svr2AuthCredentials != null}, svr3: ${state.svr3AuthCredentials != null})")
-      result = RegistrationRepository.registerAccount(context = context, sessionId = sessionId, registrationData = registrationData, recoveryPassword = null, pin = pin) {
+      result = RegistrationRepository.registerAccount(context, sessionId, registrationData, pin) {
         SvrRepository.restoreMasterKeyPreRegistration(
           credentials = SvrAuthCredentialSet(
             svr2Credentials = state.svr2AuthCredentials,
@@ -835,7 +903,7 @@ class RegistrationViewModel : ViewModel() {
   private suspend fun registerVerifiedSession(context: Context, sessionId: String) {
     Log.v(TAG, "registerVerifiedSession()")
     val registrationData = getRegistrationData()
-    var result: RegisterAccountResult = RegistrationRepository.registerAccount(context = context, sessionId = sessionId, registrationData = registrationData, recoveryPassword = null)
+    var result: RegisterAccountResult = RegistrationRepository.registerAccount(context = context, sessionId = sessionId, registrationData = registrationData)
 
     val reglockEnabled = result is RegisterAccountResult.RegistrationLocked
 
@@ -845,7 +913,7 @@ class RegistrationViewModel : ViewModel() {
 
       if (SignalStore.svr.registrationLockToken != null) {
         Log.d(TAG, "Retrying registration with stored credentials.")
-        result = RegistrationRepository.registerAccount(context = context, sessionId = sessionId, registrationData = registrationData, recoveryPassword = null, pin = SignalStore.svr.pin) { SignalStore.svr.masterKey }
+        result = RegistrationRepository.registerAccount(context, sessionId, registrationData, SignalStore.svr.pin) { SignalStore.svr.masterKey }
       }
 
       if (result is RegisterAccountResult.RegistrationLocked && (result.svr2Credentials != null || result.svr3Credentials != null)) {
@@ -862,46 +930,109 @@ class RegistrationViewModel : ViewModel() {
     handleRegistrationResult(context, registrationData, result, reglockEnabled)
   }
 
-  private suspend fun onSuccessfulRegistration(context: Context, registrationData: RegistrationData, remoteResult: AccountRegistrationResult, reglockEnabled: Boolean) {
-    Log.v(TAG, "onSuccessfulRegistration()")
+  private suspend fun onSuccessfulRegistration(context: Context, registrationData: RegistrationData, remoteResult: AccountRegistrationResult, reglockEnabled: Boolean) = withContext(Dispatchers.IO) {
+    Log.v(TAG, "onSuccessfulRegistration()", true)
     val metadata = LocalRegistrationMetadataUtil.createLocalRegistrationMetadata(SignalStore.account.aciIdentityKey, SignalStore.account.pniIdentityKey, registrationData, remoteResult, reglockEnabled)
+    SignalStore.registration.localRegistrationMetadata = metadata
     RegistrationRepository.registerAccountLocally(context, metadata)
 
-    if (reglockEnabled) {
+    try {
+      AppDependencies.authWebSocket.connect()
+    } catch (e: WebSocketUnavailableException) {
+      Log.w(TAG, "Unable to start auth websocket", e)
+    }
+
+    if (!remoteResult.reRegistration && SignalStore.registration.restoreDecisionState.isDecisionPending && SignalStore.backup.localRestoreAccountEntropyPool == null) {
+      Log.v(TAG, "Not re-registration, and still pending restore decision, likely an account with no data to restore, skipping post register restore")
+      SignalStore.registration.restoreDecisionState = RestoreDecisionState.NewAccount
+    }
+
+    if (remoteResult.reRegistration) {
+      SignalStore.backup.backupSecretRestoreRequired = true
+    }
+
+    if (reglockEnabled || SignalStore.account.restoredAccountEntropyPool) {
       SignalStore.onboarding.clearAll()
 
-      val stopwatch = Stopwatch("post-reg-storage-service")
+      if (SignalStore.registration.restoreDecisionState.isTerminal) {
+        Log.d(TAG, "No pending restore decisions, can restore account from storage service")
+        StorageServiceRestore.restore()
+      }
+    } else if (SignalStore.registration.restoreDecisionState.isTerminal && SignalStore.misc.needsUsernameRestore) {
+      AppDependencies.jobManager.runSynchronously(ReclaimUsernameAndLinkJob(), 10.seconds.inWholeMilliseconds)
+    }
 
-      AppDependencies.jobManager.runSynchronously(StorageAccountRestoreJob(), StorageAccountRestoreJob.LIFESPAN)
-      stopwatch.split("account-restore")
-
-      AppDependencies.jobManager
-        .startChain(StorageSyncJob.forAccountRestore())
-        .then(ReclaimUsernameAndLinkJob())
-        .enqueueAndBlockUntilCompletion(TimeUnit.SECONDS.toMillis(10))
-      stopwatch.split("storage-sync")
-
-      stopwatch.stop(TAG)
-    } else if (SignalStore.misc.needsUsernameRestore) {
-      AppDependencies.jobManager.runSynchronously(ReclaimUsernameAndLinkJob(), TimeUnit.SECONDS.toMillis(10))
+    if (SignalStore.account.restoredAccountEntropyPool) {
+      Log.d(TAG, "Restoring backup timestamp")
+      var tries = 0
+      while (tries < 3) {
+        if (tries > 0) {
+          delay(1.seconds)
+        }
+        if (BackupRepository.restoreBackupFileTimestamp() !is RestoreTimestampResult.Failure) {
+          break
+        }
+        tries++
+      }
     }
 
     refreshRemoteConfig()
 
+    val checkpoint = if (
+      SignalStore.registration.restoreDecisionState.isDecisionPending &&
+      SignalStore.registration.restoreDecisionState.isWantingManualRemoteRestore &&
+      SignalStore.backup.lastBackupTime == 0L
+    ) {
+      RegistrationCheckpoint.BACKUP_TIMESTAMP_NOT_RESTORED
+    } else {
+      RegistrationCheckpoint.LOCAL_REGISTRATION_COMPLETE
+    }
+
     store.update {
       it.copy(
-        registrationCheckpoint = RegistrationCheckpoint.LOCAL_REGISTRATION_COMPLETE
+        registrationCheckpoint = checkpoint
       )
     }
   }
 
-  fun hasPin(): Boolean {
-    return RegistrationRepository.hasPin() || store.value.isReRegister
+  fun resetRestoreDecision() {
+    SignalStore.registration.restoreDecisionState = RestoreDecisionState.Start
   }
 
-  fun completeRegistration() {
-    AppDependencies.jobManager.startChain(ProfileUploadJob()).then(listOf(MultiDeviceProfileKeyUpdateJob(), MultiDeviceProfileContentUpdateJob())).enqueue()
-    RegistrationUtil.maybeMarkRegistrationComplete()
+  fun intendToRestore(hasOldDevice: Boolean, fromRemote: Boolean? = null, fromLocalV2: Boolean? = null) {
+    SignalStore.registration.restoreDecisionState = RestoreDecisionState.intendToRestore(hasOldDevice, fromRemote, fromLocalV2)
+  }
+
+  fun skipRestore() {
+    SignalStore.registration.restoreDecisionState = RestoreDecisionState.Skipped
+  }
+
+  fun resumeNormalRegistration() {
+    store.update {
+      it.copy(registrationCheckpoint = RegistrationCheckpoint.LOCAL_REGISTRATION_COMPLETE)
+    }
+  }
+
+  fun checkForBackupFile() {
+    store.update {
+      it.copy(inProgress = true, registrationCheckpoint = RegistrationCheckpoint.SERVICE_REGISTRATION_COMPLETED)
+    }
+
+    viewModelScope.launch(Dispatchers.IO) {
+      val start = System.currentTimeMillis()
+      val result = BackupRepository.restoreBackupFileTimestamp()
+      delay(max(0L, 500L - (System.currentTimeMillis() - start)))
+
+      if (result !is RestoreTimestampResult.Success) {
+        store.update {
+          it.copy(registrationCheckpoint = RegistrationCheckpoint.BACKUP_TIMESTAMP_NOT_RESTORED)
+        }
+      } else {
+        store.update {
+          it.copy(registrationCheckpoint = RegistrationCheckpoint.LOCAL_REGISTRATION_COMPLETE)
+        }
+      }
+    }
   }
 
   fun networkErrorShown() {
@@ -918,6 +1049,10 @@ class RegistrationViewModel : ViewModel() {
     }
   }
 
+  private fun hasRecoveryPassword(): Boolean {
+    return store.value.recoveryPassword != null
+  }
+
   private fun getCurrentE164(): String? {
     return store.value.phoneNumber?.toE164()
   }
@@ -926,7 +1061,7 @@ class RegistrationViewModel : ViewModel() {
     val currentState = store.value
     val code = currentState.enteredCode
     val e164: String = currentState.phoneNumber?.toE164() ?: throw IllegalStateException("Can't construct registration data without E164!")
-    val recoveryPassword = if (currentState.sessionId == null) SignalStore.svr.recoveryPassword else null
+    val recoveryPassword = if (currentState.sessionId == null && hasRecoveryPassword()) store.value.recoveryPassword!! else null
     return RegistrationData(code, e164, password, RegistrationRepository.getRegistrationId(), RegistrationRepository.getProfileKey(e164), currentState.fcmToken, RegistrationRepository.getPniRegistrationId(), recoveryPassword)
   }
 
@@ -938,6 +1073,159 @@ class RegistrationViewModel : ViewModel() {
   private fun bail(logMessage: () -> Unit) {
     logMessage()
     setInProgress(false)
+  }
+
+  /**
+   * Like [bail], but also clears challenge state. This is needed when challenge handling fails due to missing phone number,
+   * since otherwise the stale challenges would re-trigger the observer on every config change.
+   */
+  private fun clearChallengesAndBail(logMessage: () -> Unit) {
+    logMessage()
+    store.update {
+      it.copy(
+        inProgress = false,
+        challengesRequested = emptyList(),
+        challengeInProgress = false,
+        captchaToken = null
+      )
+    }
+  }
+
+  fun registerWithBackupKey(context: Context, backupKey: String, e164: String?, pin: String?, aciIdentityKeyPair: IdentityKeyPair?, pniIdentityKeyPair: IdentityKeyPair?) {
+    setInProgress(true)
+
+    viewModelScope.launch(context = coroutineExceptionHandler) {
+      if (e164 != null) {
+        setPhoneNumber(PhoneNumberUtil.getInstance().parse(e164, null))
+      }
+
+      val accountEntropyPool = AccountEntropyPool(backupKey)
+      SignalStore.account.restoreAccountEntropyPool(accountEntropyPool)
+
+      if (aciIdentityKeyPair != null) {
+        SignalStore.account.restoreAciIdentityKeyFromBackup(aciIdentityKeyPair.publicKey.serialize(), aciIdentityKeyPair.privateKey.serialize())
+        if (pniIdentityKeyPair != null) {
+          SignalStore.account.restorePniIdentityKeyFromBackup(pniIdentityKeyPair.publicKey.serialize(), pniIdentityKeyPair.privateKey.serialize())
+        }
+      }
+
+      val masterKey = accountEntropyPool.deriveMasterKey()
+      setRecoveryPassword(masterKey.deriveRegistrationRecoveryPassword())
+      verifyReRegisterInternal(context = context, pin = pin, masterKey = masterKey)
+
+      setInProgress(false)
+    }
+  }
+
+  suspend fun registerAsLinkedDevice(context: Context, message: ProvisionMessage): RegisterLinkDeviceResult {
+    val deviceName = "Android"
+
+    val aciIdentityKeyPair = IdentityKeyPair(IdentityKey(message.aciIdentityKeyPublic!!.toByteArray()), ECPrivateKey(message.aciIdentityKeyPrivate!!.toByteArray()))
+    val pniIdentityKeyPair = IdentityKeyPair(IdentityKey(message.pniIdentityKeyPublic!!.toByteArray()), ECPrivateKey(message.pniIdentityKeyPrivate!!.toByteArray()))
+
+    val profileKey = ProfileKey(message.profileKey!!.toByteArray())
+    val serverAuthToken = Util.getSecret(18)
+    val fcmToken = RegistrationRepository.getFcmToken(context)
+
+    val registrationData = RegistrationData(
+      code = "",
+      e164 = message.number!!,
+      password = serverAuthToken,
+      registrationId = RegistrationRepository.getRegistrationId(),
+      profileKey = profileKey,
+      fcmToken = fcmToken,
+      pniRegistrationId = RegistrationRepository.getPniRegistrationId(),
+      recoveryPassword = null
+    )
+
+    val result = RegistrationRepository.registerAsLinkedDevice(
+      context = context,
+      deviceName = deviceName,
+      message = message,
+      registrationData = registrationData,
+      aciIdentityKeyPair = aciIdentityKeyPair,
+      pniIdentityKeyPair = pniIdentityKeyPair
+    )
+
+    when (result) {
+      is NetworkResult.Success -> {
+        val data = LocalRegistrationMetadataUtil.createLocalRegistrationMetadata(
+          localAciIdentityKeyPair = aciIdentityKeyPair,
+          localPniIdentityKeyPair = pniIdentityKeyPair,
+          registrationData = registrationData,
+          remoteResult = result.result.accountRegistrationResult,
+          reglockEnabled = false,
+          linkedDeviceInfo = LinkedDeviceInfo(
+            deviceId = result.result.deviceId,
+            deviceName = deviceName,
+            ephemeralBackupKey = message.ephemeralBackupKey,
+            accountEntropyPool = message.accountEntropyPool,
+            mediaRootBackupKey = message.mediaRootBackupKey
+          )
+        )
+
+        if (message.readReceipts != null) {
+          TextSecurePreferences.setReadReceiptsEnabled(context, message.readReceipts!!)
+        }
+
+        RegistrationRepository.registerAccountLocally(context, data)
+      }
+
+      is NetworkResult.ApplicationError -> return RegisterLinkDeviceResult.UnexpectedException(result.throwable)
+      is NetworkResult.NetworkError<*> -> return RegisterLinkDeviceResult.NetworkException(result.exception)
+      is NetworkResult.StatusCodeError -> {
+        return when (result.code) {
+          403 -> RegisterLinkDeviceResult.IncorrectVerification
+          409 -> RegisterLinkDeviceResult.MissingCapability
+          411 -> RegisterLinkDeviceResult.MaxLinkedDevices
+          422 -> RegisterLinkDeviceResult.InvalidRequest
+          429 -> RegisterLinkDeviceResult.RateLimited(result.retryAfter())
+          else -> RegisterLinkDeviceResult.UnexpectedException(result.exception)
+        }
+      }
+    }
+
+    RegistrationUtil.maybeMarkRegistrationComplete()
+
+    refreshRemoteConfig()
+
+    if (message.ephemeralBackupKey != null) {
+      Log.i(TAG, "Primary has given Linked device an ephemeral backup key, waiting for backup...")
+      val result = RegistrationRepository.waitForLinkAndSyncBackupDetails()
+      if (result != null) {
+        BackupRepository.restoreLinkAndSyncBackup(result, MessageBackupKey(message.ephemeralBackupKey!!.toByteArray()))
+      } else {
+        Log.w(TAG, "Unable to get transfer archive data, continuing with linking process")
+      }
+
+      // TODO [linked-device] Reapply opt-out, backup restore sets pin, may want to have a different opt out mechanism for linked devices
+    }
+
+    for (type in SyncMessage.Request.Type.entries) {
+      if (type == SyncMessage.Request.Type.UNKNOWN) {
+        continue
+      }
+
+      Log.i(TAG, "Sending sync request for $type")
+      AppDependencies.signalServiceMessageSender.sendSyncMessage(
+        SignalServiceSyncMessage.forRequest(RequestMessage(SyncMessage.Request(type = type)))
+      )
+    }
+
+    SignalStore.registration.restoreDecisionState = RestoreDecisionState.NewAccount
+    SignalStore.onboarding.clearAll()
+
+    if (SignalStore.account.restoredAccountEntropyPoolFromPrimary) {
+      StorageServiceRestore.restore()
+    }
+
+    store.update {
+      it.copy(
+        registrationCheckpoint = RegistrationCheckpoint.LOCAL_REGISTRATION_COMPLETE
+      )
+    }
+
+    return RegisterLinkDeviceResult.Success
   }
 
   /** Converts the basic-auth creds we have locally into username:password pairs that are suitable for handing off to the service. */

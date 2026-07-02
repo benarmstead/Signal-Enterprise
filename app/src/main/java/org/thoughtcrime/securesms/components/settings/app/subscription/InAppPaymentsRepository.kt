@@ -20,6 +20,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.conflate
 import kotlinx.coroutines.flow.distinctUntilChanged
+import org.signal.core.util.Util
 import org.signal.core.util.concurrent.SignalExecutors
 import org.signal.core.util.logging.Log
 import org.signal.donations.InAppPaymentType
@@ -48,7 +49,6 @@ import org.thoughtcrime.securesms.jobmanager.Job
 import org.thoughtcrime.securesms.keyvalue.SignalStore
 import org.thoughtcrime.securesms.recipients.Recipient
 import org.thoughtcrime.securesms.storage.StorageSyncHelper
-import org.thoughtcrime.securesms.util.Util
 import org.whispersystems.signalservice.api.subscriptions.ActiveSubscription
 import org.whispersystems.signalservice.api.subscriptions.SubscriberId
 import org.whispersystems.signalservice.internal.push.DonationProcessor
@@ -70,10 +70,92 @@ object InAppPaymentsRepository {
   private const val JOB_PREFIX = "InAppPayments__"
   private val TAG = Log.tag(InAppPaymentsRepository::class.java)
 
+  /**
+   * Upper bound on how long we'll wait for the donations configuration before surfacing a retryable
+   * failure rather than leaving the user on an indefinite loading spinner (e.g. on a slow VPN).
+   */
+  const val DONATIONS_CONFIGURATION_TIMEOUT_SECONDS = 30L
+
   private val backupExpirationTimeout = 30.days
   private val backupExpirationDeletion = 60.days
 
   private val temporaryErrorProcessor = PublishProcessor.create<Pair<InAppPaymentTable.InAppPaymentId, Throwable>>()
+
+  /**
+   * Updates the latest payment object for the given subscription with cancelation information as necessary.
+   *
+   * This operation will only be performed if we find a latest payment for the given subscriber id in the END state without cancelation data
+   */
+  fun updateBackupInAppPaymentWithCancelation(activeSubscription: ActiveSubscription) {
+    updateInAppPaymentWithCancelation(activeSubscription, InAppPaymentSubscriberRecord.Type.BACKUP)
+  }
+
+  /**
+   * Updates the latest payment object for the given subscriber type with cancelation information as necessary.
+   *
+   * This operation will only be performed if we find a latest payment for the given subscriber id in the END state without cancelation data.
+   */
+  fun updateInAppPaymentWithCancelation(activeSubscription: ActiveSubscription, subscriberType: InAppPaymentSubscriberRecord.Type) {
+    if (activeSubscription.isCanceled || (subscriberType == InAppPaymentSubscriberRecord.Type.BACKUP && activeSubscription.willCancelAtPeriodEnd()) || activeSubscription.isFailedPayment) {
+      val subscriber = getSubscriber(subscriberType) ?: return
+      val latestPayment = SignalDatabase.inAppPayments.getLatestBySubscriberId(subscriber.subscriberId) ?: return
+      if (latestPayment.state == InAppPaymentTable.State.END && latestPayment.data.cancellation == null) {
+        synchronized(subscriber.type.lock) {
+          val payment = SignalDatabase.inAppPayments.getLatestBySubscriberId(subscriber.subscriberId) ?: return
+          val chargeFailure: ActiveSubscription.ChargeFailure? = activeSubscription.chargeFailure
+
+          Log.i(TAG, "[$subscriberType] Recording cancelation in the database. (has charge failure? ${chargeFailure != null})")
+          SignalDatabase.inAppPayments.update(
+            payment.copy(
+              data = payment.data.newBuilder()
+                .cancellation(
+                  InAppPaymentData.Cancellation(
+                    reason = if (chargeFailure != null) InAppPaymentData.Cancellation.Reason.PAST_DUE else InAppPaymentData.Cancellation.Reason.CANCELED,
+                    chargeFailure = chargeFailure?.let {
+                      InAppPaymentData.ChargeFailure(
+                        code = it.code,
+                        message = it.message,
+                        outcomeType = it.outcomeType,
+                        outcomeNetworkReason = it.outcomeNetworkReason ?: "",
+                        outcomeNetworkStatus = it.outcomeNetworkStatus
+                      )
+                    }
+                  )
+                )
+                .build()
+            )
+          )
+        }
+      }
+    }
+  }
+
+  /**
+   * Updates the latest payment object clearing cancelation information as necessary.
+   *
+   * This operation will only be performed if we find a latest payment for the given subscriber id in the END state with cancelation data
+   */
+  fun clearCancelation(activeSubscription: ActiveSubscription) {
+    if (!activeSubscription.isCanceled && !activeSubscription.willCancelAtPeriodEnd()) {
+      val subscriber = getSubscriber(InAppPaymentSubscriberRecord.Type.BACKUP) ?: return
+
+      val latestPayment = SignalDatabase.inAppPayments.getLatestBySubscriberId(subscriber.subscriberId) ?: return
+      if (latestPayment.data.cancellation != null && latestPayment.state == InAppPaymentTable.State.END) {
+        synchronized(subscriber.type.lock) {
+          val payment = SignalDatabase.inAppPayments.getLatestBySubscriberId(subscriber.subscriberId) ?: return
+
+          Log.i(TAG, "Clearing cancelation in the database.")
+          SignalDatabase.inAppPayments.update(
+            payment.copy(
+              data = payment.data.newBuilder()
+                .cancellation(null)
+                .build()
+            )
+          )
+        }
+      }
+    }
+  }
 
   /**
    * Wraps an in-app-payment update in a completable.
@@ -512,12 +594,14 @@ object InAppPaymentsRepository {
     val fromDatabase: Observable<DonationRedemptionJobStatus> = Observable.create { emitter ->
       val observer = InAppPaymentObserver {
         val latestInAppPayment = SignalDatabase.inAppPayments.getLatestInAppPaymentByType(type)
-
         emitter.onNext(Optional.ofNullable(latestInAppPayment))
       }
 
       AppDependencies.databaseObserver.registerInAppPaymentObserver(observer)
       emitter.setCancellable { AppDependencies.databaseObserver.unregisterObserver(observer) }
+
+      val latestInAppPayment = SignalDatabase.inAppPayments.getLatestInAppPaymentByType(type)
+      emitter.onNext(Optional.ofNullable(latestInAppPayment))
     }.switchMap { inAppPaymentOptional ->
       val inAppPayment = inAppPaymentOptional.getOrNull() ?: return@switchMap Observable.just(DonationRedemptionJobStatus.None)
 
@@ -586,7 +670,7 @@ object InAppPaymentsRepository {
       timestamp = insertedAt.inWholeMilliseconds,
       error = null,
       pendingVerification = true,
-      checkedVerification = data.waitForAuth!!.checkedVerification
+      checkedVerification = data.waitForAuth?.checkedVerification ?: false
     )
   }
 

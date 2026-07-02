@@ -9,15 +9,15 @@ import android.os.Build;
 import android.provider.ContactsContract;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.RequiresApi;
 import androidx.annotation.WorkerThread;
 
-import org.signal.core.util.logging.Log;
-import org.thoughtcrime.securesms.database.SignalDatabase;
-import org.thoughtcrime.securesms.permissions.Permissions;
-import org.thoughtcrime.securesms.recipients.Recipient;
 import org.signal.core.util.CursorUtil;
-import org.thoughtcrime.securesms.util.ServiceUtil;
+import org.signal.core.util.logging.Log;
+import org.thoughtcrime.securesms.database.RecipientTable;
+import org.thoughtcrime.securesms.database.SignalDatabase;
+import org.signal.core.ui.permissions.Permissions;
+import org.thoughtcrime.securesms.recipients.Recipient;
+import org.signal.core.util.ServiceUtil;
 
 import java.util.concurrent.TimeUnit;
 
@@ -28,11 +28,31 @@ public final class DoNotDisturbUtil {
   private DoNotDisturbUtil() {
   }
 
+  /**
+   * Checks whether the user should be disturbed with a call from the given recipient,
+   * taking into account the recipient's mute and call notification settings as well as
+   * the system Do Not Disturb state.
+   *
+   * For group recipients, only the system interruption filter is checked (no contact priority).
+   * For 1:1 recipients, the full DND policy including contact priority is evaluated.
+   */
   @WorkerThread
   @SuppressLint("SwitchIntDef")
-  public static boolean shouldDisturbUserWithCall(@NonNull Context context) {
-    if (Build.VERSION.SDK_INT <= 23) return true;
+  public static boolean shouldDisturbUserWithCall(@NonNull Context context, @NonNull Recipient recipient) {
+    if (recipient.isMuted() && recipient.getCallNotificationSetting() == RecipientTable.NotificationSetting.DO_NOT_NOTIFY) {
+      return false;
+    }
 
+    if (recipient.isGroup()) {
+      return checkSystemDnd(context);
+    } else {
+      return checkSystemDndWithContactPriority(context, recipient);
+    }
+  }
+
+  @WorkerThread
+  @SuppressLint("SwitchIntDef")
+  private static boolean checkSystemDnd(@NonNull Context context) {
     NotificationManager notificationManager = ServiceUtil.getNotificationManager(context);
 
     switch (notificationManager.getCurrentInterruptionFilter()) {
@@ -46,9 +66,7 @@ public final class DoNotDisturbUtil {
 
   @WorkerThread
   @SuppressLint("SwitchIntDef")
-  public static boolean shouldDisturbUserWithCall(@NonNull Context context, @NonNull Recipient recipient) {
-    if (Build.VERSION.SDK_INT <= 23) return true;
-
+  private static boolean checkSystemDndWithContactPriority(@NonNull Context context, @NonNull Recipient recipient) {
     NotificationManager notificationManager = ServiceUtil.getNotificationManager(context);
 
     switch (notificationManager.getCurrentInterruptionFilter()) {
@@ -65,16 +83,20 @@ public final class DoNotDisturbUtil {
     }
   }
 
-  @RequiresApi(23)
   private static boolean handlePriority(@NonNull Context context, @NonNull NotificationManager notificationManager, @NonNull Recipient recipient) {
     if (Build.VERSION.SDK_INT < 28 && !notificationManager.isNotificationPolicyAccessGranted()) {
       Log.w(TAG, "Notification Policy is not granted");
       return true;
     }
 
-    final NotificationManager.Policy policy                = notificationManager.getNotificationPolicy();
-    final boolean                    areCallsPrioritized   = (policy.priorityCategories & NotificationManager.Policy.PRIORITY_CATEGORY_CALLS) != 0;
-    final boolean                    isRepeatCallerEnabled = (policy.priorityCategories & NotificationManager.Policy.PRIORITY_CATEGORY_REPEAT_CALLERS) != 0;
+    final NotificationManager.Policy policy = notificationManager.getNotificationPolicy();
+    if (policy == null) {
+      Log.w(TAG, "Notification policy is null, likely in a private space. Allowing call to disturb user.");
+      return true;
+    }
+
+    final boolean areCallsPrioritized   = (policy.priorityCategories & NotificationManager.Policy.PRIORITY_CATEGORY_CALLS) != 0;
+    final boolean isRepeatCallerEnabled = (policy.priorityCategories & NotificationManager.Policy.PRIORITY_CATEGORY_REPEAT_CALLERS) != 0;
 
     if (!areCallsPrioritized && !isRepeatCallerEnabled) {
       return false;

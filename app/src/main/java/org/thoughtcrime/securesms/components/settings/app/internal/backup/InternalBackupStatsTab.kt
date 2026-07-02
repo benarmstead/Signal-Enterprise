@@ -44,11 +44,6 @@ fun InternalBackupStatsTab(stats: InternalBackupPlaygroundViewModel.StatsState, 
       )
 
       Rows.TextRow(
-        text = "Total eligible for upload rows",
-        label = "${stats.attachmentStats.totalEligibleForUploadRows}"
-      )
-
-      Rows.TextRow(
         text = "Total unique media names eligible for upload ⭐",
         label = "${stats.attachmentStats.totalUniqueMediaNamesEligibleForUpload}"
       )
@@ -71,6 +66,16 @@ fun InternalBackupStatsTab(stats: InternalBackupPlaygroundViewModel.StatsState, 
       Rows.TextRow(
         text = "Pending attachment upload bytes ⭐",
         label = "${stats.attachmentStats.pendingAttachmentUploadBytes} (~${stats.attachmentStats.pendingAttachmentUploadBytes.bytes.toUnitString()})"
+      )
+
+      Rows.TextRow(
+        text = "Last snapshot full-size count ⭐",
+        label = "${stats.attachmentStats.lastSnapshotFullSizeCount}"
+      )
+
+      Rows.TextRow(
+        text = "Last snapshot thumbnail count ⭐",
+        label = "${stats.attachmentStats.lastSnapshotThumbnailCount}"
       )
 
       Rows.TextRow(
@@ -102,12 +107,12 @@ fun InternalBackupStatsTab(stats: InternalBackupPlaygroundViewModel.StatsState, 
       CircularProgressIndicator()
     } else if (stats.remoteState != null) {
       Rows.TextRow(
-        "Total media items ⭐",
+        text = "Total media items ⭐",
         label = "${stats.remoteState.mediaCount}"
       )
 
       Rows.TextRow(
-        "Total media size ⭐",
+        text = "Total media size ⭐",
         label = "${stats.remoteState.mediaSize} (~${stats.remoteState.mediaSize.bytes.toUnitString()})"
       )
 

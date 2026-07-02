@@ -1,13 +1,11 @@
 package org.thoughtcrime.securesms.avatar.picker
 
-import android.Manifest
 import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
 import android.view.Gravity
 import android.view.View
 import android.widget.PopupMenu
-import android.widget.Toast
 import androidx.activity.result.ActivityResultLauncher
 import androidx.appcompat.widget.Toolbar
 import androidx.fragment.app.Fragment
@@ -16,6 +14,8 @@ import androidx.fragment.app.setFragmentResultListener
 import androidx.fragment.app.viewModels
 import androidx.navigation.Navigation
 import androidx.recyclerview.widget.RecyclerView
+import org.signal.core.models.media.Media
+import org.signal.core.ui.permissions.Permissions
 import org.signal.core.util.ThreadUtil
 import org.signal.core.util.getParcelableExtraCompat
 import org.thoughtcrime.securesms.R
@@ -27,11 +27,7 @@ import org.thoughtcrime.securesms.avatar.text.TextAvatarCreationFragment
 import org.thoughtcrime.securesms.avatar.vector.VectorAvatarCreationFragment
 import org.thoughtcrime.securesms.components.ButtonStripItemView
 import org.thoughtcrime.securesms.components.recyclerview.GridDividerDecoration
-import org.thoughtcrime.securesms.groups.ParcelableGroupId
 import org.thoughtcrime.securesms.mediasend.AvatarSelectionActivity
-import org.thoughtcrime.securesms.mediasend.Media
-import org.thoughtcrime.securesms.mediasend.camerax.CameraXUtil
-import org.thoughtcrime.securesms.permissions.Permissions
 import org.thoughtcrime.securesms.util.ViewUtil
 import org.thoughtcrime.securesms.util.adapter.mapping.MappingAdapter
 import org.thoughtcrime.securesms.util.navigation.safeNavigate
@@ -57,9 +53,8 @@ class AvatarPickerFragment : Fragment(R.layout.avatar_picker_fragment) {
 
   private fun createFactory(): AvatarPickerViewModel.Factory {
     val args = AvatarPickerFragmentArgs.fromBundle(requireArguments())
-    val groupId = ParcelableGroupId.get(args.groupId)
 
-    return AvatarPickerViewModel.Factory(AvatarPickerRepository(requireContext()), groupId, args.isNewGroup, args.groupAvatarMedia)
+    return AvatarPickerViewModel.Factory(AvatarPickerRepository(requireContext()), args.groupId, args.isNewGroup, args.groupAvatarMedia)
   }
 
   override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -94,6 +89,8 @@ class AvatarPickerFragment : Fragment(R.layout.avatar_picker_fragment) {
       adapter.submitList(items) {
         if (selectedPosition > -1) {
           recycler.smoothScrollToPosition(selectedPosition)
+        } else {
+          recycler.smoothScrollToPosition(0)
         }
       }
     }
@@ -222,22 +219,8 @@ class AvatarPickerFragment : Fragment(R.layout.avatar_picker_fragment) {
 
   @Suppress("DEPRECATION")
   private fun openCameraCapture() {
-    if (CameraXUtil.isSupported()) {
-      val intent = AvatarSelectionActivity.getIntentForCameraCapture(requireContext())
-      startActivityForResult(intent, REQUEST_CODE_SELECT_IMAGE)
-    } else {
-      Permissions.with(this)
-        .request(Manifest.permission.CAMERA)
-        .ifNecessary()
-        .onAllGranted {
-          val intent = AvatarSelectionActivity.getIntentForCameraCapture(requireContext())
-          startActivityForResult(intent, REQUEST_CODE_SELECT_IMAGE)
-        }
-        .withRationaleDialog(getString(R.string.CameraXFragment_allow_access_camera), getString(R.string.CameraXFragment_to_capture_photos_allow_camera), R.drawable.symbol_camera_24)
-        .withPermanentDenialDialog(getString(R.string.AvatarSelectionBottomSheetDialogFragment__taking_a_photo_requires_the_camera_permission), null, R.string.CameraXFragment_allow_access_camera, R.string.CameraXFragment_to_capture_photos, getParentFragmentManager())
-        .onAnyDenied { Toast.makeText(requireContext(), R.string.AvatarSelectionBottomSheetDialogFragment__taking_a_photo_requires_the_camera_permission, Toast.LENGTH_SHORT).show() }
-        .execute()
-    }
+    val intent = AvatarSelectionActivity.getIntentForCameraCapture(requireContext())
+    startActivityForResult(intent, REQUEST_CODE_SELECT_IMAGE)
   }
 
   @Suppress("DEPRECATION")

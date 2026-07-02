@@ -12,10 +12,10 @@ import io.reactivex.rxjava3.core.Flowable
 import io.reactivex.rxjava3.core.Single
 import io.reactivex.rxjava3.disposables.Disposable
 import io.reactivex.rxjava3.kotlin.subscribeBy
+import org.signal.core.util.Debouncer
 import org.signal.core.util.Result
 import org.signal.core.util.isAbsent
 import org.thoughtcrime.securesms.keyvalue.SignalStore
-import org.thoughtcrime.securesms.util.Debouncer
 import org.thoughtcrime.securesms.util.delegate
 import org.thoughtcrime.securesms.util.rx.RxStore
 import java.util.Optional
@@ -88,7 +88,7 @@ class LinkPreviewViewModelV2(
       }
 
       val link: Optional<Link> = LinkPreviewUtil.findValidPreviewUrls(text).findFirst()
-      if (link.isPresent && link.get().url.equals(activeUrl)) {
+      if (link.isPresent && link.get().url == activeUrl) {
         return@publish
       }
 
@@ -100,7 +100,7 @@ class LinkPreviewViewModelV2(
         return@publish
       }
 
-      setLinkPreviewState(LinkPreviewState.forLoading())
+      setLinkPreviewState(LinkPreviewState.forLoading(link.get()))
 
       val activeUrl = link.get().url
       this.activeUrl = activeUrl

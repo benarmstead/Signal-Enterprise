@@ -16,8 +16,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -43,12 +41,12 @@ import androidx.fragment.app.setFragmentResult
 import kotlinx.coroutines.flow.map
 import org.signal.core.ui.compose.BottomSheets
 import org.signal.core.ui.compose.Buttons
-import org.signal.core.ui.compose.DarkPreview
+import org.signal.core.ui.compose.ComposeBottomSheetDialogFragment
+import org.signal.core.ui.compose.NightPreview
 import org.signal.core.ui.compose.Previews
 import org.thoughtcrime.securesms.R
 import org.thoughtcrime.securesms.components.AvatarImageView
 import org.thoughtcrime.securesms.components.webrtc.v2.WebRtcCallViewModel
-import org.thoughtcrime.securesms.compose.ComposeBottomSheetDialogFragment
 import org.thoughtcrime.securesms.dependencies.AppDependencies
 import org.thoughtcrime.securesms.recipients.Recipient
 import org.thoughtcrime.securesms.service.webrtc.PendingParticipantCollection
@@ -134,10 +132,10 @@ class PendingParticipantsBottomSheet : ComposeBottomSheetDialogFragment() {
   }
 }
 
-@DarkPreview
+@NightPreview
 @Composable
 private fun PendingParticipantsSheetPreview() {
-  Previews.BottomSheetPreview {
+  Previews.BottomSheetContentPreview {
     PendingParticipantsSheet(
       pendingParticipants = listOf(
         PendingParticipantCollection.State.PENDING,
@@ -322,7 +320,7 @@ private fun CircularIconButton(
 private fun PendingParticipantAvatar(recipient: Recipient) {
   if (LocalInspectionMode.current) {
     Icon(
-      imageVector = Icons.Default.Person,
+      imageVector = ImageVector.vectorResource(R.drawable.symbol_person_fill_24),
       contentDescription = null,
       modifier = Modifier
         .size(40.dp)

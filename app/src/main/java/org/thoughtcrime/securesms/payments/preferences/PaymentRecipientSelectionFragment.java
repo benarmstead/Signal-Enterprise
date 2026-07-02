@@ -12,11 +12,12 @@ import androidx.navigation.Navigation;
 
 import org.signal.core.util.concurrent.SimpleTask;
 import org.thoughtcrime.securesms.ContactSelectionListFragment;
-import org.thoughtcrime.securesms.LoggingFragment;
+import org.signal.core.ui.logging.LoggingFragment;
 import org.thoughtcrime.securesms.R;
 import org.thoughtcrime.securesms.components.ContactFilterView;
 import org.thoughtcrime.securesms.contacts.ContactSelectionDisplayMode;
 import org.thoughtcrime.securesms.contacts.paged.ChatType;
+import org.thoughtcrime.securesms.contacts.selection.ContactSelectionArguments;
 import org.thoughtcrime.securesms.conversation.ConversationIntents;
 import org.thoughtcrime.securesms.database.SignalDatabase;
 import org.thoughtcrime.securesms.payments.CanNotSendPaymentDialog;
@@ -25,13 +26,13 @@ import org.thoughtcrime.securesms.recipients.Recipient;
 import org.thoughtcrime.securesms.recipients.RecipientId;
 import org.thoughtcrime.securesms.util.ViewUtil;
 import org.thoughtcrime.securesms.util.navigation.SafeNavigation;
-import org.whispersystems.signalservice.api.util.ExpiringProfileCredentialUtil;
+import org.signal.core.util.ExpiringProfileCredentialUtil;
 
 import java.util.Optional;
 import java.util.function.Consumer;
 
 
-public class PaymentRecipientSelectionFragment extends LoggingFragment implements ContactSelectionListFragment.OnContactSelectedListener, ContactSelectionListFragment.ScrollCallback {
+public class PaymentRecipientSelectionFragment extends LoggingFragment implements ContactSelectionListFragment.OnContactSelectedListener {
 
   private Toolbar                      toolbar;
   private ContactFilterView            contactFilterView;
@@ -49,9 +50,9 @@ public class PaymentRecipientSelectionFragment extends LoggingFragment implement
     contactFilterView = view.findViewById(R.id.contact_filter_edit_text);
 
     Bundle arguments = new Bundle();
-    arguments.putBoolean(ContactSelectionListFragment.REFRESHABLE, false);
-    arguments.putInt(ContactSelectionListFragment.DISPLAY_MODE, ContactSelectionDisplayMode.FLAG_PUSH | ContactSelectionDisplayMode.FLAG_HIDE_NEW);
-    arguments.putBoolean(ContactSelectionListFragment.CAN_SELECT_SELF, false);
+    arguments.putBoolean(ContactSelectionArguments.REFRESHABLE, false);
+    arguments.putInt(ContactSelectionArguments.DISPLAY_MODE, ContactSelectionDisplayMode.FLAG_PUSH | ContactSelectionDisplayMode.FLAG_HIDE_NEW);
+    arguments.putBoolean(ContactSelectionArguments.CAN_SELECT_SELF, false);
 
     Fragment child = getChildFragmentManager().findFragmentById(R.id.contact_selection_list_fragment_holder);
     if (child == null) {
@@ -87,11 +88,6 @@ public class PaymentRecipientSelectionFragment extends LoggingFragment implement
 
   @Override
   public void onSelectionChanged() {
-  }
-
-  @Override
-  public void onBeginScroll() {
-    hideKeyboard();
   }
 
   private void hideKeyboard() {

@@ -6,23 +6,24 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.WorkerThread;
 
+import org.signal.core.models.ServiceId;
 import org.signal.core.util.logging.Log;
 import org.signal.libsignal.zkgroup.VerificationFailedException;
 import org.signal.libsignal.zkgroup.groups.GroupMasterKey;
 import org.signal.libsignal.zkgroup.groups.GroupSecretParams;
 import org.signal.libsignal.zkgroup.groups.UuidCiphertext;
-import org.signal.storageservice.protos.groups.GroupExternalCredential;
-import org.signal.storageservice.protos.groups.local.DecryptedGroupJoinInfo;
+import org.signal.storageservice.storage.protos.groups.ExternalGroupCredential;
+import org.signal.storageservice.storage.protos.groups.local.DecryptedGroupJoinInfo;
 import org.thoughtcrime.securesms.database.GroupTable;
 import org.thoughtcrime.securesms.database.SignalDatabase;
 import org.thoughtcrime.securesms.database.model.GroupRecord;
 import org.thoughtcrime.securesms.groups.v2.GroupInviteLinkUrl;
 import org.thoughtcrime.securesms.groups.v2.GroupLinkPassword;
 import org.thoughtcrime.securesms.groups.v2.processing.GroupUpdateResult;
+import org.thoughtcrime.securesms.jobs.ConversationShortcutUpdateJob;
 import org.thoughtcrime.securesms.recipients.Recipient;
 import org.thoughtcrime.securesms.recipients.RecipientId;
 import org.whispersystems.signalservice.api.groupsv2.GroupLinkNotActiveException;
-import org.whispersystems.signalservice.api.push.ServiceId;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -72,6 +73,24 @@ public final class GroupManager {
                                                 descriptionChanged ? description : null,
                                                 avatar,
                                                 avatarChanged);
+    }
+  }
+
+  @WorkerThread
+  public static void terminateGroup(@NonNull Context context, @NonNull GroupId.V2 groupId)
+      throws GroupChangeBusyException, GroupChangeFailedException, IOException
+  {
+    try (GroupManagerV2.GroupEditor edit = new GroupManagerV2(context).edit(groupId.requireV2())) {
+      edit.terminateGroup();
+      SignalDatabase.groups().setTerminatedBy(groupId, Recipient.self().getId());
+      ConversationShortcutUpdateJob.enqueue();
+      Log.i(TAG, "Terminated group " + groupId);
+    } catch (GroupInsufficientRightsException e) {
+      Log.w(TAG, "Insufficient rights to terminate " + groupId, e);
+      throw new GroupChangeFailedException(e);
+    } catch (GroupNotAMemberException e) {
+      Log.w(TAG, "Not a member of " + groupId, e);
+      throw new GroupChangeFailedException(e);
     }
   }
 
@@ -216,7 +235,7 @@ public final class GroupManager {
   {
     try (GroupManagerV2.GroupEditor editor = new GroupManagerV2(context).edit(groupId.requireV2())) {
       editor.acceptInvite();
-      SignalDatabase.groups().setActive(groupId, true);
+      SignalDatabase.groups().setMember(groupId, true);
     }
   }
 
@@ -230,6 +249,19 @@ public final class GroupManager {
 
     try (GroupManagerV2.GroupEditor editor = new GroupManagerV2(context).edit(groupId.requireV2())) {
       editor.updateGroupTimer(expirationTime);
+    }
+  }
+
+  @WorkerThread
+  public static void updateMemberLabel(@NonNull Context context, @NonNull GroupId.V2 groupId, @NonNull String labelString, @NonNull String labelEmoji)
+      throws GroupChangeFailedException, GroupInsufficientRightsException, IOException, GroupNotAMemberException, GroupChangeBusyException
+  {
+    if (!groupId.isV2()) {
+      throw new GroupChangeFailedException("Not gv2");
+    }
+
+    try (GroupManagerV2.GroupEditor editor = new GroupManagerV2(context).edit(groupId)) {
+      editor.updateMemberLabel(labelString, labelEmoji);
     }
   }
 
@@ -283,6 +315,17 @@ public final class GroupManager {
   {
     try (GroupManagerV2.GroupEditor editor = new GroupManagerV2(context).edit(groupId.requireV2())) {
       editor.updateAttributesRights(newRights);
+    }
+  }
+
+  @WorkerThread
+  public static void applyMemberLabelRightsChange(@NonNull Context context,
+                                                  @NonNull GroupId.V2 groupId,
+                                                  @NonNull GroupAccessControl newRights)
+      throws GroupChangeFailedException, GroupInsufficientRightsException, IOException, GroupNotAMemberException, GroupChangeBusyException
+  {
+    try (GroupManagerV2.GroupEditor editor = new GroupManagerV2(context).edit(groupId.requireV2())) {
+      editor.updateMemberLabelRights(newRights);
     }
   }
 
@@ -395,11 +438,11 @@ public final class GroupManager {
   }
 
   @WorkerThread
-  public static @NonNull GroupExternalCredential getGroupExternalCredential(@NonNull Context context,
+  public static @NonNull ExternalGroupCredential getExternalGroupCredential(@NonNull Context context,
                                                                             @NonNull GroupId.V2 groupId)
       throws IOException, VerificationFailedException
   {
-    return new GroupManagerV2(context).getGroupExternalCredential(groupId);
+    return new GroupManagerV2(context).getExternalGroupCredential(groupId);
   }
 
   @WorkerThread

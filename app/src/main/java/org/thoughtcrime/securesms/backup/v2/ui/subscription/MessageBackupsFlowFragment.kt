@@ -29,20 +29,21 @@ import com.google.android.gms.common.GoogleApiAvailability
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.rx3.asFlowable
+import org.signal.core.ui.compose.ComposeFragment
 import org.signal.core.ui.compose.Dialogs
+import org.signal.core.util.Util
 import org.signal.core.util.concurrent.SignalDispatchers
 import org.signal.core.util.getSerializableCompat
 import org.thoughtcrime.securesms.R
 import org.thoughtcrime.securesms.backup.DeletionState
 import org.thoughtcrime.securesms.backup.v2.MessageBackupTier
 import org.thoughtcrime.securesms.components.settings.app.subscription.donate.InAppPaymentCheckoutDelegate
-import org.thoughtcrime.securesms.compose.ComposeFragment
 import org.thoughtcrime.securesms.compose.Nav
 import org.thoughtcrime.securesms.database.InAppPaymentTable
 import org.thoughtcrime.securesms.dependencies.AppDependencies
+import org.thoughtcrime.securesms.keyvalue.SignalStore
 import org.thoughtcrime.securesms.util.CommunicationActions
 import org.thoughtcrime.securesms.util.PlayStoreUtil
-import org.thoughtcrime.securesms.util.Util
 import org.thoughtcrime.securesms.util.storage.AndroidCredentialRepository
 import org.thoughtcrime.securesms.util.viewModel
 
@@ -67,7 +68,8 @@ class MessageBackupsFlowFragment : ComposeFragment(), InAppPaymentCheckoutDelega
   private val viewModel: MessageBackupsFlowViewModel by viewModel {
     MessageBackupsFlowViewModel(
       initialTierSelection = requireArguments().getSerializableCompat(TIER, MessageBackupTier::class.java),
-      googlePlayApiAvailability = GoogleApiAvailability.getInstance().isGooglePlayServicesAvailable(requireContext())
+      googlePlayApiAvailability = GoogleApiAvailability.getInstance().isGooglePlayServicesAvailable(requireContext()),
+      isCredentialManagerSupported = AndroidCredentialRepository.isCredentialManagerSupported(requireContext())
     )
   }
 
@@ -133,7 +135,7 @@ class MessageBackupsFlowFragment : ComposeFragment(), InAppPaymentCheckoutDelega
           onNavigationClick = viewModel::goToPreviousStage,
           onEnableBackups = viewModel::goToNextStage,
           onLearnMore = {
-            CommunicationActions.openBrowserLink(requireContext(), getString(R.string.backup_support_url))
+            CommunicationActions.openBrowserLink(requireContext(), getString(R.string.remote_backup_support_url))
           }
         )
       }
@@ -141,11 +143,42 @@ class MessageBackupsFlowFragment : ComposeFragment(), InAppPaymentCheckoutDelega
       composable(route = MessageBackupsStage.Route.BACKUP_KEY_EDUCATION.name) {
         MessageBackupsKeyEducationScreen(
           onNavigationClick = viewModel::goToPreviousStage,
-          onNextClick = viewModel::goToNextStage
+          onNextClick = viewModel::goToNextStage,
+          mode = if (SignalStore.backup.newLocalBackupsEnabled) {
+            MessageBackupsKeyEducationScreenMode.REMOTE_WITH_LOCAL_ENABLED
+          } else {
+            MessageBackupsKeyEducationScreenMode.DEFAULT
+          }
         )
       }
 
       composable(route = MessageBackupsStage.Route.BACKUP_KEY_RECORD.name) {
+        val context = LocalContext.current
+        val passwordManagerSettingsIntent = AndroidCredentialRepository.getCredentialManagerSettingsIntent(requireContext())
+
+        MessageBackupsKeyRecordScreen(
+          backupKey = state.accountEntropyPool.displayValue,
+          keySaveState = state.backupKeySaveState,
+          canOpenPasswordManagerSettings = passwordManagerSettingsIntent != null,
+          onNavigationClick = viewModel::goToPreviousStage,
+          mode = remember {
+            MessageBackupsKeyRecordMode.Passkey(
+              onSaveToPasswordManager = viewModel::onBackupKeySaveRequested,
+              onSaveManually = viewModel::goToRecordManually,
+              onSaveSuccessful = viewModel::goToNextStage
+            )
+          },
+          onCopyToClipboardClick = { Util.copyToClipboard(context, it, CLIPBOARD_TIMEOUT_SECONDS) },
+          onRequestSaveToPasswordManager = viewModel::onBackupKeySaveRequested,
+          onConfirmSaveToPasswordManager = viewModel::onBackupKeySaveConfirmed,
+          onSaveStateCleared = viewModel::onBackupKeySaveStateCleared,
+          onSaveToPasswordManagerComplete = viewModel::onBackupKeySaveCompleted,
+          onGoToPasswordManagerSettingsClick = { requireContext().startActivity(passwordManagerSettingsIntent) },
+          notifyKeyIsSameAsOnDeviceBackupKey = SignalStore.backup.newLocalBackupsEnabled
+        )
+      }
+
+      composable(route = MessageBackupsStage.Route.BACKUP_KEY_RECORD_MANUALLY.name) {
         val context = LocalContext.current
         val passwordManagerSettingsIntent = AndroidCredentialRepository.getCredentialManagerSettingsIntent(requireContext())
 
@@ -159,7 +192,8 @@ class MessageBackupsFlowFragment : ComposeFragment(), InAppPaymentCheckoutDelega
           onRequestSaveToPasswordManager = viewModel::onBackupKeySaveRequested,
           onConfirmSaveToPasswordManager = viewModel::onBackupKeySaveConfirmed,
           onSaveToPasswordManagerComplete = viewModel::onBackupKeySaveCompleted,
-          onGoToPasswordManagerSettingsClick = { requireContext().startActivity(passwordManagerSettingsIntent) }
+          onGoToPasswordManagerSettingsClick = { requireContext().startActivity(passwordManagerSettingsIntent) },
+          notifyKeyIsSameAsOnDeviceBackupKey = SignalStore.backup.newLocalBackupsEnabled
         )
       }
 
@@ -183,7 +217,7 @@ class MessageBackupsFlowFragment : ComposeFragment(), InAppPaymentCheckoutDelega
           onReadMoreClicked = {
             CommunicationActions.openBrowserLink(
               requireContext(),
-              getString(R.string.backup_support_url)
+              getString(R.string.remote_backup_support_url)
             )
           },
           onNextClicked = viewModel::goToNextStage,
@@ -192,7 +226,7 @@ class MessageBackupsFlowFragment : ComposeFragment(), InAppPaymentCheckoutDelega
           onLearnMoreAboutWhyUserCanNotUpgrade = {
             CommunicationActions.openBrowserLink(
               requireContext(),
-              getString(R.string.backup_support_url)
+              getString(R.string.remote_backup_support_url)
             )
           },
           onMakeGooglePlayServicesAvailable = {

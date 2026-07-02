@@ -13,8 +13,8 @@ import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import org.signal.core.ui.logging.LoggingFragment
 import org.signal.core.util.logging.Log
-import org.thoughtcrime.securesms.LoggingFragment
 import org.thoughtcrime.securesms.R
 import org.thoughtcrime.securesms.components.ViewBinderDelegate
 import org.thoughtcrime.securesms.databinding.FragmentRegistrationPinRestoreEntryV2Binding
@@ -24,6 +24,7 @@ import org.thoughtcrime.securesms.registration.fragments.RegistrationViewDelegat
 import org.thoughtcrime.securesms.registration.ui.RegistrationCheckpoint
 import org.thoughtcrime.securesms.registration.ui.RegistrationState
 import org.thoughtcrime.securesms.registration.ui.RegistrationViewModel
+import org.thoughtcrime.securesms.registration.ui.phonenumber.EnterPhoneNumberMode
 import org.thoughtcrime.securesms.util.CommunicationActions
 import org.thoughtcrime.securesms.util.SupportEmailUtil
 import org.thoughtcrime.securesms.util.ViewUtil
@@ -79,7 +80,7 @@ class ReRegisterWithPinFragment : LoggingFragment(R.layout.fragment_registration
       genericErrorDialog()
       registrationViewModel.networkErrorShown()
     } else if (!state.canSkipSms) {
-      findNavController().safeNavigate(ReRegisterWithPinFragmentDirections.actionReRegisterWithPinFragmentToEnterPhoneNumberFragment())
+      findNavController().safeNavigate(ReRegisterWithPinFragmentDirections.actionReRegisterWithPinFragmentToEnterPhoneNumberFragment(EnterPhoneNumberMode.NORMAL))
       registrationViewModel.setInProgress(false)
     } else if (state.isRegistrationLockEnabled && state.svrTriesRemaining == 0) {
       Log.w(TAG, "Unable to continue skip flow, KBS is locked")
@@ -261,7 +262,7 @@ class ReRegisterWithPinFragment : LoggingFragment(R.layout.fragment_registration
 
       is RegisterAccountResult.IncorrectRecoveryPassword -> {
         registrationViewModel.setUserSkippedReRegisterFlow(true)
-        findNavController().safeNavigate(ReRegisterWithPinFragmentDirections.actionReRegisterWithPinFragmentToEnterPhoneNumberFragment())
+        findNavController().safeNavigate(ReRegisterWithPinFragmentDirections.actionReRegisterWithPinFragmentToEnterPhoneNumberFragment(EnterPhoneNumberMode.NORMAL))
       }
 
       is RegisterAccountResult.AttemptsExhausted,

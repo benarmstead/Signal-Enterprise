@@ -1,6 +1,6 @@
 package org.thoughtcrime.securesms.components.settings.app.data
 
-import org.thoughtcrime.securesms.mms.SentMediaQuality
+import org.signal.mediasend.SentMediaQuality
 import org.thoughtcrime.securesms.webrtc.CallDataMode
 
 data class DataAndStorageSettingsState(
@@ -10,5 +10,8 @@ data class DataAndStorageSettingsState(
   val roamingAutoDownloadValues: Set<String>,
   val callDataMode: CallDataMode,
   val isProxyEnabled: Boolean,
-  val sentMediaQuality: SentMediaQuality
+  val sentMediaQuality: SentMediaQuality,
+  val forceWebsocketMode: Boolean,
+  val playServicesAvailable: Boolean,
+  val showStayConnectedDialog: Boolean
 )

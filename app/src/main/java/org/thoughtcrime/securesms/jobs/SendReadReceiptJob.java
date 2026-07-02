@@ -9,27 +9,30 @@ import org.signal.core.util.ListUtil;
 import org.signal.core.util.logging.Log;
 import org.thoughtcrime.securesms.crypto.SealedSenderAccessUtil;
 import org.thoughtcrime.securesms.database.MessageTable.MarkedMessageInfo;
+import org.thoughtcrime.securesms.database.RecipientTable.RegisteredState;
 import org.thoughtcrime.securesms.database.SignalDatabase;
 import org.thoughtcrime.securesms.database.model.MessageId;
+import org.thoughtcrime.securesms.database.model.RecipientRecord;
 import org.thoughtcrime.securesms.dependencies.AppDependencies;
 import org.thoughtcrime.securesms.jobmanager.Job;
 import org.thoughtcrime.securesms.jobmanager.JobManager;
 import org.thoughtcrime.securesms.jobmanager.JsonJobData;
 import org.thoughtcrime.securesms.jobmanager.impl.NetworkConstraint;
+import org.thoughtcrime.securesms.jobmanager.impl.SealedSenderConstraint;
 import org.thoughtcrime.securesms.net.NotPushRegisteredException;
 import org.thoughtcrime.securesms.recipients.Recipient;
 import org.thoughtcrime.securesms.recipients.RecipientId;
 import org.thoughtcrime.securesms.recipients.RecipientUtil;
 import org.thoughtcrime.securesms.transport.UndeliverableMessageException;
 import org.thoughtcrime.securesms.util.TextSecurePreferences;
-import org.thoughtcrime.securesms.util.Util;
+import org.signal.core.util.Util;
 import org.whispersystems.signalservice.api.SignalServiceMessageSender;
 import org.whispersystems.signalservice.api.crypto.ContentHint;
 import org.whispersystems.signalservice.api.crypto.UntrustedIdentityException;
 import org.whispersystems.signalservice.api.messages.SendMessageResult;
 import org.whispersystems.signalservice.api.messages.SignalServiceReceiptMessage;
 import org.whispersystems.signalservice.api.push.SignalServiceAddress;
-import org.whispersystems.signalservice.api.push.exceptions.PushNetworkException;
+import org.signal.network.exceptions.PushNetworkException;
 import org.whispersystems.signalservice.api.push.exceptions.ServerRejectedException;
 
 import java.io.IOException;
@@ -63,11 +66,12 @@ public class SendReadReceiptJob extends BaseJob {
   @VisibleForTesting
   public SendReadReceiptJob(long threadId, @NonNull RecipientId recipientId, List<Long> messageSentTimestamps, List<MessageId> messageIds) {
     this(new Job.Parameters.Builder()
-                           .addConstraint(NetworkConstraint.KEY)
-                           .setLifespan(TimeUnit.DAYS.toMillis(1))
-                           .setMaxAttempts(Parameters.UNLIMITED)
-                           .setQueue(recipientId.toQueueKey())
-                           .build(),
+             .addConstraint(NetworkConstraint.KEY)
+             .addConstraint(SealedSenderConstraint.KEY)
+             .setLifespan(TimeUnit.DAYS.toMillis(1))
+             .setMaxAttempts(Parameters.UNLIMITED)
+             .setQueue(recipientId.toQueueKey())
+             .build(),
          threadId,
          recipientId,
          ensureSize(messageSentTimestamps, MAX_TIMESTAMPS),
@@ -152,14 +156,14 @@ public class SendReadReceiptJob extends BaseJob {
 
     if (!TextSecurePreferences.isReadReceiptsEnabled(context) || messageSentTimestamps.isEmpty()) return;
 
-    if (!RecipientUtil.isMessageRequestAccepted(context, threadId)) {
+    if (!RecipientUtil.isMessageRequestAccepted(threadId)) {
       Log.w(TAG, "Refusing to send receipts to untrusted recipient");
       return;
     }
 
-    Recipient recipient = Recipient.resolved(recipientId);
+    RecipientRecord recipient = SignalDatabase.recipients().getRecord(recipientId);
 
-    if (recipient.isSelf()) {
+    if (recipient.getId().equals(Recipient.self().getId())) {
       Log.i(TAG, "Not sending to self, aborting.");
     }
 
@@ -168,37 +172,37 @@ public class SendReadReceiptJob extends BaseJob {
       return;
     }
 
-    if (recipient.isGroup()) {
+    if (recipient.getGroupId() != null) {
       Log.w(TAG, "Refusing to send receipts to group");
       return;
     }
 
-    if (recipient.isDistributionList()) {
+    if (recipient.getDistributionListId() != null) {
       Log.w(TAG, "Refusing to send receipts to distribution list");
       return;
     }
 
-    if (recipient.isUnregistered()) {
+    if (recipient.getRegistered() == RegisteredState.NOT_REGISTERED) {
       Log.w(TAG, recipient.getId() + " not registered!");
       return;
     }
 
-    if (!recipient.getHasServiceId() && !recipient.getHasE164()) {
+    if (recipient.getServiceId() == null && recipient.getE164() == null) {
       Log.w(TAG, "No serviceId or e164!");
       return;
     }
 
     SignalServiceMessageSender  messageSender  = AppDependencies.getSignalServiceMessageSender();
-    SignalServiceAddress        remoteAddress  = RecipientUtil.toSignalServiceAddress(context, recipient);
+    SignalServiceAddress        remoteAddress  = RecipientUtil.toSignalServiceAddress(recipient);
     SignalServiceReceiptMessage receiptMessage = new SignalServiceReceiptMessage(SignalServiceReceiptMessage.Type.READ, messageSentTimestamps, timestamp);
 
-    SendMessageResult result = messageSender.sendReceipt(remoteAddress,
-                                                         SealedSenderAccessUtil.getSealedSenderAccessFor(recipient,
-                                                                                                         () -> SignalDatabase.groups().getGroupSendFullToken(threadId, recipientId)),
-                                                         receiptMessage,
-                                                         recipient.getNeedsPniSignature());
+    SendMessageResult result = ReceiptSender.sendWithSessionRepair(recipientId, () -> messageSender.sendReceipt(remoteAddress,
+                                                                                                                SealedSenderAccessUtil.getSealedSenderAccessFor(recipient,
+                                                                                                                                                                () -> SignalDatabase.groups().getGroupSendFullToken(threadId, recipientId)),
+                                                                                                                receiptMessage,
+                                                                                                                recipient.needsPniSignature()));
 
-    if (Util.hasItems(messageIds)) {
+    if (result != null && Util.hasItems(messageIds)) {
       SignalDatabase.messageLog().insertIfPossible(recipientId, timestamp, result, ContentHint.IMPLICIT, messageIds, false);
     }
   }

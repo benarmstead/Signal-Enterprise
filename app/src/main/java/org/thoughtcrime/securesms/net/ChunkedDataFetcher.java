@@ -4,13 +4,12 @@ import android.text.TextUtils;
 
 import androidx.annotation.NonNull;
 
-import com.annimon.stream.Stream;
+import java.util.stream.Collectors;
 import com.bumptech.glide.util.ContentLengthInputStream;
 
 import org.signal.core.util.concurrent.SignalExecutors;
 import org.signal.core.util.logging.Log;
-import org.signal.libsignal.protocol.util.Pair;
-import org.thoughtcrime.securesms.util.Util;
+import org.signal.core.util.Util;
 
 import java.io.FilterInputStream;
 import java.io.IOException;
@@ -20,6 +19,8 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
+
+import kotlin.Pair;
 
 import okhttp3.CacheControl;
 import okhttp3.Call;
@@ -137,11 +138,10 @@ public class ChunkedDataFetcher {
     List<ByteRange> requestPattern;
     try {
       if (firstChunk.isPresent()) {
-        requestPattern = Stream.of(getRequestPattern(contentLength - firstChunk.get().second()))
-                               .map(b -> new ByteRange(b.start + firstChunk.get().second(),
-                                                       b.end   + firstChunk.get().second(),
-                                                       b.ignoreFirst))
-                               .toList();
+        requestPattern = getRequestPattern(contentLength - firstChunk.get().getSecond()).stream()
+                                                                                        .map(b -> new ByteRange(b.start + firstChunk.get().getSecond(),
+                                                       b.end   + firstChunk.get().getSecond(),
+                                                       b.ignoreFirst)).collect(Collectors.toList());
       } else {
         requestPattern = getRequestPattern(contentLength);
       }
@@ -152,14 +152,14 @@ public class ChunkedDataFetcher {
     }
 
     SignalExecutors.UNBOUNDED.execute(() -> {
-      List<CallRequestController> controllers = Stream.of(requestPattern).map(range -> makeChunkRequest(client, url, range)).toList();
+      List<CallRequestController> controllers = requestPattern.stream().map(range -> makeChunkRequest(client, url, range)).collect(Collectors.toList());
       List<InputStream>           streams     = new ArrayList<>(controllers.size() + (firstChunk.isPresent() ? 1 : 0));
 
       if (firstChunk.isPresent()) {
-        streams.add(firstChunk.get().first());
+        streams.add(firstChunk.get().getFirst());
       }
 
-      Stream.of(controllers).forEach(compositeController::addController);
+      controllers.stream().forEach(compositeController::addController);
 
       for (CallRequestController controller : controllers) {
         Optional<InputStream> stream = controller.getStream();

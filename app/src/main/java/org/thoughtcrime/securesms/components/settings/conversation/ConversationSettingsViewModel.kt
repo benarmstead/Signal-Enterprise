@@ -26,11 +26,15 @@ import org.thoughtcrime.securesms.components.settings.conversation.preferences.C
 import org.thoughtcrime.securesms.components.settings.conversation.preferences.LegacyGroupPreference
 import org.thoughtcrime.securesms.database.MediaTable
 import org.thoughtcrime.securesms.database.RecipientTable
+import org.thoughtcrime.securesms.database.RxDatabaseObserver
 import org.thoughtcrime.securesms.database.model.StoryViewState
 import org.thoughtcrime.securesms.dependencies.AppDependencies
 import org.thoughtcrime.securesms.groups.GroupId
 import org.thoughtcrime.securesms.groups.LiveGroup
+import org.thoughtcrime.securesms.groups.SelectionLimits
+import org.thoughtcrime.securesms.groups.memberlabel.MemberLabelRepository
 import org.thoughtcrime.securesms.groups.ui.GroupChangeFailureReason
+import org.thoughtcrime.securesms.groups.ui.GroupMemberEntry
 import org.thoughtcrime.securesms.groups.v2.GroupAddMembersResult
 import org.thoughtcrime.securesms.keyvalue.SignalStore
 import org.thoughtcrime.securesms.messagerequests.MessageRequestRepository
@@ -76,10 +80,6 @@ sealed class ConversationSettingsViewModel(
       } ?: emptyList()
     }
 
-    store.update(repository.getCallEvents(callMessageIds).toObservable()) { callRecords, state ->
-      state.copy(calls = callRecords.map { (call, messageRecord) -> CallPreference.Model(call, messageRecord) })
-    }
-
     store.update(sharedMedia) { mediaRecords, state ->
       if (!cleared) {
         state.copy(
@@ -96,6 +96,17 @@ sealed class ConversationSettingsViewModel(
 
   fun refreshSharedMedia() {
     sharedMediaUpdateTrigger.postValue(Unit)
+  }
+
+  fun observeConversationForCallUpdates(threadId: Long) {
+    disposable += RxDatabaseObserver.conversation(threadId)
+      .toObservable()
+      .switchMapSingle { repository.getCallEvents(callMessageIds) }
+      .subscribe { callRecords ->
+        store.update { state ->
+          state.copy(calls = callRecords.map { (call, messageRecord) -> CallPreference.Model(call, messageRecord) })
+        }
+      }
   }
 
   fun onReportSpam(): Maybe<Unit> {
@@ -139,6 +150,26 @@ sealed class ConversationSettingsViewModel(
     cleared = true
     store.clear()
     disposable.clear()
+  }
+
+  fun toggleArchive() {
+    val state = store.state
+    if (state.threadId > 0) {
+      val newArchived = !state.isArchived
+      store.update { it.copy(isArchived = newArchived) }
+      viewModelScope.launch(SignalDispatchers.IO) {
+        repository.setArchived(state.threadId, newArchived)
+      }
+    }
+  }
+
+  suspend fun deleteChat() {
+    withContext(SignalDispatchers.IO) {
+      val threadId = store.state.threadId
+      if (threadId > 0) {
+        repository.deleteChat(threadId)
+      }
+    }
   }
 
   private class RecipientSettingsViewModel(
@@ -195,6 +226,7 @@ sealed class ConversationSettingsViewModel(
         store.update { state ->
           state.copy(threadId = threadId)
         }
+        observeConversationForCallUpdates(threadId)
       }
 
       if (recipientId != Recipient.self().id) {
@@ -296,21 +328,21 @@ sealed class ConversationSettingsViewModel(
         store.update { it.copy(storyViewState = storyViewState) }
       }
 
-      val recipientAndIsActive = LiveDataUtil.combineLatest(liveGroup.groupRecipient, liveGroup.isActive) { r, a -> r to a }
-      store.update(recipientAndIsActive) { (recipient, isActive), state ->
+      store.update(liveGroup.groupRecipient) { recipient, state ->
         state.copy(
           recipient = recipient,
           buttonStripState = ButtonStripPreference.State(
             isMessageAvailable = callMessageIds.isNotEmpty(),
-            isVideoAvailable = recipient.isPushV2Group && !recipient.isBlocked && isActive,
+            isVideoAvailable = recipient.isPushV2Group && !recipient.isBlocked && recipient.isActiveGroup,
             isAudioAvailable = false,
             isAudioSecure = recipient.isPushV2Group,
             isMuted = recipient.isMuted,
             isMuteAvailable = true,
             isSearchAvailable = callMessageIds.isEmpty(),
-            isAddToStoryAvailable = recipient.isPushV2Group && !recipient.isBlocked && isActive && !SignalStore.story.isFeatureDisabled
+            isAddToStoryAvailable = recipient.isPushV2Group && !recipient.isBlocked && recipient.isActiveGroup && !SignalStore.story.isFeatureDisabled
           ),
           canModifyBlockedState = RecipientUtil.isBlockable(recipient),
+          isArchived = repository.isArchived(recipient.id),
           specificSettingsState = state.requireGroupSettingsState().copy(
             legacyGroupState = getLegacyGroupState()
           )
@@ -321,6 +353,7 @@ sealed class ConversationSettingsViewModel(
         store.update { state ->
           state.copy(threadId = threadId)
         }
+        observeConversationForCallUpdates(threadId)
       }
 
       store.update(liveGroup.selfCanEditGroupAttributes()) { selfCanEditGroupAttributes, state ->
@@ -357,6 +390,11 @@ sealed class ConversationSettingsViewModel(
         val groupState = state.requireGroupSettingsState()
         val canShowMore = !groupState.groupMembersExpanded && fullMembers.size > 6
 
+        if (groupId.isV2) {
+          loadMemberLabels(groupId.requireV2(), fullMembers)
+          loadCanSetMemberLabel(groupId.requireV2())
+        }
+
         state.copy(
           specificSettingsState = groupState.copy(
             allMembers = fullMembers,
@@ -390,7 +428,16 @@ sealed class ConversationSettingsViewModel(
       store.update(liveGroup.isActive) { isActive, state ->
         state.copy(
           specificSettingsState = state.requireGroupSettingsState().copy(
+            isActive = isActive,
             canLeave = isActive && groupId.isPush
+          )
+        )
+      }
+
+      store.update(liveGroup.isTerminated) { isTerminated, state ->
+        state.copy(
+          specificSettingsState = state.requireGroupSettingsState().copy(
+            isTerminated = isTerminated
           )
         )
       }
@@ -435,9 +482,7 @@ sealed class ConversationSettingsViewModel(
           internalEvents.onNext(
             ConversationSettingsEvent.AddMembersToGroup(
               groupId,
-              capacityResult.getSelectionWarning(),
-              capacityResult.getSelectionLimit(),
-              capacityResult.isAnnouncementGroup,
+              SelectionLimits(capacityResult.getSelectionWarning(), capacityResult.getSelectionLimit()),
               capacityResult.getMembersWithoutSelf()
             )
           )
@@ -501,6 +546,30 @@ sealed class ConversationSettingsViewModel(
 
     override fun unblock() {
       repository.unblock(groupId)
+    }
+
+    private fun loadMemberLabels(v2GroupId: GroupId.V2, groupMembers: List<GroupMemberEntry.FullMember>) = viewModelScope.launch(SignalDispatchers.IO) {
+      val labelsByRecipientId = MemberLabelRepository.instance
+        .getLabels(v2GroupId, groupMembers.map { it.member })
+
+      store.update { state ->
+        state.copy(
+          specificSettingsState = state.requireGroupSettingsState().copy(
+            memberLabelsByRecipientId = labelsByRecipientId
+          )
+        )
+      }
+    }
+
+    private fun loadCanSetMemberLabel(groupId: GroupId.V2) = viewModelScope.launch(SignalDispatchers.IO) {
+      val canSetLabel = MemberLabelRepository.instance.canSetLabel(groupId, Recipient.self())
+      store.update {
+        it.copy(
+          specificSettingsState = it.requireGroupSettingsState().copy(
+            canSetOwnMemberLabel = canSetLabel
+          )
+        )
+      }
     }
   }
 

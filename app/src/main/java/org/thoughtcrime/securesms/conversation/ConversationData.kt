@@ -1,7 +1,7 @@
 package org.thoughtcrime.securesms.conversation
 
+import org.signal.core.models.ServiceId
 import org.thoughtcrime.securesms.recipients.Recipient
-import org.whispersystems.signalservice.api.push.ServiceId
 
 /**
  * Represents metadata about a conversation.
@@ -9,8 +9,8 @@ import org.whispersystems.signalservice.api.push.ServiceId
 data class ConversationData(
   val threadRecipient: Recipient,
   val threadId: Long,
-  val lastSeen: Long,
-  val lastSeenPosition: Int,
+  val firstUnreadId: Long,
+  val firstUnreadPosition: Int,
   val lastScrolledPosition: Int,
   val jumpToPosition: Int,
   val threadSize: Int,
@@ -24,14 +24,14 @@ data class ConversationData(
     return jumpToPosition >= 0
   }
 
-  fun shouldScrollToLastSeen(): Boolean {
-    return lastSeenPosition > 0
+  fun shouldScrollToFirstUnread(): Boolean {
+    return firstUnreadPosition > 0
   }
 
   fun getStartPosition(): Int {
     return when {
       shouldJumpToMessage() -> jumpToPosition
-      messageRequestData.isMessageRequestAccepted && shouldScrollToLastSeen() -> lastSeenPosition
+      messageRequestData.isMessageRequestAccepted && shouldScrollToFirstUnread() -> firstUnreadPosition
       messageRequestData.isMessageRequestAccepted -> lastScrolledPosition
       else -> threadSize
     }

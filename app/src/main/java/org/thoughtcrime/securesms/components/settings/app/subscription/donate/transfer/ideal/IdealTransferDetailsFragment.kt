@@ -25,10 +25,8 @@ import androidx.compose.ui.Alignment.Companion.CenterHorizontally
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.focus.onFocusChanged
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
@@ -45,20 +43,24 @@ import androidx.navigation.fragment.navArgs
 import androidx.navigation.navGraphViewModels
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import org.signal.core.ui.compose.Buttons
+import org.signal.core.ui.compose.ComposeFragment
+import org.signal.core.ui.compose.Previews
 import org.signal.core.ui.compose.Scaffolds
+import org.signal.core.ui.compose.SignalIcons
 import org.signal.core.ui.compose.Texts
 import org.signal.core.util.getParcelableCompat
+import org.signal.donations.InAppPaymentType
 import org.thoughtcrime.securesms.R
 import org.thoughtcrime.securesms.components.TemporaryScreenshotSecurity
 import org.thoughtcrime.securesms.components.settings.app.subscription.DonationSerializationHelper.toFiatMoney
 import org.thoughtcrime.securesms.components.settings.app.subscription.donate.InAppPaymentCheckoutDelegate
 import org.thoughtcrime.securesms.components.settings.app.subscription.donate.InAppPaymentProcessorAction
 import org.thoughtcrime.securesms.components.settings.app.subscription.donate.InAppPaymentProcessorActionResult
+import org.thoughtcrime.securesms.components.settings.app.subscription.donate.gateway.createInAppPaymentPreview
 import org.thoughtcrime.securesms.components.settings.app.subscription.donate.stripe.StripePaymentInProgressFragment
 import org.thoughtcrime.securesms.components.settings.app.subscription.donate.stripe.StripePaymentInProgressViewModel
 import org.thoughtcrime.securesms.components.settings.app.subscription.donate.transfer.BankTransferRequestKeys
 import org.thoughtcrime.securesms.components.settings.app.subscription.donate.transfer.ideal.IdealTransferDetailsViewModel.Field
-import org.thoughtcrime.securesms.compose.ComposeFragment
 import org.thoughtcrime.securesms.database.InAppPaymentTable
 import org.thoughtcrime.securesms.payments.FiatMoneyUtil
 import org.thoughtcrime.securesms.util.SpanUtil
@@ -154,7 +156,7 @@ class IdealTransferDetailsFragment : ComposeFragment(), InAppPaymentCheckoutDele
     if (state.inAppPayment!!.type.recurring) { // TODO [message-requests] -- handle backup
       val formattedMoney = FiatMoneyUtil.format(requireContext().resources, state.inAppPayment.data.amount!!.toFiatMoney(), FiatMoneyUtil.formatOptions().trimZerosAfterDecimal())
       MaterialAlertDialogBuilder(requireContext())
-        .setTitle(getString(R.string.IdealTransferDetailsFragment__confirm_your_donation_with_ideal))
+        .setTitle(getString(R.string.IdealTransferDetailsFragment__confirm_your_donation_with_ideal_wero))
         .setMessage(getString(R.string.IdealTransferDetailsFragment__to_setup_your_recurring_donation, formattedMoney))
         .setPositiveButton(R.string.IdealTransferDetailsFragment__continue) { _, _ ->
           continueTransfer()
@@ -190,19 +192,25 @@ class IdealTransferDetailsFragment : ComposeFragment(), InAppPaymentCheckoutDele
 
 @Preview
 @Composable
-private fun IdealTransferDetailsContentPreview() {
-  IdealTransferDetailsContent(
-    state = IdealTransferDetailsState(),
-    idealDirections = R.string.IdealTransferDetailsFragment__enter_your_bank,
-    donateLabel = "Donate $5/month",
-    onNavigationClick = {},
-    onLearnMoreClick = {},
-    onSelectBankClick = {},
-    onNameChanged = {},
-    onEmailChanged = {},
-    onFocusChanged = { _, _ -> },
-    onDonateClick = {}
-  )
+fun IdealTransferDetailsContentPreview() {
+  Previews.Preview {
+    IdealTransferDetailsContent(
+      state = IdealTransferDetailsState(
+        inAppPayment = createInAppPaymentPreview(InAppPaymentType.RECURRING_DONATION),
+        name = "Miles Morales",
+        email = "miles@example.com"
+      ),
+      idealDirections = R.string.IdealTransferDetailsFragment__enter_your_bank,
+      donateLabel = "Donate $5/month",
+      onNavigationClick = {},
+      onLearnMoreClick = {},
+      onSelectBankClick = {},
+      onNameChanged = {},
+      onEmailChanged = {},
+      onFocusChanged = { _, _ -> },
+      onDonateClick = {}
+    )
+  }
 }
 
 @Composable
@@ -219,9 +227,9 @@ private fun IdealTransferDetailsContent(
   onDonateClick: () -> Unit
 ) {
   Scaffolds.Settings(
-    title = stringResource(id = R.string.GatewaySelectorBottomSheet__ideal),
+    title = stringResource(id = R.string.GatewaySelectorBottomSheet__ideal_wero),
     onNavigationClick = onNavigationClick,
-    navigationIcon = ImageVector.vectorResource(id = R.drawable.symbol_arrow_start_24)
+    navigationIcon = SignalIcons.ArrowStart.imageVector
   ) {
     val focusManager = LocalFocusManager.current
 
@@ -267,7 +275,7 @@ private fun IdealTransferDetailsContent(
             isError = state.showNameError(),
             supportingText = {
               if (state.showNameError()) {
-                Text(text = stringResource(id = R.string.BankTransferDetailsFragment__minimum_2_characters))
+                Text(text = stringResource(id = R.string.BankTransferDetailsFragment__minimum_3_characters))
               }
             },
             modifier = Modifier

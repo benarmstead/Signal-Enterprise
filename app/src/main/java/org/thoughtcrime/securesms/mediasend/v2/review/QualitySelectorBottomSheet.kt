@@ -28,11 +28,11 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.fragment.app.viewModels
 import org.signal.core.ui.compose.BottomSheets
-import org.signal.core.ui.compose.theme.SignalTheme
+import org.signal.core.ui.compose.ComposeBottomSheetDialogFragment
+import org.signal.core.ui.compose.Previews
+import org.signal.mediasend.SentMediaQuality
 import org.thoughtcrime.securesms.R
-import org.thoughtcrime.securesms.compose.ComposeBottomSheetDialogFragment
 import org.thoughtcrime.securesms.mediasend.v2.MediaSelectionViewModel
-import org.thoughtcrime.securesms.mms.SentMediaQuality
 
 /**
  * Bottom sheet dialog to select the media quality (Standard vs. High) when sending media.
@@ -114,7 +114,7 @@ private fun ButtonLabel(title: String, description: String) {
 @Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES)
 @Composable
 private fun PreviewQualitySelectorBottomSheetStandard() {
-  SignalTheme(isDarkMode = true) {
+  Previews.Preview {
     Content(SentMediaQuality.STANDARD) {}
   }
 }
@@ -122,7 +122,7 @@ private fun PreviewQualitySelectorBottomSheetStandard() {
 @Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES)
 @Composable
 private fun PreviewQualitySelectorBottomSheetHigh() {
-  SignalTheme(isDarkMode = true) {
+  Previews.Preview {
     Content(SentMediaQuality.HIGH) {}
   }
 }

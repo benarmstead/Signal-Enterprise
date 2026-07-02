@@ -6,7 +6,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import org.thoughtcrime.securesms.components.emoji.EmojiUtil;
-import org.thoughtcrime.securesms.util.Util;
+import org.signal.core.util.Util;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -133,6 +133,10 @@ public class EmojiValues extends SignalStoreValues {
               .remove(SEARCH_LANGUAGE)
               .remove(LAST_SEARCH_CHECK)
               .apply();
+  }
+
+  public void clearSearchIndexVersion() {
+    getStore().beginWrite().remove(SEARCH_VERSION).apply();
   }
 
   public @Nullable String getSearchLanguage() {

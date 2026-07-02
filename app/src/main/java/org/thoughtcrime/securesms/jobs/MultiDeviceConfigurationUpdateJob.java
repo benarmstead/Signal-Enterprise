@@ -5,19 +5,20 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import org.signal.core.util.logging.Log;
+import org.signal.libsignal.protocol.NoSessionException;
+import org.signal.network.exceptions.PushNetworkException;
 import org.thoughtcrime.securesms.dependencies.AppDependencies;
 import org.thoughtcrime.securesms.jobmanager.Job;
 import org.thoughtcrime.securesms.jobmanager.JsonJobData;
 import org.thoughtcrime.securesms.jobmanager.impl.NetworkConstraint;
+import org.thoughtcrime.securesms.jobmanager.impl.SealedSenderConstraint;
 import org.thoughtcrime.securesms.keyvalue.SignalStore;
 import org.thoughtcrime.securesms.net.NotPushRegisteredException;
 import org.thoughtcrime.securesms.recipients.Recipient;
-import org.thoughtcrime.securesms.util.TextSecurePreferences;
 import org.whispersystems.signalservice.api.SignalServiceMessageSender;
 import org.whispersystems.signalservice.api.crypto.UntrustedIdentityException;
 import org.whispersystems.signalservice.api.messages.multidevice.ConfigurationMessage;
 import org.whispersystems.signalservice.api.messages.multidevice.SignalServiceSyncMessage;
-import org.whispersystems.signalservice.api.push.exceptions.PushNetworkException;
 import org.whispersystems.signalservice.api.push.exceptions.ServerRejectedException;
 
 import java.io.IOException;
@@ -48,6 +49,7 @@ public class MultiDeviceConfigurationUpdateJob extends BaseJob {
     this(new Job.Parameters.Builder()
                            .setQueue(QUEUE)
                            .addConstraint(NetworkConstraint.KEY)
+                           .addConstraint(SealedSenderConstraint.KEY)
                            .setMaxAttempts(10)
                            .build(),
          readReceiptsEnabled,
@@ -86,7 +88,7 @@ public class MultiDeviceConfigurationUpdateJob extends BaseJob {
   }
 
   @Override
-  public void onRun() throws IOException, UntrustedIdentityException {
+  public void onRun() throws IOException, UntrustedIdentityException, NoSessionException {
     if (!Recipient.self().isRegistered()) {
       throw new NotPushRegisteredException();
     }

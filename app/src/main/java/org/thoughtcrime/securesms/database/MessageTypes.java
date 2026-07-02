@@ -122,6 +122,8 @@ public interface MessageTypes {
   long SPECIAL_TYPE_PAYMENTS_TOMBSTONE        = 0x900000000L;
   long SPECIAL_TYPE_BLOCKED                   = 0xA00000000L;
   long SPECIAL_TYPE_UNBLOCKED                 = 0xB00000000L;
+  long SPECIAL_TYPE_POLL_TERMINATE            = 0xC00000000L;
+  long SPECIAL_TYPE_PINNED_MESSAGE            = 0xD00000000L;
 
   long IGNORABLE_TYPESMASK_WHEN_COUNTING = END_SESSION_BIT | KEY_EXCHANGE_IDENTITY_UPDATE_BIT | KEY_EXCHANGE_IDENTITY_VERIFIED_BIT;
 
@@ -163,6 +165,14 @@ public interface MessageTypes {
 
   static boolean isUnblocked(long type) {
     return (type & SPECIAL_TYPES_MASK) == SPECIAL_TYPE_UNBLOCKED;
+  }
+
+  static boolean isPollTerminate(long type) {
+    return (type & SPECIAL_TYPES_MASK) == SPECIAL_TYPE_POLL_TERMINATE;
+  }
+
+  static boolean isPinnedMessageUpdate(long type) {
+    return (type & SPECIAL_TYPES_MASK) == SPECIAL_TYPE_PINNED_MESSAGE;
   }
 
   static boolean isDraftMessageType(long type) {
@@ -335,19 +345,11 @@ public interface MessageTypes {
   }
 
   static boolean isChatSessionRefresh(long type) {
-    return (type & ENCRYPTION_REMOTE_FAILED_BIT) != 0;
-  }
-
-  static boolean isDuplicateMessageType(long type) {
-    return (type & ENCRYPTION_REMOTE_DUPLICATE_BIT) != 0;
-  }
-
-  static boolean isNoRemoteSessionType(long type) {
-    return (type & ENCRYPTION_REMOTE_NO_SESSION_BIT) != 0;
-  }
-
-  static boolean isLegacyType(long type) {
-    return (type & ENCRYPTION_REMOTE_LEGACY_BIT) != 0 ||
+    return (type & ENCRYPTION_REMOTE_FAILED_BIT) != 0 ||
+           // These are legacy encryption error types that we just bundle into this type
+           (type & ENCRYPTION_REMOTE_NO_SESSION_BIT) != 0 ||
+           (type & ENCRYPTION_REMOTE_DUPLICATE_BIT) != 0 ||
+           (type & ENCRYPTION_REMOTE_LEGACY_BIT) != 0 ||
            (type & ENCRYPTION_REMOTE_BIT) != 0;
   }
 

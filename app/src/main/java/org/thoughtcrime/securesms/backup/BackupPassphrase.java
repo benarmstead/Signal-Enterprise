@@ -1,13 +1,12 @@
 package org.thoughtcrime.securesms.backup;
 
 import android.content.Context;
-import android.os.Build;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import org.signal.core.util.logging.Log;
-import org.thoughtcrime.securesms.crypto.KeyStoreHelper;
+import org.signal.core.util.crypto.KeyStoreHelper;
 import org.thoughtcrime.securesms.util.TextSecurePreferences;
 
 /**
@@ -24,8 +23,8 @@ public final class BackupPassphrase {
     String passphrase          = TextSecurePreferences.getBackupPassphrase(context);
     String encryptedPassphrase = TextSecurePreferences.getEncryptedBackupPassphrase(context);
 
-    if (Build.VERSION.SDK_INT < 23 || (passphrase == null && encryptedPassphrase == null)) {
-      return stripSpaces(passphrase);
+    if (passphrase == null && encryptedPassphrase == null) {
+      return null;
     }
 
     if (encryptedPassphrase == null) {
@@ -40,8 +39,8 @@ public final class BackupPassphrase {
   }
 
   public static void set(@NonNull Context context, @Nullable String passphrase) {
-    if (passphrase == null || Build.VERSION.SDK_INT < 23) {
-      TextSecurePreferences.setBackupPassphrase(context, passphrase);
+    if (passphrase == null) {
+      TextSecurePreferences.setBackupPassphrase(context, null);
       TextSecurePreferences.setEncryptedBackupPassphrase(context, null);
     } else {
       KeyStoreHelper.SealedData encryptedPassphrase = KeyStoreHelper.seal(passphrase.getBytes());

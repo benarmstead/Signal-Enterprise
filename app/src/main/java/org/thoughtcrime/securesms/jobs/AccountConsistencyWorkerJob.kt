@@ -24,7 +24,7 @@ class AccountConsistencyWorkerJob private constructor(parameters: Parameters) : 
 
     @JvmStatic
     fun enqueueIfNecessary() {
-      if (System.currentTimeMillis() - SignalStore.misc.lastConsistencyCheckTime > 3.days.inWholeMilliseconds) {
+      if (SignalStore.account.isPrimaryDevice && System.currentTimeMillis() - SignalStore.misc.lastConsistencyCheckTime > 3.days.inWholeMilliseconds) {
         AppDependencies.jobManager.add(AccountConsistencyWorkerJob())
       }
     }
@@ -56,15 +56,18 @@ class AccountConsistencyWorkerJob private constructor(parameters: Parameters) : 
       return
     }
 
+    if (SignalStore.account.isLinkedDevice) {
+      Log.i(TAG, "Linked device, skipping.")
+      return
+    }
+
     val aciProfile: SignalServiceProfile = ProfileUtil.retrieveProfileSync(context, Recipient.self(), SignalServiceProfile.RequestType.PROFILE, false).profile
     val encodedAciPublicKey = Base64.encodeWithPadding(SignalStore.account.aciIdentityKey.publicKey.serialize())
 
     if (aciProfile.identityKey != encodedAciPublicKey) {
       Log.w(TAG, "ACI identity key on profile differed from the one we have locally! Marking ourselves unregistered.")
 
-      SignalStore.account.setRegistered(false)
-      SignalStore.registration.clearRegistrationComplete()
-      SignalStore.registration.hasUploadedProfile = false
+      markUnregistered()
 
       SignalStore.misc.lastConsistencyCheckTime = System.currentTimeMillis()
       return
@@ -74,17 +77,24 @@ class AccountConsistencyWorkerJob private constructor(parameters: Parameters) : 
     val encodedPniPublicKey = Base64.encodeWithPadding(SignalStore.account.pniIdentityKey.publicKey.serialize())
 
     if (pniProfile.identityKey != encodedPniPublicKey) {
-      Log.w(TAG, "PNI identity key on profile differed from the one we have locally!")
+      Log.w(TAG, "PNI identity key on profile differed from the one we have locally! Marking ourselves unregistered.")
 
-      SignalStore.account.setRegistered(false)
-      SignalStore.registration.clearRegistrationComplete()
-      SignalStore.registration.hasUploadedProfile = false
+      markUnregistered()
+
+      SignalStore.misc.lastConsistencyCheckTime = System.currentTimeMillis()
       return
     }
 
     Log.i(TAG, "Everything matched.")
 
     SignalStore.misc.lastConsistencyCheckTime = System.currentTimeMillis()
+  }
+
+  /** Marks the account unregistered so the user is prompted to re-register. */
+  private fun markUnregistered() {
+    SignalStore.account.setRegistered(false)
+    SignalStore.registration.clearRegistrationComplete()
+    SignalStore.registration.hasUploadedProfile = false
   }
 
   override fun onShouldRetry(e: Exception): Boolean {

@@ -2,6 +2,7 @@ package org.thoughtcrime.securesms.jobs
 
 import androidx.annotation.VisibleForTesting
 import kotlinx.collections.immutable.toImmutableSet
+import org.signal.core.util.LRUCache
 import org.signal.core.util.Stopwatch
 import org.signal.core.util.logging.Log
 import org.thoughtcrime.securesms.database.JobDatabase
@@ -11,7 +12,6 @@ import org.thoughtcrime.securesms.jobmanager.persistence.DependencySpec
 import org.thoughtcrime.securesms.jobmanager.persistence.FullSpec
 import org.thoughtcrime.securesms.jobmanager.persistence.JobSpec
 import org.thoughtcrime.securesms.jobmanager.persistence.JobStorage
-import org.thoughtcrime.securesms.util.LRUCache
 import java.util.TreeSet
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.function.Predicate
@@ -356,10 +356,14 @@ class FastJobStorage(private val jobDatabase: JobDatabase) : JobStorage {
     mostEligibleJobForQueue.keys.removeAll(affectedQueues)
 
     for (queue in affectedQueues) {
-      jobDatabase.getMostEligibleJobInQueue(queue)?.let {
-        jobSpecCache[it.id] = it
-        placeJobInEligibleList(it.toMinimalJobSpec())
-      }
+      minimalJobs
+        .filter { it.queueKey == queue }
+        .minWithOrNull(
+          compareByDescending<MinimalJobSpec> { it.globalPriority }
+            .thenByDescending { it.queuePriority }
+            .thenBy { it.createTime }
+        )
+        ?.let { placeJobInEligibleList(it) }
     }
 
     for (jobId in ids) {
@@ -488,6 +492,10 @@ class FastJobStorage(private val jobDatabase: JobDatabase) : JobStorage {
   private fun placeJobInEligibleList(jobCandidate: MinimalJobSpec) {
     val existingJobInQueue = jobCandidate.queueKey?.let { mostEligibleJobForQueue[it] }
     if (existingJobInQueue != null) {
+      if (existingJobInQueue.isRunning) {
+        return
+      }
+
       if (jobCandidate.globalPriority < existingJobInQueue.globalPriority) {
         return
       }

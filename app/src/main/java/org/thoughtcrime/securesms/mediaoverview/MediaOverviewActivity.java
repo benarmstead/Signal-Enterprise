@@ -36,7 +36,6 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.tabs.TabLayout;
 import com.google.android.material.transition.platform.MaterialContainerTransformSharedElementCallback;
 
-import org.signal.libsignal.protocol.util.Pair;
 import org.thoughtcrime.securesms.PassphraseRequiredActivity;
 import org.thoughtcrime.securesms.R;
 import org.thoughtcrime.securesms.components.AnimatingToggle;
@@ -52,6 +51,8 @@ import org.signal.core.util.concurrent.SimpleTask;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import kotlin.Pair;
 
 /**
  * Activity for displaying media attachments in-app
@@ -127,7 +128,7 @@ public final class MediaOverviewActivity extends PassphraseRequiredActivity {
       }
     });
 
-    viewPager.setCurrentItem(allThreads ? 3 : 0);
+    viewPager.setCurrentItem(allThreads ? viewPager.getAdapter().getCount() - 1 : 0);
   }
 
   private static boolean allowGridSelectionOnPage(int page) {
@@ -249,8 +250,11 @@ public final class MediaOverviewActivity extends PassphraseRequiredActivity {
         maxWidth = Math.max(maxWidth, tabWidth);
       }
 
-      int viewWidth = right - left;
-      if (totalWidth < viewWidth) {
+      int viewWidth    = right - left;
+      int tabCount     = tabLayout.getTabCount();
+      int fixedTabSize = tabCount > 0 ? viewWidth / tabCount : 0;
+
+      if (totalWidth < viewWidth && maxWidth <= fixedTabSize) {
         tabLayout.setTabMode(TabLayout.MODE_FIXED);
       }
     });
@@ -263,10 +267,15 @@ public final class MediaOverviewActivity extends PassphraseRequiredActivity {
     MediaOverviewPagerAdapter(FragmentManager fragmentManager) {
       super(fragmentManager, BEHAVIOR_RESUME_ONLY_CURRENT_FRAGMENT);
 
-      pages = new ArrayList<>(4);
+      boolean allThreads = threadId == MediaTable.ALL_THREADS;
+
+      pages = new ArrayList<>(allThreads ? 4 : 5);
       pages.add(new Pair<>(MediaLoader.MediaType.GALLERY,  getString(R.string.MediaOverviewActivity_Media)));
       pages.add(new Pair<>(MediaLoader.MediaType.DOCUMENT, getString(R.string.MediaOverviewActivity_Files)));
       pages.add(new Pair<>(MediaLoader.MediaType.AUDIO,    getString(R.string.MediaOverviewActivity_Audio)));
+      if (!allThreads) {
+        pages.add(new Pair<>(MediaLoader.MediaType.LINK,   getString(R.string.MediaOverviewActivity_Links)));
+      }
       pages.add(new Pair<>(MediaLoader.MediaType.ALL,      getString(R.string.MediaOverviewActivity_All)));
     }
 
@@ -276,7 +285,7 @@ public final class MediaOverviewActivity extends PassphraseRequiredActivity {
                                                        ? MediaOverviewPageFragment.GridMode.FOLLOW_MODEL
                                                        : MediaOverviewPageFragment.GridMode.FIXED_DETAIL;
 
-      return MediaOverviewPageFragment.newInstance(threadId, pages.get(position).first(), gridMode);
+      return MediaOverviewPageFragment.newInstance(threadId, pages.get(position).getFirst(), gridMode);
     }
 
     @Override
@@ -286,7 +295,7 @@ public final class MediaOverviewActivity extends PassphraseRequiredActivity {
 
     @Override
     public CharSequence getPageTitle(int position) {
-      return pages.get(position).second();
+      return pages.get(position).getSecond();
     }
   }
 }

@@ -7,6 +7,7 @@ import androidx.core.content.contentValuesOf
 import org.signal.core.util.SqlUtil
 import org.signal.core.util.delete
 import org.signal.core.util.deleteAll
+import org.signal.core.util.exists
 import org.signal.core.util.forEach
 import org.signal.core.util.logging.Log
 import org.signal.core.util.readToList
@@ -16,7 +17,6 @@ import org.signal.core.util.requireLong
 import org.signal.core.util.select
 import org.signal.core.util.update
 import org.signal.core.util.withinTransaction
-import org.signal.libsignal.protocol.util.Pair
 import org.thoughtcrime.securesms.recipients.RecipientId
 
 class GroupReceiptTable(context: Context?, databaseHelper: SignalDatabase?) : DatabaseTable(context, databaseHelper), RecipientIdDatabaseReference {
@@ -86,12 +86,12 @@ class GroupReceiptTable(context: Context?, databaseHelper: SignalDatabase?) : Da
     val mmsMatchPrefix = "$MMS_ID = $mmsId AND"
     val unidentifiedQueries = SqlUtil.buildCollectionQuery(
       column = RECIPIENT_ID,
-      values = results.filter { it.second() }.map { it.first().serialize() },
+      values = results.filter { it.second }.map { it.first.serialize() },
       prefix = mmsMatchPrefix
     )
     val identifiedQueries = SqlUtil.buildCollectionQuery(
       column = RECIPIENT_ID,
-      values = results.filterNot { it.second() }.map { it.first().serialize() },
+      values = results.filterNot { it.second }.map { it.first.serialize() },
       prefix = mmsMatchPrefix
     )
     writableDatabase.withinTransaction { db ->
@@ -126,6 +126,13 @@ class GroupReceiptTable(context: Context?, databaseHelper: SignalDatabase?) : Da
           .run()
       }
     }
+  }
+
+  fun hasReceipt(mmsId: Long, recipientId: RecipientId): Boolean {
+    return readableDatabase
+      .exists(TABLE_NAME)
+      .where("$MMS_ID = ? AND $RECIPIENT_ID = ?", mmsId, recipientId)
+      .run()
   }
 
   fun getGroupReceiptInfo(mmsId: Long): List<GroupReceiptInfo> {

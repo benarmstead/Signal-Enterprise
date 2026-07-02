@@ -5,9 +5,7 @@ import android.app.PendingIntent;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
-import android.hardware.Camera.CameraInfo;
 import android.net.Uri;
-import android.os.Build;
 import android.provider.Settings;
 
 import androidx.annotation.ArrayRes;
@@ -28,7 +26,6 @@ import org.thoughtcrime.securesms.backup.proto.SharedPreference;
 import org.thoughtcrime.securesms.crypto.ProfileKeyUtil;
 import org.thoughtcrime.securesms.database.SignalDatabase;
 import org.thoughtcrime.securesms.dependencies.AppDependencies;
-import org.thoughtcrime.securesms.jobmanager.impl.SqlCipherMigrationConstraintObserver;
 import org.thoughtcrime.securesms.keyvalue.SettingsValues;
 import org.thoughtcrime.securesms.keyvalue.SignalStore;
 import org.thoughtcrime.securesms.lock.RegistrationLockReminders;
@@ -89,10 +86,9 @@ public class TextSecurePreferences {
 
   public  static final String SYSTEM_EMOJI_PREF                = "pref_system_emoji";
   private static final String MULTI_DEVICE_PROVISIONED_PREF    = "pref_multi_device";
-  public  static final String DIRECT_CAPTURE_CAMERA_ID         = "pref_direct_capture_camera_id";
   public  static final String ALWAYS_RELAY_CALLS_PREF          = "pref_turn_only";
   public  static final String READ_RECEIPTS_PREF               = "pref_read_receipts";
-  public  static final String INCOGNITO_KEYBORAD_PREF          = "pref_incognito_keyboard";
+  public  static final String INCOGNITO_KEYBOARD_PREF          = "pref_incognito_keyboard";
   public  static final String UNAUTHORIZED_RECEIVED            = "pref_unauthorized_received";
   private static final String SUCCESSFUL_DIRECTORY_PREF        = "pref_successful_directory";
 
@@ -100,7 +96,6 @@ public class TextSecurePreferences {
   private static final String DATABASE_UNENCRYPTED_SECRET   = "pref_database_unencrypted_secret";
   private static final String ATTACHMENT_ENCRYPTED_SECRET   = "pref_attachment_encrypted_secret";
   private static final String ATTACHMENT_UNENCRYPTED_SECRET = "pref_attachment_unencrypted_secret";
-  private static final String NEEDS_SQLCIPHER_MIGRATION     = "pref_needs_sql_cipher_migration";
 
   public static final String CALL_NOTIFICATIONS_PREF = "pref_call_notifications";
   public static final String CALL_RINGTONE_PREF      = "pref_call_ringtone";
@@ -159,7 +154,7 @@ public class TextSecurePreferences {
   private static final String HAS_SEEN_VIDEO_RECORDING_TOOLTIP = "camerax.fragment.has.dismissed.video.recording.tooltip";
 
   private static final String[] booleanPreferencesToBackup = {SCREEN_SECURITY_PREF,
-                                                              INCOGNITO_KEYBORAD_PREF,
+                                                              INCOGNITO_KEYBOARD_PREF,
                                                               ALWAYS_RELAY_CALLS_PREF,
                                                               READ_RECEIPTS_PREF,
                                                               TYPING_INDICATORS,
@@ -339,15 +334,6 @@ public class TextSecurePreferences {
     return getLongPreference(context, BACKUP_TIME, -1);
   }
 
-  public static void setNeedsSqlCipherMigration(@NonNull Context context, boolean value) {
-    setBooleanPreference(context, NEEDS_SQLCIPHER_MIGRATION, value);
-    EventBus.getDefault().post(new SqlCipherMigrationConstraintObserver.SqlCipherNeedsMigrationEvent());
-  }
-
-  public static boolean getNeedsSqlCipherMigration(@NonNull Context context) {
-    return getBooleanPreference(context, NEEDS_SQLCIPHER_MIGRATION, false);
-  }
-
   public static void setAttachmentEncryptedSecret(@NonNull Context context, @NonNull String secret) {
     setStringPreference(context, ATTACHMENT_ENCRYPTED_SECRET, secret);
   }
@@ -407,7 +393,8 @@ public class TextSecurePreferences {
   }
 
   public static boolean isIncognitoKeyboardEnabled(Context context) {
-    return getBooleanPreference(context, INCOGNITO_KEYBORAD_PREF, true);
+    // Signal-Enterprise: enable the incognito keyboard flag by default.
+    return getBooleanPreference(context, INCOGNITO_KEYBOARD_PREF, true);
   }
 
   public static boolean isReadReceiptsEnabled(Context context) {
@@ -444,15 +431,6 @@ public class TextSecurePreferences {
 
   public static boolean isTurnOnly(Context context) {
     return getBooleanPreference(context, ALWAYS_RELAY_CALLS_PREF, false);
-  }
-
-  public static void setDirectCaptureCameraId(Context context, int value) {
-    setIntegerPrefrence(context, DIRECT_CAPTURE_CAMERA_ID, value);
-  }
-
-  @SuppressWarnings("deprecation")
-  public static int getDirectCaptureCameraId(Context context) {
-    return getIntegerPreference(context, DIRECT_CAPTURE_CAMERA_ID, CameraInfo.CAMERA_FACING_FRONT);
   }
 
   @Deprecated
@@ -510,6 +488,10 @@ public class TextSecurePreferences {
 
   public static boolean isUniversalUnidentifiedAccess(Context context) {
     return getBooleanPreference(context, UNIVERSAL_UNIDENTIFIED_ACCESS, true);
+  }
+
+  public static void setIsUniversalUnidentifiedAccess(Context context, boolean enabled) {
+    setBooleanPreference(context, UNIVERSAL_UNIDENTIFIED_ACCESS, enabled);
   }
 
   public static void setShowUnidentifiedDeliveryIndicatorsEnabled(Context context, boolean enabled) {
@@ -596,7 +578,7 @@ public class TextSecurePreferences {
    */
   @Deprecated
   public static void setLanguage(Context context, String language) {
-    setStringPreference(context, LANGUAGE_PREF, language);
+    getSharedPreferences(context).edit().putString(LANGUAGE_PREF, language).commit();
   }
 
   @Deprecated
@@ -659,11 +641,7 @@ public class TextSecurePreferences {
 
   @Deprecated
   public static boolean isCallNotificationVibrateEnabled(Context context) {
-    boolean defaultValue = true;
-
-    if (Build.VERSION.SDK_INT >= 23) {
-      defaultValue = (Settings.System.getInt(context.getContentResolver(), Settings.System.VIBRATE_WHEN_RINGING, 1) == 1);
-    }
+    boolean defaultValue = (Settings.System.getInt(context.getContentResolver(), Settings.System.VIBRATE_WHEN_RINGING, 1) == 1);
 
     return getBooleanPreference(context, CALL_VIBRATE_PREF, defaultValue);
   }
@@ -895,7 +873,7 @@ public class TextSecurePreferences {
     AppDependencies.getGroupsV2Authorization().clear();
   }
 
-  private static SharedPreferences getSharedPreferences(Context context) {
+  public static SharedPreferences getSharedPreferences(Context context) {
     if (preferences == null) {
       preferences = PreferenceManager.getDefaultSharedPreferences(context);
     }

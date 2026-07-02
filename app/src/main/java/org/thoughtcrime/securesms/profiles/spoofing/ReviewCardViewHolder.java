@@ -3,7 +3,7 @@ package org.thoughtcrime.securesms.profiles.spoofing;
 import android.content.Context;
 import android.graphics.drawable.Drawable;
 import android.text.SpannableStringBuilder;
-import android.util.Pair;
+import kotlin.Pair;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
@@ -19,7 +19,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import org.thoughtcrime.securesms.R;
 import org.thoughtcrime.securesms.databinding.ReviewCardBinding;
 import org.thoughtcrime.securesms.util.SpanUtil;
-import org.whispersystems.signalservice.api.util.Preconditions;
+import org.signal.network.util.Preconditions;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -45,10 +45,10 @@ class ReviewCardViewHolder extends RecyclerView.ViewHolder {
     this.binding               = ReviewCardBinding.bind(itemView);
 
     this.subtextGroups = Arrays.asList(
-        Pair.create(binding.cardSubtextLine1, binding.cardSubtextIcon1),
-        Pair.create(binding.cardSubtextLine2, binding.cardSubtextIcon2),
-        Pair.create(binding.cardSubtextLine3, binding.cardSubtextIcon3),
-        Pair.create(binding.cardSubtextLine4, binding.cardSubtextIcon4)
+        new Pair(binding.cardSubtextLine1, binding.cardSubtextIcon1),
+        new Pair(binding.cardSubtextLine2, binding.cardSubtextIcon2),
+        new Pair(binding.cardSubtextLine3, binding.cardSubtextIcon3),
+        new Pair(binding.cardSubtextLine4, binding.cardSubtextIcon4)
     );
 
     itemView.findViewById(R.id.card_tap_target).setOnClickListener(unused -> {
@@ -136,21 +136,21 @@ class ReviewCardViewHolder extends RecyclerView.ViewHolder {
   private void presentReviewTextRows(@NonNull List<ReviewTextRow> reviewTextRows, @NonNull Context context, @NonNull ReviewCard reviewCard) {
 
     for (Pair<TextView, ImageView> group : subtextGroups) {
-      setVisibility(View.GONE, group.first, group.second);
+      setVisibility(View.GONE, group.getFirst(), group.getSecond());
     }
 
     for (int i = 0; i < Math.min(reviewTextRows.size(), subtextGroups.size()); i++) {
       ReviewTextRow             row   = reviewTextRows.get(i);
       Pair<TextView, ImageView> group = subtextGroups.get(i);
 
-      setVisibility(View.VISIBLE, group.first, group.second);
+      setVisibility(View.VISIBLE, group.getFirst(), group.getSecond());
 
       switch (row) {
-        case SIGNAL_CONNECTION -> presentSignalConnection(group.first, group.second, context, reviewCard);
-        case PHONE_NUMBER -> presentPhoneNumber(group.first, group.second, reviewCard);
-        case RECENTLY_CHANGED -> presentRecentlyChanged(group.first, group.second, context, reviewCard);
-        case GROUPS_IN_COMMON -> presentGroupsInCommon(group.first, group.second, reviewCard);
-        case SYSTEM_CONTACTS -> presentSystemContacts(group.first, group.second, context, reviewCard);
+        case SIGNAL_CONNECTION -> presentSignalConnection(group.getFirst(), group.getSecond(), context, reviewCard);
+        case PHONE_NUMBER -> presentPhoneNumber(group.getFirst(), group.getSecond(), reviewCard);
+        case RECENTLY_CHANGED -> presentRecentlyChanged(group.getFirst(), group.getSecond(), context, reviewCard);
+        case GROUPS_IN_COMMON -> presentGroupsInCommon(group.getFirst(), group.getSecond(), reviewCard);
+        case SYSTEM_CONTACTS -> presentSystemContacts(group.getFirst(), group.getSecond(), context, reviewCard);
       }
     }
   }
@@ -158,7 +158,7 @@ class ReviewCardViewHolder extends RecyclerView.ViewHolder {
   private void presentSignalConnection(@NonNull TextView line, @NonNull ImageView icon, @NonNull Context context, @NonNull ReviewCard reviewCard) {
     Preconditions.checkArgument(reviewCard.getReviewRecipient().isProfileSharing());
 
-    Drawable chevron = ContextCompat.getDrawable(context, R.drawable.symbol_chevron_right_24);
+    Drawable chevron = ContextCompat.getDrawable(context, org.signal.core.ui.R.drawable.symbol_chevron_right_24);
     Preconditions.checkNotNull(chevron);
     chevron.setTint(ContextCompat.getColor(context, R.color.core_grey_45));
 

@@ -5,86 +5,146 @@
 
 package org.thoughtcrime.securesms.components.webrtc.v2
 
-import android.content.res.Configuration
-import android.view.LayoutInflater
-import android.widget.FrameLayout
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.layout.displayCutoutPadding
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.VerticalPager
+import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.viewinterop.AndroidView
-import org.thoughtcrime.securesms.R
-import org.thoughtcrime.securesms.components.webrtc.CallParticipantsLayout
-import org.thoughtcrime.securesms.components.webrtc.CallParticipantsLayoutStrategies
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInRoot
+import org.signal.core.ui.compose.AllNightPreviews
+import org.signal.core.ui.compose.Previews
+import org.thoughtcrime.securesms.conversation.colors.ChatColorsPalette
 import org.thoughtcrime.securesms.events.CallParticipant
+import org.thoughtcrime.securesms.events.CallParticipantId
+import org.thoughtcrime.securesms.recipients.Recipient
+import org.thoughtcrime.securesms.recipients.RecipientId
 
 @Composable
 fun CallParticipantsPager(
   callParticipantsPagerState: CallParticipantsPagerState,
   pagerState: PagerState,
-  modifier: Modifier = Modifier
+  modifier: Modifier = Modifier,
+  onTap: (() -> Unit)? = null,
+  onParticipantLongPress: ((CallParticipant, Offset) -> Unit)? = null
 ) {
   if (callParticipantsPagerState.focusedParticipant == null) {
     return
   }
 
-  if (callParticipantsPagerState.callParticipants.size > 1) {
-    VerticalPager(
-      state = pagerState,
-      modifier = modifier
-    ) { page ->
-      when (page) {
-        0 -> {
-          CallParticipantsLayoutComponent(
-            callParticipantsPagerState = callParticipantsPagerState,
-            modifier = Modifier.fillMaxSize()
-          )
-        }
-        1 -> {
-          CallParticipantRenderer(
-            callParticipant = callParticipantsPagerState.focusedParticipant,
-            modifier = Modifier.fillMaxSize()
+  val currentOnTap = rememberUpdatedState(onTap)
+  val currentOnLongPress = rememberUpdatedState(onParticipantLongPress)
+
+  val firstParticipantAR = rememberParticipantAspectRatio(
+    callParticipantsPagerState.callParticipants.firstOrNull()?.videoSink
+  )
+
+  VerticalPager(
+    state = pagerState,
+    modifier = modifier
+      .displayCutoutPadding()
+      .statusBarsPadding()
+  ) { page ->
+    when (page) {
+      0 -> {
+        CallGrid(
+          items = callParticipantsPagerState.callParticipants,
+          singleParticipantAspectRatio = firstParticipantAR,
+          modifier = Modifier.fillMaxSize(),
+          itemKey = { it.callParticipantId }
+        ) { participant, itemModifier ->
+          val longPressModifier = if (!participant.recipient.isSelf && currentOnLongPress.value != null) {
+            var itemWindowOrigin by remember(participant.callParticipantId) { mutableStateOf(Offset.Zero) }
+            itemModifier
+              .onGloballyPositioned { coords -> itemWindowOrigin = coords.positionInRoot() }
+              .pointerInput(participant.callParticipantId) {
+                detectTapGestures(
+                  onTap = { currentOnTap.value?.invoke() },
+                  onLongPress = { local -> currentOnLongPress.value?.invoke(participant, itemWindowOrigin + local) }
+                )
+              }
+          } else {
+            itemModifier
+          }
+
+          RemoteParticipantContent(
+            participant = participant,
+            renderInPip = callParticipantsPagerState.isRenderInPip,
+            raiseHandAllowed = false,
+            onInfoMoreInfoClick = null,
+            showAudioIndicator = callParticipantsPagerState.callParticipants.size > 1,
+            modifier = longPressModifier
           )
         }
       }
+
+      1 -> {
+        RemoteParticipantContent(
+          participant = callParticipantsPagerState.focusedParticipant,
+          renderInPip = callParticipantsPagerState.isRenderInPip,
+          raiseHandAllowed = false,
+          onInfoMoreInfoClick = null,
+          modifier = Modifier.fillMaxSize()
+        )
+      }
     }
-  } else {
-    CallParticipantsLayoutComponent(
-      callParticipantsPagerState = callParticipantsPagerState,
-      modifier = modifier
-    )
   }
 }
 
+@AllNightPreviews
 @Composable
-fun CallParticipantsLayoutComponent(
-  callParticipantsPagerState: CallParticipantsPagerState,
-  modifier: Modifier = Modifier
-) {
-  if (callParticipantsPagerState.focusedParticipant == null) {
-    return
-  }
+private fun CallParticipantsPagerPreview() {
+  Previews.Preview {
+    val participants = remember {
+      (1..5).map {
+        CallParticipant(
+          callParticipantId = CallParticipantId(0, RecipientId.from(it.toLong())),
+          recipient = Recipient(
+            isResolving = false,
+            chatColorsValue = ChatColorsPalette.UNKNOWN_CONTACT
+          )
+        )
+      }
+    }
 
-  val isPortrait = LocalConfiguration.current.orientation == Configuration.ORIENTATION_PORTRAIT
+    val state = remember {
+      CallParticipantsPagerState(
+        callParticipants = participants,
+        focusedParticipant = participants.first(),
+        isRenderInPip = false,
+        hideAvatar = false
+      )
+    }
 
-  AndroidView(
-    factory = {
-      LayoutInflater.from(it).inflate(R.layout.webrtc_call_participants_layout, FrameLayout(it), false) as CallParticipantsLayout
-    },
-    modifier = modifier
-  ) {
-    it.update(
-      callParticipantsPagerState.callParticipants,
-      callParticipantsPagerState.focusedParticipant,
-      callParticipantsPagerState.isRenderInPip,
-      isPortrait,
-      callParticipantsPagerState.hideAvatar,
-      0,
-      CallParticipantsLayoutStrategies.getStrategy(isPortrait, true)
-    )
+    Surface(
+      modifier = Modifier.fillMaxSize()
+    ) {
+      CallGrid(
+        items = state.callParticipants,
+        modifier = Modifier.fillMaxSize(),
+        itemKey = { it.callParticipantId }
+      ) { participant, itemModifier ->
+        RemoteParticipantContent(
+          participant = participant,
+          renderInPip = state.isRenderInPip,
+          raiseHandAllowed = false,
+          onInfoMoreInfoClick = null,
+          modifier = itemModifier
+        )
+      }
+    }
   }
 }
 

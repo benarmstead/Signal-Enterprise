@@ -5,8 +5,8 @@
 
 package org.thoughtcrime.securesms.notifications.profiles
 
-import org.signal.core.util.DatabaseId
-import org.whispersystems.signalservice.api.util.UuidUtil
+import org.signal.core.models.database.DatabaseId
+import org.signal.core.util.UuidUtil
 import java.util.UUID
 
 /**

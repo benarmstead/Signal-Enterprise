@@ -23,7 +23,7 @@ import org.thoughtcrime.securesms.keyvalue.SignalStore;
 import org.thoughtcrime.securesms.net.SignalNetwork;
 import org.thoughtcrime.securesms.util.DynamicTheme;
 import org.thoughtcrime.securesms.util.ExceptionHelper;
-import org.thoughtcrime.securesms.util.Util;
+import org.signal.core.util.Util;
 import org.thoughtcrime.securesms.util.views.SimpleProgressDialog;
 import org.whispersystems.signalservice.api.NetworkResultUtil;
 
@@ -69,6 +69,7 @@ public class RecaptchaProofActivity extends PassphraseRequiredActivity {
       }
     });
 
+    SignalStore.misc().setCaptchaLastViewedAt(System.currentTimeMillis());
     webView.loadUrl(BuildConfig.RECAPTCHA_PROOF_URL);
   }
 

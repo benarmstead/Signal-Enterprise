@@ -66,18 +66,20 @@ class RestoreOptimizedMediaJob private constructor(parameters: Parameters) : Job
 
     ArchiveRestoreProgress.onStartMediaRestore()
 
+    BackupMediaRestoreService.start(context, context.getString(R.string.BackupStatus__restoring_media))
+
     restorableAttachments
       .forEach {
         val job = RestoreAttachmentJob.forOffloadedRestore(
           messageId = it.mmsId,
-          attachmentId = it.attachmentId
+          attachmentId = it.attachmentId,
+          queueHash = it.plaintextHash?.contentHashCode() ?: it.remoteKey?.contentHashCode()
         )
 
         // Intentionally enqueues one at a time for safer attachment transfer state management
         jobManager.add(job)
       }
 
-    BackupMediaRestoreService.start(context, context.getString(R.string.BackupStatus__restoring_media))
     ArchiveRestoreProgress.onRestoringMedia()
 
     RestoreAttachmentJob.Queues.OFFLOAD_RESTORE.forEach { queue ->

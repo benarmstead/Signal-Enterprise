@@ -37,26 +37,25 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.fragment.findNavController
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toImmutableList
+import org.signal.core.ui.compose.ComposeFragment
+import org.signal.core.ui.compose.DayNightPreviews
+import org.signal.core.ui.compose.Previews
 import org.signal.core.ui.compose.Scaffolds
-import org.signal.core.ui.compose.theme.SignalTheme
+import org.signal.core.ui.compose.SignalIcons
 import org.signal.core.util.logging.Log
 import org.thoughtcrime.securesms.R
 import org.thoughtcrime.securesms.components.settings.app.appearance.appicon.util.AppIconPreset
 import org.thoughtcrime.securesms.components.settings.app.appearance.appicon.util.AppIconUtility
-import org.thoughtcrime.securesms.compose.ComposeFragment
 import org.thoughtcrime.securesms.util.navigation.safeNavigate
 
 class AppIconSelectionFragment : ComposeFragment() {
@@ -74,7 +73,7 @@ class AppIconSelectionFragment : ComposeFragment() {
       onNavigationClick = {
         findNavController().popBackStack()
       },
-      navigationIcon = ImageVector.vectorResource(id = R.drawable.symbol_arrow_start_24),
+      navigationIcon = SignalIcons.ArrowStart.imageVector,
       navigationContentDescription = stringResource(id = R.string.Material3SearchToolbar__close)
     ) { contentPadding: PaddingValues ->
       IconSelectionScreen(appIconUtility.currentAppIcon, ::updateAppIcon, ::openLearnMore, Modifier.padding(contentPadding))
@@ -306,20 +305,10 @@ fun CaveatWarning(onClick: () -> Unit, modifier: Modifier = Modifier) {
   )
 }
 
-@Preview(name = "Light Theme")
+@DayNightPreviews
 @Composable
-private fun MainScreenPreviewLight() {
-  SignalTheme(isDarkMode = false) {
-    Surface {
-      IconSelectionScreen(AppIconPreset.DEFAULT, onItemConfirmed = {}, onWarningClick = {})
-    }
-  }
-}
-
-@Preview(name = "Dark Theme")
-@Composable
-private fun MainScreenPreviewDark() {
-  SignalTheme(isDarkMode = true) {
+private fun MainScreenPreview() {
+  Previews.Preview {
     Surface {
       IconSelectionScreen(AppIconPreset.DEFAULT, onItemConfirmed = {}, onWarningClick = {})
     }

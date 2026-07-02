@@ -7,6 +7,7 @@
 
 package org.thoughtcrime.securesms.components.settings.app.internal.search
 
+import androidx.activity.compose.LocalActivity
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -24,14 +25,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.fragment.app.viewModels
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
-import org.signal.core.ui.compose.theme.SignalTheme
-import org.thoughtcrime.securesms.compose.ComposeFragment
+import org.signal.core.ui.compose.ComposeFragment
+import org.signal.core.ui.compose.DayNightPreviews
+import org.signal.core.ui.compose.Previews
 import org.thoughtcrime.securesms.recipients.RecipientId
 import org.thoughtcrime.securesms.recipients.ui.bottomsheet.RecipientBottomSheetDialogFragment
 import java.util.UUID
@@ -87,7 +87,7 @@ fun SearchBar(query: String, onSearchUpdated: (String) -> Unit, modifier: Modifi
 
 @Composable
 fun ResultItem(result: InternalSearchResult, modifier: Modifier = Modifier) {
-  val activity = LocalContext.current as? AppCompatActivity
+  val activity = LocalActivity.current as? AppCompatActivity
 
   Column(
     modifier = modifier
@@ -107,40 +107,27 @@ fun ResultItem(result: InternalSearchResult, modifier: Modifier = Modifier) {
   }
 }
 
-@Preview
-@Composable
-fun InternalSearchScreenPreviewLightTheme() {
-  SignalTheme(isDarkMode = false) {
-    InternalSearchScreenPreview()
-  }
-}
-
-@Preview
-@Composable
-fun InternalSearchScreenPreviewDarkTheme() {
-  SignalTheme(isDarkMode = true) {
-    InternalSearchScreenPreview()
-  }
-}
-
+@DayNightPreviews
 @Composable
 fun InternalSearchScreenPreview() {
-  InternalSearchFragmentScreen(
-    query = "",
-    results = persistentListOf(
-      InternalSearchResult(
-        name = "Peter Parker",
-        id = RecipientId.from(1),
-        aci = UUID.randomUUID().toString(),
-        pni = UUID.randomUUID().toString()
+  Previews.Preview {
+    InternalSearchFragmentScreen(
+      query = "",
+      results = persistentListOf(
+        InternalSearchResult(
+          name = "Peter Parker",
+          id = RecipientId.from(1),
+          aci = UUID.randomUUID().toString(),
+          pni = UUID.randomUUID().toString()
+        ),
+        InternalSearchResult(
+          name = "Mary Jane",
+          id = RecipientId.from(2),
+          aci = UUID.randomUUID().toString(),
+          pni = null
+        )
       ),
-      InternalSearchResult(
-        name = "Mary Jane",
-        id = RecipientId.from(2),
-        aci = UUID.randomUUID().toString(),
-        pni = null
-      )
-    ),
-    onSearchUpdated = {}
-  )
+      onSearchUpdated = {}
+    )
+  }
 }

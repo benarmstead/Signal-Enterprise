@@ -10,8 +10,8 @@ import androidx.activity.result.contract.ActivityResultContract
 import androidx.biometric.BiometricManager
 import androidx.biometric.BiometricPrompt
 import androidx.biometric.BiometricPrompt.PromptInfo
+import org.signal.core.util.ServiceUtil
 import org.signal.core.util.logging.Log
-import org.thoughtcrime.securesms.util.ServiceUtil
 
 /**
  * Authentication using phone biometric (face, fingerprint recognition) or device lock (pattern, pin or passphrase).
@@ -38,11 +38,7 @@ class BiometricDeviceAuthentication(
   }
 
   private fun isDeviceSecure(context: Context): Boolean {
-    return if (Build.VERSION.SDK_INT > 23) {
-      ServiceUtil.getKeyguardManager(context).isDeviceSecure
-    } else {
-      ServiceUtil.getKeyguardManager(context).isKeyguardSecure
-    }
+    return ServiceUtil.getKeyguardManager(context).isDeviceSecure
   }
 
   /**

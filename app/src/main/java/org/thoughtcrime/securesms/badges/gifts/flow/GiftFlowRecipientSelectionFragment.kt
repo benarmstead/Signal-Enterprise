@@ -4,10 +4,8 @@ import android.graphics.Color
 import android.os.Bundle
 import android.view.View
 import android.view.ViewGroup
-import androidx.appcompat.widget.Toolbar
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
-import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
 import org.signal.core.util.getParcelableArrayListCompat
 import org.thoughtcrime.securesms.R
@@ -18,28 +16,27 @@ import org.thoughtcrime.securesms.conversation.mutiselect.forward.MultiselectFor
 import org.thoughtcrime.securesms.conversation.mutiselect.forward.MultiselectForwardFragmentArgs
 import org.thoughtcrime.securesms.conversation.mutiselect.forward.SearchConfigurationProvider
 import org.thoughtcrime.securesms.database.RecipientTable
+import org.thoughtcrime.securesms.util.activityViewModel
 import org.thoughtcrime.securesms.util.navigation.safeNavigate
 
 /**
  * Allows the user to select a recipient to send a gift to.
  */
-class GiftFlowRecipientSelectionFragment : Fragment(R.layout.gift_flow_recipient_selection_fragment), MultiselectForwardFragment.Callback, SearchConfigurationProvider {
+class GiftFlowRecipientSelectionFragment : Fragment(R.layout.multiselect_forward_activity), MultiselectForwardFragment.Callback, SearchConfigurationProvider {
 
-  private val viewModel: GiftFlowViewModel by viewModels(
-    ownerProducer = { requireActivity() }
-  )
+  private val viewModel: GiftFlowViewModel by activityViewModel {
+    GiftFlowViewModel()
+  }
 
   override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-    val toolbar = view.findViewById<Toolbar>(R.id.toolbar)
-    toolbar.setNavigationOnClickListener { requireActivity().onBackPressed() }
-
     if (savedInstanceState == null) {
       childFragmentManager.beginTransaction()
         .replace(
-          R.id.multiselect_container,
+          R.id.fragment_container,
           MultiselectForwardFragment.create(
             MultiselectForwardFragmentArgs(
               multiShareArgs = emptyList(),
+              title = R.string.GiftFlowRecipientSelectionFragment__choose_recipient,
               forceDisableAddMessage = true,
               selectSingleRecipient = true
             )
@@ -76,6 +73,10 @@ class GiftFlowRecipientSelectionFragment : Fragment(R.layout.gift_flow_recipient
   override fun onFinishForwardAction() = Unit
 
   override fun exitFlow() = Unit
+
+  override fun navigateUp() {
+    requireActivity().onBackPressedDispatcher.onBackPressed()
+  }
 
   override fun onSearchInputFocused() = Unit
 

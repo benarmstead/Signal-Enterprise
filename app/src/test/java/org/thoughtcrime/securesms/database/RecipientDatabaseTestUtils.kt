@@ -1,6 +1,7 @@
 package org.thoughtcrime.securesms.database
 
 import android.net.Uri
+import org.signal.core.models.ServiceId.ACI
 import org.signal.core.util.toOptional
 import org.signal.libsignal.zkgroup.profiles.ExpiringProfileKeyCredential
 import org.thoughtcrime.securesms.badges.models.Badge
@@ -15,7 +16,6 @@ import org.thoughtcrime.securesms.recipients.Recipient
 import org.thoughtcrime.securesms.recipients.RecipientCreator
 import org.thoughtcrime.securesms.recipients.RecipientId
 import org.thoughtcrime.securesms.wallpaper.ChatWallpaper
-import org.whispersystems.signalservice.api.push.ServiceId.ACI
 import java.util.UUID
 import kotlin.random.Random
 
@@ -56,12 +56,11 @@ object RecipientDatabaseTestUtils {
     signalProfileAvatar: String? = null,
     profileAvatarFileDetails: ProfileAvatarFileDetails = ProfileAvatarFileDetails.NO_DETAILS,
     profileSharing: Boolean = false,
-    lastProfileFetch: Long = 0L,
     notificationChannel: String? = null,
     sealedSenderAccessMode: RecipientTable.SealedSenderAccessMode = RecipientTable.SealedSenderAccessMode.UNKNOWN,
     capabilities: Long = 0L,
     storageId: ByteArray? = null,
-    mentionSetting: RecipientTable.MentionSetting = RecipientTable.MentionSetting.ALWAYS_NOTIFY,
+    mentionSetting: RecipientTable.NotificationSetting = RecipientTable.NotificationSetting.ALWAYS_NOTIFY,
     wallpaper: ChatWallpaper? = null,
     chatColors: ChatColors? = null,
     avatarColor: AvatarColor = AvatarColor.A100,
@@ -120,14 +119,16 @@ object RecipientDatabaseTestUtils {
       signalProfileAvatar = signalProfileAvatar,
       profileAvatarFileDetails = profileAvatarFileDetails,
       profileSharing = profileSharing,
-      lastProfileFetch = lastProfileFetch,
       notificationChannel = notificationChannel,
       sealedSenderAccessMode = sealedSenderAccessMode,
       capabilities = RecipientRecord.Capabilities(
-        rawBits = capabilities
+        rawBits = capabilities,
+        usernameSyncMessages = Recipient.Capability.SUPPORTED
       ),
       storageId = storageId,
       mentionSetting = mentionSetting,
+      callNotificationSetting = RecipientTable.NotificationSetting.ALWAYS_NOTIFY,
+      replyNotificationSetting = RecipientTable.NotificationSetting.ALWAYS_NOTIFY,
       wallpaper = wallpaper,
       chatColors = chatColors,
       avatarColor = avatarColor,

@@ -31,8 +31,8 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.os.bundleOf
 import androidx.core.text.util.LinkifyCompat
-import androidx.core.view.GestureDetectorCompat
 import androidx.core.view.animation.PathInterpolatorCompat
+import androidx.core.view.doOnNextLayout
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
@@ -47,7 +47,12 @@ import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
 import io.reactivex.rxjava3.core.Observable
 import io.reactivex.rxjava3.kotlin.subscribeBy
 import kotlinx.coroutines.launch
+import org.signal.core.ui.BottomSheetUtil
+import org.signal.core.ui.permissions.Permissions
+import org.signal.core.util.Debouncer
 import org.signal.core.util.DimensionUnit
+import org.signal.core.util.ServiceUtil
+import org.signal.core.util.addDetectedLinks
 import org.signal.core.util.concurrent.LifecycleDisposable
 import org.signal.core.util.dp
 import org.signal.core.util.getParcelableCompat
@@ -70,7 +75,6 @@ import org.thoughtcrime.securesms.database.model.MmsMessageRecord
 import org.thoughtcrime.securesms.database.model.databaseprotos.BodyRangeList
 import org.thoughtcrime.securesms.mediapreview.MediaPreviewFragment
 import org.thoughtcrime.securesms.mediapreview.VideoControlsDelegate
-import org.thoughtcrime.securesms.permissions.Permissions
 import org.thoughtcrime.securesms.recipients.Recipient
 import org.thoughtcrime.securesms.recipients.RecipientId
 import org.thoughtcrime.securesms.recipients.ui.bottomsheet.RecipientBottomSheetDialogFragment
@@ -90,14 +94,11 @@ import org.thoughtcrime.securesms.stories.viewer.reply.reaction.OnReactionSentVi
 import org.thoughtcrime.securesms.stories.viewer.reply.tabs.StoryViewsAndRepliesDialogFragment
 import org.thoughtcrime.securesms.stories.viewer.views.StoryViewsBottomSheetDialogFragment
 import org.thoughtcrime.securesms.util.AvatarUtil
-import org.thoughtcrime.securesms.util.BottomSheetUtil
 import org.thoughtcrime.securesms.util.DateUtils
-import org.thoughtcrime.securesms.util.Debouncer
 import org.thoughtcrime.securesms.util.LinkUtil
 import org.thoughtcrime.securesms.util.LongClickCopySpan
 import org.thoughtcrime.securesms.util.LongClickMovementMethod
 import org.thoughtcrime.securesms.util.Projection
-import org.thoughtcrime.securesms.util.ServiceUtil
 import org.thoughtcrime.securesms.util.ViewUtil
 import org.thoughtcrime.securesms.util.fragments.requireListener
 import org.thoughtcrime.securesms.util.views.TouchInterceptingFrameLayout
@@ -107,6 +108,7 @@ import java.util.concurrent.TimeUnit
 import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min
+import org.signal.core.ui.R as CoreUiR
 
 class StoryViewerPageFragment :
   Fragment(R.layout.stories_viewer_fragment_page),
@@ -251,7 +253,18 @@ class StoryViewerPageFragment :
       viewModel::goToPreviousPost
     )
 
-    val gestureDetector = GestureDetectorCompat(
+    val parentListener = GestureDetector(
+      requireContext(),
+      ParentGestureListener(
+        singleTapHandler = singleTapHandler
+      )
+    )
+
+    storyPageContainer.setOnTouchListener { v, event ->
+      parentListener.onTouchEvent(event)
+    }
+
+    val gestureDetector = GestureDetector(
       requireContext(),
       StoryGestureListener(
         cardWrapper,
@@ -821,7 +834,7 @@ class StoryViewerPageFragment :
     viewModel.setIsDisplayingPartialSendDialog(true)
     if (storyPost.conversationMessage.messageRecord.isIdentityMismatchFailure) {
       SafetyNumberBottomSheet
-        .forMessageRecord(requireContext(), storyPost.conversationMessage.messageRecord)
+        .forOutgoingMessageRecord(requireContext(), storyPost.conversationMessage.messageRecord)
         .show(childFragmentManager)
     } else {
       StoryDialogs.resendStory(requireContext(), { viewModel.setIsDisplayingPartialSendDialog(false) }) {
@@ -968,31 +981,29 @@ class StoryViewerPageFragment :
     caption.text = displayBody
     caption.setMaxLength(SMALL_CAPTION_TEXT_MAX_LENGTH)
 
-    if (displayBody.length <= SMALL_CAPTION_TEXT_MAX_LENGTH) {
-      caption.setOnClickListener(null)
-      caption.isClickable = false
-    } else {
-      caption.setOnClickListener {
-        onShowCaptionOverlay(caption, largeCaption, largeCaptionOverlay)
+    caption.doOnNextLayout {
+      if (displayBody.length <= SMALL_CAPTION_TEXT_MAX_LENGTH && caption.lineCount <= SMALL_CAPTION_TEXT_MAX_LINES) {
+        caption.setOnClickListener(null)
+        caption.isClickable = false
+      } else {
+        caption.setOnClickListener {
+          onShowCaptionOverlay(caption, largeCaption, largeCaptionOverlay)
+        }
       }
     }
   }
 
   fun linkifyUrlLinks(spannable: Spannable) {
-    val hasLinks = LinkifyCompat.addLinks(spannable, CAPTION_LINK_PATTERN)
+    LinkifyCompat.addLinks(spannable, Linkify.EMAIL_ADDRESSES or Linkify.PHONE_NUMBERS)
+    spannable.addDetectedLinks()
 
-    if (hasLinks) {
-      spannable.getSpans(0, spannable.length, URLSpan::class.java)
-        .filterNot { url -> LinkUtil.isLegalUrl(url.url) }
-        .forEach { spannable.removeSpan(it) }
-
-      val urlSpans = spannable.getSpans(0, spannable.length, URLSpan::class.java)
-
-      for (urlSpan in urlSpans) {
-        val start = spannable.getSpanStart(urlSpan)
-        val end = spannable.getSpanEnd(urlSpan)
-        val span = LongClickCopySpan(urlSpan.url)
-        spannable.setSpan(span, start, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+    spannable.getSpans(0, spannable.length, URLSpan::class.java).forEach { urlSpan ->
+      val url = urlSpan.url
+      val start = spannable.getSpanStart(urlSpan)
+      val end = spannable.getSpanEnd(urlSpan)
+      spannable.removeSpan(urlSpan)
+      if (LinkUtil.isLegalUrl(url)) {
+        spannable.setSpan(LongClickCopySpan(url), start, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
       }
     }
   }
@@ -1045,9 +1056,10 @@ class StoryViewerPageFragment :
   }
 
   private fun presentDate(date: TextView, storyPost: StoryPost) {
-    val formattedDate = DateUtils.getBriefRelativeTimeSpanString(requireContext(), Locale.getDefault(), storyPost.dateInMilliseconds)
+    val (formattedDate, formattedDateContentDesc) = DateUtils.getBriefRelativeTimeSpanString(requireContext(), Locale.getDefault(), storyPost.dateInMilliseconds)
     if (date.text != formattedDate) {
       date.text = formattedDate
+      date.contentDescription = formattedDateContentDesc
     }
   }
 
@@ -1083,7 +1095,7 @@ class StoryViewerPageFragment :
 
     sendingBar.visible = false
     viewsAndReplies.isEnabled = true
-    viewsAndReplies.iconTint = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.signal_colorOnSurface))
+    viewsAndReplies.iconTint = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), CoreUiR.color.signal_colorOnSurface))
 
     when (replyState) {
       StoryViewerPageState.ReplyState.SENDING -> presentSendingBottomBar()
@@ -1101,7 +1113,7 @@ class StoryViewerPageFragment :
           indicatorSize = 18.dp
           indicatorInset = 2.dp
           trackColor = ContextCompat.getColor(requireContext(), R.color.transparent_white_40)
-          indicatorColors = intArrayOf(ContextCompat.getColor(requireContext(), R.color.signal_dark_colorNeutralInverse))
+          indicatorColors = intArrayOf(ContextCompat.getColor(requireContext(), CoreUiR.color.signal_dark_colorNeutralInverse))
           trackThickness = 2.dp
         }
       ).apply {
@@ -1122,14 +1134,14 @@ class StoryViewerPageFragment :
 
   private fun presentPartialSendBottomBar() {
     viewsAndReplies.setIconResource(R.drawable.symbol_error_circle_24)
-    viewsAndReplies.iconTint = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.signal_light_colorError))
+    viewsAndReplies.iconTint = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), CoreUiR.color.signal_light_colorError))
     viewsAndReplies.iconSize = 20.dp
     viewsAndReplies.setText(R.string.StoryViewerPageFragment__partially_sent)
   }
 
   private fun presentSendFailureBottomBar() {
     viewsAndReplies.setIconResource(R.drawable.symbol_error_circle_24)
-    viewsAndReplies.iconTint = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.signal_light_colorError))
+    viewsAndReplies.iconTint = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), CoreUiR.color.signal_light_colorError))
     viewsAndReplies.iconSize = 20.dp
     viewsAndReplies.setText(R.string.StoryViewerPageFragment__send_failed)
   }
@@ -1241,7 +1253,7 @@ class StoryViewerPageFragment :
       },
       onDelete = {
         viewModel.setIsDisplayingDeleteDialog(true)
-        lifecycleDisposable += StoryContextMenu.delete(requireContext(), setOf(it.conversationMessage.messageRecord)).subscribe { _ ->
+        lifecycleDisposable += StoryContextMenu.delete(requireContext(), it.conversationMessage.messageRecord).subscribe { _ ->
           viewModel.setIsDisplayingDeleteDialog(false)
           viewModel.refresh()
         }
@@ -1299,7 +1311,7 @@ class StoryViewerPageFragment :
     private val DEFAULT_DURATION = TimeUnit.SECONDS.toMillis(5)
     private val ONBOARDING_DURATION = TimeUnit.SECONDS.toMillis(10)
     private const val SMALL_CAPTION_TEXT_MAX_LENGTH = 280
-    private const val CAPTION_LINK_PATTERN = Linkify.WEB_URLS or Linkify.EMAIL_ADDRESSES or Linkify.PHONE_NUMBERS
+    private const val SMALL_CAPTION_TEXT_MAX_LINES = 5
 
     private const val ARGS = "args"
 
@@ -1356,6 +1368,19 @@ class StoryViewerPageFragment :
           sharedViewModel.setIsChildScrolling(false)
         }
       })
+    }
+  }
+
+  private class ParentGestureListener(
+    private val singleTapHandler: SingleTapHandler
+  ) : GestureDetector.SimpleOnGestureListener() {
+    override fun onDown(e: MotionEvent): Boolean {
+      return true
+    }
+
+    override fun onSingleTapUp(e: MotionEvent): Boolean {
+      singleTapHandler.onActionUp(e)
+      return true
     }
   }
 
@@ -1472,6 +1497,8 @@ class StoryViewerPageFragment :
   override fun onRecipientBottomSheetDismissed() {
     viewModel.setIsDisplayingRecipientBottomSheet(false)
   }
+
+  override fun onMessageClicked() = Unit
 
   interface Callback {
     fun onGoToPreviousStory(recipientId: RecipientId)

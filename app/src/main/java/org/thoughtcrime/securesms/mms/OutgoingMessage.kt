@@ -13,6 +13,7 @@ import org.thoughtcrime.securesms.database.model.databaseprotos.GV2UpdateDescrip
 import org.thoughtcrime.securesms.database.model.databaseprotos.GiftBadge
 import org.thoughtcrime.securesms.database.model.databaseprotos.MessageExtras
 import org.thoughtcrime.securesms.linkpreview.LinkPreview
+import org.thoughtcrime.securesms.polls.Poll
 import org.thoughtcrime.securesms.recipients.Recipient
 import org.thoughtcrime.securesms.sms.GroupV2UpdateMessageUtil
 import kotlin.time.Duration.Companion.seconds
@@ -49,7 +50,6 @@ data class OutgoingMessage(
   val isUrgent: Boolean = true,
   val networkFailures: Set<NetworkFailure> = emptySet(),
   val identityKeyMismatches: Set<IdentityKeyMismatch> = emptySet(),
-  val isEndSession: Boolean = false,
   val isIdentityVerified: Boolean = false,
   val isIdentityDefault: Boolean = false,
   val scheduledDate: Long = -1,
@@ -58,7 +58,9 @@ data class OutgoingMessage(
   val isMessageRequestAccept: Boolean = false,
   val isBlocked: Boolean = false,
   val isUnblocked: Boolean = false,
-  val messageExtras: MessageExtras? = null
+  val poll: Poll? = null,
+  val messageExtras: MessageExtras? = null,
+  val isSelfGroupAdd: Boolean = false
 ) {
 
   val isV2Group: Boolean = messageGroupContext != null && GroupV2UpdateMessageUtil.isGroupV2(messageGroupContext)
@@ -238,7 +240,7 @@ data class OutgoingMessage(
      * Helper for creating a group update message when a state change occurs and needs to be sent to others.
      */
     @JvmStatic
-    fun groupUpdateMessage(threadRecipient: Recipient, update: GV2UpdateDescription, sentTimeMillis: Long): OutgoingMessage {
+    fun groupUpdateMessage(threadRecipient: Recipient, update: GV2UpdateDescription, sentTimeMillis: Long, isSelfGroupAdd: Boolean): OutgoingMessage {
       val messageExtras = MessageExtras(gv2UpdateDescription = update)
       val groupContext = MessageGroupContext(update.gv2ChangeDescription!!)
 
@@ -249,7 +251,8 @@ data class OutgoingMessage(
         isGroup = true,
         isGroupUpdate = true,
         isSecure = true,
-        messageExtras = messageExtras
+        messageExtras = messageExtras,
+        isSelfGroupAdd = isSelfGroupAdd
       )
     }
 
@@ -399,21 +402,6 @@ data class OutgoingMessage(
       )
     }
 
-    /**
-     * A legacy message that represented that the user manually reset the session. We don't send these anymore, and could probably get rid of them,
-     * but it doesn't hurt to support receiving them in sync messages.
-     */
-    @JvmStatic
-    fun endSessionMessage(threadRecipient: Recipient, sentTimeMillis: Long): OutgoingMessage {
-      return OutgoingMessage(
-        threadRecipient = threadRecipient,
-        sentTimeMillis = sentTimeMillis,
-        isEndSession = true,
-        isUrgent = false,
-        isSecure = true
-      )
-    }
-
     @JvmStatic
     fun reportSpamMessage(threadRecipient: Recipient, sentTimeMillis: Long, expiresIn: Long): OutgoingMessage {
       return OutgoingMessage(
@@ -466,6 +454,42 @@ data class OutgoingMessage(
         isGroup = threadRecipient.isPushV2Group,
         isUnblocked = true,
         isUrgent = false,
+        isSecure = true
+      )
+    }
+
+    @JvmStatic
+    fun pollMessage(threadRecipient: Recipient, sentTimeMillis: Long, expiresIn: Long, poll: Poll, question: String = ""): OutgoingMessage {
+      return OutgoingMessage(
+        threadRecipient = threadRecipient,
+        sentTimeMillis = sentTimeMillis,
+        expiresIn = expiresIn,
+        poll = poll,
+        body = question,
+        isUrgent = true,
+        isSecure = true
+      )
+    }
+
+    @JvmStatic
+    fun pollTerminateMessage(threadRecipient: Recipient, sentTimeMillis: Long, expiresIn: Long, messageExtras: MessageExtras): OutgoingMessage {
+      return OutgoingMessage(
+        threadRecipient = threadRecipient,
+        sentTimeMillis = sentTimeMillis,
+        expiresIn = expiresIn,
+        messageExtras = messageExtras,
+        isUrgent = true,
+        isSecure = true
+      )
+    }
+
+    @JvmStatic
+    fun pinMessage(threadRecipient: Recipient, sentTimeMillis: Long, expiresIn: Long, messageExtras: MessageExtras): OutgoingMessage {
+      return OutgoingMessage(
+        threadRecipient = threadRecipient,
+        sentTimeMillis = sentTimeMillis,
+        expiresIn = expiresIn,
+        messageExtras = messageExtras,
         isSecure = true
       )
     }

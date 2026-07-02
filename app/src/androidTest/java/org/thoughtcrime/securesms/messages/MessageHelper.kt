@@ -10,18 +10,18 @@ import io.mockk.every
 import io.mockk.mockkStatic
 import io.mockk.slot
 import io.mockk.unmockkStatic
+import org.signal.core.models.media.TransformProperties
 import org.thoughtcrime.securesms.attachments.Attachment
 import org.thoughtcrime.securesms.attachments.UriAttachment
-import org.thoughtcrime.securesms.database.AttachmentTable
 import org.thoughtcrime.securesms.database.SignalDatabase
 import org.thoughtcrime.securesms.database.UriAttachmentBuilder
 import org.thoughtcrime.securesms.database.model.GroupsV2UpdateMessageConverter
 import org.thoughtcrime.securesms.database.model.databaseprotos.DecryptedGroupV2Context
 import org.thoughtcrime.securesms.database.model.databaseprotos.GV2UpdateDescription
+import org.thoughtcrime.securesms.dependencies.AppDependencies
 import org.thoughtcrime.securesms.jobs.ThreadUpdateJob
 import org.thoughtcrime.securesms.keyvalue.SignalStore
 import org.thoughtcrime.securesms.mms.OutgoingMessage
-import org.thoughtcrime.securesms.providers.BlobProvider
 import org.thoughtcrime.securesms.recipients.Recipient
 import org.thoughtcrime.securesms.recipients.RecipientId
 import org.thoughtcrime.securesms.testing.GroupTestingUtils
@@ -44,7 +44,7 @@ class MessageHelper(private val harness: SignalActivityRule, var startTime: Long
   init {
     val threadIdSlot = slot<Long>()
     mockkStatic(ThreadUpdateJob::class)
-    every { ThreadUpdateJob.enqueue(capture(threadIdSlot)) } answers {
+    every { ThreadUpdateJob.enqueue(capture(threadIdSlot), any()) } answers {
       SignalDatabase.threads.update(threadIdSlot.captured, false)
     }
   }
@@ -120,13 +120,13 @@ class MessageHelper(private val harness: SignalActivityRule, var startTime: Long
   }
 
   fun outgoingAttachment(data: ByteArray, uuid: UUID? = UUID.randomUUID()): Attachment {
-    val uri: Uri = BlobProvider.getInstance().forData(data).createForSingleSessionInMemory()
+    val uri: Uri = AppDependencies.blobs.forData(data).createForSingleSessionInMemory()
 
     val attachment: UriAttachment = UriAttachmentBuilder.build(
       id = Random.nextLong(),
       uri = uri,
       contentType = MediaUtil.IMAGE_JPEG,
-      transformProperties = AttachmentTable.TransformProperties(),
+      transformProperties = TransformProperties(),
       uuid = uuid
     )
 
@@ -148,7 +148,7 @@ class MessageHelper(private val harness: SignalActivityRule, var startTime: Long
       .groupChangeUpdate(GroupsV2UpdateMessageConverter.translateDecryptedChange(SignalStore.account.getServiceIds(), decryptedGroupV2Context))
       .build()
 
-    val outgoingMessage = OutgoingMessage.groupUpdateMessage(groupRecipient, updateDescription, startTime)
+    val outgoingMessage = OutgoingMessage.groupUpdateMessage(groupRecipient, updateDescription, startTime, false)
 
     val threadId = SignalDatabase.threads.getOrCreateThreadIdFor(groupRecipient)
     val messageId = SignalDatabase.messages.insertMessageOutbox(outgoingMessage, threadId, false, null).messageId

@@ -1,11 +1,11 @@
 package org.thoughtcrime.securesms.registration.v2;
 
 import org.junit.Test;
+import org.signal.core.util.Hex;
 import org.signal.core.util.StreamUtil;
 import org.thoughtcrime.securesms.registration.testdata.PinSanitationVector;
 import org.whispersystems.signalservice.api.kbs.PinHashUtil;
-import org.whispersystems.signalservice.internal.util.Hex;
-import org.whispersystems.signalservice.internal.util.JsonUtil;
+import org.signal.network.util.JsonUtil;
 
 import java.io.IOException;
 import java.io.InputStream;

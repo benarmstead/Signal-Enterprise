@@ -11,11 +11,13 @@ import androidx.core.view.postDelayed
 import androidx.core.view.updateLayoutParams
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
+import androidx.lifecycle.createSavedStateHandle
 import androidx.navigation.fragment.findNavController
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
 import io.reactivex.rxjava3.core.Flowable
 import io.reactivex.rxjava3.kotlin.subscribeBy
+import org.signal.camera.CameraDisplay
 import org.signal.core.util.concurrent.LifecycleDisposable
 import org.thoughtcrime.securesms.R
 import org.thoughtcrime.securesms.contacts.paged.ContactSearchKey
@@ -24,7 +26,6 @@ import org.thoughtcrime.securesms.databinding.StoriesTextPostCreationFragmentBin
 import org.thoughtcrime.securesms.linkpreview.LinkPreview
 import org.thoughtcrime.securesms.linkpreview.LinkPreviewState
 import org.thoughtcrime.securesms.linkpreview.LinkPreviewViewModelV2
-import org.thoughtcrime.securesms.mediasend.CameraDisplay
 import org.thoughtcrime.securesms.mediasend.v2.HudCommand
 import org.thoughtcrime.securesms.mediasend.v2.MediaSelectionViewModel
 import org.thoughtcrime.securesms.mediasend.v2.stories.StoriesMultiselectForwardActivity
@@ -32,7 +33,7 @@ import org.thoughtcrime.securesms.mediasend.v2.text.send.TextStoryPostSendReposi
 import org.thoughtcrime.securesms.mediasend.v2.text.send.TextStoryPostSendResult
 import org.thoughtcrime.securesms.safety.SafetyNumberBottomSheet
 import org.thoughtcrime.securesms.stories.Stories
-import org.thoughtcrime.securesms.util.activitySavedStateViewModel
+import org.thoughtcrime.securesms.util.activityViewModel
 import org.thoughtcrime.securesms.util.visible
 import java.util.Optional
 
@@ -56,8 +57,8 @@ class TextStoryPostCreationFragment : Fragment(R.layout.stories_text_post_creati
     }
   )
 
-  private val linkPreviewViewModel: LinkPreviewViewModelV2 by activitySavedStateViewModel { handle ->
-    LinkPreviewViewModelV2(handle, enablePlaceholder = true)
+  private val linkPreviewViewModel: LinkPreviewViewModelV2 by activityViewModel { extras ->
+    LinkPreviewViewModelV2(extras.createSavedStateHandle(), enablePlaceholder = true)
   }
 
   private val lifecycleDisposable = LifecycleDisposable()

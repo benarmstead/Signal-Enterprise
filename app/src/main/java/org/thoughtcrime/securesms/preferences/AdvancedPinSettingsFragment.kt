@@ -9,35 +9,38 @@ import android.content.Intent
 import android.os.Bundle
 import android.view.View
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.res.vectorResource
+import androidx.fragment.app.setFragmentResultListener
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import androidx.navigation.fragment.findNavController
 import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import org.signal.core.ui.compose.ComposeFragment
+import org.signal.core.ui.compose.DayNightPreviews
 import org.signal.core.ui.compose.Dialogs
 import org.signal.core.ui.compose.Previews
 import org.signal.core.ui.compose.Rows
 import org.signal.core.ui.compose.Scaffolds
-import org.signal.core.ui.compose.SignalPreview
+import org.signal.core.ui.compose.SignalIcons
 import org.signal.core.ui.compose.Snackbars
+import org.signal.core.ui.compose.showSnackbar
 import org.thoughtcrime.securesms.R
-import org.thoughtcrime.securesms.compose.ComposeFragment
+import org.thoughtcrime.securesms.components.settings.app.backups.remote.BackupKeyDisplayFragment
 import org.thoughtcrime.securesms.lock.v2.CreateSvrPinActivity
 import org.thoughtcrime.securesms.payments.backup.PaymentsRecoveryStartFragmentArgs.Builder
 import org.thoughtcrime.securesms.payments.preferences.PaymentsActivity
 import org.thoughtcrime.securesms.pin.PinOptOutDialog
+import org.thoughtcrime.securesms.util.navigation.safeNavigate
 
 /**
  * Fragment which allows user to enable or disable their PIN
@@ -56,7 +59,7 @@ class AdvancedPinSettingsFragment : ComposeFragment() {
       repeatOnLifecycle(Lifecycle.State.RESUMED) {
         viewModel.event.collectLatest {
           when (it) {
-            AdvancedPinSettingsViewModel.Event.SHOW_OPT_OUT_DIALOG -> PinOptOutDialog.show(requireContext()) {
+            AdvancedPinSettingsViewModel.Event.SHOW_BACKUPS_DISABLED_OPT_OUT_DIALOG -> PinOptOutDialog.show(requireContext(), viewLifecycleOwner, true) {
               viewModel.onPinOptOutSuccess()
               displayOptOutSnackbar()
             }
@@ -70,8 +73,18 @@ class AdvancedPinSettingsFragment : ComposeFragment() {
 
               startActivity(intent)
             }
+            AdvancedPinSettingsViewModel.Event.SHOW_PIN_DISABLED_SNACKBAR -> {
+              displayOptOutSnackbar()
+            }
           }
         }
+      }
+    }
+
+    setFragmentResultListener(BackupKeyDisplayFragment.AEP_ROTATION_KEY) { key, bundle ->
+      val didRotate = bundle.getBoolean(BackupKeyDisplayFragment.AEP_ROTATION_KEY, false)
+      if (didRotate) {
+        viewModel.onAepRotatedForPinDisable()
       }
     }
   }
@@ -109,7 +122,22 @@ class AdvancedPinSettingsFragment : ComposeFragment() {
           viewModel.dismissDialog()
         }
       )
-      else -> Unit
+      AdvancedPinSettingsViewModel.Dialog.ROTATE_AEP -> RotateAepDialog(
+        onConfirm = {
+          viewModel.dismissDialog()
+          val bundle = Bundle()
+          bundle.putBoolean("start_with_key_rotation", true)
+          findNavController().safeNavigate(
+            AdvancedPinSettingsFragmentDirections
+              .actionAdvancedPinSettingsFragmentToBackupKeyDisplayFragment()
+              .setStartWithKeyRotation(true)
+          )
+        },
+        onDismiss = {
+          viewModel.dismissDialog()
+        }
+      )
+      AdvancedPinSettingsViewModel.Dialog.NONE -> Unit
     }
   }
 
@@ -117,7 +145,7 @@ class AdvancedPinSettingsFragment : ComposeFragment() {
     viewLifecycleOwner.lifecycleScope.launch {
       viewModel.snackbarHostState.showSnackbar(
         message = getString(R.string.ApplicationPreferencesActivity_pin_disabled),
-        duration = SnackbarDuration.Long
+        duration = Snackbars.Duration.LONG
       )
     }
   }
@@ -132,7 +160,7 @@ private fun AdvancedPinSettingsFragmentContent(
 ) {
   Scaffolds.Settings(
     title = stringResource(R.string.preferences__advanced_pin_settings_title),
-    navigationIcon = ImageVector.vectorResource(R.drawable.symbol_arrow_start_24),
+    navigationIcon = SignalIcons.ArrowStart.imageVector,
     navigationContentDescription = stringResource(R.string.CallScreenTopBar__go_back),
     onNavigationClick = onNavigationClick,
     snackbarHost = {
@@ -191,7 +219,22 @@ private fun RecordPaymentsRecoveryPhraseDialog(
   )
 }
 
-@SignalPreview
+@Composable
+private fun RotateAepDialog(
+  onConfirm: () -> Unit,
+  onDismiss: () -> Unit
+) {
+  Dialogs.SimpleAlertDialog(
+    title = stringResource(R.string.AdvancedPinSettingsFragment_rotate_aep_dialog_title),
+    body = stringResource(R.string.AdvancedPinSettingsFragment_rotate_aep_dialog_body),
+    confirm = stringResource(R.string.AdvancedPinSettingsFragment_rotate_aep_dialog_positive_button),
+    onConfirm = onConfirm,
+    dismiss = stringResource(android.R.string.cancel),
+    onDismiss = onDismiss
+  )
+}
+
+@DayNightPreviews
 @Composable
 private fun AdvancedPinSettingsFragmentContentEnabledPreview() {
   Previews.Preview {
@@ -201,7 +244,7 @@ private fun AdvancedPinSettingsFragmentContentEnabledPreview() {
   }
 }
 
-@SignalPreview
+@DayNightPreviews
 @Composable
 private fun AdvancedPinSettingsFragmentContentDisabledPreview() {
   Previews.Preview {
@@ -211,7 +254,7 @@ private fun AdvancedPinSettingsFragmentContentDisabledPreview() {
   }
 }
 
-@SignalPreview
+@DayNightPreviews
 @Composable
 private fun PinsAreRequiredForRegistrationLockDialogPreview() {
   Previews.Preview {
@@ -219,10 +262,18 @@ private fun PinsAreRequiredForRegistrationLockDialogPreview() {
   }
 }
 
-@SignalPreview
+@DayNightPreviews
 @Composable
 private fun RecordPaymentsRecoveryPhraseDialogPreview() {
   Previews.Preview {
     RecordPaymentsRecoveryPhraseDialog({}, {})
+  }
+}
+
+@DayNightPreviews
+@Composable
+private fun RotateAepDialogPreview() {
+  Previews.Preview {
+    RotateAepDialog({}, {})
   }
 }

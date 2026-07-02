@@ -24,8 +24,8 @@ import kotlinx.coroutines.withContext
 import org.signal.core.util.logging.Log
 import org.thoughtcrime.securesms.R
 import org.thoughtcrime.securesms.database.model.InAppPaymentReceiptRecord
+import org.thoughtcrime.securesms.dependencies.AppDependencies
 import org.thoughtcrime.securesms.payments.FiatMoneyUtil
-import org.thoughtcrime.securesms.providers.BlobProvider
 import org.thoughtcrime.securesms.util.DateUtils
 import java.io.ByteArrayOutputStream
 import java.util.Locale
@@ -62,6 +62,8 @@ object ReceiptImageRenderer {
           .from(context)
           .inflate(R.layout.donation_receipt_png, null)
 
+        view.layoutDirection = context.resources.configuration.layoutDirection
+
         view.findViewById<TextView>(R.id.date).text = today
         view.findViewById<TextView>(R.id.amount).text = amount
         view.findViewById<TextView>(R.id.donation_type).text = type
@@ -73,7 +75,7 @@ object ReceiptImageRenderer {
         val bitmap = view.drawToBitmap()
         bitmap.compress(Bitmap.CompressFormat.PNG, 0, outputStream)
 
-        BlobProvider.getInstance()
+        AppDependencies.blobs
           .forData(outputStream.toByteArray())
           .withMimeType("image/png")
           .withFileName("Signal-Donation-Receipt.png")

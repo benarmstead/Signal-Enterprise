@@ -30,8 +30,8 @@ import androidx.appcompat.widget.LinearLayoutCompat;
 
 import org.signal.core.util.logging.Log;
 import org.thoughtcrime.securesms.R;
-import org.thoughtcrime.securesms.util.ServiceUtil;
-import org.thoughtcrime.securesms.util.Util;
+import org.signal.core.util.ServiceUtil;
+import org.signal.core.util.Util;
 import org.thoughtcrime.securesms.util.ViewUtil;
 
 import java.lang.reflect.Field;
@@ -135,7 +135,7 @@ public class KeyboardAwareLinearLayout extends LinearLayoutCompat {
   protected void onAttachedToWindow() {
     super.onAttachedToWindow();
     rotation = getDeviceRotation();
-    if (Build.VERSION.SDK_INT >= 23 && getRootWindowInsets() != null) {
+    if (getRootWindowInsets() != null) {
       int          bottomInset;
       WindowInsets windowInsets = getRootWindowInsets();
 

@@ -20,15 +20,14 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.fragment.findNavController
+import androidx.navigation.fragment.navArgs
+import org.signal.core.ui.compose.ComposeFragment
 import org.signal.core.ui.compose.Dialogs
 import org.thoughtcrime.securesms.R
 import org.thoughtcrime.securesms.backup.v2.ui.subscription.MessageBackupsKeyRecordMode
 import org.thoughtcrime.securesms.backup.v2.ui.subscription.MessageBackupsKeyRecordScreen
 import org.thoughtcrime.securesms.backup.v2.ui.subscription.MessageBackupsKeyVerifyScreen
-import org.thoughtcrime.securesms.compose.ComposeFragment
 import org.thoughtcrime.securesms.compose.Nav
-import org.thoughtcrime.securesms.util.Util
-import org.thoughtcrime.securesms.util.storage.AndroidCredentialRepository
 import org.thoughtcrime.securesms.util.viewModel
 
 /**
@@ -38,20 +37,25 @@ class BackupKeyDisplayFragment : ComposeFragment() {
 
   companion object {
     const val AEP_ROTATION_KEY = "AEP_ROTATION_KEY"
-    const val CLIPBOARD_TIMEOUT_SECONDS = 60
   }
 
   private val viewModel: BackupKeyDisplayViewModel by viewModel { BackupKeyDisplayViewModel() }
+  private val args: BackupKeyDisplayFragmentArgs by navArgs()
 
   @Composable
   override fun FragmentContent() {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
-    val passwordManagerSettingsIntent = AndroidCredentialRepository.getCredentialManagerSettingsIntent(requireContext())
 
     val navController = rememberNavController()
     LaunchedEffect(Unit) {
       navController.setLifecycleOwner(this@BackupKeyDisplayFragment)
       navController.enableOnBackPressed(true)
+    }
+
+    LaunchedEffect(args.startWithKeyRotation, state.rotationState) {
+      if (args.startWithKeyRotation && state.rotationState == BackupKeyRotationState.NOT_STARTED) {
+        viewModel.rotateBackupKey()
+      }
     }
 
     LaunchedEffect(state.rotationState) {
@@ -67,7 +71,7 @@ class BackupKeyDisplayFragment : ComposeFragment() {
       displayWarningDialog = true
     }
 
-    val mode = remember(state.rotationState) {
+    val mode = remember(state.rotationState, state.canRotateKey) {
       if (state.rotationState == BackupKeyRotationState.NOT_STARTED) {
         MessageBackupsKeyRecordMode.CreateNewKey(
           onCreateNewKeyClick = {
@@ -77,7 +81,8 @@ class BackupKeyDisplayFragment : ComposeFragment() {
             viewModel.turnOffOptimizedStorageAndDownloadMedia()
             findNavController().popBackStack()
           },
-          isOptimizedStorageEnabled = state.isOptimizedStorageEnabled
+          isOptimizedStorageEnabled = state.isOptimizedStorageEnabled,
+          canRotateKey = state.canRotateKey
         )
       } else {
         MessageBackupsKeyRecordMode.Next(
@@ -112,14 +117,8 @@ class BackupKeyDisplayFragment : ComposeFragment() {
         MessageBackupsKeyRecordScreen(
           backupKey = state.accountEntropyPool.displayValue,
           keySaveState = state.keySaveState,
-          canOpenPasswordManagerSettings = passwordManagerSettingsIntent != null,
-          onNavigationClick = { onBackPressedDispatcher?.onBackPressed() },
-          onCopyToClipboardClick = { Util.copyToClipboard(requireContext(), it, CLIPBOARD_TIMEOUT_SECONDS) },
-          onRequestSaveToPasswordManager = viewModel::onBackupKeySaveRequested,
-          onConfirmSaveToPasswordManager = viewModel::onBackupKeySaveConfirmed,
-          onSaveToPasswordManagerComplete = viewModel::onBackupKeySaveCompleted,
-          mode = mode,
-          onGoToPasswordManagerSettingsClick = { requireContext().startActivity(passwordManagerSettingsIntent) }
+          backupKeyCredentialManagerHandler = viewModel,
+          mode = mode
         )
       }
 

@@ -6,6 +6,8 @@ import android.os.Parcelable
 import kotlinx.parcelize.Parceler
 import kotlinx.parcelize.Parcelize
 import kotlinx.parcelize.TypeParceler
+import org.signal.core.models.media.Media
+import org.signal.core.util.ParcelUtil
 import org.signal.core.util.getParcelableExtraCompat
 import org.thoughtcrime.securesms.conversation.MessageSendType
 import org.thoughtcrime.securesms.database.model.Mention
@@ -13,7 +15,6 @@ import org.thoughtcrime.securesms.database.model.StoryType
 import org.thoughtcrime.securesms.database.model.databaseprotos.BodyRangeList
 import org.thoughtcrime.securesms.recipients.RecipientId
 import org.thoughtcrime.securesms.sms.MessageSender.PreUploadResult
-import org.thoughtcrime.securesms.util.ParcelUtil
 
 /**
  * A class that lets us nicely format data that we'll send back to [ConversationActivity].

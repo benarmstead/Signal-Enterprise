@@ -3,7 +3,6 @@ package org.thoughtcrime.securesms.conversation;
 import android.animation.Animator;
 import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
-import android.animation.ValueAnimator;
 import android.app.Activity;
 import android.content.Context;
 import android.content.res.Configuration;
@@ -11,12 +10,10 @@ import android.graphics.Bitmap;
 import android.graphics.PointF;
 import android.graphics.Rect;
 import android.graphics.drawable.BitmapDrawable;
-import android.os.Build;
 import android.util.AttributeSet;
 import android.view.HapticFeedbackConstants;
 import android.view.MotionEvent;
 import android.view.View;
-import android.view.Window;
 import android.view.animation.DecelerateInterpolator;
 import android.view.animation.Interpolator;
 import android.widget.FrameLayout;
@@ -32,9 +29,8 @@ import androidx.core.view.ViewKt;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.vectordrawable.graphics.drawable.AnimatorInflaterCompat;
 
-import com.annimon.stream.Stream;
-
 import org.signal.core.util.DimensionUnit;
+import org.signal.core.util.Util;
 import org.signal.core.util.logging.Log;
 import org.thoughtcrime.securesms.R;
 import org.thoughtcrime.securesms.animation.AnimationCompleteListener;
@@ -45,13 +41,13 @@ import org.thoughtcrime.securesms.database.model.MessageRecord;
 import org.thoughtcrime.securesms.database.model.ReactionRecord;
 import org.thoughtcrime.securesms.keyvalue.SignalStore;
 import org.thoughtcrime.securesms.recipients.Recipient;
-import org.thoughtcrime.securesms.util.ThemeUtil;
-import org.thoughtcrime.securesms.util.Util;
 import org.thoughtcrime.securesms.util.ViewUtil;
-import org.thoughtcrime.securesms.util.WindowUtil;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.LongStream;
+import java.util.stream.Stream;
 
 import kotlin.Unit;
 
@@ -60,7 +56,7 @@ public final class ConversationReactionOverlay extends FrameLayout {
   private static final String       TAG          = Log.tag(ConversationReactionOverlay.class);
   private static final Interpolator INTERPOLATOR = new DecelerateInterpolator();
 
-  private final Rect  emojiViewGlobalRect = new Rect();
+  private final Rect  emojiViewGlobalRect  = new Rect();
   private final Rect  emojiStripViewBounds = new Rect();
   private       float segmentSize;
 
@@ -68,22 +64,18 @@ public final class ConversationReactionOverlay extends FrameLayout {
   private final Boundary verticalScrubBoundary   = new Boundary();
   private final PointF   deadzoneTouchPoint      = new PointF();
 
-  private Activity                  activity;
   private Recipient                 conversationRecipient;
   private MessageRecord             messageRecord;
   private SelectedConversationModel selectedConversationModel;
   private OverlayState              overlayState = OverlayState.HIDDEN;
   private boolean                   isNonAdminInAnnouncementGroup;
+  private boolean                   canEditGroupInfo;
 
   private boolean downIsOurs;
   private int     selected = -1;
   private int     customEmojiIndex;
-  private int     originalStatusBarColor;
-  private int     originalNavigationBarColor;
 
   private View             dropdownAnchor;
-  private View             toolbarShade;
-  private View             inputShade;
   private View             conversationItem;
   private View             backgroundView;
   private ConstraintLayout foregroundView;
@@ -101,12 +93,12 @@ public final class ConversationReactionOverlay extends FrameLayout {
   private int   statusBarHeight;
   private int   bottomNavigationBarHeight;
 
-  private OnReactionSelectedListener       onReactionSelectedListener;
-  private OnActionSelectedListener         onActionSelectedListener;
-  private OnHideListener                   onHideListener;
+  private OnReactionSelectedListener onReactionSelectedListener;
+  private OnActionSelectedListener   onActionSelectedListener;
+  private OnHideListener             onHideListener;
 
-  private AnimatorSet revealAnimatorSet = new AnimatorSet();
-  private AnimatorSet hideAnimatorSet   = new AnimatorSet();
+  private final AnimatorSet revealAnimatorSet = new AnimatorSet();
+  private       AnimatorSet hideAnimatorSet   = new AnimatorSet();
 
   public ConversationReactionOverlay(@NonNull Context context) {
     super(context);
@@ -121,8 +113,6 @@ public final class ConversationReactionOverlay extends FrameLayout {
     super.onFinishInflate();
 
     dropdownAnchor   = findViewById(R.id.dropdown_anchor);
-    toolbarShade     = findViewById(R.id.toolbar_shade);
-    inputShade       = findViewById(R.id.input_shade);
     conversationItem = findViewById(R.id.conversation_item);
     backgroundView   = findViewById(R.id.conversation_reaction_scrubber_background);
     foregroundView   = findViewById(R.id.conversation_reaction_scrubber_foreground);
@@ -155,7 +145,8 @@ public final class ConversationReactionOverlay extends FrameLayout {
                    @NonNull ConversationMessage conversationMessage,
                    @NonNull PointF lastSeenDownPoint,
                    boolean isNonAdminInAnnouncementGroup,
-                   @NonNull SelectedConversationModel selectedConversationModel)
+                   @NonNull SelectedConversationModel selectedConversationModel,
+                   boolean canEditGroupInfo)
   {
     if (overlayState != OverlayState.HIDDEN) {
       return;
@@ -165,6 +156,7 @@ public final class ConversationReactionOverlay extends FrameLayout {
     this.conversationRecipient         = conversationRecipient;
     this.selectedConversationModel     = selectedConversationModel;
     this.isNonAdminInAnnouncementGroup = isNonAdminInAnnouncementGroup;
+    this.canEditGroupInfo              = canEditGroupInfo;
     overlayState                       = OverlayState.UNINITAILIZED;
     selected                           = -1;
 
@@ -177,7 +169,7 @@ public final class ConversationReactionOverlay extends FrameLayout {
       Log.i(TAG, "Capturing insets from root view.");
 
       Insets insets = rootWindowInsets.getInsets(WindowInsetsCompat.Type.systemBars());
-      statusBarHeight = insets.top;
+      statusBarHeight           = insets.top;
       bottomNavigationBarHeight = insets.bottom;
     } else {
       Log.i(TAG, "Capturing insets from util methods.");
@@ -202,22 +194,16 @@ public final class ConversationReactionOverlay extends FrameLayout {
 
     setVisibility(View.INVISIBLE);
 
-    this.activity = activity;
-    updateSystemUiOnShow(activity);
-
     ViewKt.doOnLayout(this, v -> {
-      showAfterLayout(activity, conversationMessage, lastSeenDownPoint, isMessageOnLeft);
+      showAfterLayout(conversationMessage, lastSeenDownPoint, isMessageOnLeft);
       return Unit.INSTANCE;
     });
   }
 
-  private void showAfterLayout(@NonNull Activity activity,
-                               @NonNull ConversationMessage conversationMessage,
+  private void showAfterLayout(@NonNull ConversationMessage conversationMessage,
                                @NonNull PointF lastSeenDownPoint,
-                               boolean isMessageOnLeft) {
-    updateToolbarShade();
-    updateInputShade();
-
+                               boolean isMessageOnLeft)
+  {
     contextMenu = new ConversationContextMenu(dropdownAnchor, getMenuActionItems(conversationMessage));
 
     conversationItem.setX(selectedConversationModel.getSnapshotMetrics().getSnapshotOffset());
@@ -229,10 +215,10 @@ public final class ConversationReactionOverlay extends FrameLayout {
     int overlayHeight = getHeight() - bottomNavigationBarHeight;
     int bubbleWidth   = selectedConversationModel.getBubbleWidth();
 
-    float endX            = selectedConversationModel.getSnapshotMetrics().getSnapshotOffset();
-    float endY            = conversationItem.getY();
-    float endApparentTop  = endY;
-    float endScale        = 1f;
+    float endX           = selectedConversationModel.getSnapshotMetrics().getSnapshotOffset();
+    float endY           = conversationItem.getY();
+    float endApparentTop = endY;
+    float endScale       = 1f;
 
     float menuPadding           = DimensionUnit.DP.toPixels(12f);
     float reactionBarTopPadding = DimensionUnit.DP.toPixels(32f);
@@ -255,7 +241,7 @@ public final class ConversationReactionOverlay extends FrameLayout {
         float spaceAvailableForItem = overlayHeight - reactionBarHeight - menuPadding - reactionBarTopPadding;
 
         endScale               = spaceAvailableForItem / conversationItem.getHeight();
-        endX                  += Util.halfOffsetFromScale(conversationItemSnapshot.getWidth(), endScale) * (isMessageOnLeft ? -1 : 1);
+        endX                   += Util.halfOffsetFromScale(conversationItemSnapshot.getWidth(), endScale) * (isMessageOnLeft ? -1 : 1);
         endY                   = reactionBarHeight + menuPadding + reactionBarTopPadding - Util.halfOffsetFromScale(conversationItemSnapshot.getHeight(), endScale);
         reactionBarBackgroundY = reactionBarTopPadding;
       }
@@ -290,7 +276,7 @@ public final class ConversationReactionOverlay extends FrameLayout {
         float spaceAvailableForItem = (float) overlayHeight - contextMenu.getMaxHeight() - menuPadding - spaceForReactionBar;
 
         endScale = spaceAvailableForItem / conversationItemSnapshot.getHeight();
-        endX    += Util.halfOffsetFromScale(conversationItemSnapshot.getWidth(), endScale) * (isMessageOnLeft ? -1 : 1);
+        endX     += Util.halfOffsetFromScale(conversationItemSnapshot.getWidth(), endScale) * (isMessageOnLeft ? -1 : 1);
         endY     = spaceForReactionBar - Util.halfOffsetFromScale(conversationItemSnapshot.getHeight(), endScale);
 
         float contextMenuTop = endY + (conversationItemSnapshot.getHeight() * endScale);
@@ -317,12 +303,12 @@ public final class ConversationReactionOverlay extends FrameLayout {
             endY                   = overlayHeight - menuHeight - menuPadding - conversationItemSnapshot.getHeight();
             reactionBarBackgroundY = endY - reactionBarHeight - menuPadding;
           }
-          endApparentTop         = endY;
+          endApparentTop = endY;
         } else {
           float spaceAvailableForItem = (float) overlayHeight - menuHeight - menuPadding * 2 - reactionBarHeight - reactionBarTopPadding;
 
           endScale               = spaceAvailableForItem / conversationItemSnapshot.getHeight();
-          endX                  += Util.halfOffsetFromScale(conversationItemSnapshot.getWidth(), endScale) * (isMessageOnLeft ? -1 : 1);
+          endX                   += Util.halfOffsetFromScale(conversationItemSnapshot.getWidth(), endScale) * (isMessageOnLeft ? -1 : 1);
           endY                   = reactionBarHeight - Util.halfOffsetFromScale(conversationItemSnapshot.getHeight(), endScale) + menuPadding + reactionBarTopPadding;
           reactionBarBackgroundY = reactionBarTopPadding;
           endApparentTop         = reactionBarHeight + menuPadding + reactionBarTopPadding;
@@ -398,18 +384,6 @@ public final class ConversationReactionOverlay extends FrameLayout {
     return Math.max(reactionStartingPoint - reactionBarOffset - reactionBarHeight, spaceNeededBetweenTopOfScreenAndTopOfReactionBar);
   }
 
-  private void updateToolbarShade() {
-    LayoutParams layoutParams = (LayoutParams) toolbarShade.getLayoutParams();
-    layoutParams.height = 0;
-    toolbarShade.setLayoutParams(layoutParams);
-  }
-
-  private void updateInputShade() {
-    LayoutParams layoutParams = (LayoutParams) inputShade.getLayoutParams();
-    layoutParams.height = 0;
-    inputShade.setLayoutParams(layoutParams);
-  }
-
   /**
    * Returns true when the device is in a configuration where the navigation bar doesn't take up
    * space at the bottom of the screen.
@@ -417,38 +391,19 @@ public final class ConversationReactionOverlay extends FrameLayout {
   private boolean zeroNavigationBarHeightForConfiguration() {
     boolean isLandscape = getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE;
 
-    if (Build.VERSION.SDK_INT >= 29) {
-      return getRootWindowInsets().getSystemGestureInsets().bottom == 0 && isLandscape;
-    } else {
-      return isLandscape;
-    }
-  }
-
-  private void updateSystemUiOnShow(@NonNull Activity activity) {
-    Window window   = activity.getWindow();
-    int    barColor = ContextCompat.getColor(getContext(), R.color.conversation_item_selected_system_ui);
-
-    originalStatusBarColor = window.getStatusBarColor();
-    WindowUtil.setStatusBarColor(window, barColor);
-
-    originalNavigationBarColor = window.getNavigationBarColor();
-    WindowUtil.setNavigationBarColor(activity, barColor);
-
-    if (!ThemeUtil.isDarkTheme(getContext())) {
-      WindowUtil.clearLightStatusBar(window);
-      WindowUtil.clearLightNavigationBar(window);
-    }
+    WindowInsetsCompat insets = ViewCompat.getRootWindowInsets(this);
+    return (insets == null || insets.getInsets(WindowInsetsCompat.Type.systemGestures()).bottom == 0) && isLandscape;
   }
 
   public void hide() {
     hideInternal(onHideListener);
   }
 
-  public void hideForReactWithAny() {
-    hideInternal(onHideListener);
-  }
-
   private void hideInternal(@Nullable OnHideListener onHideListener) {
+    if (overlayState == OverlayState.HIDDEN || selectedConversationModel == null) {
+      return;
+    }
+
     overlayState = OverlayState.HIDDEN;
 
     AnimatorSet animatorSet = newHideAnimatorSet();
@@ -464,9 +419,6 @@ public final class ConversationReactionOverlay extends FrameLayout {
     animatorSet.addListener(new AnimationCompleteListener() {
       @Override public void onAnimationEnd(Animator animation) {
         animatorSet.removeListener(this);
-
-        toolbarShade.setVisibility(INVISIBLE);
-        inputShade.setVisibility(INVISIBLE);
 
         if (onHideListener != null) {
           onHideListener.onHide();
@@ -710,19 +662,19 @@ public final class ConversationReactionOverlay extends FrameLayout {
   }
 
   private static @Nullable String getOldEmoji(@NonNull MessageRecord messageRecord) {
-    return Stream.of(messageRecord.getReactions())
-                 .filter(record -> record.getAuthor()
-                                         .serialize()
-                                         .equals(Recipient.self()
-                                                          .getId()
-                                                          .serialize()))
-                 .findFirst()
-                 .map(ReactionRecord::getEmoji)
-                 .orElse(null);
+    return messageRecord.getReactions().stream()
+                        .filter(record -> record.getAuthor()
+                                                .serialize()
+                                                .equals(Recipient.self()
+                                                                 .getId()
+                                                                 .serialize()))
+                        .findFirst()
+                        .map(ReactionRecord::getEmoji)
+                        .orElse(null);
   }
 
   private @NonNull List<ActionItem> getMenuActionItems(@NonNull ConversationMessage conversationMessage) {
-    MenuState menuState = MenuState.getMenuState(conversationRecipient, conversationMessage.getMultiselectCollection().toSet(), false, isNonAdminInAnnouncementGroup);
+    MenuState menuState = MenuState.getMenuState(conversationRecipient, conversationMessage.getMultiselectCollection().toSet(), false, isNonAdminInAnnouncementGroup, canEditGroupInfo);
 
     List<ActionItem> items = new ArrayList<>();
 
@@ -731,11 +683,11 @@ public final class ConversationReactionOverlay extends FrameLayout {
     }
 
     if (menuState.shouldShowEditAction()) {
-      items.add(new ActionItem(R.drawable.symbol_edit_24, getResources().getString(R.string.conversation_selection__menu_edit), () -> handleActionItemClicked(Action.EDIT)));
+      items.add(new ActionItem(org.signal.core.ui.R.drawable.symbol_edit_24, getResources().getString(R.string.conversation_selection__menu_edit), () -> handleActionItemClicked(Action.EDIT)));
     }
 
     if (menuState.shouldShowForwardAction()) {
-      items.add(new ActionItem(R.drawable.symbol_forward_24, getResources().getString(R.string.conversation_selection__menu_forward), () -> handleActionItemClicked(Action.FORWARD)));
+      items.add(new ActionItem(org.signal.core.ui.R.drawable.symbol_forward_24, getResources().getString(R.string.conversation_selection__menu_forward), () -> handleActionItemClicked(Action.FORWARD)));
     }
 
     if (menuState.shouldShowResendAction()) {
@@ -743,27 +695,47 @@ public final class ConversationReactionOverlay extends FrameLayout {
     }
 
     if (menuState.shouldShowSaveAttachmentAction()) {
-      items.add(new ActionItem(R.drawable.symbol_save_android_24, getResources().getString(R.string.conversation_selection__menu_save), () -> handleActionItemClicked(Action.DOWNLOAD)));
+      items.add(new ActionItem(org.signal.core.ui.R.drawable.symbol_save_android_24, getResources().getString(R.string.conversation_selection__menu_save), () -> handleActionItemClicked(Action.DOWNLOAD)));
     }
 
     if (menuState.shouldShowCopyAction()) {
-      items.add(new ActionItem(R.drawable.symbol_copy_android_24, getResources().getString(R.string.conversation_selection__menu_copy), () -> handleActionItemClicked(Action.COPY)));
+      items.add(new ActionItem(org.signal.core.ui.R.drawable.symbol_copy_android_24, getResources().getString(R.string.conversation_selection__menu_copy), () -> handleActionItemClicked(Action.COPY)));
     }
 
     if (menuState.shouldShowPaymentDetails()) {
       items.add(new ActionItem(R.drawable.symbol_payment_24, getResources().getString(R.string.conversation_selection__menu_payment_details), () -> handleActionItemClicked(Action.PAYMENT_DETAILS)));
     }
 
-    items.add(new ActionItem(R.drawable.symbol_check_circle_24, getResources().getString(R.string.conversation_selection__menu_multi_select), () -> handleActionItemClicked(Action.MULTISELECT)));
+    items.add(new ActionItem(org.signal.core.ui.R.drawable.symbol_check_circle_24, getResources().getString(R.string.conversation_selection__menu_multi_select), () -> handleActionItemClicked(Action.MULTISELECT)));
 
     if (menuState.shouldShowDetailsAction()) {
-      items.add(new ActionItem(R.drawable.symbol_info_24, getResources().getString(R.string.conversation_selection__menu_message_details), () -> handleActionItemClicked(Action.VIEW_INFO)));
+      items.add(new ActionItem(org.signal.core.ui.R.drawable.symbol_info_24, getResources().getString(R.string.conversation_selection__menu_message_details), () -> handleActionItemClicked(Action.VIEW_INFO)));
+    }
+
+    if (menuState.shouldShowPollTerminateAction()) {
+      items.add(new ActionItem(R.drawable.symbol_stop_24, getResources().getString(R.string.conversation_selection__menu_end_poll), () -> handleActionItemClicked(Action.END_POLL)));
+    }
+
+    if (menuState.shouldShowPinMessage()) {
+      items.add(new ActionItem(R.drawable.symbol_pin_24, getResources().getString(R.string.conversation_selection__menu_pin_message), () -> handleActionItemClicked(Action.PIN_MESSAGE)));
+    }
+
+    if (menuState.showShowUnpinMessage()) {
+      items.add(new ActionItem(R.drawable.symbol_pin_slash_24, getResources().getString(R.string.conversation_selection__menu_unpin_message), () -> handleActionItemClicked(Action.UNPIN_MESSAGE)));
+    }
+
+    if (menuState.shouldShowStarMessage()) {
+      items.add(new ActionItem(R.drawable.symbol_star_outline_24, getResources().getString(R.string.conversation_selection__menu_star), () -> handleActionItemClicked(Action.STAR_MESSAGE)));
+    }
+
+    if (menuState.shouldShowUnstarMessage()) {
+      items.add(new ActionItem(R.drawable.symbol_star_outline_24, getResources().getString(R.string.conversation_selection__menu_unstar), () -> handleActionItemClicked(Action.UNSTAR_MESSAGE)));
     }
 
     backgroundView.setVisibility(menuState.shouldShowReactions() ? View.VISIBLE : View.INVISIBLE);
     foregroundView.setVisibility(menuState.shouldShowReactions() ? View.VISIBLE : View.INVISIBLE);
 
-    items.add(new ActionItem(R.drawable.symbol_trash_24, getResources().getString(R.string.conversation_selection__menu_delete), () -> handleActionItemClicked(Action.DELETE)));
+    items.add(new ActionItem(org.signal.core.ui.R.drawable.symbol_trash_24, getResources().getString(R.string.conversation_selection__menu_delete), () -> handleActionItemClicked(Action.DELETE)));
 
     return items;
   }
@@ -793,16 +765,16 @@ public final class ConversationReactionOverlay extends FrameLayout {
   private void initAnimators() {
 
     int revealDuration = getContext().getResources().getInteger(R.integer.reaction_scrubber_reveal_duration);
-    int revealOffset = getContext().getResources().getInteger(R.integer.reaction_scrubber_reveal_offset);
+    int revealOffset   = getContext().getResources().getInteger(R.integer.reaction_scrubber_reveal_offset);
 
-    List<Animator> reveals = Stream.of(emojiViews)
-        .mapIndexed((idx, v) -> {
-          Animator anim = AnimatorInflaterCompat.loadAnimator(getContext(), R.animator.reactions_scrubber_reveal);
-          anim.setTarget(v);
-          anim.setStartDelay(idx * animationEmojiStartDelayFactor);
-          return anim;
-        })
-        .toList();
+    List<Animator> reveals = LongStream.range(0, emojiViews.length)
+                                       .boxed()
+                                       .map(idx -> {
+                                         Animator anim = AnimatorInflaterCompat.loadAnimator(getContext(), R.animator.reactions_scrubber_reveal);
+                                         anim.setTarget(emojiViews[idx.intValue()]);
+                                         anim.setStartDelay(idx * animationEmojiStartDelayFactor);
+                                         return anim;
+                                       }).collect(Collectors.toList());
 
     Animator backgroundRevealAnim = AnimatorInflaterCompat.loadAnimator(getContext(), android.R.animator.fade_in);
     backgroundRevealAnim.setTarget(backgroundView);
@@ -840,12 +812,12 @@ public final class ConversationReactionOverlay extends FrameLayout {
     int duration = getContext().getResources().getInteger(R.integer.reaction_scrubber_hide_duration);
 
     List<Animator> animators = new ArrayList<>(Stream.of(emojiViews)
-                                                     .mapIndexed((idx, v) -> {
+                                                     .map(v -> {
                                                        Animator anim = AnimatorInflaterCompat.loadAnimator(getContext(), R.animator.reactions_scrubber_hide);
                                                        anim.setTarget(v);
                                                        return anim;
                                                      })
-                                                     .toList());
+                                                     .collect(Collectors.toList()));
 
     Animator backgroundHideAnim = AnimatorInflaterCompat.loadAnimator(getContext(), android.R.animator.fade_out);
     backgroundHideAnim.setTarget(backgroundView);
@@ -885,32 +857,18 @@ public final class ConversationReactionOverlay extends FrameLayout {
     itemYAnim.setDuration(duration);
     animators.add(itemYAnim);
 
-    if (activity != null) {
-      ValueAnimator statusBarAnim = ValueAnimator.ofArgb(activity.getWindow().getStatusBarColor(), originalStatusBarColor);
-      statusBarAnim.setDuration(duration);
-      statusBarAnim.addUpdateListener(animation -> {
-        WindowUtil.setStatusBarColor(activity.getWindow(), (int) animation.getAnimatedValue());
-      });
-      animators.add(statusBarAnim);
-
-      ValueAnimator navigationBarAnim = ValueAnimator.ofArgb(activity.getWindow().getStatusBarColor(), originalNavigationBarColor);
-      navigationBarAnim.setDuration(duration);
-      navigationBarAnim.addUpdateListener(animation -> {
-        WindowUtil.setNavigationBarColor(activity, (int) animation.getAnimatedValue());
-      });
-      animators.add(navigationBarAnim);
-    }
-
     return animators;
   }
 
   public interface OnHideListener {
     void startHide(@Nullable View focusedView);
+
     void onHide();
   }
 
   public interface OnReactionSelectedListener {
     void onReactionSelected(@NonNull MessageRecord messageRecord, String emoji);
+
     void onCustomReactionSelected(@NonNull MessageRecord messageRecord, boolean hasAddedCustomEmoji);
   }
 
@@ -961,5 +919,10 @@ public final class ConversationReactionOverlay extends FrameLayout {
     PAYMENT_DETAILS,
     VIEW_INFO,
     DELETE,
+    END_POLL,
+    PIN_MESSAGE,
+    UNPIN_MESSAGE,
+    STAR_MESSAGE,
+    UNSTAR_MESSAGE
   }
 }

@@ -83,7 +83,7 @@ class MainToolbarViewModel : ViewModel() {
   fun isInActionMode(): Boolean = state.value.mode == MainToolbarMode.ACTION_MODE
 
   fun presentToolbarForConversationListFragment() {
-    setToolbarMode(MainToolbarMode.FULL, destination = MainNavigationListLocation.CHATS, overwriteSearchMode = false)
+    setToolbarMode(MainToolbarMode.FULL, destination = MainNavigationListLocation.CHATS, overwriteExtraMode = false)
   }
 
   fun presentToolbarForConversationListArchiveFragment() {
@@ -113,16 +113,16 @@ class MainToolbarViewModel : ViewModel() {
   fun setToolbarMode(
     mode: MainToolbarMode,
     destination: MainNavigationListLocation? = null,
-    overwriteSearchMode: Boolean = true
+    overwriteExtraMode: Boolean = true
   ) {
     val previousMode = internalStateFlow.value.mode
-    val newMode = if (previousMode == MainToolbarMode.SEARCH && !overwriteSearchMode) {
+    val newMode = if ((previousMode == MainToolbarMode.SEARCH || previousMode == MainToolbarMode.ACTION_MODE) && !overwriteExtraMode) {
       previousMode
     } else {
       mode
     }
 
-    val newSearchQuery = if (previousMode == MainToolbarMode.SEARCH && !overwriteSearchMode) {
+    val newSearchQuery = if (previousMode == MainToolbarMode.SEARCH && !overwriteExtraMode) {
       internalStateFlow.value.searchQuery
     } else {
       ""
@@ -210,6 +210,12 @@ class MainToolbarViewModel : ViewModel() {
   fun setSearchHint(@StringRes hint: Int) {
     internalStateFlow.update {
       it.copy(searchHint = hint)
+    }
+  }
+
+  fun setHasActiveSearchFilter(hasActiveSearchFilter: Boolean) {
+    internalStateFlow.update {
+      it.copy(hasActiveSearchFilter = hasActiveSearchFilter)
     }
   }
 

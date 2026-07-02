@@ -1,7 +1,6 @@
 package org.thoughtcrime.securesms.megaphone
 
 import org.thoughtcrime.securesms.keyvalue.SignalStore
-import org.thoughtcrime.securesms.util.RemoteConfig
 import kotlin.time.Duration.Companion.days
 
 /**
@@ -13,11 +12,11 @@ import kotlin.time.Duration.Companion.days
 class VerifyBackupKeyReminderSchedule : MegaphoneSchedule {
 
   override fun shouldDisplay(seenCount: Int, lastSeen: Long, firstVisible: Long, currentTime: Long): Boolean {
-    if (!RemoteConfig.messageBackups) {
+    if (!SignalStore.backup.areBackupsEnabled) {
       return false
     }
 
-    if (!SignalStore.backup.areBackupsEnabled) {
+    if (SignalStore.account.isLinkedDevice) {
       return false
     }
 
@@ -26,11 +25,11 @@ class VerifyBackupKeyReminderSchedule : MegaphoneSchedule {
     val isFirstReminder = !SignalStore.backup.hasVerifiedBefore
 
     val intervalTime = if (isFirstReminder) 14.days.inWholeMilliseconds else 183.days.inWholeMilliseconds
-    val snoozedTime = if (previouslySnoozed) 7.days.inWholeMilliseconds else 0.days.inWholeMilliseconds
 
-    val shouldShowBackupKeyReminder = System.currentTimeMillis() > (lastVerifiedTime + intervalTime + snoozedTime)
-    val hasShownPinReminderRecently = System.currentTimeMillis() < SignalStore.pin.lastReminderTime + 7.days.inWholeMilliseconds
+    val intervalHasPassed = currentTime > (lastVerifiedTime + intervalTime)
+    val snoozeHasExpired = !previouslySnoozed || currentTime > (lastSeen + 7.days.inWholeMilliseconds)
+    val hasShownPinReminderRecently = currentTime < SignalStore.pin.lastReminderTime + 7.days.inWholeMilliseconds
 
-    return shouldShowBackupKeyReminder && !hasShownPinReminderRecently
+    return intervalHasPassed && snoozeHasExpired && !hasShownPinReminderRecently
   }
 }

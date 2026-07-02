@@ -1,8 +1,8 @@
 package org.thoughtcrime.securesms.keyvalue
 
+import org.signal.core.models.MasterKey
 import org.signal.core.util.StringStringSerializer
 import org.signal.core.util.logging.Log
-import org.whispersystems.signalservice.api.kbs.MasterKey
 import org.whispersystems.signalservice.api.kbs.PinHashUtil.localPinHash
 
 class SvrValues internal constructor(store: KeyValueStore) : SignalStoreValues(store) {
@@ -41,6 +41,7 @@ class SvrValues internal constructor(store: KeyValueStore) : SignalStoreValues(s
       .remove(LAST_CREATE_FAILED_TIMESTAMP)
       .remove(OPTED_OUT)
       .remove(SVR2_AUTH_TOKENS)
+      .remove(SVR3_AUTH_TOKENS)
       .remove(SVR_LAST_AUTH_REFRESH_TIMESTAMP)
       .commit()
   }
@@ -228,6 +229,9 @@ class SvrValues internal constructor(store: KeyValueStore) : SignalStoreValues(s
       .remove(LOCK_LOCAL_PIN_HASH)
       .remove(PIN)
       .remove(REGISTRATION_LOCK_ENABLED)
+      .remove(SVR2_AUTH_TOKENS)
+      .remove(SVR3_AUTH_TOKENS)
+      .remove(SVR_LAST_AUTH_REFRESH_TIMESTAMP)
       .putLong(LAST_CREATE_FAILED_TIMESTAMP, -1)
       .commit()
   }

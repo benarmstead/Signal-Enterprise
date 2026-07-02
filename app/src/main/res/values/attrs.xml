@@ -1,7 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <attr name="theme_type" format="string"/>
-
     <attr name="search_view_style" format="reference" />
 
     <attr name="circularProgressMaterialButtonStyle" format="reference" />
@@ -275,20 +273,6 @@
       <attr name="rcv_outgoing" format="boolean" />
     </declare-styleable>
 
-    <declare-styleable name="VideoThumbnailsRangeSelectorView">
-        <attr name="thumbWidth" format="dimension" />
-        <attr name="thumbColorEdited" format="color" />
-        <attr name="thumbColor" format="color" />
-        <attr name="thumbTouchRadius" format="dimension" />
-        <attr name="thumbHintTextSize" format="dimension" />
-        <attr name="thumbHintTextColor" format="color" />
-        <attr name="thumbHintBackgroundColor" format="color" />
-    </declare-styleable>
-
-    <declare-styleable name="VideoPlayer">
-        <attr name="playerLayoutId" format="dimension" />
-    </declare-styleable>
-
     <declare-styleable name="GroupMemberListView">
         <attr name="maxHeight" />
         <attr name="selectable" format="boolean" />
@@ -382,6 +366,5 @@
 
     <declare-styleable name="InsetAwareConstraintLayout">
         <attr name="animateKeyboardChanges" format="boolean" />
-        <attr name="applyRootInsets" format="boolean" />
     </declare-styleable>
 </resources>

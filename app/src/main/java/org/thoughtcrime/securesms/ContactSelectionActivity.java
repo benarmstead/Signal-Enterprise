@@ -29,11 +29,11 @@ import org.signal.core.util.logging.Log;
 import org.thoughtcrime.securesms.components.ContactFilterView;
 import org.thoughtcrime.securesms.contacts.ContactSelectionDisplayMode;
 import org.thoughtcrime.securesms.contacts.paged.ChatType;
+import org.thoughtcrime.securesms.contacts.selection.ContactSelectionArguments;
 import org.thoughtcrime.securesms.contacts.sync.ContactDiscovery;
 import org.thoughtcrime.securesms.recipients.RecipientId;
 import org.thoughtcrime.securesms.util.DynamicNoActionBarTheme;
 import org.thoughtcrime.securesms.util.DynamicTheme;
-import org.thoughtcrime.securesms.util.ServiceUtil;
 
 import java.io.IOException;
 import java.lang.ref.WeakReference;
@@ -48,8 +48,7 @@ import java.util.function.Consumer;
  */
 public abstract class ContactSelectionActivity extends PassphraseRequiredActivity
                                                implements SwipeRefreshLayout.OnRefreshListener,
-                                                          ContactSelectionListFragment.OnContactSelectedListener,
-                                                          ContactSelectionListFragment.ScrollCallback
+                                                          ContactSelectionListFragment.OnContactSelectedListener
 {
   private static final String TAG = Log.tag(ContactSelectionActivity.class);
 
@@ -69,9 +68,9 @@ public abstract class ContactSelectionActivity extends PassphraseRequiredActivit
 
   @Override
   protected void onCreate(Bundle icicle, boolean ready) {
-    if (!getIntent().hasExtra(ContactSelectionListFragment.DISPLAY_MODE)) {
+    if (!getIntent().hasExtra(ContactSelectionArguments.DISPLAY_MODE)) {
       int displayMode = ContactSelectionDisplayMode.FLAG_PUSH | ContactSelectionDisplayMode.FLAG_ACTIVE_GROUPS | ContactSelectionDisplayMode.FLAG_INACTIVE_GROUPS | ContactSelectionDisplayMode.FLAG_SELF;
-      getIntent().putExtra(ContactSelectionListFragment.DISPLAY_MODE, displayMode);
+      getIntent().putExtra(ContactSelectionArguments.DISPLAY_MODE, displayMode);
     }
 
     setContentView(getIntent().getIntExtra(EXTRA_LAYOUT_RES_ID, R.layout.contact_selection_activity));
@@ -134,17 +133,6 @@ public abstract class ContactSelectionActivity extends PassphraseRequiredActivit
 
   @Override
   public void onContactDeselected(@NonNull Optional<RecipientId> recipientId, String number, @NonNull Optional<ChatType> chatType) {}
-
-  @Override
-  public void onBeginScroll() {
-    hideKeyboard();
-  }
-
-  private void hideKeyboard() {
-    ServiceUtil.getInputMethodManager(this)
-               .hideSoftInputFromWindow(toolbar.getWindowToken(), 0);
-    toolbar.clearFocus();
-  }
 
   private static class RefreshDirectoryTask extends AsyncTask<Context, Void, Void> {
 

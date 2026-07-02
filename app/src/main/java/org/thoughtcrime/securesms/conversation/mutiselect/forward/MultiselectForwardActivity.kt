@@ -5,7 +5,6 @@ import android.content.Intent
 import android.os.Bundle
 import android.view.ViewGroup
 import androidx.activity.result.contract.ActivityResultContract
-import androidx.appcompat.widget.Toolbar
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
@@ -16,6 +15,7 @@ import org.thoughtcrime.securesms.R
 import org.thoughtcrime.securesms.components.FragmentWrapperActivity
 import org.thoughtcrime.securesms.contacts.paged.ContactSearchKey
 import org.thoughtcrime.securesms.conversation.mutiselect.forward.MultiselectForwardFragment.Companion.RESULT_SELECTION
+import org.signal.core.ui.R as CoreUiR
 
 open class MultiselectForwardActivity : FragmentWrapperActivity(), MultiselectForwardFragment.Callback, SearchConfigurationProvider {
 
@@ -27,14 +27,6 @@ open class MultiselectForwardActivity : FragmentWrapperActivity(), MultiselectFo
   private val args: MultiselectForwardFragmentArgs get() = intent.getParcelableExtraCompat(ARGS, MultiselectForwardFragmentArgs::class.java)!!
 
   override val contentViewId: Int = R.layout.multiselect_forward_activity
-
-  override fun onCreate(savedInstanceState: Bundle?, ready: Boolean) {
-    super.onCreate(savedInstanceState, ready)
-
-    val toolbar: Toolbar = findViewById(R.id.toolbar)
-    toolbar.setTitle(args.title)
-    toolbar.setNavigationOnClickListener { exitFlow() }
-  }
 
   override fun getFragment(): Fragment {
     return MultiselectForwardFragment.create(args)
@@ -61,7 +53,7 @@ open class MultiselectForwardActivity : FragmentWrapperActivity(), MultiselectFo
   }
 
   override fun getDialogBackgroundColor(): Int {
-    return ContextCompat.getColor(this, R.color.signal_colorBackground)
+    return ContextCompat.getColor(this, CoreUiR.color.signal_colorBackground)
   }
 
   class SelectionContract : ActivityResultContract<MultiselectForwardFragmentArgs, List<ContactSearchKey.RecipientSearchKey>>() {

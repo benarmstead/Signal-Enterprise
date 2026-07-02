@@ -18,9 +18,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -35,8 +33,9 @@ import androidx.core.os.BundleCompat
 import org.signal.core.ui.R
 import org.signal.core.ui.compose.BottomSheets
 import org.signal.core.ui.compose.Buttons
+import org.signal.core.ui.compose.DayNightPreviews
 import org.signal.core.ui.compose.Previews
-import org.signal.core.ui.compose.SignalPreview
+import org.signal.core.ui.compose.SignalIcons
 import org.signal.core.util.gibiBytes
 import org.signal.core.util.money.FiatMoney
 import org.thoughtcrime.securesms.backup.v2.ui.subscription.MessageBackupsType
@@ -107,7 +106,7 @@ private fun SheetContent(
           .padding(2.dp)
       )
       Icon(
-        imageVector = ImageVector.vectorResource(org.thoughtcrime.securesms.R.drawable.symbol_error_circle_fill_24),
+        imageVector = SignalIcons.ErrorCircle.imageVector,
         contentDescription = null,
         tint = MaterialTheme.colorScheme.error,
         modifier = Modifier.align(Alignment.TopEnd)
@@ -158,10 +157,10 @@ private fun SheetContent(
   }
 }
 
-@SignalPreview
+@DayNightPreviews
 @Composable
 private fun BackupAlertSheetContentPreviewMedia() {
-  Previews.BottomSheetPreview {
+  Previews.BottomSheetContentPreview {
     SheetContent(
       mediaBackupsAreOff = BackupAlert.MediaBackupsAreOff(endOfPeriodSeconds = System.currentTimeMillis().milliseconds.inWholeSeconds),
       paidBackupType = MessageBackupsType.Paid(

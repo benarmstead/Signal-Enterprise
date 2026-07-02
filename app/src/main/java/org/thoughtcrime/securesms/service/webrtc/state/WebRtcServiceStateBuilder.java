@@ -1,12 +1,12 @@
 package org.thoughtcrime.securesms.service.webrtc.state;
 
+import android.content.Intent;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import com.annimon.stream.OptionalLong;
-
-import org.checkerframework.checker.units.qual.N;
 import org.signal.ringrtc.CallId;
+import org.signal.ringrtc.CallManager;
 import org.signal.ringrtc.GroupCall;
 import org.thoughtcrime.securesms.components.sensors.Orientation;
 import org.thoughtcrime.securesms.components.webrtc.BroadcastVideoSink;
@@ -17,8 +17,8 @@ import org.thoughtcrime.securesms.events.GroupCallSpeechEvent;
 import org.thoughtcrime.securesms.events.WebRtcViewModel;
 import org.thoughtcrime.securesms.recipients.Recipient;
 import org.thoughtcrime.securesms.recipients.RecipientId;
-import org.thoughtcrime.securesms.ringrtc.Camera;
 import org.thoughtcrime.securesms.ringrtc.CameraState;
+import org.thoughtcrime.securesms.ringrtc.OutgoingVideoSourceRouter;
 import org.thoughtcrime.securesms.ringrtc.RemotePeer;
 import org.thoughtcrime.securesms.service.webrtc.CallLinkDisconnectReason;
 import org.thoughtcrime.securesms.service.webrtc.WebRtcActionProcessor;
@@ -27,6 +27,7 @@ import org.webrtc.PeerConnection;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 /**
@@ -139,6 +140,11 @@ public class WebRtcServiceStateBuilder {
       return this;
     }
 
+    public @NonNull LocalDeviceStateBuilder setAudioDeviceChangePending(boolean isAudioDeviceChangePending) {
+      toBuild.setAudioDeviceChangePending(isAudioDeviceChangePending);
+      return this;
+    }
+
     public @NonNull LocalDeviceStateBuilder setNetworkConnectionType(@NonNull PeerConnection.AdapterType type) {
       toBuild.setNetworkConnectionType(type);
       return this;
@@ -152,6 +158,16 @@ public class WebRtcServiceStateBuilder {
     public @NonNull LocalDeviceStateBuilder setRemoteMutedBy(@NonNull CallParticipant participant) {
       toBuild.setRemoteMutedBy(participant);
       toBuild.setMicrophoneEnabled(false);
+      return this;
+    }
+
+    public @NonNull LocalDeviceStateBuilder isScreenSharing(boolean isScreenSharing) {
+      toBuild.setScreenSharing(isScreenSharing);
+      return this;
+    }
+
+    public @NonNull LocalDeviceStateBuilder setMediaProjectionIntent(@Nullable Intent mediaProjectionIntent) {
+      toBuild.setMediaProjectionIntent(mediaProjectionIntent);
       return this;
     }
   }
@@ -259,8 +275,8 @@ public class WebRtcServiceStateBuilder {
       return this;
     }
 
-    public @NonNull VideoStateBuilder camera(@Nullable Camera camera) {
-      toBuild.camera = camera;
+    public @NonNull VideoStateBuilder router(@Nullable OutgoingVideoSourceRouter router) {
+      toBuild.router = router;
       return this;
     }
   }
@@ -353,7 +369,7 @@ public class WebRtcServiceStateBuilder {
     }
 
     public @NonNull CallInfoStateBuilder remoteDevicesCount(long remoteDevicesCount) {
-      toBuild.setRemoteDevicesCount(OptionalLong.of(remoteDevicesCount));
+      toBuild.setRemoteDevicesCount(Optional.of(remoteDevicesCount));
       return this;
     }
 
@@ -382,7 +398,7 @@ public class WebRtcServiceStateBuilder {
       return this;
     }
 
-    public @NonNull CallInfoStateBuilder setGroupCallEndReason(@Nullable GroupCall.GroupCallEndReason groupCallEndReason) {
+    public @NonNull CallInfoStateBuilder setGroupCallEndReason(@Nullable CallManager.CallEndReason groupCallEndReason) {
       toBuild.setGroupCallEndReason(groupCallEndReason);
       return this;
     }

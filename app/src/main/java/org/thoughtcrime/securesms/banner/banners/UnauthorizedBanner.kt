@@ -13,14 +13,15 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
+import org.signal.core.ui.compose.DayNightPreviews
 import org.signal.core.ui.compose.Previews
-import org.signal.core.ui.compose.SignalPreview
 import org.thoughtcrime.securesms.R
 import org.thoughtcrime.securesms.banner.Banner
 import org.thoughtcrime.securesms.banner.ui.compose.Action
 import org.thoughtcrime.securesms.banner.ui.compose.DefaultBanner
 import org.thoughtcrime.securesms.banner.ui.compose.Importance
 import org.thoughtcrime.securesms.keyvalue.SignalStore
+import org.thoughtcrime.securesms.net.DeviceTransferBlockingInterceptor
 import org.thoughtcrime.securesms.registration.ui.RegistrationActivity
 import org.thoughtcrime.securesms.util.TextSecurePreferences
 
@@ -51,6 +52,11 @@ private fun Banner(contentPadding: PaddingValues) {
     importance = Importance.ERROR,
     actions = listOf(
       Action(R.string.UnauthorizedReminder_reregister_action) {
+        if (SignalStore.misc.isOldDeviceTransferLocked) {
+          SignalStore.misc.isOldDeviceTransferLocked = false
+          DeviceTransferBlockingInterceptor.getInstance().unblockNetwork()
+        }
+
         val registrationIntent = RegistrationActivity.newIntentForReRegistration(context)
         context.startActivity(registrationIntent)
       }
@@ -59,7 +65,7 @@ private fun Banner(contentPadding: PaddingValues) {
   )
 }
 
-@SignalPreview
+@DayNightPreviews
 @Composable
 private fun BannerPreview() {
   Previews.Preview {

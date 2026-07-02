@@ -33,8 +33,8 @@ import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import org.signal.core.ui.compose.DarkPreview
 import org.signal.core.ui.compose.IconButtons
+import org.signal.core.ui.compose.NightPreview
 import org.signal.core.ui.compose.Previews
 import org.signal.core.ui.compose.Rows
 import org.thoughtcrime.securesms.R
@@ -55,7 +55,8 @@ fun CallAudioToggleButton(
   contentDescription: String,
   onSheetDisplayChanged: (Boolean) -> Unit,
   pickerController: AudioOutputPickerController,
-  modifier: Modifier = Modifier
+  modifier: Modifier = Modifier,
+  enabled: Boolean = true
 ) {
   val buttonSize = dimensionResource(id = R.dimen.webrtc_button_size)
 
@@ -65,13 +66,13 @@ fun CallAudioToggleButton(
   val containerColor = if (currentOutput == WebRtcAudioOutput.HANDSET || allOutputs.size >= SHOW_PICKER_THRESHOLD) {
     MaterialTheme.colorScheme.secondaryContainer
   } else {
-    colorResource(id = R.color.signal_light_colorSecondaryContainer)
+    colorResource(id = CoreUiR.color.signal_light_colorSecondaryContainer)
   }
 
   val contentColor = if (currentOutput == WebRtcAudioOutput.HANDSET || allOutputs.size >= SHOW_PICKER_THRESHOLD) {
-    colorResource(id = R.color.signal_light_colorOnPrimary)
+    colorResource(id = CoreUiR.color.signal_light_colorOnPrimary)
   } else {
-    colorResource(id = R.color.signal_light_colorOnSecondaryContainer)
+    colorResource(id = CoreUiR.color.signal_light_colorOnSecondaryContainer)
   }
 
   IconButtons.IconButton(
@@ -79,9 +80,12 @@ fun CallAudioToggleButton(
     onClick = {
       pickerController.show()
     },
+    enabled = enabled,
     colors = IconButtons.iconButtonColors(
       containerColor = containerColor,
-      contentColor = contentColor
+      contentColor = contentColor,
+      disabledContainerColor = containerColor.copy(alpha = 0.38f),
+      disabledContentColor = contentColor.copy(alpha = 0.38f)
     ),
     modifier = modifier.size(buttonSize)
   ) {
@@ -181,10 +185,13 @@ class AudioOutputPickerController(
 
     val isLegacy = Build.VERSION.SDK_INT < 31
     if (!willDisplayPicker) {
-      if (isLegacy) {
-        onSelectedDeviceChanged(WebRtcAudioDevice(outputState.peekNext(), null))
-      } else {
-        newApiController!!.Picker(threshold = SHOW_PICKER_THRESHOLD)
+      LaunchedEffect(Unit) {
+        displaySheet = false
+        if (isLegacy) {
+          onSelectedDeviceChanged(WebRtcAudioDevice(outputState.peekNext(), null))
+        } else {
+          newApiController!!.cycleToNextDevice()
+        }
       }
       return
     }
@@ -263,10 +270,10 @@ private fun LegacyAudioPickerContent(
   }
 }
 
-@DarkPreview
+@NightPreview
 @Composable
 private fun CallAudioPickerSheetContentPreview() {
-  Previews.BottomSheetPreview {
+  Previews.BottomSheetContentPreview {
     Column {
       LegacyAudioPickerContent(
         toggleButtonOutputState = ToggleButtonOutputState().apply {
@@ -280,7 +287,7 @@ private fun CallAudioPickerSheetContentPreview() {
   }
 }
 
-@DarkPreview
+@NightPreview
 @Composable
 private fun TwoDeviceCallAudioToggleButtonPreview() {
   val outputState = remember {
@@ -303,7 +310,7 @@ private fun TwoDeviceCallAudioToggleButtonPreview() {
   }
 }
 
-@DarkPreview
+@NightPreview
 @Composable
 private fun ThreeDeviceCallAudioToggleButtonPreview() {
   val outputState = remember {

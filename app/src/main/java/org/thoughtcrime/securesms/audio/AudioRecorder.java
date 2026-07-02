@@ -11,10 +11,11 @@ import androidx.annotation.Nullable;
 
 import org.signal.core.util.ThreadUtil;
 import org.signal.core.util.concurrent.SignalExecutors;
+import org.signal.core.util.contentproviders.BlobProvider;
 import org.signal.core.util.logging.Log;
 import org.thoughtcrime.securesms.components.voice.VoiceNoteDraft;
+import org.thoughtcrime.securesms.dependencies.AppDependencies;
 import org.thoughtcrime.securesms.notifications.v2.InChatNotificationSoundSuppressor;
-import org.thoughtcrime.securesms.providers.BlobProvider;
 import org.thoughtcrime.securesms.util.MediaUtil;
 
 import java.io.IOException;
@@ -35,9 +36,9 @@ public class AudioRecorder {
   private final AudioRecordingHandler     uiHandler;
   private final AudioRecorderFocusManager audioFocusManager;
 
-  private Recorder    recorder;
-  private Future<Uri> recordingUriFuture;
-
+  private Recorder         recorder;
+  private Future<Uri>      recordingUriFuture;
+  private volatile Uri     recordingUri;
   private SingleSubject<VoiceNoteDraft> recordingSubject;
 
   public AudioRecorder(@NonNull Context context, @Nullable AudioRecordingHandler uiHandler) {
@@ -88,10 +89,12 @@ public class AudioRecorder {
 
         ParcelFileDescriptor fds[] = ParcelFileDescriptor.createPipe();
 
-        recordingUriFuture = BlobProvider.getInstance()
-                                       .forData(new ParcelFileDescriptor.AutoCloseInputStream(fds[0]), 0)
-                                       .withMimeType(MediaUtil.AUDIO_AAC)
-                                       .createForDraftAttachmentAsync(context);
+        BlobProvider.BlobBuilder blobBuilder = AppDependencies.getBlobs()
+                                                              .forData(new ParcelFileDescriptor.AutoCloseInputStream(fds[0]), 0)
+                                                              .withMimeType(MediaUtil.AUDIO_AAC);
+
+        recordingUri       = blobBuilder.buildUriForDraftAttachment();
+        recordingUriFuture = blobBuilder.createForDraftAttachmentAsync(context);
 
         recorder = useMediaRecorderWrapper ? new MediaRecorderWrapper() : new AudioCodec();
         int focusResult = audioFocusManager.requestAudioFocus();
@@ -130,6 +133,7 @@ public class AudioRecorder {
       recordingSubject   = null;
       recorder           = null;
       recordingUriFuture = null;
+      recordingUri       = null;
     });
   }
 
@@ -157,6 +161,28 @@ public class AudioRecorder {
       recordingSubject   = null;
       recorder           = null;
       recordingUriFuture = null;
+      recordingUri       = null;
     });
+  }
+
+  /**
+   * Gets a snapshot of the current recording as a VoiceNoteDraft, without stopping the recording.
+   * This can be used to periodically save drafts while recording is in progress.
+   * Returns null if there is no active recording.
+   */
+  @Nullable
+  public VoiceNoteDraft getCurrentRecordingSnapshot() {
+    Uri currentUri = recordingUri;
+    if (currentUri == null) {
+      return null;
+    }
+
+    try {
+      long size = MediaUtil.getMediaSize(context, currentUri);
+      return new VoiceNoteDraft(currentUri, size);
+    } catch (IOException e) {
+      Log.w(TAG, "Error getting current recording snapshot", e);
+      return null;
+    }
   }
 }

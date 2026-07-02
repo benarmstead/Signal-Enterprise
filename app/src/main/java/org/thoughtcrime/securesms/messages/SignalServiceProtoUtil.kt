@@ -3,11 +3,12 @@ package org.thoughtcrime.securesms.messages
 import com.squareup.wire.Message
 import okio.ByteString
 import okio.ByteString.Companion.toByteString
+import org.signal.core.models.ServiceId
 import org.signal.core.util.isNotEmpty
 import org.signal.core.util.orNull
 import org.signal.libsignal.protocol.message.DecryptionErrorMessage
 import org.signal.libsignal.zkgroup.groups.GroupMasterKey
-import org.signal.storageservice.protos.groups.local.DecryptedGroupChange
+import org.signal.storageservice.storage.protos.groups.local.DecryptedGroupChange
 import org.thoughtcrime.securesms.attachments.Attachment
 import org.thoughtcrime.securesms.attachments.Cdn
 import org.thoughtcrime.securesms.attachments.PointerAttachment
@@ -20,7 +21,6 @@ import org.whispersystems.signalservice.api.InvalidMessageStructureException
 import org.whispersystems.signalservice.api.crypto.EnvelopeMetadata
 import org.whispersystems.signalservice.api.messages.SignalServiceAttachmentPointer
 import org.whispersystems.signalservice.api.payments.Money
-import org.whispersystems.signalservice.api.push.ServiceId
 import org.whispersystems.signalservice.api.util.AttachmentPointerUtil
 import org.whispersystems.signalservice.internal.push.AttachmentPointer
 import org.whispersystems.signalservice.internal.push.DataMessage
@@ -51,7 +51,13 @@ object SignalServiceProtoUtil {
         bodyRanges.isNotEmpty() ||
         sticker != null ||
         reaction != null ||
-        hasRemoteDelete
+        hasRemoteDelete ||
+        pollCreate != null ||
+        pollVote != null ||
+        pollTerminate != null ||
+        pinMessage != null ||
+        unpinMessage != null ||
+        adminDelete != null
     }
 
   val DataMessage.hasDisallowedAnnouncementOnlyContent: Boolean
@@ -61,7 +67,8 @@ object SignalServiceProtoUtil {
         quote != null ||
         preview.isNotEmpty() ||
         bodyRanges.isNotEmpty() ||
-        sticker != null
+        sticker != null ||
+        pollCreate != null
     }
 
   val DataMessage.isExpirationUpdate: Boolean
@@ -81,9 +88,6 @@ object SignalServiceProtoUtil {
 
   val DataMessage.isMediaMessage: Boolean
     get() = attachments.isNotEmpty() || quote != null || contact.isNotEmpty() || sticker != null || bodyRanges.isNotEmpty() || preview.isNotEmpty()
-
-  val DataMessage.isEndSession: Boolean
-    get() = flags != null && flags!! and DataMessage.Flags.END_SESSION.value != 0
 
   val DataMessage.isStoryReaction: Boolean
     get() = reaction != null && storyContext != null
@@ -142,14 +146,14 @@ object SignalServiceProtoUtil {
     }
 
   fun Sent.isUnidentified(serviceId: ServiceId?): Boolean {
-    return serviceId != null && unidentifiedStatus.firstOrNull { ServiceId.parseOrNull(it.destinationServiceId) == serviceId }?.unidentified ?: false
+    return serviceId != null && unidentifiedStatus.firstOrNull { ServiceId.parseOrNull(it.destinationServiceId, it.destinationServiceIdBinary) == serviceId }?.unidentified ?: false
   }
 
   val Sent.serviceIdsToUnidentifiedStatus: Map<ServiceId, Boolean>
     get() {
       return unidentifiedStatus
         .mapNotNull { status ->
-          val serviceId = ServiceId.parseOrNull(status.destinationServiceId)
+          val serviceId = ServiceId.parseOrNull(status.destinationServiceId, status.destinationServiceIdBinary)
           if (serviceId != null) {
             serviceId to (status.unidentified ?: false)
           } else {

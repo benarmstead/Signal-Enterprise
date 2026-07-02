@@ -19,7 +19,7 @@ import org.thoughtcrime.securesms.mms.GifSlide;
 import org.thoughtcrime.securesms.mms.Slide;
 import org.thoughtcrime.securesms.mms.StickerSlide;
 import org.thoughtcrime.securesms.util.MessageRecordUtil;
-import org.thoughtcrime.securesms.util.Util;
+import org.signal.core.util.Util;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -71,6 +71,14 @@ public final class ThreadBodyUtil {
       return new ThreadBody(getCallLogSummary(context, record));
     } else if (MessageRecordUtil.isScheduled(record)) {
       return new ThreadBody(context.getString(R.string.ThreadRecord_scheduled_message));
+    } else if (MessageRecordUtil.hasPoll(record)) {
+      return new ThreadBody(context.getString(R.string.Poll__poll_question, record.getPoll().getQuestion()));
+    } else if (MessageRecordUtil.hasPollTerminate(record)) {
+      return record.getFromRecipient().isSelf() ? new ThreadBody(context.getString(R.string.Poll__you_poll_end, record.getMessageExtras().pollTerminate.question))
+                                                : new ThreadBody(context.getString(R.string.Poll__poll_end, record.getFromRecipient().getDisplayName(context), record.getMessageExtras().pollTerminate.question));
+    } else if (MessageRecordUtil.hasPinnedMessageUpdate(record)) {
+      return record.getFromRecipient().isSelf() ? new ThreadBody(context.getString(R.string.PinnedMessage__you_pinned_a_message))
+                                                : new ThreadBody(context.getString(R.string.PinnedMessage__s_pinned_a_message, record.getFromRecipient().getDisplayName(context)));
     }
 
     boolean hasImage = false;
@@ -94,6 +102,14 @@ public final class ThreadBodyUtil {
     } else {
       return getBody(context, record);
     }
+  }
+
+  public static CharSequence getFormattedBodyForPollNotification(@NonNull Context context, @NonNull MmsMessageRecord record) {
+    return format(EmojiStrings.POLL, context.getString(R.string.Poll__poll_question, record.getPoll().getQuestion()), null).body;
+  }
+
+  public static CharSequence getFormattedBodyForPollEndNotification(@NonNull Context context, @NonNull MmsMessageRecord record) {
+    return format(EmojiStrings.POLL, context.getString(R.string.Poll__poll_end, record.getFromRecipient().getDisplayName(context), record.getMessageExtras().pollTerminate.question), null).body;
   }
 
   private static @NonNull String getGiftSummary(@NonNull Context context, @NonNull MessageRecord messageRecord) {
@@ -135,10 +151,11 @@ public final class ThreadBodyUtil {
     if (call != null) {
       boolean accepted = call.getEvent() == CallTable.Event.ACCEPTED;
       if (call.getDirection() == CallTable.Direction.OUTGOING) {
-        if (call.getType() == CallTable.Type.AUDIO_CALL) {
-          return context.getString(R.string.MessageRecord_outgoing_voice_call);
+        boolean isVideoCall = call.getType() == CallTable.Type.VIDEO_CALL;
+        if (call.getEvent() == CallTable.Event.NOT_ACCEPTED) {
+          return context.getString(isVideoCall ? R.string.MessageRecord_unanswered_video_call : R.string.MessageRecord_unanswered_voice_call);
         } else {
-          return context.getString(R.string.MessageRecord_outgoing_video_call);
+          return context.getString(isVideoCall ? R.string.MessageRecord_outgoing_video_call : R.string.MessageRecord_outgoing_voice_call);
         }
       } else {
         boolean isVideoCall = call.getType() == CallTable.Type.VIDEO_CALL;

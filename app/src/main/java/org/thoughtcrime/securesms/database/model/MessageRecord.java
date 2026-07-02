@@ -30,22 +30,24 @@ import androidx.annotation.VisibleForTesting;
 import androidx.annotation.WorkerThread;
 import androidx.core.content.ContextCompat;
 
-import com.annimon.stream.Stream;
+import java.util.stream.Collectors;
 
 import org.signal.core.util.Base64;
 import org.signal.core.util.BidiUtil;
 import org.signal.core.util.logging.Log;
-import org.signal.storageservice.protos.groups.local.DecryptedGroup;
-import org.signal.storageservice.protos.groups.local.DecryptedGroupChange;
+import org.signal.storageservice.storage.protos.groups.local.DecryptedGroup;
+import org.signal.storageservice.storage.protos.groups.local.DecryptedGroupChange;
 import org.thoughtcrime.securesms.R;
-import org.thoughtcrime.securesms.backup.v2.proto.GroupChangeChatUpdate;
-import org.thoughtcrime.securesms.backup.v2.proto.GroupCreationUpdate;
+import org.signal.archive.proto.GroupChangeChatUpdate;
+import org.signal.archive.proto.GroupCreationUpdate;
 import org.thoughtcrime.securesms.components.emoji.EmojiProvider;
 import org.thoughtcrime.securesms.components.emoji.parsing.EmojiParser;
-import org.thoughtcrime.securesms.components.transfercontrols.TransferControlView;
+import org.thoughtcrime.securesms.components.transfercontrols.TransferControls;
+import org.thoughtcrime.securesms.database.CollapsedState;
 import org.thoughtcrime.securesms.database.MessageTypes;
 import org.thoughtcrime.securesms.database.documents.IdentityKeyMismatch;
 import org.thoughtcrime.securesms.database.documents.NetworkFailure;
+import org.thoughtcrime.securesms.database.model.databaseprotos.AdminDeleteStatus;
 import org.thoughtcrime.securesms.database.model.databaseprotos.BodyRangeList;
 import org.thoughtcrime.securesms.database.model.databaseprotos.DecryptedGroupV2Context;
 import org.thoughtcrime.securesms.database.model.databaseprotos.GroupCallUpdateDetails;
@@ -65,12 +67,13 @@ import org.thoughtcrime.securesms.recipients.RecipientId;
 import org.thoughtcrime.securesms.util.DateUtils;
 import org.thoughtcrime.securesms.util.ExpirationUtil;
 import org.thoughtcrime.securesms.util.GroupUtil;
+import org.thoughtcrime.securesms.util.MessageRecordUtil;
 import org.thoughtcrime.securesms.util.SignalE164Util;
-import org.thoughtcrime.securesms.util.Util;
+import org.signal.core.util.Util;
 import org.whispersystems.signalservice.api.groupsv2.DecryptedGroupUtil;
-import org.whispersystems.signalservice.api.push.ServiceId;
-import org.whispersystems.signalservice.api.push.ServiceId.ACI;
-import org.whispersystems.signalservice.api.util.UuidUtil;
+import org.signal.core.models.ServiceId;
+import org.signal.core.models.ServiceId.ACI;
+import org.signal.core.util.UuidUtil;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -107,12 +110,16 @@ public abstract class MessageRecord extends DisplayRecord {
   private final boolean                  unidentified;
   private final List<ReactionRecord>     reactions;
   private final long                     serverTimestamp;
-  private final boolean                  remoteDelete;
   private final long                     notifiedTimestamp;
   private final long                     receiptTimestamp;
   private final MessageId                originalMessageId;
   private final int                      revisionNumber;
+  private final long                     pinnedUntil;
+  private final RecipientId              deletedBy;
+  private final CollapsedState           collapsedState;
+  private final long                     collapsedHeadId;
   private final MessageExtras            messageExtras;
+  private final boolean                  starred;
 
   protected Boolean isJumboji = null;
 
@@ -128,13 +135,17 @@ public abstract class MessageRecord extends DisplayRecord {
                 boolean hasReadReceipt,
                 boolean unidentified,
                 @NonNull List<ReactionRecord> reactions,
-                boolean remoteDelete,
                 long notifiedTimestamp,
                 boolean viewed,
                 long receiptTimestamp,
                 @Nullable MessageId originalMessageId,
                 int revisionNumber,
-                @Nullable MessageExtras messageExtras)
+                long pinnedUntil,
+                @Nullable RecipientId deletedBy,
+                CollapsedState collapsedState,
+                long collapsedHeadId,
+                @Nullable MessageExtras messageExtras,
+                boolean starred)
   {
     super(body, fromRecipient, toRecipient, dateSent, dateReceived,
           threadId, deliveryStatus, hasDeliveryReceipt, type,
@@ -150,12 +161,16 @@ public abstract class MessageRecord extends DisplayRecord {
     this.unidentified        = unidentified;
     this.reactions           = reactions;
     this.serverTimestamp     = dateServer;
-    this.remoteDelete        = remoteDelete;
     this.notifiedTimestamp   = notifiedTimestamp;
     this.receiptTimestamp    = receiptTimestamp;
     this.originalMessageId   = originalMessageId;
     this.revisionNumber      = revisionNumber;
+    this.pinnedUntil         = pinnedUntil;
+    this.deletedBy           = deletedBy;
+    this.collapsedState      = collapsedState;
+    this.collapsedHeadId     = collapsedHeadId;
     this.messageExtras       = messageExtras;
+    this.starred             = starred;
   }
 
   public abstract boolean isMms();
@@ -165,10 +180,15 @@ public abstract class MessageRecord extends DisplayRecord {
     return MessageTypes.isSecureType(type);
   }
 
-  public boolean isLegacyMessage() {
-    return MessageTypes.isLegacyType(type);
+  @Override
+  public boolean isFailed() {
+    return super.isFailed() || isFailedAdminDelete();
   }
 
+  @Override
+  public boolean isPending() {
+    return super.isPending() || isPendingAdminDelete();
+  }
 
   @Override
   @WorkerThread
@@ -286,13 +306,20 @@ public abstract class MessageRecord extends DisplayRecord {
     } else if (isReportedSpam()) {
       return staticUpdateDescription(context.getString(R.string.MessageRecord_reported_as_spam), Glyph.SPAM);
     } else if (isMessageRequestAccepted()) {
-      return staticUpdateDescription(context.getString(R.string.MessageRecord_you_accepted_the_message_request), Glyph.THREAD);
+      return isGroupV2() ? staticUpdateDescription(context.getString(R.string.MessageRecord_you_accepted_the_group_request), Glyph.THREAD)
+                         : fromRecipient(getToRecipient(), r -> context.getString(R.string.MessageRecord_you_accepted_s_message_request, r.getDisplayName(context)), Glyph.THREAD);
     } else if (isBlocked()) {
       return staticUpdateDescription(context.getString(isGroupV2() ? R.string.MessageRecord_you_blocked_this_group : R.string.MessageRecord_you_blocked_this_person), Glyph.BLOCK);
     } else if (isUnblocked()) {
       return staticUpdateDescription(context.getString(isGroupV2() ? R.string.MessageRecord_you_unblocked_this_group : R.string.MessageRecord_you_unblocked_this_person) , Glyph.THREAD);
     } else if (isUnsupported()) {
       return staticUpdateDescription(context.getString(R.string.MessageRecord_unsupported_feature, getFromRecipient().getDisplayName(context)), Glyph.ERROR);
+    } else if (MessageRecordUtil.hasPollTerminate(this)) {
+      return getFromRecipient().isSelf() ? staticUpdateDescriptionWithExpiration(context.getString(R.string.MessageRecord_you_ended_the_poll, messageExtras.pollTerminate.question), Glyph.POLL)
+                                         : staticUpdateDescriptionWithExpiration(context.getString(R.string.MessageRecord_ended_the_poll, getFromRecipient().getDisplayName(context), messageExtras.pollTerminate.question), Glyph.POLL);
+    } else if (MessageRecordUtil.hasPinnedMessageUpdate(this)) {
+     return getFromRecipient().isSelf() ? staticUpdateDescriptionWithExpiration(context.getString(R.string.PinnedMessage__you_pinned_a_message), Glyph.PIN)
+                                        : staticUpdateDescriptionWithExpiration(context.getString(R.string.PinnedMessage__s_pinned_a_message, getFromRecipient().getDisplayName(context)), Glyph.PIN);
     }
 
     return null;
@@ -476,6 +503,14 @@ public abstract class MessageRecord extends DisplayRecord {
     return UpdateDescription.staticDescription(string, glyph);
   }
 
+  protected static @NonNull UpdateDescription staticUpdateDescriptionWithExpiration(@NonNull String string, Glyph glyph) {
+    return UpdateDescription.staticDescriptionWithExpiration(string, glyph);
+  }
+
+  protected static @NonNull UpdateDescription staticUpdateDescriptionWithExpiration(@NonNull String string, Glyph glyph, @ColorInt int lightTint, @ColorInt int darkTint) {
+    return UpdateDescription.staticDescriptionWithExpiration(string, glyph, lightTint, darkTint);
+  }
+
   protected static @NonNull UpdateDescription staticUpdateDescription(@NonNull String string,
                                                                       Glyph glyph,
                                                                       @ColorInt int lightTint,
@@ -558,11 +593,9 @@ public abstract class MessageRecord extends DisplayRecord {
   public static @NonNull UpdateDescription getGroupCallUpdateDescription(@NonNull Context context, @NonNull String body, boolean withTime) {
     GroupCallUpdateDetails groupCallUpdateDetails = GroupCallUpdateDetailsUtil.parse(body);
 
-    List<ServiceId> joinedMembers = Stream.of(groupCallUpdateDetails.inCallUuids)
-                                          .map(UuidUtil::parseOrNull)
-                                          .withoutNulls()
-                                          .<ServiceId>map(ACI::from)
-                                          .toList();
+    List<ServiceId> joinedMembers = groupCallUpdateDetails.inCallUuids.stream()
+                                                                      .map(UuidUtil::parseOrNull).filter(Objects::nonNull)
+                                                                      .<ServiceId>map(ACI::from).collect(Collectors.toList());
 
     UpdateDescription.SpannableFactory stringFactory = new GroupCallUpdateMessageFactory(context, joinedMembers, withTime, groupCallUpdateDetails);
 
@@ -732,7 +765,7 @@ public abstract class MessageRecord extends DisplayRecord {
            isProfileChange() || isGroupV1MigrationEvent() || isChatSessionRefresh() || isBadDecryptType() ||
            isChangeNumber() || isReleaseChannelDonationRequest() || isThreadMergeEventType() || isSmsExportType() || isSessionSwitchoverEventType() ||
            isPaymentsRequestToActivate() || isPaymentsActivated() || isReportedSpam() || isMessageRequestAccepted() ||
-           isBlocked() || isUnblocked() || isUnsupported();
+           isBlocked() || isUnblocked() || isUnsupported() || isPollTerminate() || isPinnedMessageUpdate();
   }
 
   public boolean isMediaPending() {
@@ -765,6 +798,38 @@ public abstract class MessageRecord extends DisplayRecord {
 
   public boolean isChatSessionRefresh() {
     return MessageTypes.isChatSessionRefresh(type);
+  }
+
+  public long getPinnedUntil() {
+    return pinnedUntil;
+  }
+
+  public @Nullable RecipientId getDeletedBy() {
+    return deletedBy;
+  }
+
+  public boolean isStarred() {
+    return starred;
+  }
+
+  public boolean isPendingAdminDelete() {
+    return messageExtras != null &&
+           messageExtras.adminDeleteStatus != null &&
+           messageExtras.adminDeleteStatus.status == AdminDeleteStatus.Status.PENDING;
+  }
+
+  public boolean isFailedAdminDelete() {
+    return messageExtras != null &&
+           messageExtras.adminDeleteStatus != null &&
+           messageExtras.adminDeleteStatus.status == AdminDeleteStatus.Status.FAILED;
+  }
+
+  public CollapsedState getCollapsedState() {
+    return collapsedState;
+  }
+
+  public long getCollapsedHeadId() {
+    return collapsedHeadId;
   }
 
   public boolean isInMemoryMessageRecord() {
@@ -814,7 +879,7 @@ public abstract class MessageRecord extends DisplayRecord {
   }
 
   public boolean isRemoteDelete() {
-    return remoteDelete;
+    return deletedBy != null;
   }
 
   public @NonNull List<ReactionRecord> getReactions() {
@@ -898,7 +963,7 @@ public abstract class MessageRecord extends DisplayRecord {
       if (slides.isEmpty()) {
         return false;
       }
-      return TransferControlView.getTransferState(slides) == expectedTransferState;
+      return TransferControls.getTransferState(slides) == expectedTransferState;
     }
     return false;
   }

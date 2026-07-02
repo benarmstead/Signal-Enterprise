@@ -3,15 +3,19 @@ package org.thoughtcrime.securesms.recipients
 import android.content.Context
 import androidx.annotation.VisibleForTesting
 import androidx.annotation.WorkerThread
+import org.signal.core.util.Util
 import org.thoughtcrime.securesms.conversation.colors.AvatarColor
 import org.thoughtcrime.securesms.database.RecipientTable.RegisteredState
 import org.thoughtcrime.securesms.database.SignalDatabase
 import org.thoughtcrime.securesms.database.model.GroupRecord
 import org.thoughtcrime.securesms.database.model.RecipientRecord
+import org.thoughtcrime.securesms.dependencies.AppDependencies
 import org.thoughtcrime.securesms.groups.GroupId
 import org.thoughtcrime.securesms.keyvalue.SignalStore
+import org.thoughtcrime.securesms.mms.PartAuthority
 import org.thoughtcrime.securesms.util.TextSecurePreferences
-import org.thoughtcrime.securesms.util.Util
+import org.thoughtcrime.securesms.wallpaper.ChatWallpaper
+import org.thoughtcrime.securesms.wallpaper.UriChatWallpaper
 import java.util.LinkedList
 import java.util.Optional
 
@@ -20,6 +24,7 @@ import java.util.Optional
  * It's also helpful for java-kotlin interop, since there's so many optional fields.
  */
 object RecipientCreator {
+
   @JvmOverloads
   @JvmStatic
   fun forId(recipientId: RecipientId, resolved: Boolean = false): Recipient {
@@ -173,14 +178,15 @@ object RecipientCreator {
       profileAvatarFileDetails = record.profileAvatarFileDetails,
       isProfileSharing = record.profileSharing,
       hiddenState = record.hiddenState,
-      lastProfileFetchTime = record.lastProfileFetch,
       isSelf = isSelf,
       notificationChannelValue = record.notificationChannel,
       sealedSenderAccessModeValue = record.sealedSenderAccessMode,
       capabilities = record.capabilities,
       storageId = record.storageId,
       mentionSetting = record.mentionSetting,
-      wallpaperValue = record.wallpaper,
+      callNotificationSettingValue = record.callNotificationSetting,
+      replyNotificationSettingValue = record.replyNotificationSetting,
+      wallpaperValue = record.wallpaper?.validate(),
       chatColorsValue = record.chatColors,
       avatarColor = avatarColor ?: record.avatarColor,
       about = record.about,
@@ -197,7 +203,8 @@ object RecipientCreator {
       groupRecord = groupRecord,
       phoneNumberSharing = record.phoneNumberSharing,
       nickname = record.nickname,
-      note = record.note
+      note = record.note,
+      keyTransparencyData = record.keyTransparencyData
     )
   }
 
@@ -238,5 +245,19 @@ object RecipientCreator {
     }
 
     return forCallLink(null, record, AvatarColor.UNKNOWN)
+  }
+
+  @WorkerThread
+  private fun ChatWallpaper.validate(): ChatWallpaper? {
+    if (this !is UriChatWallpaper) {
+      return this
+    }
+
+    return try {
+      PartAuthority.getAttachmentStream(AppDependencies.application, this.uri).close()
+      this
+    } catch (_: Exception) {
+      null
+    }
   }
 }

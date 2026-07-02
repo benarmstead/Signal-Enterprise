@@ -21,10 +21,10 @@ import com.airbnb.lottie.compose.LottieConstants
 import com.airbnb.lottie.compose.rememberLottieComposition
 import org.signal.core.ui.compose.BottomSheets
 import org.signal.core.ui.compose.Buttons
+import org.signal.core.ui.compose.ComposeBottomSheetDialogFragment
+import org.signal.core.ui.compose.DayNightPreviews
 import org.signal.core.ui.compose.Previews
-import org.signal.core.ui.compose.SignalPreview
 import org.thoughtcrime.securesms.R
-import org.thoughtcrime.securesms.compose.ComposeBottomSheetDialogFragment
 
 /**
  * Bottom sheet dialog displayed when users click 'Link a device'
@@ -73,10 +73,10 @@ fun EducationSheet(onClick: () -> Unit) {
   }
 }
 
-@SignalPreview
+@DayNightPreviews
 @Composable
 fun EducationSheetPreview() {
-  Previews.BottomSheetPreview {
+  Previews.BottomSheetContentPreview {
     EducationSheet(onClick = {})
   }
 }

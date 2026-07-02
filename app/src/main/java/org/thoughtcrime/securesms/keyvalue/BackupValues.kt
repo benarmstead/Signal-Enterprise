@@ -4,7 +4,11 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import okio.withLock
+import org.signal.core.models.backup.MediaRootBackupKey
+import org.signal.core.models.backup.MessageBackupKey
+import org.signal.core.util.LongSerializer
 import org.signal.core.util.logging.Log
+import org.signal.network.util.JsonUtil
 import org.thoughtcrime.securesms.backup.DeletionState
 import org.thoughtcrime.securesms.backup.RestoreState
 import org.thoughtcrime.securesms.backup.v2.MessageBackupTier
@@ -16,12 +20,8 @@ import org.thoughtcrime.securesms.jobmanager.impl.RestoreAttachmentConstraintObs
 import org.thoughtcrime.securesms.keyvalue.protos.ArchiveUploadProgressState
 import org.thoughtcrime.securesms.keyvalue.protos.BackupDownloadNotifierState
 import org.thoughtcrime.securesms.util.Environment
-import org.thoughtcrime.securesms.util.RemoteConfig
 import org.whispersystems.signalservice.api.archive.ArchiveServiceCredential
 import org.whispersystems.signalservice.api.archive.GetArchiveCdnCredentialsResponse
-import org.whispersystems.signalservice.api.backup.MediaRootBackupKey
-import org.whispersystems.signalservice.api.backup.MessageBackupKey
-import org.whispersystems.signalservice.internal.util.JsonUtil
 import java.io.IOException
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.time.Duration
@@ -47,6 +47,7 @@ class BackupValues(store: KeyValueStore) : SignalStoreValues(store) {
     private const val KEY_LAST_CHECK_IN_MILLIS = "backup.lastCheckInMilliseconds"
     private const val KEY_LAST_CHECK_IN_SNOOZE_MILLIS = "backup.lastCheckInSnoozeMilliseconds"
     private const val KEY_FIRST_APP_VERSION = "backup.firstAppVersion"
+    private const val KEY_FINISHED_INITIAL_BACKUP = "backup.finishedInitialBackup"
 
     private const val KEY_NEXT_BACKUP_TIME = "backup.nextBackupTime"
     private const val KEY_LAST_BACKUP_TIME = "backup.lastBackupTime"
@@ -61,13 +62,14 @@ class BackupValues(store: KeyValueStore) : SignalStoreValues(store) {
     private const val KEY_RESTORE_OVER_CELLULAR = "backup.restore.useCellular"
     private const val KEY_OPTIMIZE_STORAGE = "backup.optimizeStorage"
     private const val KEY_BACKUPS_INITIALIZED = "backup.initialized"
+    private const val KEY_IMPORTED_EMPTY_ANDROID_SETTINGS = "backup.importedEmptyAndroidSettings"
 
     const val KEY_ARCHIVE_UPLOAD_STATE = "backup.archiveUploadState"
 
     private const val KEY_BACKUP_UPLOADED = "backup.backupUploaded"
     private const val KEY_SUBSCRIPTION_STATE_MISMATCH = "backup.subscriptionStateMismatch"
 
-    private const val KEY_BACKUP_FAIL = "backup.failed"
+    private const val KEY_BACKUP_CREATION_ERROR = "backup.creationError"
     private const val KEY_BACKUP_FAIL_ACKNOWLEDGED_SNOOZE_TIME = "backup.failed.acknowledged.snooze.time"
     private const val KEY_BACKUP_FAIL_ACKNOWLEDGED_SNOOZE_COUNT = "backup.failed.acknowledged.snooze.count"
     private const val KEY_BACKUP_FAIL_SHEET_SNOOZE_TIME = "backup.failed.sheet.snooze"
@@ -82,6 +84,7 @@ class BackupValues(store: KeyValueStore) : SignalStoreValues(store) {
     private const val KEY_BACKUP_EXPIRED_AND_DOWNGRADED = "backup.expired.and.downgraded"
     private const val KEY_BACKUP_DELETION_STATE = "backup.deletion.state"
     private const val KEY_REMOTE_STORAGE_GARBAGE_COLLECTION_PENDING = "backup.remoteStorageGarbageCollectionPending"
+    private const val KEY_ARCHIVE_ATTACHMENT_RECONCILIATION_ATTEMPTS = "backup.archiveAttachmentReconciliationAttempts"
 
     private const val KEY_MEDIA_ROOT_BACKUP_KEY = "backup.mediaRootBackupKey"
 
@@ -90,6 +93,21 @@ class BackupValues(store: KeyValueStore) : SignalStoreValues(store) {
     private const val KEY_HAS_VERIFIED_BEFORE = "backup.has_verified_before"
 
     private const val KEY_NEXT_BACKUP_SECRET_DATA = "backup.next_backup_secret_data"
+    private const val KEY_BACKUP_SECRET_RESTORE_REQUIRED = "backup.backup_secret_restore_required"
+
+    private const val KEY_RESTORING_VIA_QR = "backup.restore_via_qr"
+
+    private const val KEY_MESSAGE_CUTOFF_DURATION = "backup.message_cutoff_duration"
+    private const val KEY_LAST_USED_MESSAGE_CUTOFF_TIME = "backup.last_used_message_cutoff_time"
+
+    private const val KEY_NEW_LOCAL_BACKUPS_ENABLED = "backup.new_local_backups_enabled"
+    private const val KEY_NEW_LOCAL_BACKUPS_DIRECTORY = "backup.new_local_backups_directory"
+    private const val KEY_NEW_LOCAL_BACKUPS_LAST_BACKUP_TIME = "backup.new_local_backups_last_backup_time"
+    private const val KEY_NEW_LOCAL_BACKUPS_SELECTED_SNAPSHOT_TIMESTAMP = "backup.new_local_backups_selected_snapshot_timestamp"
+    private const val KEY_LOCAL_RESTORE_ACCOUNT_ENTROPY_POOL = "backup.local_restore_account_entropy_pool"
+    private const val KEY_LOCAL_RESTORE_DIRECTORY_ERROR = "backup.local_restore_directory_error"
+
+    private const val KEY_UPLOAD_BANNER_VISIBLE = "backup.upload_banner_visible"
 
     private val cachedCdnCredentialsExpiresIn: Duration = 12.hours
 
@@ -117,7 +135,7 @@ class BackupValues(store: KeyValueStore) : SignalStoreValues(store) {
 
   val deletionStateFlow: Flow<DeletionState> = deletionStateValue.toFlow()
 
-  var optimizeStorage: Boolean by booleanValue(KEY_OPTIMIZE_STORAGE, false).withPrecondition { RemoteConfig.internalUser || Environment.IS_STAGING || Environment.IS_INSTRUMENTATION }
+  var optimizeStorage: Boolean by booleanValue(KEY_OPTIMIZE_STORAGE, false)
   var backupWithCellular: Boolean
     get() = getBoolean(KEY_BACKUP_OVER_CELLULAR, false)
     set(value) {
@@ -145,6 +163,16 @@ class BackupValues(store: KeyValueStore) : SignalStoreValues(store) {
         _lastBackupTimeFlow.value.tryEmit(value)
       }
     }
+
+  /**
+   * Whether or not the user has completed their initial backup. This if enabling backups for the first time or going from free -> paid tier.
+   * It is initialized to 'true' to account for pre-existing backup users.
+   * Users who newly-enable backups will set this to 'false' via the aforementioned mechanism.
+   */
+  var finishedInitialBackup: Boolean by booleanValue(KEY_FINISHED_INITIAL_BACKUP, true)
+
+  /** Whether or not the user chose to hide the uplaod banner that appears on the chat list. */
+  var uploadBannerVisible: Boolean by booleanValue(KEY_UPLOAD_BANNER_VISIBLE, false)
 
   private val _lastBackupTimeFlow: Lazy<MutableStateFlow<Long>> = lazy { MutableStateFlow(lastBackupTime) }
   val lastBackupTimeFlow by lazy { _lastBackupTimeFlow.value }
@@ -254,8 +282,15 @@ class BackupValues(store: KeyValueStore) : SignalStoreValues(store) {
 
         if (storedValue != value) {
           clearNotEnoughRemoteStorageSpace()
-          clearMessageBackupFailure()
           clearMessageBackupFailureSheetWatermark()
+          backupCreationError = null
+
+          if (storedValue == null) {
+            Log.i(TAG, "Enabling backups. Resetting 'finished initial backup' state.")
+          } else if (value == MessageBackupTier.PAID) {
+            Log.i(TAG, "Moving to PAID backups. Resetting 'finished initial backup' state.")
+            finishedInitialBackup = false
+          }
         }
 
         deletionState = DeletionState.NONE
@@ -297,7 +332,8 @@ class BackupValues(store: KeyValueStore) : SignalStoreValues(store) {
   /** True if we believe we have successfully uploaded a backup, otherwise false. */
   var hasBackupBeenUploaded: Boolean by booleanValue(KEY_BACKUP_UPLOADED, false)
 
-  val hasBackupFailure: Boolean get() = getBoolean(KEY_BACKUP_FAIL, false)
+  val hasBackupCreationError: Boolean get() = backupCreationError != null
+  var backupCreationError: BackupCreationError? by enumValue(KEY_BACKUP_CREATION_ERROR, null, BackupCreationError.serializer)
   val nextBackupFailureSnoozeTime: Duration get() = getLong(KEY_BACKUP_FAIL_ACKNOWLEDGED_SNOOZE_TIME, 0L).milliseconds
   val nextBackupFailureSheetSnoozeTime: Duration get() = getLong(KEY_BACKUP_FAIL_SHEET_SNOOZE_TIME, getNextBackupFailureSheetSnoozeTime(lastBackupTime.milliseconds).inWholeMilliseconds).milliseconds
 
@@ -333,11 +369,6 @@ class BackupValues(store: KeyValueStore) : SignalStoreValues(store) {
    */
   fun clearDownloadNotifierState() {
     backupDownloadNotifierState = null
-  }
-
-  fun internalSetBackupFailedErrorState() {
-    markMessageBackupFailure()
-    putLong(KEY_BACKUP_FAIL_SHEET_SNOOZE_TIME, 0)
   }
 
   /**
@@ -386,6 +417,12 @@ class BackupValues(store: KeyValueStore) : SignalStoreValues(store) {
   /** The value from the last successful SVRB operation that must be passed to the next SVRB operation. */
   var nextBackupSecretData by nullableBlobValue(KEY_NEXT_BACKUP_SECRET_DATA, null)
 
+  /** True if user re-registered but did not restore SVRB secrets during registration, and should on backup. */
+  var backupSecretRestoreRequired by booleanValue(KEY_BACKUP_SECRET_RESTORE_REQUIRED, false)
+
+  /** True if attempting to restore backup from quick restore/QR code */
+  var restoringViaQr by booleanValue(KEY_RESTORING_VIA_QR, false)
+
   /**
    * If true, it means we have been told that remote storage is full, but we have not yet run any of our "garbage collection" tasks, like committing deletes
    * or pruning orphaned media.
@@ -393,9 +430,76 @@ class BackupValues(store: KeyValueStore) : SignalStoreValues(store) {
   var remoteStorageGarbageCollectionPending
     get() = store.getBoolean(KEY_REMOTE_STORAGE_GARBAGE_COLLECTION_PENDING, false)
     set(value) {
-      store.beginWrite().putBoolean(KEY_REMOTE_STORAGE_GARBAGE_COLLECTION_PENDING, value)
+      store.beginWrite()
+        .putBoolean(KEY_REMOTE_STORAGE_GARBAGE_COLLECTION_PENDING, value)
+        .apply()
       NoRemoteArchiveGarbageCollectionPendingConstraint.Observer.notifyListeners()
     }
+
+  /**
+   * Tracks archive attachment reconciliation attempts to prevent infinite retries when we disagree with the server about available storage space.
+   */
+  var archiveAttachmentReconciliationAttempts: Int
+    get() {
+      return store.getInteger(KEY_ARCHIVE_ATTACHMENT_RECONCILIATION_ATTEMPTS, 0)
+    }
+    set(value) {
+      store.beginWrite()
+        .putInteger(KEY_ARCHIVE_ATTACHMENT_RECONCILIATION_ATTEMPTS, value)
+        .apply()
+    }
+
+  /**
+   * An annoying workaround to making tests pass when importing empty androidSpecificSettings.
+   */
+  var importedEmptyAndroidSettings by booleanValue(KEY_IMPORTED_EMPTY_ANDROID_SETTINGS, false)
+
+  /**
+   * If set, this represents how far back we should backup messages. For instance, if the returned value is 1 year in milliseconds, you should back up
+   * every message within the last year. If unset, back up all messages. We only cutoff old messages for users whose backup is over the
+   * size limit, which is *extraordinarily* rare, so this value is almost always null.
+   */
+  var messageCuttoffDuration: Duration? by durationValue(KEY_MESSAGE_CUTOFF_DURATION, null)
+
+  /**
+   * The last threshold we used for backing up messages. Messages sent before this time were not included in the backup.
+   * A value of 0 indicates that we included all messages. We only cutoff old messages for users whose backup is over the
+   * size limit, which is *extraordinarily* rare, so this value is almost always 0.
+   */
+  var lastUsedMessageCutoffTime: Long by longValue(KEY_LAST_USED_MESSAGE_CUTOFF_TIME, 0)
+
+  /**
+   * True if the new local backup system is enabled, otherwise false.
+   */
+  private val newLocalBackupsEnabledValue = booleanValue(KEY_NEW_LOCAL_BACKUPS_ENABLED, false)
+  var newLocalBackupsEnabled: Boolean by newLocalBackupsEnabledValue
+  val newLocalBackupsEnabledFlow: Flow<Boolean> by lazy { newLocalBackupsEnabledValue.toFlow() }
+
+  /**IT
+   * The directory URI path selected for new local backups.
+   */
+  private val newLocalBackupsDirectoryValue = stringValue(KEY_NEW_LOCAL_BACKUPS_DIRECTORY, null as String?)
+  var newLocalBackupsDirectory: String? by newLocalBackupsDirectoryValue
+  val newLocalBackupsDirectoryFlow: Flow<String?> by lazy { newLocalBackupsDirectoryValue.toFlow() }
+
+  /**
+   * The timestamp of the last successful new local backup.
+   */
+  private val newLocalBackupsLastBackupTimeValue = longValue(KEY_NEW_LOCAL_BACKUPS_LAST_BACKUP_TIME, -1)
+  var newLocalBackupsLastBackupTime: Long by newLocalBackupsLastBackupTimeValue
+  val newLocalBackupsLastBackupTimeFlow: Flow<Long> by lazy { newLocalBackupsLastBackupTimeValue.toFlow() }
+
+  /**
+   * The snapshot timestamp selected for restore. Set before launching restore, cleared after completion.
+   */
+  var newLocalBackupsSelectedSnapshotTimestamp: Long by longValue(KEY_NEW_LOCAL_BACKUPS_SELECTED_SNAPSHOT_TIMESTAMP, -1L)
+
+  /**
+   * Temporary storage for the AEP used to decrypt a local backup file. This is kept separate from
+   * the account AEP because the local backup may belong to a different account (e.g., after ACI change).
+   */
+  var localRestoreAccountEntropyPool: String? by stringValue(KEY_LOCAL_RESTORE_ACCOUNT_ENTROPY_POOL, null as String?)
+  var localRestoreDirectoryError: Boolean by booleanValue(KEY_LOCAL_RESTORE_DIRECTORY_ERROR, false)
 
   /**
    * When we are told by the server that we are out of storage space, we should show
@@ -416,6 +520,8 @@ class BackupValues(store: KeyValueStore) : SignalStoreValues(store) {
       .putBoolean(KEY_NOT_ENOUGH_REMOTE_STORAGE_SPACE, false)
       .putBoolean(KEY_NOT_ENOUGH_REMOTE_STORAGE_SPACE_DISPLAY_SHEET, false)
       .apply()
+
+    archiveAttachmentReconciliationAttempts = 0
   }
 
   /**
@@ -427,9 +533,9 @@ class BackupValues(store: KeyValueStore) : SignalStoreValues(store) {
       .apply()
   }
 
-  fun markMessageBackupFailure() {
+  fun markBackupCreationFailed(error: BackupCreationError) {
     store.beginWrite()
-      .putBoolean(KEY_BACKUP_FAIL, true)
+      .putLong(KEY_BACKUP_CREATION_ERROR, error.value)
       .putLong(KEY_BACKUP_FAIL_ACKNOWLEDGED_SNOOZE_TIME, System.currentTimeMillis())
       .putLong(KEY_BACKUP_FAIL_ACKNOWLEDGED_SNOOZE_COUNT, 0)
       .putLong(KEY_BACKUP_FAIL_SHEET_SNOOZE_TIME, System.currentTimeMillis())
@@ -437,7 +543,7 @@ class BackupValues(store: KeyValueStore) : SignalStoreValues(store) {
   }
 
   fun updateMessageBackupFailureWatermark() {
-    if (!hasBackupFailure) {
+    if (!hasBackupCreationError) {
       return
     }
 
@@ -454,8 +560,8 @@ class BackupValues(store: KeyValueStore) : SignalStoreValues(store) {
       .apply()
   }
 
-  fun clearMessageBackupFailure() {
-    putBoolean(KEY_BACKUP_FAIL, false)
+  fun clearBackupCreationFailed() {
+    putLong(KEY_BACKUP_CREATION_ERROR, -1)
   }
 
   fun updateMessageBackupFailureSheetWatermark() {
@@ -555,5 +661,32 @@ class BackupValues(store: KeyValueStore) : SignalStoreValues(store) {
         putString(cdnKey, value?.let { JsonUtil.toJson(it) })
         putLong(cdnTimestampKey, System.currentTimeMillis())
       }
+  }
+
+  enum class BackupCreationError(val value: Long) {
+    /** A temporary failure, usually cause by poor network. */
+    TRANSIENT(1),
+
+    /** The validation of the backup file failed. This likely cannot be fixed without an app update. */
+    VALIDATION(2),
+
+    /** The backup file itself is too large. The only resolution would be for the user to delete some number of messages. */
+    BACKUP_FILE_TOO_LARGE(3),
+
+    /** We do not have enough space on the device to create the backup file. */
+    NOT_ENOUGH_DISK_SPACE(4);
+
+    companion object {
+
+      val serializer = object : LongSerializer<BackupCreationError?> {
+        override fun serialize(data: BackupCreationError?): Long {
+          return data?.value ?: -1
+        }
+
+        override fun deserialize(input: Long): BackupCreationError? {
+          return entries.firstOrNull { it.value == input }
+        }
+      }
+    }
   }
 }

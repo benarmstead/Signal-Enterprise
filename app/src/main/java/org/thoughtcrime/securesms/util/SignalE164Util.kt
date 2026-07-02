@@ -5,7 +5,10 @@
 
 package org.thoughtcrime.securesms.util
 
+import org.signal.core.util.BidiUtil
 import org.signal.core.util.E164Util
+import org.signal.core.util.LRUCache
+import org.signal.core.util.Util
 import org.thoughtcrime.securesms.dependencies.AppDependencies
 import org.thoughtcrime.securesms.keyvalue.SignalStore
 
@@ -28,7 +31,7 @@ object SignalE164Util {
    */
   @JvmStatic
   fun prettyPrint(input: String): String {
-    return getFormatter().prettyPrint(input)
+    return BidiUtil.forceLtr(getFormatter().prettyPrint(input))
   }
 
   /**
@@ -60,14 +63,14 @@ object SignalE164Util {
    * This does not check if the number is *valid* for a given region. Instead, it's very lenient and just
    * does it's best to interpret the input string as a number that could be put into the E164 format.
    *
-   * Note that shortcodes will not have leading '+' signs.
+   * Note that shortcodes will return null.
    *
    * In other words, if this method returns null, you likely do not have anything that could be considered
    * a phone number.
    */
   @JvmStatic
   fun formatNonShortCodeAsE164(input: String): String? {
-    return getFormatter().formatAsE164(input)?.takeIf { input.trimStart('+', '0').length > 6 }
+    return getFormatter().formatAsE164(input)?.takeIf { !getFormatter().isValidShortNumber(input) }
   }
 
   /**

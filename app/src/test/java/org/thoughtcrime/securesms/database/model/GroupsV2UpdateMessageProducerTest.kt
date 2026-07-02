@@ -5,7 +5,6 @@ import androidx.test.core.app.ApplicationProvider
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkObject
-import io.mockk.mockkStatic
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -14,18 +13,21 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
+import org.signal.core.models.ServiceId
+import org.signal.core.models.ServiceId.ACI
+import org.signal.core.models.ServiceId.PNI
 import org.signal.core.util.BidiUtil
-import org.signal.storageservice.protos.groups.AccessControl
-import org.signal.storageservice.protos.groups.AccessControl.AccessRequired
-import org.signal.storageservice.protos.groups.AccessControl.AccessRequired.ADMINISTRATOR
-import org.signal.storageservice.protos.groups.AccessControl.AccessRequired.ANY
-import org.signal.storageservice.protos.groups.AccessControl.AccessRequired.MEMBER
-import org.signal.storageservice.protos.groups.AccessControl.AccessRequired.UNKNOWN
-import org.signal.storageservice.protos.groups.AccessControl.AccessRequired.UNSATISFIABLE
-import org.signal.storageservice.protos.groups.local.DecryptedGroup
-import org.signal.storageservice.protos.groups.local.DecryptedGroupChange
-import org.signal.storageservice.protos.groups.local.DecryptedMember
-import org.signal.storageservice.protos.groups.local.DecryptedPendingMember
+import org.signal.storageservice.storage.protos.groups.AccessControl
+import org.signal.storageservice.storage.protos.groups.AccessControl.AccessRequired
+import org.signal.storageservice.storage.protos.groups.AccessControl.AccessRequired.ADMINISTRATOR
+import org.signal.storageservice.storage.protos.groups.AccessControl.AccessRequired.ANY
+import org.signal.storageservice.storage.protos.groups.AccessControl.AccessRequired.MEMBER
+import org.signal.storageservice.storage.protos.groups.AccessControl.AccessRequired.UNKNOWN
+import org.signal.storageservice.storage.protos.groups.AccessControl.AccessRequired.UNSATISFIABLE
+import org.signal.storageservice.storage.protos.groups.local.DecryptedGroup
+import org.signal.storageservice.storage.protos.groups.local.DecryptedGroupChange
+import org.signal.storageservice.storage.protos.groups.local.DecryptedMember
+import org.signal.storageservice.storage.protos.groups.local.DecryptedPendingMember
 import org.thoughtcrime.securesms.database.model.GroupsV2UpdateMessageConverter.translateDecryptedChangeNewGroup
 import org.thoughtcrime.securesms.database.model.GroupsV2UpdateMessageConverter.translateDecryptedChangeUpdate
 import org.thoughtcrime.securesms.database.model.databaseprotos.DecryptedGroupV2Context
@@ -33,9 +35,6 @@ import org.thoughtcrime.securesms.groups.v2.ChangeBuilder
 import org.thoughtcrime.securesms.recipients.Recipient
 import org.thoughtcrime.securesms.recipients.Recipient.Companion.resolved
 import org.thoughtcrime.securesms.recipients.RecipientId
-import org.whispersystems.signalservice.api.push.ServiceId
-import org.whispersystems.signalservice.api.push.ServiceId.ACI
-import org.whispersystems.signalservice.api.push.ServiceId.PNI
 import org.whispersystems.signalservice.api.push.ServiceIds
 import java.util.UUID
 
@@ -50,7 +49,7 @@ class GroupsV2UpdateMessageProducerTest {
 
   @Before
   fun setup() {
-    mockkStatic(RecipientId::class)
+    mockkObject(RecipientId.Companion)
     val aliceId = RecipientId.from(1)
     val bobId = RecipientId.from(2)
     every { RecipientId.from(alice) } returns aliceId
@@ -823,6 +822,34 @@ class GroupsV2UpdateMessageProducerTest {
       .build()
 
     assertEquals(listOf("Who can edit group membership has been changed to \"Only admins\"."), describeChange(change))
+  }
+
+  // member label access change
+  @Test
+  fun member_changes_member_label_access() {
+    val change = ChangeBuilder.changeBy(bob)
+      .memberLabelAccess(MEMBER)
+      .build()
+
+    assertEquals(listOf("Bob changed who can add member labels to \"All members\"."), describeChange(change))
+  }
+
+  @Test
+  fun you_changed_member_label_access() {
+    val change = ChangeBuilder.changeBy(you)
+      .memberLabelAccess(ADMINISTRATOR)
+      .build()
+
+    assertEquals(listOf("You changed who can add member labels to \"Only admins\"."), describeChange(change))
+  }
+
+  @Test
+  fun unknown_changed_member_label_access() {
+    val change = ChangeBuilder.changeByUnknown()
+      .memberLabelAccess(ADMINISTRATOR)
+      .build()
+
+    assertEquals(listOf("An admin changed who can add member labels to \"Only admins\"."), describeChange(change))
   }
 
   // Group link access change

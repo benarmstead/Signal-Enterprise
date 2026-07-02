@@ -2,6 +2,8 @@ package org.thoughtcrime.securesms.storage
 
 import okio.ByteString
 import okio.ByteString.Companion.toByteString
+import org.signal.core.models.ServiceId
+import org.signal.core.util.UuidUtil
 import org.signal.core.util.isNotEmpty
 import org.signal.core.util.isNullOrEmpty
 import org.signal.core.util.logging.Log
@@ -25,10 +27,10 @@ import org.thoughtcrime.securesms.database.model.databaseprotos.InAppPaymentData
 import org.thoughtcrime.securesms.groups.BadGroupIdException
 import org.thoughtcrime.securesms.groups.GroupId
 import org.thoughtcrime.securesms.keyvalue.PhoneNumberPrivacyValues
+import org.thoughtcrime.securesms.keyvalue.SignalStore
 import org.thoughtcrime.securesms.notifications.profiles.NotificationProfile
 import org.thoughtcrime.securesms.recipients.Recipient
 import org.thoughtcrime.securesms.recipients.RecipientId
-import org.whispersystems.signalservice.api.push.ServiceId
 import org.whispersystems.signalservice.api.push.SignalServiceAddress
 import org.whispersystems.signalservice.api.storage.IAPSubscriptionId
 import org.whispersystems.signalservice.api.storage.SignalCallLinkRecord
@@ -49,7 +51,6 @@ import org.whispersystems.signalservice.api.storage.toSignalNotificationProfileR
 import org.whispersystems.signalservice.api.storage.toSignalStorageRecord
 import org.whispersystems.signalservice.api.storage.toSignalStoryDistributionListRecord
 import org.whispersystems.signalservice.api.subscriptions.SubscriberId
-import org.whispersystems.signalservice.api.util.UuidUtil
 import org.whispersystems.signalservice.internal.storage.protos.AccountRecord
 import org.whispersystems.signalservice.internal.storage.protos.ContactRecord
 import org.whispersystems.signalservice.internal.storage.protos.ContactRecord.IdentityState
@@ -121,19 +122,24 @@ object StorageSyncModels {
 
   @JvmStatic
   fun localToRemotePinnedConversations(records: List<RecipientRecord>): List<AccountRecord.PinnedConversation> {
+    val releaseChannelId = SignalStore.releaseChannel.releaseChannelRecipientId
     return records
-      .filter { it.recipientType == RecipientType.GV1 || it.recipientType == RecipientType.GV2 || it.registered == RecipientTable.RegisteredState.REGISTERED }
-      .map { localToRemotePinnedConversation(it) }
+      .filter { it.recipientType == RecipientType.GV1 || it.recipientType == RecipientType.GV2 || it.registered == RecipientTable.RegisteredState.REGISTERED || it.id == releaseChannelId }
+      .map { localToRemotePinnedConversation(it, releaseChannelId) }
   }
 
   @JvmStatic
-  private fun localToRemotePinnedConversation(settings: RecipientRecord): AccountRecord.PinnedConversation {
+  private fun localToRemotePinnedConversation(settings: RecipientRecord, releaseChannelId: RecipientId?): AccountRecord.PinnedConversation {
+    if (settings.id == releaseChannelId) {
+      return AccountRecord.PinnedConversation(releaseNotes = AccountRecord.PinnedConversation.ReleaseNotes())
+    }
     return when (settings.recipientType) {
       RecipientType.INDIVIDUAL -> {
         AccountRecord.PinnedConversation(
           contact = AccountRecord.PinnedConversation.Contact(
-            serviceId = settings.serviceId?.toString() ?: "",
-            e164 = settings.e164 ?: ""
+            serviceId = "",
+            e164 = settings.e164 ?: "",
+            serviceIdBinary = settings.serviceId?.toByteString() ?: ByteString.EMPTY
           )
         )
       }
@@ -186,9 +192,11 @@ object StorageSyncModels {
     }
 
     return SignalContactRecord.newBuilder(recipient.syncExtras.storageProto).apply {
-      aci = recipient.aci?.toString() ?: ""
+      aciBinary = recipient.aci?.toByteString() ?: ByteString.EMPTY
+      aci = ""
       e164 = recipient.e164 ?: ""
-      pni = recipient.pni?.toStringWithoutPrefix() ?: ""
+      pniBinary = recipient.pni?.toByteStringWithoutPrefix() ?: ByteString.EMPTY
+      pni = ""
       profileKey = recipient.profileKey?.toByteString() ?: ByteString.EMPTY
       givenName = recipient.signalProfileName.givenName
       familyName = recipient.signalProfileName.familyName
@@ -237,6 +245,8 @@ object StorageSyncModels {
       throw AssertionError("Group is not V2")
     }
 
+    val localVerifiedNameHash: ByteArray? = groups.getGroup(groupId).orElse(null)?.verifiedNameHash
+
     return SignalGroupV2Record.newBuilder(recipient.syncExtras.storageProto).apply {
       masterKey = groupMasterKey.serialize().toByteString()
       blocked = recipient.isBlocked
@@ -244,13 +254,16 @@ object StorageSyncModels {
       archived = recipient.syncExtras.isArchived
       markedUnread = recipient.syncExtras.isForcedUnread
       mutedUntilTimestamp = recipient.muteUntil
-      dontNotifyForMentionsIfMuted = recipient.mentionSetting == RecipientTable.MentionSetting.ALWAYS_NOTIFY
+      dontNotifyForMentionsIfMuted = recipient.mentionSetting == RecipientTable.NotificationSetting.DO_NOT_NOTIFY
       hideStory = recipient.extras != null && recipient.extras.hideStory()
       avatarColor = localToRemoteAvatarColor(recipient.avatarColor)
       storySendMode = when (groups.getShowAsStoryState(groupId)) {
         ShowAsStoryState.ALWAYS -> GroupV2Record.StorySendMode.ENABLED
         ShowAsStoryState.NEVER -> GroupV2Record.StorySendMode.DISABLED
         else -> GroupV2Record.StorySendMode.DEFAULT
+      }
+      if (localVerifiedNameHash != null) {
+        verifiedNameHash = localVerifiedNameHash.toByteString()
       }
     }.build().toSignalGroupV2Record(StorageId.forGroupV2(rawStorageId))
   }
@@ -269,7 +282,6 @@ object StorageSyncModels {
 
     return SignalCallLinkRecord.newBuilder(null).apply {
       rootKey = callLink.credentials.linkKeyBytes.toByteString()
-      epoch = callLink.credentials.epochBytes?.toByteString()
       adminPasskey = adminPassword.toByteString()
       deletedAtTimestampMs = deletedTimestamp
     }.build().toSignalCallLinkRecord(StorageId.forCallLink(rawStorageId))
@@ -290,10 +302,11 @@ object StorageSyncModels {
     return SignalStoryDistributionListRecord.newBuilder(recipient.syncExtras.storageProto).apply {
       identifier = UuidUtil.toByteArray(record.distributionId.asUuid()).toByteString()
       name = record.name
-      recipientServiceIds = record.getMembersToSync()
+      recipientServiceIds = emptyList()
+      recipientServiceIdsBinary = record.getMembersToSync()
         .map { Recipient.resolved(it) }
         .filter { it.hasServiceId }
-        .map { it.requireServiceId().toString() }
+        .map { it.requireServiceId().toByteString() }
       allowsReplies = record.allowsReplies
       isBlockList = record.privacyMode.isBlockList
     }.build().toSignalStoryDistributionListRecord(StorageId.forStoryDistributionList(rawStorageId))
@@ -493,7 +506,13 @@ object StorageSyncModels {
       } else {
         when (recipient.recipientType) {
           RecipientType.INDIVIDUAL -> {
-            RemoteRecipient(contact = RemoteRecipient.Contact(serviceId = recipient.serviceId?.toString() ?: "", e164 = recipient.e164 ?: ""))
+            RemoteRecipient(
+              contact = RemoteRecipient.Contact(
+                serviceId = "",
+                e164 = recipient.e164 ?: "",
+                serviceIdBinary = recipient.serviceId?.toByteString() ?: ByteString.EMPTY
+              )
+            )
           }
           RecipientType.GV1 -> {
             RemoteRecipient(legacyGroupId = recipient.groupId!!.requireV1().decodedId.toByteString())
@@ -509,7 +528,7 @@ object StorageSyncModels {
 
   fun remoteToLocalRecipient(remoteRecipient: RemoteRecipient): Recipient? {
     return if (remoteRecipient.contact != null) {
-      val serviceId = ServiceId.parseOrNull(remoteRecipient.contact!!.serviceId)
+      val serviceId = ServiceId.parseOrNull(remoteRecipient.contact!!.serviceId, remoteRecipient.contact!!.serviceIdBinary)
       val e164 = remoteRecipient.contact!!.e164
       Recipient.externalPush(SignalServiceAddress(serviceId, e164))
     } else if (remoteRecipient.legacyGroupId != null) {

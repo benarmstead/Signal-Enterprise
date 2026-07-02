@@ -3,6 +3,7 @@
 package org.thoughtcrime.securesms.util
 
 import android.content.Context
+import org.signal.core.util.Util
 import org.thoughtcrime.securesms.R
 import org.thoughtcrime.securesms.database.MessageTypes
 import org.thoughtcrime.securesms.database.model.MessageRecord
@@ -11,6 +12,7 @@ import org.thoughtcrime.securesms.database.model.Quote
 import org.thoughtcrime.securesms.database.model.databaseprotos.GiftBadge
 import org.thoughtcrime.securesms.mms.QuoteModel
 import org.thoughtcrime.securesms.mms.TextSlide
+import org.thoughtcrime.securesms.polls.PollRecord
 import org.thoughtcrime.securesms.stickers.StickerUrl
 
 const val MAX_BODY_DISPLAY_LENGTH = 1000
@@ -22,32 +24,23 @@ fun MessageRecord.isMediaMessage(): Boolean {
     slideDeck.stickerSlide == null
 }
 
-fun MessageRecord.hasNonTextSlide(): Boolean =
-  isMms && (this as MmsMessageRecord).slideDeck.slides.any { slide -> slide !is TextSlide }
+fun MessageRecord.hasNonTextSlide(): Boolean = isMms && (this as MmsMessageRecord).slideDeck.slides.any { slide -> slide !is TextSlide }
 
-fun MessageRecord.hasSticker(): Boolean =
-  isMms && (this as MmsMessageRecord).slideDeck.stickerSlide != null
+fun MessageRecord.hasSticker(): Boolean = isMms && (this as MmsMessageRecord).slideDeck.stickerSlide != null
 
-fun MessageRecord.hasSharedContact(): Boolean =
-  isMms && (this as MmsMessageRecord).sharedContacts.isNotEmpty()
+fun MessageRecord.hasSharedContact(): Boolean = isMms && (this as MmsMessageRecord).sharedContacts.isNotEmpty()
 
-fun MessageRecord.hasLocation(): Boolean =
-  isMms && ((this as MmsMessageRecord).slideDeck.slides).any { slide -> slide.hasLocation() }
+fun MessageRecord.hasLocation(): Boolean = isMms && ((this as MmsMessageRecord).slideDeck.slides).any { slide -> slide.hasLocation() }
 
-fun MessageRecord.hasAudio(): Boolean =
-  isMms && (this as MmsMessageRecord).slideDeck.audioSlide != null
+fun MessageRecord.hasAudio(): Boolean = isMms && (this as MmsMessageRecord).slideDeck.audioSlide != null
 
-fun MessageRecord.isCaptionlessMms(context: Context): Boolean =
-  isMms && isDisplayBodyEmpty(context) && (this as MmsMessageRecord).slideDeck.textSlide == null
+fun MessageRecord.isCaptionlessMms(context: Context): Boolean = isMms && isDisplayBodyEmpty(context) && (this as MmsMessageRecord).slideDeck.textSlide == null
 
-fun MessageRecord.hasThumbnail(): Boolean =
-  isMms && (this as MmsMessageRecord).slideDeck.thumbnailSlide != null
+fun MessageRecord.hasThumbnail(): Boolean = isMms && (this as MmsMessageRecord).slideDeck.thumbnailSlide != null
 
-fun MessageRecord.isStoryReaction(): Boolean =
-  isMms && MessageTypes.isStoryReaction(type)
+fun MessageRecord.isStoryReaction(): Boolean = isMms && MessageTypes.isStoryReaction(type)
 
-fun MessageRecord.isStory(): Boolean =
-  isMms && (this as MmsMessageRecord).storyType.isStory
+fun MessageRecord.isStory(): Boolean = isMms && (this as MmsMessageRecord).storyType.isStory
 
 fun MessageRecord.isBorderless(context: Context): Boolean {
   return isCaptionlessMms(context) &&
@@ -55,8 +48,7 @@ fun MessageRecord.isBorderless(context: Context): Boolean {
     (this as MmsMessageRecord).slideDeck.thumbnailSlide?.isBorderless == true
 }
 
-fun MessageRecord.hasNoBubble(context: Context): Boolean =
-  hasSticker() || isBorderless(context) || (isTextOnly(context) && isJumbomoji(context) && (messageRanges?.ranges?.isEmpty() ?: true))
+fun MessageRecord.hasNoBubble(context: Context): Boolean = hasSticker() || isBorderless(context) || (isTextOnly(context) && isJumbomoji(context) && (messageRanges?.ranges?.isEmpty() ?: true))
 
 fun MessageRecord.hasOnlyThumbnail(context: Context): Boolean {
   return hasThumbnail() &&
@@ -68,11 +60,9 @@ fun MessageRecord.hasOnlyThumbnail(context: Context): Boolean {
     !isViewOnceMessage()
 }
 
-fun MessageRecord.hasDocument(): Boolean =
-  isMms && (this as MmsMessageRecord).slideDeck.documentSlide != null
+fun MessageRecord.hasDocument(): Boolean = isMms && (this as MmsMessageRecord).slideDeck.documentSlide != null
 
-fun MessageRecord.isViewOnceMessage(): Boolean =
-  isMms && (this as MmsMessageRecord).isViewOnce
+fun MessageRecord.isViewOnceMessage(): Boolean = isMms && (this as MmsMessageRecord).isViewOnce
 
 fun MessageRecord.hasExtraText(): Boolean {
   val hasTextSlide = isMms && (this as MmsMessageRecord).slideDeck.textSlide != null
@@ -81,24 +71,29 @@ fun MessageRecord.hasExtraText(): Boolean {
   return hasTextSlide || hasOverflowText
 }
 
-fun MessageRecord.hasQuote(): Boolean =
-  isMms && (this as MmsMessageRecord).quote != null
+fun MessageRecord.hasQuote(): Boolean = isMms && (this as MmsMessageRecord).quote != null
 
-fun MessageRecord.getQuote(): Quote? =
-  if (isMms) {
-    (this as MmsMessageRecord).quote
-  } else {
-    null
-  }
+fun MessageRecord.getQuote(): Quote? = if (isMms) {
+  (this as MmsMessageRecord).quote
+} else {
+  null
+}
 
-fun MessageRecord.hasLinkPreview(): Boolean =
-  isMms && (this as MmsMessageRecord).linkPreviews.isNotEmpty()
+fun MessageRecord.hasLinkPreview(): Boolean = isMms && (this as MmsMessageRecord).linkPreviews.isNotEmpty()
 
-fun MessageRecord.hasTextSlide(): Boolean =
-  isMms && (this as MmsMessageRecord).slideDeck.textSlide != null && this.slideDeck.textSlide?.uri != null
+fun MessageRecord.hasTextSlide(): Boolean = isMms && (this as MmsMessageRecord).slideDeck.textSlide != null && this.slideDeck.textSlide?.uri != null
 
-fun MessageRecord.requireTextSlide(): TextSlide =
-  requireNotNull((this as MmsMessageRecord).slideDeck.textSlide)
+fun MessageRecord.hasUndownloadedTextSlide(): Boolean = isMms && (this as MmsMessageRecord).slideDeck.textSlide != null && this.slideDeck.textSlide?.uri == null
+
+fun MessageRecord.requireTextSlide(): TextSlide = requireNotNull((this as MmsMessageRecord).slideDeck.textSlide)
+
+fun MessageRecord.hasPoll(): Boolean = isMms && (this as MmsMessageRecord).poll != null
+
+fun MessageRecord.getPoll(): PollRecord? = if (isMms) (this as MmsMessageRecord).poll else null
+
+fun MessageRecord.hasPollTerminate(): Boolean = this.isPollTerminate && this.messageExtras != null && this.messageExtras!!.pollTerminate != null
+
+fun MessageRecord.hasPinnedMessageUpdate(): Boolean = this.isPinnedMessageUpdate && this.messageExtras != null && this.messageExtras!!.pinnedMessage != null
 
 fun MessageRecord.hasBigImageLinkPreview(context: Context): Boolean {
   if (!hasLinkPreview()) {
@@ -124,6 +119,10 @@ fun MessageRecord.requireGiftBadge(): GiftBadge {
   return (this as MmsMessageRecord).giftBadge!!
 }
 
+fun MessageRecord.isPoll(): Boolean {
+  return (this as? MmsMessageRecord)?.poll != null
+}
+
 fun MessageRecord.isTextOnly(context: Context): Boolean {
   return !isMms ||
     (
@@ -140,7 +139,8 @@ fun MessageRecord.isTextOnly(context: Context): Boolean {
         !isCaptionlessMms(context) &&
         !hasGiftBadge() &&
         !isPaymentNotification &&
-        !isPaymentTombstone
+        !isPaymentTombstone &&
+        !isPoll()
       )
 }
 
@@ -152,7 +152,13 @@ fun MessageRecord.isScheduled(): Boolean {
  * Returns the QuoteType for this record, as if it was being quoted.
  */
 fun MessageRecord.getRecordQuoteType(): QuoteModel.Type {
-  return if (hasGiftBadge()) QuoteModel.Type.GIFT_BADGE else QuoteModel.Type.NORMAL
+  return if (hasGiftBadge()) {
+    QuoteModel.Type.GIFT_BADGE
+  } else if (hasPoll()) {
+    QuoteModel.Type.POLL
+  } else {
+    QuoteModel.Type.NORMAL
+  }
 }
 
 fun MessageRecord.isEditMessage(): Boolean {

@@ -19,10 +19,10 @@ import com.google.i18n.phonenumbers.PhoneNumberUtil
 import org.greenrobot.eventbus.EventBus
 import org.greenrobot.eventbus.Subscribe
 import org.greenrobot.eventbus.ThreadMode
+import org.signal.core.ui.logging.LoggingFragment
 import org.signal.core.util.ThreadUtil
 import org.signal.core.util.isNotNullOrBlank
 import org.signal.core.util.logging.Log
-import org.thoughtcrime.securesms.LoggingFragment
 import org.thoughtcrime.securesms.R
 import org.thoughtcrime.securesms.components.ViewBinderDelegate
 import org.thoughtcrime.securesms.conversation.v2.registerForLifecycle
@@ -182,7 +182,6 @@ class EnterCodeFragment : LoggingFragment(R.layout.fragment_registration_enter_c
     if (!result.isSuccess()) {
       Log.i(TAG, "[sessionCreateError] Handling error response of ${result.javaClass.name}", result.getCause())
     }
-
     when (result) {
       is RegistrationSessionCheckResult.Success,
       is RegistrationSessionCreationResult.Success -> throw IllegalStateException("Session error handler called on successful response!")
@@ -376,6 +375,10 @@ class EnterCodeFragment : LoggingFragment(R.layout.fragment_registration_enter_c
   }
 
   private fun popBackStack() {
+    if (!isAdded) {
+      Log.w(TAG, "Fragment is no longer attached, ignoring popBackStack request.")
+      return
+    }
     sharedViewModel.setRegistrationCheckpoint(RegistrationCheckpoint.PUSH_NETWORK_AUDITED)
     NavHostFragment.findNavController(this).popBackStack()
     sharedViewModel.setInProgress(false)

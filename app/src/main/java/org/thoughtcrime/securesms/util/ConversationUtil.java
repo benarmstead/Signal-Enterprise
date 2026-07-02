@@ -12,7 +12,6 @@ import androidx.core.content.LocusIdCompat;
 import androidx.core.content.pm.ShortcutInfoCompat;
 import androidx.core.content.pm.ShortcutManagerCompat;
 
-import com.annimon.stream.Stream;
 import com.google.common.collect.Sets;
 
 import org.signal.core.util.concurrent.SignalExecutors;
@@ -25,7 +24,7 @@ import org.thoughtcrime.securesms.database.SignalDatabase;
 import org.thoughtcrime.securesms.groups.GroupId;
 import org.thoughtcrime.securesms.jobs.ConversationShortcutUpdateJob;
 import org.thoughtcrime.securesms.notifications.NotificationChannels;
-import org.thoughtcrime.securesms.permissions.Permissions;
+import org.signal.core.ui.permissions.Permissions;
 import org.thoughtcrime.securesms.recipients.Recipient;
 import org.thoughtcrime.securesms.recipients.RecipientId;
 
@@ -33,6 +32,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
@@ -54,8 +54,9 @@ public final class ConversationUtil {
 
   private static final List<String> PARAMETERS_AUDIENCE = Collections.singletonList("Audience");
 
-  private ConversationUtil() {}
+  private static final int MAX_SHORTCUT_PERSON_COUNT = 10;
 
+  private ConversationUtil() {}
 
   /**
    * @return The stringified channel id for a given Recipient
@@ -77,14 +78,14 @@ public final class ConversationUtil {
   /**
    * Synchronously pushes a dynamic shortcut for the given recipient.
    * <p>
-   * The recipient is given a high ranking with the intention of not appearing immediately in results.
+   * The recipient is given the best ranking (0) so that the OS treats this as a high-priority
+   * conversation for share sheet ordering.
    *
    * @return True if it succeeded, or false if it was rate-limited.
    */
   @WorkerThread
   public static boolean pushShortcutForRecipientSync(@NonNull Context context, @NonNull Recipient recipient, @NonNull Direction direction ) {
-    List<ShortcutInfoCompat> shortcuts  = ShortcutManagerCompat.getDynamicShortcuts(context);
-    return pushShortcutForRecipientInternal(context, recipient, shortcuts.size(), direction);
+    return pushShortcutForRecipientInternal(context, recipient, 0, direction);
   }
 
   /**
@@ -93,7 +94,7 @@ public final class ConversationUtil {
   public static void clearAllShortcuts(@NonNull Context context) {
     List<ShortcutInfoCompat> shortcutInfos = ShortcutManagerCompat.getDynamicShortcuts(context);
 
-    ShortcutManagerCompat.removeLongLivedShortcuts(context, Stream.of(shortcutInfos).map(ShortcutInfoCompat::getId).toList());
+    ShortcutManagerCompat.removeLongLivedShortcuts(context, shortcutInfos.stream().map(ShortcutInfoCompat::getId).collect(Collectors.toList()));
   }
 
   /**
@@ -101,7 +102,7 @@ public final class ConversationUtil {
    */
   public static void clearShortcuts(@NonNull Context context, @NonNull Collection<RecipientId> recipientIds) {
     SignalExecutors.BOUNDED.execute(() -> {
-      ShortcutManagerCompat.removeLongLivedShortcuts(context, Stream.of(recipientIds).withoutNulls().map(ConversationUtil::getShortcutId).toList());
+      ShortcutManagerCompat.removeLongLivedShortcuts(context, recipientIds.stream().filter(Objects::nonNull).map(ConversationUtil::getShortcutId).collect(Collectors.toList()));
     });
   }
 
@@ -183,7 +184,12 @@ public final class ConversationUtil {
       shortcuts.add(info);
     }
 
-    return ShortcutManagerCompat.setDynamicShortcuts(context, shortcuts);
+    try {
+      return ShortcutManagerCompat.setDynamicShortcuts(context, shortcuts);
+    } catch (IllegalArgumentException e) {
+      Log.w(TAG, "Failed to set dynamic shortcuts, likely because one was too large. Skipping update.", e);
+      return true;
+    }
   }
 
   /**
@@ -198,7 +204,12 @@ public final class ConversationUtil {
 
     ShortcutInfoCompat shortcutInfo = buildShortcutInfo(context, activityName, recipient, rank, direction);
 
-    return ShortcutManagerCompat.pushDynamicShortcut(context, shortcutInfo);
+    try {
+      return ShortcutManagerCompat.pushDynamicShortcut(context, shortcutInfo);
+    } catch (IllegalArgumentException e) {
+      Log.w(TAG, "Failed to push dynamic shortcut, likely because it was too large. Skipping update.", e);
+      return true;
+    }
   }
 
   /**
@@ -271,7 +282,7 @@ public final class ConversationUtil {
   private static @NonNull Person[] buildPersonsForGroup(@NonNull Context context, @NonNull GroupId groupId) {
     List<Recipient> members = SignalDatabase.groups().getGroupMembers(groupId, GroupTable.MemberSet.FULL_MEMBERS_EXCLUDING_SELF);
 
-    return Stream.of(members).map(member -> buildPersonWithoutIcon(context, member.resolve())).toArray(Person[]::new);
+    return members.stream().limit(MAX_SHORTCUT_PERSON_COUNT).map(member -> buildPersonWithoutIcon(context, member.resolve())).toArray(Person[]::new);
   }
 
   /**

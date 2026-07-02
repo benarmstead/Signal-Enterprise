@@ -1,19 +1,19 @@
 package org.thoughtcrime.securesms.database.model;
 
+import android.content.Context;
 import android.text.Spannable;
 import android.text.SpannableString;
 import android.text.SpannableStringBuilder;
 
 import androidx.annotation.AnyThread;
 import androidx.annotation.ColorInt;
-import androidx.annotation.DrawableRes;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.WorkerThread;
 
-import org.thoughtcrime.securesms.fonts.SignalSymbols;
+import org.signal.core.ui.util.ThemeUtil;
 import org.thoughtcrime.securesms.fonts.SignalSymbols.Glyph;
-import org.whispersystems.signalservice.api.push.ServiceId;
+import org.signal.core.models.ServiceId;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -35,6 +35,7 @@ public final class UpdateDescription {
   private final SpannableFactory      stringFactory;
   private final Spannable             staticString;
   private final Glyph                 glyph;
+  private final boolean               canExpire;
   private final int                   lightTint;
   private final int                   darkTint;
 
@@ -42,6 +43,16 @@ public final class UpdateDescription {
                             @Nullable SpannableFactory stringFactory,
                             @Nullable Spannable staticString,
                             @NonNull Glyph glyph,
+                            @ColorInt int lightTint,
+                            @ColorInt int darkTint) {
+    this(mentioned, stringFactory, staticString, glyph, false, lightTint, darkTint);
+  }
+
+  private UpdateDescription(@NonNull Collection<ServiceId> mentioned,
+                            @Nullable SpannableFactory stringFactory,
+                            @Nullable Spannable staticString,
+                            @NonNull Glyph glyph,
+                            boolean canExpire,
                             @ColorInt int lightTint,
                             @ColorInt int darkTint)
   {
@@ -52,6 +63,7 @@ public final class UpdateDescription {
     this.stringFactory     = stringFactory;
     this.staticString      = staticString;
     this.glyph             = glyph;
+    this.canExpire         = canExpire;
     this.lightTint         = lightTint;
     this.darkTint          = darkTint;
   }
@@ -71,6 +83,7 @@ public final class UpdateDescription {
                                  stringFactory,
                                  null,
                                  glyph,
+                                 true,
                                  0,
                                  0);
   }
@@ -82,6 +95,20 @@ public final class UpdateDescription {
                                                     Glyph glyph)
   {
     return new UpdateDescription(Collections.emptyList(), null, new SpannableString(staticString), glyph, 0, 0);
+  }
+
+  /**
+   * Create an update description that's string value is fixed with a start glyph and has the ability to expire when a disappearing timer is set.
+   */
+  public static UpdateDescription staticDescriptionWithExpiration(@NonNull String staticString, Glyph glyph) {
+    return staticDescriptionWithExpiration(staticString, glyph, 0, 0);
+  }
+
+  /**
+   * Create an update description that's string value is fixed with a start glyph and has the ability to expire when a disappearing timer is set.
+   */
+  public static UpdateDescription staticDescriptionWithExpiration(@NonNull String staticString, Glyph glyph, @ColorInt int lightTint, @ColorInt int darkTint) {
+    return new UpdateDescription(Collections.emptyList(), null, new SpannableString(staticString), glyph, true, lightTint, darkTint);
   }
 
   /**
@@ -142,6 +169,15 @@ public final class UpdateDescription {
 
   public @ColorInt int getDarkTint() {
     return darkTint;
+  }
+
+  public @ColorInt int getTint(Context context) {
+    boolean isDarkTheme = ThemeUtil.isDarkTheme(context);
+    return isDarkTheme ? getDarkTint() : getLightTint();
+  }
+
+  public boolean hasExpiration() {
+    return canExpire;
   }
 
   public static UpdateDescription concatWithNewLines(@NonNull List<UpdateDescription> updateDescriptions) {

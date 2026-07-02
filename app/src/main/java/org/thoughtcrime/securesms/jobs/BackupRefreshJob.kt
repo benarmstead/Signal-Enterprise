@@ -6,13 +6,12 @@
 package org.thoughtcrime.securesms.jobs
 
 import org.signal.core.util.logging.Log
+import org.signal.network.NetworkResult
 import org.thoughtcrime.securesms.backup.v2.BackupRepository
 import org.thoughtcrime.securesms.dependencies.AppDependencies
 import org.thoughtcrime.securesms.jobmanager.Job
 import org.thoughtcrime.securesms.jobmanager.impl.NetworkConstraint
 import org.thoughtcrime.securesms.keyvalue.SignalStore
-import org.thoughtcrime.securesms.util.RemoteConfig
-import org.whispersystems.signalservice.api.NetworkResult
 import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -60,11 +59,6 @@ class BackupRefreshJob private constructor(
         return false
       }
 
-      if (!RemoteConfig.messageBackups) {
-        Log.i(TAG, "Backups are not enabled in remote config. Exiting.")
-        return false
-      }
-
       if (!SignalStore.backup.areBackupsEnabled) {
         Log.i(TAG, "Backups have not been enabled on this device. Exiting.")
         return false
@@ -87,8 +81,20 @@ class BackupRefreshJob private constructor(
         SignalStore.backup.lastCheckInSnoozeMillis = 0
         Result.success()
       }
-      else -> {
-        Log.w(TAG, "Failed to refresh backup with server.", result.getCause())
+      is NetworkResult.NetworkError -> {
+        Log.w(TAG, "Network error when refreshing backup.", result.getCause())
+        Result.retry(defaultBackoff())
+      }
+      is NetworkResult.StatusCodeError -> {
+        Log.w(TAG, "Status code error (${result.code}) when refreshing backup.", result.getCause())
+        if (result.code == 429) {
+          Result.retry(result.retryAfter()?.inWholeMilliseconds ?: defaultBackoff())
+        } else {
+          Result.failure()
+        }
+      }
+      is NetworkResult.ApplicationError -> {
+        Log.w(TAG, "Application error when refreshing backup.", result.throwable)
         Result.failure()
       }
     }

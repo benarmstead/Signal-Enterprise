@@ -23,11 +23,9 @@ import org.thoughtcrime.securesms.jobmanager.Job
 import org.thoughtcrime.securesms.jobmanager.impl.NetworkConstraint
 import org.thoughtcrime.securesms.keyvalue.SignalStore
 import org.thoughtcrime.securesms.recipients.Recipient
-import org.thoughtcrime.securesms.util.RemoteConfig
 import org.whispersystems.signalservice.internal.push.SubscriptionsConfiguration
 import java.math.BigDecimal
 import java.util.Currency
-import java.util.Locale
 import kotlin.concurrent.withLock
 
 /**
@@ -58,11 +56,6 @@ class PostRegistrationBackupRedemptionJob : CoroutineJob {
   override suspend fun doRun(): Result {
     if (!SignalStore.account.isRegistered) {
       info("User is not registered. Exiting.")
-      return Result.success()
-    }
-
-    if (!RemoteConfig.messageBackups) {
-      info("Message backups feature is not available. Exiting.")
       return Result.success()
     }
 
@@ -98,9 +91,9 @@ class PostRegistrationBackupRedemptionJob : CoroutineJob {
     }
 
     info("Attempting to grab price information for records...")
-    val subscription = RecurringInAppPaymentRepository.getActiveSubscriptionSync(InAppPaymentSubscriberRecord.Type.BACKUP).getOrNull()?.activeSubscription
+    val subscription = RecurringInAppPaymentRepository.getActiveSubscriptionSync(InAppPaymentSubscriberRecord.Type.BACKUP).successOrNull()?.activeSubscription
 
-    val emptyPrice = FiatMoney(BigDecimal.ZERO, Currency.getInstance(Locale.getDefault()))
+    val emptyPrice = FiatMoney(BigDecimal.ZERO, SignalStore.inAppPayments.getOneTimeCurrency())
     val price: FiatMoney = if (subscription != null) {
       FiatMoney.fromSignalNetworkAmount(subscription.amount, Currency.getInstance(subscription.currency))
     } else if (AppDependencies.billingApi.getApiAvailability().isSuccess) {

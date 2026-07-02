@@ -8,45 +8,45 @@ import android.content.ActivityNotFoundException
 import android.content.DialogInterface
 import android.content.Intent
 import android.os.Bundle
-import android.text.SpannableStringBuilder
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
-import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.FragmentManager
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
-import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import com.google.android.material.snackbar.Snackbar
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import org.signal.core.ui.BottomSheetUtil
+import org.signal.core.ui.FixedRoundedCornerBottomSheetDialogFragment
 import org.signal.core.util.logging.Log
+import org.signal.core.util.requireDrawable
+import org.thoughtcrime.securesms.BlockUnblockDialog
 import org.thoughtcrime.securesms.R
 import org.thoughtcrime.securesms.avatar.view.AvatarView
 import org.thoughtcrime.securesms.badges.BadgeImageView
 import org.thoughtcrime.securesms.badges.view.ViewBadgeBottomSheetDialogFragment
 import org.thoughtcrime.securesms.calls.YouAreAlreadyInACallSnackbar
+import org.thoughtcrime.securesms.components.SignalProgressDialog
 import org.thoughtcrime.securesms.components.settings.DSLSettingsIcon
 import org.thoughtcrime.securesms.components.settings.conversation.preferences.ButtonStripPreference
 import org.thoughtcrime.securesms.conversation.v2.data.AvatarDownloadStateCache
-import org.thoughtcrime.securesms.fonts.SignalSymbols
 import org.thoughtcrime.securesms.groups.GroupId
+import org.thoughtcrime.securesms.groups.memberlabel.MemberLabelEducationSheet
+import org.thoughtcrime.securesms.groups.memberlabel.MemberLabelPillView
 import org.thoughtcrime.securesms.nicknames.NicknameActivity
 import org.thoughtcrime.securesms.recipients.Recipient
 import org.thoughtcrime.securesms.recipients.RecipientExporter
 import org.thoughtcrime.securesms.recipients.RecipientId
 import org.thoughtcrime.securesms.recipients.RecipientUtil
 import org.thoughtcrime.securesms.recipients.ui.about.AboutSheet
-import org.thoughtcrime.securesms.util.BottomSheetUtil
-import org.thoughtcrime.securesms.util.ContextUtil
-import org.thoughtcrime.securesms.util.SpanUtil
-import org.thoughtcrime.securesms.util.ThemeUtil
-import org.thoughtcrime.securesms.util.ViewUtil
 import org.thoughtcrime.securesms.util.WindowUtil
 import org.thoughtcrime.securesms.util.visible
 
@@ -54,7 +54,7 @@ import org.thoughtcrime.securesms.util.visible
  * A bottom sheet that shows some simple recipient details, as well as some actions (like calling,
  * adding to contacts, etc).
  */
-class RecipientBottomSheetDialogFragment : BottomSheetDialogFragment() {
+class RecipientBottomSheetDialogFragment : FixedRoundedCornerBottomSheetDialogFragment() {
 
   companion object {
     val TAG: String = Log.tag(RecipientBottomSheetDialogFragment::class.java)
@@ -70,7 +70,8 @@ class RecipientBottomSheetDialogFragment : BottomSheetDialogFragment() {
     fun show(fragmentManager: FragmentManager, recipientId: RecipientId, groupId: GroupId?) {
       val recipient = Recipient.resolved(recipientId)
       if (recipient.isSelf) {
-        AboutSheet.create(recipient).show(fragmentManager, BottomSheetUtil.STANDARD_BOTTOM_SHEET_FRAGMENT_TAG)
+        AboutSheet.create(recipient, groupId as? GroupId.V2)
+          .show(fragmentManager, BottomSheetUtil.STANDARD_BOTTOM_SHEET_FRAGMENT_TAG)
       } else {
         val args = Bundle()
         val fragment = RecipientBottomSheetDialogFragment()
@@ -87,6 +88,8 @@ class RecipientBottomSheetDialogFragment : BottomSheetDialogFragment() {
     }
   }
 
+  override val peekHeightPercentage: Float = 1f
+
   private val viewModel: RecipientDialogViewModel by viewModels(factoryProducer = this::createFactory)
   private var callback: Callback? = null
 
@@ -98,15 +101,6 @@ class RecipientBottomSheetDialogFragment : BottomSheetDialogFragment() {
     return RecipientDialogViewModel.Factory(requireContext(), recipientId, groupId)
   }
 
-  override fun onCreate(savedInstanceState: Bundle?) {
-    setStyle(
-      DialogFragment.STYLE_NORMAL,
-      if (ThemeUtil.isDarkTheme(requireContext())) R.style.Theme_Signal_RoundedBottomSheet else R.style.Theme_Signal_RoundedBottomSheet_Light
-    )
-
-    super.onCreate(savedInstanceState)
-  }
-
   override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
     return inflater.inflate(R.layout.recipient_bottom_sheet, container, false)
   }
@@ -116,7 +110,10 @@ class RecipientBottomSheetDialogFragment : BottomSheetDialogFragment() {
 
     val avatar: AvatarView = view.findViewById(R.id.rbs_recipient_avatar)
     val fullName: TextView = view.findViewById(R.id.rbs_full_name)
-    val about: TextView = view.findViewById(R.id.rbs_about)
+    val memberLabelView: MemberLabelPillView = view.findViewById<MemberLabelPillView>(R.id.rbs_member_label).apply {
+      style = MemberLabelPillView.Style(maxLines = Int.MAX_VALUE)
+    }
+    val aboutView: TextView = view.findViewById(R.id.rbs_about)
     val nickname: TextView = view.findViewById(R.id.rbs_nickname_button)
     val blockButton: TextView = view.findViewById(R.id.rbs_block_button)
     val unblockButton: TextView = view.findViewById(R.id.rbs_unblock_button)
@@ -156,6 +153,7 @@ class RecipientBottomSheetDialogFragment : BottomSheetDialogFragment() {
           AvatarDownloadStateCache.forRecipient(recipient.id).collect {
             when (it) {
               AvatarDownloadStateCache.DownloadState.NONE -> {}
+
               AvatarDownloadStateCache.DownloadState.IN_PROGRESS -> {
                 if (inProgress) {
                   return@collect
@@ -167,12 +165,14 @@ class RecipientBottomSheetDialogFragment : BottomSheetDialogFragment() {
                 delay(LOADING_DELAY)
                 progressBar.visible = AvatarDownloadStateCache.getDownloadState(recipient) == AvatarDownloadStateCache.DownloadState.IN_PROGRESS
               }
+
               AvatarDownloadStateCache.DownloadState.FINISHED -> {
                 AvatarDownloadStateCache.set(recipient, AvatarDownloadStateCache.DownloadState.NONE)
                 viewModel.refreshGroupId(groupId)
                 inProgress = false
                 progressBar.visible = false
               }
+
               AvatarDownloadStateCache.DownloadState.FAILED -> {
                 AvatarDownloadStateCache.set(recipient, AvatarDownloadStateCache.DownloadState.NONE)
                 avatar.displayGradientBlur(recipient)
@@ -215,42 +215,13 @@ class RecipientBottomSheetDialogFragment : BottomSheetDialogFragment() {
         tapToView.setOnClickListener(null)
       }
 
-      val name = if (recipient.isSelf) requireContext().getString(R.string.note_to_self) else recipient.getDisplayName(requireContext())
-
-      fullName.visible = name.isNotEmpty()
-      val nameBuilder = SpannableStringBuilder(name)
-      if (recipient.showVerified) {
-        SpanUtil.appendSpacer(nameBuilder, 8)
-        SpanUtil.appendCenteredImageSpanWithoutSpace(nameBuilder, ContextUtil.requireDrawable(requireContext(), R.drawable.ic_official_28), 28, 28)
-      } else if (recipient.isSystemContact) {
-        val systemContactGlyph = SignalSymbols.getSpannedString(
-          requireContext(),
-          SignalSymbols.Weight.BOLD,
-          SignalSymbols.Glyph.PERSON_CIRCLE
-        )
-
-        nameBuilder.append(" ")
-        nameBuilder.append(SpanUtil.ofSize(systemContactGlyph, 20))
+      val name = recipient.getDisplayNameForHeadline(requireContext())
+      fullName.apply {
+        text = name
+        visible = name.isNotEmpty()
       }
 
       if (!recipient.isSelf && recipient.isIndividual) {
-        val isLtr = ViewUtil.isLtr(view)
-        val chevronGlyph = SignalSymbols.getSpannedString(
-          requireContext(),
-          SignalSymbols.Weight.BOLD,
-          if (isLtr) SignalSymbols.Glyph.CHEVRON_RIGHT else SignalSymbols.Glyph.CHEVRON_LEFT,
-          R.color.signal_colorOutline
-        )
-
-        if (isLtr) {
-          nameBuilder.append(" ")
-          nameBuilder.append(SpanUtil.ofSize(chevronGlyph, 24))
-        } else {
-          nameBuilder.insert(0, " ")
-          nameBuilder.insert(0, SpanUtil.ofSize(chevronGlyph, 24))
-        }
-
-        fullName.text = nameBuilder
         fullName.setOnClickListener {
           dismiss()
           AboutSheet.create(recipient).show(getParentFragmentManager(), null)
@@ -260,20 +231,8 @@ class RecipientBottomSheetDialogFragment : BottomSheetDialogFragment() {
         nickname.setOnClickListener {
           nicknameLauncher.launch(NicknameActivity.Args(recipientId, false))
         }
-      } else if (recipient.isReleaseNotes) {
-        fullName.text = name
-      }
-
-      var aboutText = recipient.combinedAboutAndEmoji
-      if (recipient.isReleaseNotes) {
-        aboutText = getString(R.string.ReleaseNotes__signal_release_notes_and_news)
-      }
-
-      if (!aboutText.isNullOrEmpty()) {
-        about.text = aboutText
-        about.visible = true
       } else {
-        about.visible = false
+        fullName.setOnClickListener(null)
       }
 
       noteToSelfDescription.visible = recipient.isSelf
@@ -303,9 +262,10 @@ class RecipientBottomSheetDialogFragment : BottomSheetDialogFragment() {
 
       val buttonStripModel = ButtonStripPreference.Model(
         state = buttonStripState,
-        background = DSLSettingsIcon.from(ContextUtil.requireDrawable(requireContext(), R.drawable.selectable_recipient_bottom_sheet_icon_button)),
+        background = DSLSettingsIcon.from(requireContext().requireDrawable(R.drawable.selectable_recipient_bottom_sheet_icon_button)),
         enabled = !viewModel.isDeprecatedOrUnregistered,
         onMessageClick = {
+          callback?.onMessageClicked()
           dismiss()
           viewModel.onMessageClicked(requireActivity())
         },
@@ -346,6 +306,10 @@ class RecipientBottomSheetDialogFragment : BottomSheetDialogFragment() {
       }
     }
 
+    viewModel.recipientDetails.observe(viewLifecycleOwner) { state ->
+      updateRecipientDetails(state, memberLabelView, aboutView, groupId?.v2OrNull())
+    }
+
     viewModel.canAddToAGroup.observe(getViewLifecycleOwner()) { canAdd: Boolean ->
       addToGroupButton.setText(if (groupId == null) R.string.RecipientBottomSheet_add_to_a_group else R.string.RecipientBottomSheet_add_to_another_group)
       addToGroupButton.visible = canAdd
@@ -381,8 +345,19 @@ class RecipientBottomSheetDialogFragment : BottomSheetDialogFragment() {
       ViewBadgeBottomSheetDialogFragment.show(getParentFragmentManager(), recipientId, null)
     }
 
-    blockButton.setOnClickListener { viewModel.onBlockClicked(requireActivity()) }
-    unblockButton.setOnClickListener { viewModel.onUnblockClicked(requireActivity()) }
+    blockButton.setOnClickListener {
+      val recipient = viewModel.recipient.value ?: return@setOnClickListener
+      BlockUnblockDialog.showBlockFor(requireContext(), recipient) {
+        runWithProgress { viewModel.onBlockClicked(recipient) }
+      }
+    }
+
+    unblockButton.setOnClickListener {
+      val recipient = viewModel.recipient.value ?: return@setOnClickListener
+      BlockUnblockDialog.showUnblockFor(requireContext(), recipient) {
+        runWithProgress { viewModel.onUnblockClicked(recipient) }
+      }
+    }
 
     makeGroupAdminButton.setOnClickListener { viewModel.onMakeGroupAdminClicked(requireActivity()) }
     removeAdminButton.setOnClickListener { viewModel.onRemoveGroupAdminClicked(requireActivity()) }
@@ -456,7 +431,67 @@ class RecipientBottomSheetDialogFragment : BottomSheetDialogFragment() {
     animator.start()
   }
 
+  private fun updateRecipientDetails(
+    state: RecipientDetailsState,
+    memberLabelView: MemberLabelPillView,
+    aboutView: TextView,
+    groupId: GroupId.V2?
+  ) {
+    when {
+      state.memberLabel != null -> {
+        memberLabelView.setLabel(state.memberLabel.label, state.memberLabel.tintColor)
+        memberLabelView.visible = true
+        aboutView.visible = false
+
+        if (groupId != null) {
+          memberLabelView.setOnClickListener {
+            dismiss()
+            MemberLabelEducationSheet.show(parentFragmentManager, groupId)
+          }
+        } else {
+          memberLabelView.setOnClickListener(null)
+        }
+      }
+
+      !state.aboutText.isNullOrBlank() -> {
+        aboutView.text = state.aboutText
+        aboutView.visible = true
+        memberLabelView.visible = false
+      }
+
+      else -> {
+        memberLabelView.visible = false
+        aboutView.visible = false
+      }
+    }
+  }
+
+  private fun runWithProgress(operation: () -> Unit) {
+    lifecycleScope.launch(Dispatchers.Main) {
+      val task = async(Dispatchers.Default) {
+        operation()
+      }
+
+      delay(250)
+
+      if (task.isActive) {
+        val dialog = SignalProgressDialog.show(
+          requireContext(),
+          indeterminate = true,
+          cancelable = false
+        )
+
+        try {
+          task.await()
+        } finally {
+          dialog.dismiss()
+        }
+      }
+    }
+  }
+
   interface Callback {
     fun onRecipientBottomSheetDismissed()
+    fun onMessageClicked()
   }
 }

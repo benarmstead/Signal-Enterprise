@@ -6,13 +6,13 @@
 package org.thoughtcrime.securesms.backup.v2.importer
 
 import androidx.core.content.contentValuesOf
+import org.signal.archive.proto.Chat
+import org.signal.core.models.database.AttachmentId
 import org.signal.core.util.SqlUtil
 import org.signal.core.util.insertInto
 import org.signal.core.util.toInt
-import org.thoughtcrime.securesms.attachments.AttachmentId
 import org.thoughtcrime.securesms.backup.v2.ImportState
 import org.thoughtcrime.securesms.backup.v2.database.restoreWallpaperAttachment
-import org.thoughtcrime.securesms.backup.v2.proto.Chat
 import org.thoughtcrime.securesms.backup.v2.util.parseChatWallpaper
 import org.thoughtcrime.securesms.backup.v2.util.toLocal
 import org.thoughtcrime.securesms.backup.v2.util.toLocalAttachment
@@ -28,7 +28,8 @@ import kotlin.time.Duration.Companion.milliseconds
  * Handles the importing of [Chat] models into the local database.
  */
 object ChatArchiveImporter {
-  fun import(chat: Chat, recipientId: RecipientId, importState: ImportState): Long {
+
+  fun import(chat: Chat, recipientId: RecipientId, importState: ImportState): Long? {
     val chatColor = chat.style?.toLocal(importState)
 
     val wallpaperAttachmentId: AttachmentId? = chat.style?.wallpaperPhoto?.let { filePointer ->
@@ -45,16 +46,21 @@ object ChatArchiveImporter {
         ThreadTable.RECIPIENT_ID to recipientId.serialize(),
         ThreadTable.PINNED_ORDER to chat.pinnedOrder,
         ThreadTable.ARCHIVED to chat.archived.toInt(),
-        ThreadTable.READ to if (chat.markedUnread) ThreadTable.ReadStatus.FORCED_UNREAD.serialize() else ThreadTable.ReadStatus.READ.serialize(),
+        ThreadTable.READ to if (chat.markedUnread) ThreadTable.ReadStatus.ForcedUnread.serialize() else ThreadTable.ReadStatus.Read.serialize(),
         ThreadTable.ACTIVE to 1
       )
       .run()
+      .takeIf { it > 0L }
+
+    if (threadId == null) {
+      return null
+    }
 
     SignalDatabase.writableDatabase
       .update(
         RecipientTable.TABLE_NAME,
         contentValuesOf(
-          RecipientTable.MENTION_SETTING to (if (chat.dontNotifyForMentionsIfMuted) RecipientTable.MentionSetting.DO_NOT_NOTIFY.id else RecipientTable.MentionSetting.ALWAYS_NOTIFY.id),
+          RecipientTable.MENTION_SETTING to (if (chat.dontNotifyForMentionsIfMuted) RecipientTable.NotificationSetting.DO_NOT_NOTIFY.id else RecipientTable.NotificationSetting.ALWAYS_NOTIFY.id),
           RecipientTable.MUTE_UNTIL to (chat.muteUntilMs ?: 0),
           RecipientTable.MESSAGE_EXPIRATION_TIME to (chat.expirationTimerMs?.milliseconds?.inWholeSeconds ?: 0),
           RecipientTable.MESSAGE_EXPIRATION_TIME_VERSION to chat.expireTimerVersion,

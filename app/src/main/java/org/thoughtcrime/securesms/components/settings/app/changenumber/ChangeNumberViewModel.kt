@@ -12,13 +12,12 @@ import androidx.lifecycle.viewModelScope
 import com.google.i18n.phonenumbers.NumberParseException
 import com.google.i18n.phonenumbers.PhoneNumberUtil
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import org.signal.core.util.concurrent.SignalExecutors
+import org.signal.core.models.ServiceId
 import org.signal.core.util.logging.Log
 import org.thoughtcrime.securesms.dependencies.AppDependencies
 import org.thoughtcrime.securesms.keyvalue.SignalStore
@@ -34,10 +33,8 @@ import org.thoughtcrime.securesms.registration.ui.countrycode.Country
 import org.thoughtcrime.securesms.registration.viewmodel.NumberViewState
 import org.thoughtcrime.securesms.registration.viewmodel.SvrAuthCredentialSet
 import org.thoughtcrime.securesms.util.dualsim.MccMncProducer
-import org.whispersystems.signalservice.api.push.ServiceId
 import java.io.IOException
-import java.util.concurrent.locks.ReentrantLock
-import kotlin.concurrent.withLock
+import java.util.concurrent.atomic.AtomicBoolean
 
 /**
  * [ViewModel] for the change number flow.
@@ -48,17 +45,16 @@ class ChangeNumberViewModel : ViewModel() {
 
   companion object {
     private val TAG = Log.tag(ChangeNumberViewModel::class.java)
-
-    val CHANGE_NUMBER_LOCK = ReentrantLock()
   }
 
   private val repository = ChangeNumberRepository()
   private val store = MutableStateFlow(ChangeNumberState())
-  private val serialContext = SignalExecutors.SERIAL.asCoroutineDispatcher()
   private val smsRetrieverReceiver: SmsRetrieverReceiver = SmsRetrieverReceiver(AppDependencies.application)
 
   private val initialLocalNumber = SignalStore.account.e164
   private val password = SignalStore.account.servicePassword!!
+
+  private val changeNumberSessionInFlight = AtomicBoolean(false)
 
   val uiState = store.asLiveData()
   val liveOldNumberState = store.map { it.oldPhoneNumber }.asLiveData()
@@ -151,8 +147,8 @@ class ChangeNumberViewModel : ViewModel() {
   }
 
   fun togglePinKeyboardType() {
-    store.update { previousState ->
-      previousState.copy(pinKeyboardType = previousState.pinKeyboardType.other)
+    store.update {
+      it.copy(pinKeyboardType = it.pinKeyboardType.other)
     }
   }
 
@@ -165,7 +161,7 @@ class ChangeNumberViewModel : ViewModel() {
   fun resetLocalSessionState() {
     Log.v(TAG, "resetLocalSessionState()")
     store.update {
-      it.copy(inProgress = false, changeNumberOutcome = null, captchaToken = null, challengesRequested = emptyList(), allowedToRequestCode = false)
+      it.copy(inProgress = false, sessionId = null, changeNumberOutcome = null, captchaToken = null, challengesRequested = emptyList(), allowedToRequestCode = false)
     }
   }
 
@@ -185,27 +181,47 @@ class ChangeNumberViewModel : ViewModel() {
 
   // region Public actions
 
-  fun checkWhoAmI(onSuccess: () -> Unit, onError: (Throwable) -> Unit) {
-    Log.v(TAG, "checkWhoAmI()")
+  fun reattemptChangeLocalNumber(onSuccess: () -> Unit, onError: (Throwable) -> Unit) {
+    require(SignalStore.misc.pendingChangeNumberMetadata != null)
+    val metadata = SignalStore.misc.pendingChangeNumberMetadata!!
+
+    Log.v(TAG, "reattemptChangeLocalNumber()")
     viewModelScope.launch(Dispatchers.IO) {
       try {
         val whoAmI = repository.whoAmI()
+        val remoteE164 = whoAmI.number
+        val remotePni = ServiceId.PNI.parseOrThrow(whoAmI.pni)
 
-        if (whoAmI.number == SignalStore.account.e164) {
-          return@launch bail { Log.i(TAG, "Local and remote numbers match, nothing needs to be done.") }
+        val remoteMatchesPrevious = remoteE164 == metadata.previousE164
+        val remoteMatchesNew = remoteE164 == metadata.newE164
+        val remoteMatchesLocal = remoteE164 == SignalStore.account.requireE164()
+
+        val reattempt = if (remoteMatchesLocal && remoteMatchesPrevious) {
+          Log.i(TAG, "Remote matches local and previous, no state has changed on server or local, can skip reattempt")
+          false
+        } else if (remoteMatchesNew) {
+          Log.i(TAG, "Remote matches new, should be safe to reattempt set local number")
+          true
+        } else {
+          Log.w(TAG, "Unexpected e164 state, remoteMatchesPrevious:$remoteMatchesPrevious remoteMatchesNew:$remoteMatchesNew remoteMatchesLocal:$remoteMatchesLocal")
+          withContext(Dispatchers.Main) {
+            onError(IllegalStateException("Unexpected e164 state"))
+          }
+          return@launch
         }
 
-        Log.i(TAG, "Local (${SignalStore.account.e164}) and remote (${whoAmI.number}) numbers do not match, updating local.")
-
-        withLockOnSerialExecutor {
-          repository.changeLocalNumber(whoAmI.number, ServiceId.PNI.parseOrThrow(whoAmI.pni))
+        if (reattempt) {
+          Log.i(TAG, "Reattempting local change.\n  Local state  (e164=${SignalStore.account.e164}, pni=${SignalStore.account.pni})\n  Remote state (e164=${whoAmI.number}, pni=$remotePni)")
+          repository.changeLocalNumber(whoAmI.number, remotePni)
         }
+
+        SignalStore.misc.unlockChangeNumber()
 
         withContext(Dispatchers.Main) {
           onSuccess()
         }
       } catch (ioException: IOException) {
-        Log.w(TAG, "Encountered an exception when requesting whoAmI()", ioException)
+        Log.w(TAG, "Encountered an exception when reattempting change local number", ioException)
         withContext(Dispatchers.Main) {
           onError(ioException)
         }
@@ -230,7 +246,7 @@ class ChangeNumberViewModel : ViewModel() {
       )
     }
 
-    viewModelScope.launch {
+    viewModelScope.launch(Dispatchers.IO) {
       verifyCodeInternal(context = context, pin = null, verificationErrorHandler = verificationErrorHandler, numberChangeErrorHandler = numberChangeErrorHandler)
     }
   }
@@ -239,20 +255,30 @@ class ChangeNumberViewModel : ViewModel() {
     Log.v(TAG, "verifyCodeAndRegisterAccountWithRegistrationLock()")
     store.update { it.copy(inProgress = true) }
 
-    viewModelScope.launch {
+    viewModelScope.launch(Dispatchers.IO) {
       verifyCodeInternal(context = context, pin = pin, verificationErrorHandler = verificationErrorHandler, numberChangeErrorHandler = numberChangeErrorHandler)
     }
   }
 
   private suspend fun verifyCodeInternal(context: Context, pin: String?, verificationErrorHandler: (VerificationCodeRequestResult) -> Unit, numberChangeErrorHandler: (ChangeNumberResult) -> Unit) {
-    val sessionId = getOrCreateValidSession(context)?.sessionId ?: return bail { Log.i(TAG, "Bailing from code verification due to invalid session.") }
-    val registrationData = getRegistrationData(context)
+    val session = getOrCreateValidSession(context) ?: return bail { Log.i(TAG, "Bailing from code verification due to invalid session.") }
+    val sessionId = session.sessionId
 
-    val verificationResponse = RegistrationRepository.submitVerificationCode(context, sessionId, registrationData)
+    if (!session.verified) {
+      if (store.value.enteredCode == null) {
+        Log.w(TAG, "Session is not verified and no code is available to submit; cannot complete change number.")
+        handleVerificationError(VerificationCodeRequestResult.UnknownError(IllegalStateException("No verification code available for an unverified session")), verificationErrorHandler)
+        return bail { Log.i(TAG, "Bailing from code verification due to missing code for unverified session.") }
+      }
 
-    if (verificationResponse !is VerificationCodeRequestResult.Success && verificationResponse !is VerificationCodeRequestResult.AlreadyVerified) {
-      handleVerificationError(verificationResponse, verificationErrorHandler)
-      return bail { Log.i(TAG, "Bailing from code verification due to non-successful response.") }
+      val registrationData = getRegistrationData(context)
+
+      val verificationResponse = RegistrationRepository.submitVerificationCode(context, sessionId, registrationData)
+
+      if (verificationResponse !is VerificationCodeRequestResult.Success && verificationResponse !is VerificationCodeRequestResult.AlreadyVerified) {
+        handleVerificationError(verificationResponse, verificationErrorHandler)
+        return bail { Log.i(TAG, "Bailing from code verification due to non-successful response.") }
+      }
     }
 
     val result: ChangeNumberResult = if (pin == null) {
@@ -270,7 +296,7 @@ class ChangeNumberViewModel : ViewModel() {
     }
 
     if (result is ChangeNumberResult.Success) {
-      handleSuccessfulChangedRemoteNumber(e164 = result.numberChangeResult.number, pni = ServiceId.PNI.parseOrThrow(result.numberChangeResult.pni), changeNumberOutcome = ChangeNumberOutcome.RecoveryPasswordWorked)
+      handleSuccessfulChangedRemoteNumber(e164 = result.numberChangeResult.number, pni = ServiceId.PNI.parseOrThrow(result.numberChangeResult.pni), changeNumberOutcome = ChangeNumberOutcome.Succeeded)
     } else {
       handleChangeNumberError(result, numberChangeErrorHandler)
     }
@@ -343,22 +369,27 @@ class ChangeNumberViewModel : ViewModel() {
 
   fun initiateChangeNumberSession(context: Context, mode: RegistrationRepository.E164VerificationMode) {
     Log.v(TAG, "changeNumber()")
+    if (!changeNumberSessionInFlight.compareAndSet(false, true)) {
+      Log.i(TAG, "A change number session is already in progress; ignoring duplicate request.")
+      return
+    }
     store.update { it.copy(inProgress = true) }
-    viewModelScope.launch {
-      val encryptionDrained = repository.ensureDecryptionsDrained() ?: false
+    viewModelScope.launch(Dispatchers.IO) {
+      try {
+        val encryptionDrained = repository.ensureDecryptionsDrained() ?: false
 
-      if (!encryptionDrained) {
-        return@launch bail { Log.i(TAG, "Failed to drain encryption.") }
+        if (!encryptionDrained) {
+          return@launch bail { Log.i(TAG, "Failed to drain encryption.") }
+        }
+
+        when (changeNumberWithRecoveryPassword()) {
+          ChangeLocalNumberOutcome.NotPerformed -> requestVerificationCode(context, mode)
+          ChangeLocalNumberOutcome.Success -> Log.d(TAG, "Successfully changed number using recovery password")
+          ChangeLocalNumberOutcome.Failure -> Log.w(TAG, "Change number failed, bailing")
+        }
+      } finally {
+        changeNumberSessionInFlight.set(false)
       }
-
-      val changed = changeNumberWithRecoveryPassword()
-
-      if (changed) {
-        Log.d(TAG, "Successfully changed number using recovery password, which cleaned up after itself.")
-        return@launch
-      }
-
-      requestVerificationCode(context, mode)
     }
   }
 
@@ -398,39 +429,47 @@ class ChangeNumberViewModel : ViewModel() {
     })
   }
 
-  private suspend fun changeNumberWithRecoveryPassword(): Boolean {
+  private suspend fun changeNumberWithRecoveryPassword(): ChangeLocalNumberOutcome {
     Log.v(TAG, "changeNumberWithRecoveryPassword()")
     SignalStore.svr.recoveryPassword?.let { recoveryPassword ->
       val result = repository.changeNumberWithRecoveryPassword(recoveryPassword = recoveryPassword, newE164 = number.e164Number)
 
       if (result is ChangeNumberResult.Success) {
-        handleSuccessfulChangedRemoteNumber(e164 = result.numberChangeResult.number, pni = ServiceId.PNI.parseOrThrow(result.numberChangeResult.pni), changeNumberOutcome = ChangeNumberOutcome.RecoveryPasswordWorked)
-        return true
+        return handleSuccessfulChangedRemoteNumber(e164 = result.numberChangeResult.number, pni = ServiceId.PNI.parseOrThrow(result.numberChangeResult.pni), changeNumberOutcome = ChangeNumberOutcome.Succeeded)
+      } else if (result is ChangeNumberResult.UnknownError) {
+        store.update {
+          it.copy(inProgress = false, changeNumberOutcome = ChangeNumberOutcome.ChangeNumberRequestOutcome(VerificationCodeRequestResult.UnknownError(result.getCause())))
+        }
+        return ChangeLocalNumberOutcome.Failure
       }
 
       Log.d(TAG, "Encountered error while trying to change number with recovery password.", result.getCause())
     }
-    return false
+    return ChangeLocalNumberOutcome.NotPerformed
   }
 
-  private suspend fun handleSuccessfulChangedRemoteNumber(e164: String, pni: ServiceId.PNI, changeNumberOutcome: ChangeNumberOutcome) {
+  private fun handleSuccessfulChangedRemoteNumber(e164: String, pni: ServiceId.PNI, changeNumberOutcome: ChangeNumberOutcome): ChangeLocalNumberOutcome {
     var result = changeNumberOutcome
-    Log.v(TAG, "handleSuccessfulChangedRemoteNumber(${result.javaClass.simpleName}")
-    try {
-      withLockOnSerialExecutor {
-        repository.changeLocalNumber(e164, pni)
-      }
+
+    Log.v(TAG, "handleSuccessfulChangedRemoteNumber(${result.javaClass.simpleName})")
+    val changeLocalNumberResult: ChangeLocalNumberOutcome = try {
+      repository.changeLocalNumber(e164, pni)
+      SignalStore.misc.clearPendingChangeNumberMetadata()
+      ChangeLocalNumberOutcome.Success
     } catch (ioException: IOException) {
       Log.w(TAG, "Failed to change local number!", ioException)
       result = ChangeNumberOutcome.ChangeNumberRequestOutcome(VerificationCodeRequestResult.UnknownError(ioException))
+      ChangeLocalNumberOutcome.Failure
     }
 
     store.update {
       it.copy(inProgress = false, changeNumberOutcome = result)
     }
+
+    return changeLocalNumberResult
   }
 
-  private fun handleVerificationError(result: VerificationCodeRequestResult, verificationErrorHandler: (VerificationCodeRequestResult) -> Unit) {
+  private suspend fun handleVerificationError(result: VerificationCodeRequestResult, verificationErrorHandler: (VerificationCodeRequestResult) -> Unit) {
     Log.v(TAG, "handleVerificationError(${result.javaClass.simpleName}")
     when (result) {
       is VerificationCodeRequestResult.Success -> Unit
@@ -442,14 +481,17 @@ class ChangeNumberViewModel : ViewModel() {
             svr3Credentials = result.svr3Credentials
           )
         }
+
       else -> Log.i(TAG, "Received exception during verification.", result.getCause())
     }
 
-    verificationErrorHandler(result)
+    withContext(Dispatchers.Main) {
+      verificationErrorHandler(result)
+    }
   }
 
-  private fun handleChangeNumberError(result: ChangeNumberResult, numberChangeErrorHandler: (ChangeNumberResult) -> Unit) {
-    Log.v(TAG, "handleChangeNumberError(${result.javaClass.simpleName}")
+  private suspend fun handleChangeNumberError(result: ChangeNumberResult, numberChangeErrorHandler: (ChangeNumberResult) -> Unit) {
+    Log.v(TAG, "handleChangeNumberError(${result.javaClass.simpleName})")
     when (result) {
       is ChangeNumberResult.Success -> Unit
       is ChangeNumberResult.RegistrationLocked ->
@@ -459,6 +501,7 @@ class ChangeNumberViewModel : ViewModel() {
             svr3Credentials = result.svr3Credentials
           )
         }
+
       is ChangeNumberResult.SvrWrongPin -> {
         store.update {
           it.copy(
@@ -466,10 +509,13 @@ class ChangeNumberViewModel : ViewModel() {
           )
         }
       }
+
       else -> Log.i(TAG, "Received exception during change number.", result.getCause())
     }
 
-    numberChangeErrorHandler(result)
+    withContext(Dispatchers.Main) {
+      numberChangeErrorHandler(result)
+    }
   }
 
   private suspend fun requestVerificationCode(context: Context, mode: RegistrationRepository.E164VerificationMode) {
@@ -481,6 +527,12 @@ class ChangeNumberViewModel : ViewModel() {
     if (validSession == null) {
       Log.w(TAG, "Bailing on requesting verification code because could not create a session!")
       resetLocalSessionState()
+      return
+    }
+
+    if (validSession.verified) {
+      Log.i(TAG, "Existing session is already verified; completing the change with the verified session instead of requesting a new code.")
+      changeNumberWithVerifiedSession(validSession.sessionId)
       return
     }
 
@@ -503,10 +555,73 @@ class ChangeNumberViewModel : ViewModel() {
       emptyList()
     }
 
+    if (result is VerificationCodeRequestResult.AlreadyVerified) {
+      Log.i(TAG, "Session became verified while requesting a code; completing the change with the verified session.")
+      changeNumberWithVerifiedSession(validSession.sessionId)
+      return
+    }
+
     Log.d(TAG, "Received result: ${result.javaClass.canonicalName}\nwith challenges: ${challengesRequested.joinToString { it.key }}")
 
+    val (nextSmsTimestamp, nextCallTimestamp) = when (result) {
+      is VerificationCodeRequestResult.Success -> result.nextSmsTimestamp.inWholeMilliseconds to result.nextCallTimestamp.inWholeMilliseconds
+      is VerificationCodeRequestResult.RequestVerificationCodeRateLimited -> result.nextSmsTimestamp.inWholeMilliseconds to result.nextCallTimestamp.inWholeMilliseconds
+      else -> store.value.nextSmsTimestamp to store.value.nextCallTimestamp
+    }
+
     store.update {
-      it.copy(changeNumberOutcome = ChangeNumberOutcome.ChangeNumberRequestOutcome(result), challengesRequested = challengesRequested, inProgress = false)
+      it.copy(
+        changeNumberOutcome = ChangeNumberOutcome.ChangeNumberRequestOutcome(result),
+        challengesRequested = challengesRequested,
+        inProgress = false,
+        nextSmsTimestamp = nextSmsTimestamp,
+        nextCallTimestamp = nextCallTimestamp
+      )
+    }
+  }
+
+  /**
+   * Completes a number change using a registration session that the service already considers verified.
+   */
+  private suspend fun changeNumberWithVerifiedSession(sessionId: String) {
+    Log.v(TAG, "changeNumberWithVerifiedSession()")
+    when (val result = repository.changeNumberWithoutRegistrationLock(sessionId = sessionId, newE164 = number.e164Number)) {
+      is ChangeNumberResult.Success -> {
+        handleSuccessfulChangedRemoteNumber(
+          e164 = result.numberChangeResult.number,
+          pni = ServiceId.PNI.parseOrThrow(result.numberChangeResult.pni),
+          changeNumberOutcome = ChangeNumberOutcome.Succeeded
+        )
+      }
+
+      is ChangeNumberResult.RegistrationLocked -> {
+        if (result.svr2Credentials != null) {
+          Log.i(TAG, "Destination number is registration locked; prompting for PIN.")
+          store.update {
+            it.copy(
+              inProgress = false,
+              svr2Credentials = result.svr2Credentials,
+              svr3Credentials = result.svr3Credentials,
+              lockedTimeRemaining = result.timeRemaining,
+              changeNumberOutcome = ChangeNumberOutcome.ChangeNumberRequestOutcome(
+                VerificationCodeRequestResult.RegistrationLocked(result.getCause(), result.timeRemaining, result.svr2Credentials, result.svr3Credentials)
+              )
+            )
+          }
+        } else {
+          Log.w(TAG, "Destination number is registration locked but SVR credentials were missing, cannot prompt for PIN.")
+          store.update {
+            it.copy(inProgress = false, changeNumberOutcome = ChangeNumberOutcome.ChangeNumberRequestOutcome(VerificationCodeRequestResult.UnknownError(result.getCause())))
+          }
+        }
+      }
+
+      else -> {
+        Log.w(TAG, "Unable to complete change number with verified session.", result.getCause())
+        store.update {
+          it.copy(inProgress = false, changeNumberOutcome = ChangeNumberOutcome.ChangeNumberRequestOutcome(VerificationCodeRequestResult.UnknownError(result.getCause())))
+        }
+      }
     }
   }
 
@@ -533,24 +648,6 @@ class ChangeNumberViewModel : ViewModel() {
     store.update {
       it.copy(inProgress = false)
     }
-  }
-
-  /**
-   * Anything that runs through this will be run serially, with locks.
-   */
-  private suspend fun <T> withLockOnSerialExecutor(action: () -> T): T = withContext(serialContext) {
-    Log.v(TAG, "withLock()")
-    val result = CHANGE_NUMBER_LOCK.withLock {
-      SignalStore.misc.lockChangeNumber()
-      Log.v(TAG, "Change number lock acquired.")
-      try {
-        action()
-      } finally {
-        SignalStore.misc.unlockChangeNumber()
-      }
-    }
-    Log.v(TAG, "Change number lock released.")
-    return@withContext result
   }
 
   // endregion

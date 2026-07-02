@@ -6,20 +6,22 @@ import android.os.Looper
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.fragment.app.viewModels
+import androidx.core.os.bundleOf
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.bottomsheet.BottomSheetBehavior.BottomSheetCallback
 import io.reactivex.rxjava3.kotlin.subscribeBy
+import org.signal.core.ui.logging.LoggingFragment
 import org.signal.core.util.concurrent.LifecycleDisposable
 import org.signal.core.util.concurrent.addTo
-import org.thoughtcrime.securesms.LoggingFragment
 import org.thoughtcrime.securesms.R
 import org.thoughtcrime.securesms.conversation.ui.inlinequery.InlineQueryViewModelV2
+import org.thoughtcrime.securesms.conversation.v2.ConversationRecipientRepository
 import org.thoughtcrime.securesms.recipients.Recipient
 import org.thoughtcrime.securesms.util.VibrateUtil
 import org.thoughtcrime.securesms.util.adapter.mapping.MappingModel
+import org.thoughtcrime.securesms.util.viewModel
 import org.thoughtcrime.securesms.util.viewholders.RecipientViewHolder
 
 /**
@@ -27,9 +29,27 @@ import org.thoughtcrime.securesms.util.viewholders.RecipientViewHolder
  */
 class MentionsPickerFragmentV2 : LoggingFragment() {
 
+  companion object {
+
+    private val THREAD_ID = "thread.id"
+
+    fun create(threadId: Long): MentionsPickerFragmentV2 {
+      return MentionsPickerFragmentV2().apply {
+        arguments = bundleOf(THREAD_ID to threadId)
+      }
+    }
+  }
+
   private val lifecycleDisposable: LifecycleDisposable = LifecycleDisposable()
-  private val viewModel: InlineQueryViewModelV2 by viewModels(
-    ownerProducer = { requireParentFragment() }
+
+  private val conversationRecipientRepository: ConversationRecipientRepository by viewModel(
+    ownerProducer = { requireParentFragment() },
+    create = { ConversationRecipientRepository(requireArguments().getLong(THREAD_ID)) }
+  )
+
+  private val viewModel: InlineQueryViewModelV2 by viewModel(
+    ownerProducer = { requireParentFragment() },
+    create = { InlineQueryViewModelV2(conversationRecipientRepository) }
   )
 
   private lateinit var adapter: MentionsPickerAdapter

@@ -26,7 +26,8 @@ import org.thoughtcrime.securesms.service.webrtc.state.VideoState;
 import org.thoughtcrime.securesms.service.webrtc.state.WebRtcServiceState;
 import org.thoughtcrime.securesms.service.webrtc.state.WebRtcServiceStateBuilder;
 import org.thoughtcrime.securesms.util.NetworkUtil;
-import org.thoughtcrime.securesms.util.Util;
+import org.signal.core.util.Util;
+import org.thoughtcrime.securesms.util.RemoteConfig;
 import org.thoughtcrime.securesms.webrtc.audio.SignalAudioManager;
 import org.webrtc.PeerConnection;
 import org.whispersystems.signalservice.api.messages.calls.OfferMessage;
@@ -71,11 +72,11 @@ public class OutgoingCallActionProcessor extends DeviceAwareActionProcessor {
     boolean isVideoCall = offerType == OfferMessage.Type.VIDEO_CALL;
 
     webRtcInteractor.setCallInProgressNotification(TYPE_OUTGOING_RINGING, remotePeer, isVideoCall);
+    webRtcInteractor.updatePhoneState(WebRtcUtil.getInCallPhoneState(context, isVideoCall, false));
+    webRtcInteractor.initializeAudioForCall(false);
     webRtcInteractor.setDefaultAudioDevice(remotePeer.getId(),
                                            isVideoCall ? SignalAudioManager.AudioDevice.SPEAKER_PHONE : SignalAudioManager.AudioDevice.EARPIECE,
                                            false);
-    webRtcInteractor.updatePhoneState(WebRtcUtil.getInCallPhoneState(context));
-    webRtcInteractor.initializeAudioForCall();
     webRtcInteractor.startOutgoingRinger();
 
     if (!webRtcInteractor.addNewOutgoingCall(remotePeer.getId(), remotePeer.getCallId().longValue(), isVideoCall)) {
@@ -90,7 +91,8 @@ public class OutgoingCallActionProcessor extends DeviceAwareActionProcessor {
                                               remotePeer.getId(),
                                       isVideoCall ? CallTable.Type.VIDEO_CALL : CallTable.Type.AUDIO_CALL,
                                               CallTable.Direction.OUTGOING,
-                                              CallTable.Event.ONGOING);
+                                              CallTable.Event.ONGOING,
+                                              false);
 
     EglBaseWrapper.replaceHolder(EglBaseWrapper.OUTGOING_PLACEHOLDER, remotePeer.getCallId().longValue());
 
@@ -144,6 +146,8 @@ public class OutgoingCallActionProcessor extends DeviceAwareActionProcessor {
       return currentState;
     }
 
+    byte            dredDuration    = (byte) RemoteConfig.dredDuration();
+    boolean         enableVp9       = RemoteConfig.enableSoftwareVp9();
     boolean         hideIp          = !activePeer.getRecipient().isProfileSharing() || callSetupState.isAlwaysTurnServers();
     VideoState      videoState      = currentState.getVideoState();
     CallParticipant callParticipant = Objects.requireNonNull(currentState.getCallInfoState().getRemoteCallParticipant(activePeer.getRecipient()));
@@ -155,11 +159,13 @@ public class OutgoingCallActionProcessor extends DeviceAwareActionProcessor {
                                                 RingRtcDynamicConfiguration.getAudioConfig(),
                                                 videoState.requireLocalSink(),
                                                 callParticipant.getVideoSink(),
-                                                videoState.requireCamera(),
+                                                videoState.requireRouter(),
                                                 callSetupState.getIceServers(),
                                                 hideIp,
                                                 NetworkUtil.getCallingDataMode(context),
                                                 AUDIO_LEVELS_INTERVAL,
+                                                dredDuration,
+                                                enableVp9,
                                                 currentState.getCallSetupState(activePeer).isEnableVideoOnCreate());
     } catch (CallException e) {
       return callFailure(currentState, "Unable to proceed with call: ", e);
@@ -167,7 +173,7 @@ public class OutgoingCallActionProcessor extends DeviceAwareActionProcessor {
 
     return currentState.builder()
                        .changeLocalDeviceState()
-                       .cameraState(currentState.getVideoState().requireCamera().getCameraState())
+                       .cameraState(currentState.getVideoState().requireRouter().getCameraState())
                        .build();
   }
 
@@ -265,26 +271,26 @@ public class OutgoingCallActionProcessor extends DeviceAwareActionProcessor {
   }
 
   @Override
-  protected @NonNull WebRtcServiceState handleEndedRemote(@NonNull WebRtcServiceState currentState, @NonNull CallManager.CallEvent endedRemoteEvent, @NonNull RemotePeer remotePeer) {
+  protected @NonNull WebRtcServiceState handleEndedRemote(@NonNull WebRtcServiceState currentState, @NonNull CallManager.CallEndReason callEndReason, @NonNull RemotePeer remotePeer) {
     RemotePeer activePeer = currentState.getCallInfoState().getActivePeer();
     if (activePeer != null &&
-        (endedRemoteEvent == CallManager.CallEvent.ENDED_REMOTE_HANGUP ||
-         endedRemoteEvent == CallManager.CallEvent.ENDED_REMOTE_HANGUP_NEED_PERMISSION ||
-         endedRemoteEvent == CallManager.CallEvent.ENDED_REMOTE_BUSY ||
-         endedRemoteEvent == CallManager.CallEvent.ENDED_TIMEOUT ||
-         endedRemoteEvent == CallManager.CallEvent.ENDED_REMOTE_GLARE))
+        (callEndReason == CallManager.CallEndReason.REMOTE_HANGUP ||
+         callEndReason == CallManager.CallEndReason.REMOTE_HANGUP_NEED_PERMISSION ||
+         callEndReason == CallManager.CallEndReason.REMOTE_BUSY ||
+         callEndReason == CallManager.CallEndReason.TIMEOUT ||
+         callEndReason == CallManager.CallEndReason.REMOTE_GLARE))
     {
       webRtcInteractor.sendNotAcceptedCallEventSyncMessage(activePeer,
                                                            true,
                                                            currentState.getCallSetupState(activePeer).isAcceptWithVideo() || currentState.getLocalDeviceState().getCameraState().isEnabled());
     }
 
-    return activeCallDelegate.handleEndedRemote(currentState, endedRemoteEvent, remotePeer);
+    return activeCallDelegate.handleEndedRemote(currentState, callEndReason, remotePeer);
   }
 
   @Override
-  protected @NonNull WebRtcServiceState handleEnded(@NonNull WebRtcServiceState currentState, @NonNull CallManager.CallEvent endedEvent, @NonNull RemotePeer remotePeer) {
-    return activeCallDelegate.handleEnded(currentState, endedEvent, remotePeer);
+  protected @NonNull WebRtcServiceState handleEnded(@NonNull WebRtcServiceState currentState, @NonNull CallManager.CallEndReason callEndReason, @NonNull RemotePeer remotePeer) {
+    return activeCallDelegate.handleEnded(currentState, callEndReason, remotePeer);
   }
 
   @Override

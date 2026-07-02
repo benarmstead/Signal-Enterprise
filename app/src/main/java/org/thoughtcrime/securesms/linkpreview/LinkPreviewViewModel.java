@@ -1,6 +1,5 @@
 package org.thoughtcrime.securesms.linkpreview;
 
-import android.content.Context;
 import android.text.TextUtils;
 
 import androidx.annotation.NonNull;
@@ -12,11 +11,11 @@ import androidx.lifecycle.ViewModel;
 import androidx.lifecycle.ViewModelProvider;
 
 import org.signal.core.util.ThreadUtil;
-import org.thoughtcrime.securesms.attachments.AttachmentId;
+import org.signal.core.models.database.AttachmentId;
 import org.thoughtcrime.securesms.dependencies.AppDependencies;
 import org.thoughtcrime.securesms.keyvalue.SignalStore;
 import org.thoughtcrime.securesms.net.RequestController;
-import org.thoughtcrime.securesms.util.Debouncer;
+import org.signal.core.util.Debouncer;
 
 import java.util.Collections;
 import java.util.List;
@@ -124,7 +123,7 @@ public class LinkPreviewViewModel extends ViewModel {
       Optional<Link> link = LinkPreviewUtil.findValidPreviewUrls(text)
                                            .findFirst();
 
-      if (link.isPresent() && link.get().getUrl().equals(activeUrl)) {
+      if (link.isPresent() && link.get().url.equals(activeUrl)) {
         return;
       }
 
@@ -139,9 +138,9 @@ public class LinkPreviewViewModel extends ViewModel {
         return;
       }
 
-      linkPreviewState.setValue(LinkPreviewState.forLoading());
+      linkPreviewState.setValue(LinkPreviewState.forLoading(link.get()));
 
-      activeUrl     = link.get().getUrl();
+      activeUrl     = link.get().url;
       activeRequest = enabled ? performRequest(activeUrl) : createPlaceholder(activeUrl);
     });
   }
@@ -186,11 +185,11 @@ public class LinkPreviewViewModel extends ViewModel {
       return true;
     }
 
-    if (text.endsWith(link.getUrl()) && cursorStart == link.getPosition() + link.getUrl().length()) {
+    if (text.endsWith(link.url) && cursorStart == link.position + link.url.length()) {
       return true;
     }
 
-    return cursorStart < link.getPosition() || cursorStart > link.getPosition() + link.getUrl().length();
+    return cursorStart < link.position || cursorStart > link.position + link.url.length();
   }
 
   private @Nullable RequestController createPlaceholder(String url) {

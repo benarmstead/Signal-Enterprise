@@ -11,8 +11,6 @@ import androidx.annotation.RequiresApi;
 import androidx.annotation.VisibleForTesting;
 import androidx.documentfile.provider.DocumentFile;
 
-import com.annimon.stream.function.Predicate;
-
 import net.zetetic.database.sqlcipher.SQLiteDatabase;
 
 import org.greenrobot.eventbus.EventBus;
@@ -21,22 +19,25 @@ import org.signal.core.util.SetUtil;
 import org.signal.core.util.SqlUtil;
 import org.signal.core.util.Stopwatch;
 import org.signal.core.util.logging.Log;
-import org.thoughtcrime.securesms.attachments.AttachmentId;
+import org.signal.core.models.database.AttachmentId;
 import org.thoughtcrime.securesms.backup.proto.KeyValue;
 import org.thoughtcrime.securesms.backup.proto.SharedPreference;
 import org.thoughtcrime.securesms.backup.proto.SqlStatement;
-import org.thoughtcrime.securesms.crypto.AttachmentSecret;
-import org.thoughtcrime.securesms.crypto.ClassicDecryptingPartInputStream;
-import org.thoughtcrime.securesms.crypto.ModernDecryptingPartInputStream;
+import org.signal.core.util.crypto.AttachmentSecret;
+import org.signal.core.util.crypto.ClassicDecryptingPartInputStream;
+import org.signal.core.util.crypto.ModernDecryptingPartInputStream;
 import org.thoughtcrime.securesms.database.AttachmentTable;
+import org.thoughtcrime.securesms.database.BackupMediaSnapshotTable;
 import org.thoughtcrime.securesms.database.EmojiSearchTable;
 import org.thoughtcrime.securesms.database.GroupReceiptTable;
 import org.thoughtcrime.securesms.database.KeyValueDatabase;
 import org.thoughtcrime.securesms.database.KyberPreKeyTable;
+import org.thoughtcrime.securesms.database.LastResortKeyTupleTable;
 import org.thoughtcrime.securesms.database.MentionTable;
 import org.thoughtcrime.securesms.database.MessageTable;
 import org.thoughtcrime.securesms.database.OneTimePreKeyTable;
 import org.thoughtcrime.securesms.database.PendingRetryReceiptTable;
+import org.thoughtcrime.securesms.database.PollTables;
 import org.thoughtcrime.securesms.database.ReactionTable;
 import org.thoughtcrime.securesms.database.RemappedRecordTables;
 import org.thoughtcrime.securesms.database.RemoteMegaphoneTable;
@@ -68,6 +69,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import okio.ByteString;
@@ -90,6 +92,7 @@ public class FullBackupExporter extends FullBackupBase {
       SignedPreKeyTable.TABLE_NAME,
       OneTimePreKeyTable.TABLE_NAME,
       KyberPreKeyTable.TABLE_NAME,
+      LastResortKeyTupleTable.TABLE_NAME,
       SessionTable.TABLE_NAME,
       SearchTable.FTS_TABLE_NAME,
       EmojiSearchTable.TABLE_NAME,
@@ -99,7 +102,8 @@ public class FullBackupExporter extends FullBackupBase {
       AvatarPickerDatabase.TABLE_NAME,
       RemappedRecordTables.Recipients.TABLE_NAME,
       RemappedRecordTables.Threads.TABLE_NAME,
-      RemoteMegaphoneTable.TABLE_NAME
+      RemoteMegaphoneTable.TABLE_NAME,
+      BackupMediaSnapshotTable.TABLE_NAME
   );
 
   public static BackupEvent export(@NonNull Context context,
@@ -176,6 +180,12 @@ public class FullBackupExporter extends FullBackupBase {
           count = exportTable(table, input, outputStream, cursor -> isForNonExpiringMessage(input, cursor.getLong(cursor.getColumnIndexOrThrow(GroupReceiptTable.MMS_ID))), null, count, estimatedCount, cancellationSignal);
         } else if (table.equals(AttachmentTable.TABLE_NAME)) {
           count = exportTable(table, input, outputStream, cursor -> isForNonExpiringMessage(input, cursor.getLong(cursor.getColumnIndexOrThrow(AttachmentTable.MESSAGE_ID))), (cursor, innerCount) -> exportAttachment(attachmentSecret, cursor, outputStream, innerCount, estimatedCount), count, estimatedCount, cancellationSignal);
+        } else if (table.equals(PollTables.PollTable.TABLE_NAME)) {
+          count = exportTable(table, input, outputStream, cursor -> isForNonExpiringMessage(input, cursor.getLong(cursor.getColumnIndexOrThrow(PollTables.PollTable.MESSAGE_ID))), null, count, estimatedCount, cancellationSignal);
+        } else if (table.equals(PollTables.PollOptionTable.TABLE_NAME)) {
+          count = exportTable(table, input, outputStream, cursor -> isForNonExpiringPollMessage(input, cursor.getLong(cursor.getColumnIndexOrThrow(PollTables.PollOptionTable.POLL_ID))), null, count, estimatedCount, cancellationSignal);
+        } else if (table.equals(PollTables.PollVoteTable.TABLE_NAME)) {
+          count = exportTable(table, input, outputStream, cursor -> isForNonExpiringPollMessage(input, cursor.getLong(cursor.getColumnIndexOrThrow(PollTables.PollVoteTable.POLL_ID))), null, count, estimatedCount, cancellationSignal);
         } else if (table.equals(StickerTable.TABLE_NAME)) {
           count = exportTable(table, input, outputStream, cursor -> true, (cursor, innerCount) -> exportSticker(attachmentSecret, cursor, outputStream, innerCount, estimatedCount), count, estimatedCount, cancellationSignal);
         } else if (!TABLE_CONTENT_BLOCKLIST.contains(table)) {
@@ -614,6 +624,20 @@ public class FullBackupExporter extends FullBackupBase {
     try (Cursor mmsCursor = db.query(MessageTable.TABLE_NAME, columns, where, args, null, null, null)) {
       if (mmsCursor != null && mmsCursor.moveToFirst()) {
         return isNonExpiringMessage(db, mmsCursor);
+      }
+    }
+
+    return false;
+  }
+
+  private static boolean isForNonExpiringPollMessage(@NonNull SQLiteDatabase db, long pollId) {
+    String[] columns = new String[] { PollTables.PollTable.MESSAGE_ID };
+    String   where   = PollTables.PollTable.ID + " = ?";
+    String[] args    = SqlUtil.buildArgs(pollId);
+
+    try (Cursor cursor = db.query(PollTables.PollTable.TABLE_NAME, columns, where, args, null, null, null)) {
+      if (cursor != null && cursor.moveToFirst()) {
+        return isForNonExpiringMessage(db, cursor.getLong(cursor.getColumnIndexOrThrow(PollTables.PollTable.MESSAGE_ID)));
       }
     }
 

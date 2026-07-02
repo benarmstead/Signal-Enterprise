@@ -31,20 +31,29 @@ import androidx.recyclerview.widget.RecyclerView
 import androidx.viewpager2.widget.ViewPager2
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.imageview.ShapeableImageView
+import org.signal.core.models.media.Media
+import org.signal.core.ui.BottomSheetUtil
+import org.signal.core.ui.permissions.Permissions
 import org.signal.core.util.bytes
 import org.signal.core.util.concurrent.LifecycleDisposable
 import org.signal.core.util.concurrent.SimpleTask
 import org.signal.core.util.isNotNullOrBlank
 import org.signal.core.util.logging.Log
+import org.signal.mediasend.MediaConstraints
+import org.signal.mediasend.SentMediaQuality
+import org.signal.mediasend.edit.video.VideoThumbnailsRangeSelectorView
+import org.signal.mediasend.edit.video.VideoTrimData
 import org.thoughtcrime.securesms.R
 import org.thoughtcrime.securesms.contacts.paged.ContactSearchKey
 import org.thoughtcrime.securesms.conversation.MessageSendType
+import org.thoughtcrime.securesms.conversation.ReenableScheduledMessagesDialogFragment
 import org.thoughtcrime.securesms.conversation.ScheduleMessageContextMenu
+import org.thoughtcrime.securesms.conversation.ScheduleMessageDialogCallback
 import org.thoughtcrime.securesms.conversation.ScheduleMessageTimePickerBottomSheet
 import org.thoughtcrime.securesms.conversation.mutiselect.forward.MultiselectForwardActivity
 import org.thoughtcrime.securesms.conversation.mutiselect.forward.MultiselectForwardFragmentArgs
 import org.thoughtcrime.securesms.keyvalue.SignalStore
-import org.thoughtcrime.securesms.mediasend.Media
+import org.thoughtcrime.securesms.media.DecryptableUriMediaInput
 import org.thoughtcrime.securesms.mediasend.MediaSendActivityResult
 import org.thoughtcrime.securesms.mediasend.v2.HudCommand
 import org.thoughtcrime.securesms.mediasend.v2.MediaAnimations
@@ -52,12 +61,8 @@ import org.thoughtcrime.securesms.mediasend.v2.MediaSelectionNavigator
 import org.thoughtcrime.securesms.mediasend.v2.MediaSelectionState
 import org.thoughtcrime.securesms.mediasend.v2.MediaSelectionViewModel
 import org.thoughtcrime.securesms.mediasend.v2.stories.StoriesMultiselectForwardActivity
-import org.thoughtcrime.securesms.mms.MediaConstraints
-import org.thoughtcrime.securesms.mms.SentMediaQuality
-import org.thoughtcrime.securesms.permissions.Permissions
 import org.thoughtcrime.securesms.recipients.Recipient
 import org.thoughtcrime.securesms.scribbles.ImageEditorFragment
-import org.thoughtcrime.securesms.util.BottomSheetUtil
 import org.thoughtcrime.securesms.util.MediaUtil
 import org.thoughtcrime.securesms.util.SystemWindowInsetsSetter
 import org.thoughtcrime.securesms.util.adapter.mapping.MappingAdapter
@@ -65,16 +70,16 @@ import org.thoughtcrime.securesms.util.fragments.requireListener
 import org.thoughtcrime.securesms.util.views.TouchInterceptingFrameLayout
 import org.thoughtcrime.securesms.util.visible
 import org.thoughtcrime.securesms.video.TranscodingQuality
-import org.thoughtcrime.securesms.video.videoconverter.VideoThumbnailsRangeSelectorView
 import java.io.IOException
 import java.util.Locale
 import java.util.concurrent.TimeUnit
 import kotlin.math.roundToInt
+import org.signal.core.ui.R as CoreUiR
 
 /**
  * Allows the user to view and edit selected media.
  */
-class MediaReviewFragment : Fragment(R.layout.v2_media_review_fragment), ScheduleMessageTimePickerBottomSheet.ScheduleCallback, VideoThumbnailsRangeSelectorView.RangeDragListener {
+class MediaReviewFragment : Fragment(R.layout.v2_media_review_fragment), ScheduleMessageTimePickerBottomSheet.ScheduleCallback, ScheduleMessageDialogCallback, VideoThumbnailsRangeSelectorView.RangeDragListener {
 
   private val sharedViewModel: MediaSelectionViewModel by viewModels(
     ownerProducer = { requireActivity() }
@@ -120,6 +125,15 @@ class MediaReviewFragment : Fragment(R.layout.v2_media_review_fragment), Schedul
     SystemWindowInsetsSetter.attach(view, viewLifecycleOwner)
 
     disposables.bindTo(viewLifecycleOwner)
+
+    parentFragmentManager.setFragmentResultListener(AddMessageDialogFragment.REQUEST_KEY, viewLifecycleOwner) { _, bundle ->
+      if (bundle.getBoolean(AddMessageDialogFragment.RESULT_INCREMENT_VIEW_ONCE_STATE)) {
+        sharedViewModel.setMessage(null)
+        sharedViewModel.incrementViewOnceState()
+      } else {
+        sharedViewModel.setMessage(bundle.getCharSequence(AddMessageDialogFragment.RESULT_MESSAGE, null))
+      }
+    }
 
     callback = requireListener()
 
@@ -232,7 +246,7 @@ class MediaReviewFragment : Fragment(R.layout.v2_media_review_fragment), Schedul
                 if (MediaUtil.isImageType(media.contentType) && editorData != null && editorData is ImageEditorFragment.Data) {
                   val model = editorData.readModel()
                   if (model != null) {
-                    ImageEditorFragment.renderToSingleUseBlob(requireContext(), model)
+                    ImageEditorFragment.renderToSingleSessionBlob(requireContext(), model)
                   } else {
                     media.uri
                   }
@@ -280,8 +294,7 @@ class MediaReviewFragment : Fragment(R.layout.v2_media_review_fragment), Schedul
             scheduledSendTime = null
             ScheduleMessageTimePickerBottomSheet.showSchedule(childFragmentManager)
           } else {
-            scheduledSendTime = time
-            sendButton.performClick()
+            startScheduledSend(time)
           }
         }
         true
@@ -297,11 +310,27 @@ class MediaReviewFragment : Fragment(R.layout.v2_media_review_fragment), Schedul
     }
 
     emojiButton.setOnClickListener {
-      AddMessageDialogFragment.show(parentFragmentManager, sharedViewModel.state.value?.message, true)
+      sharedViewModel.state.value?.let { state ->
+        AddMessageDialogFragment.show(
+          parentFragmentManager,
+          state.message,
+          true,
+          state.selectedMedia.size == 1 && !state.isStory && !MediaUtil.isDocumentType(state.focusedMedia?.contentType),
+          sharedViewModel.destination.getRecipientSearchKey()?.recipientId
+        )
+      }
     }
 
     addMessageButton.setOnClickListener {
-      AddMessageDialogFragment.show(parentFragmentManager, sharedViewModel.state.value?.message, false)
+      sharedViewModel.state.value?.let { state ->
+        AddMessageDialogFragment.show(
+          parentFragmentManager,
+          state.message,
+          false,
+          state.selectedMedia.size == 1 && !state.isStory && !MediaUtil.isDocumentType(state.focusedMedia?.contentType),
+          sharedViewModel.destination.getRecipientSearchKey()?.recipientId
+        )
+      }
     }
 
     if (sharedViewModel.isReply) {
@@ -338,7 +367,10 @@ class MediaReviewFragment : Fragment(R.layout.v2_media_review_fragment), Schedul
       pagerAdapter.submitMedia(state.selectedMedia)
 
       selectionAdapter.submitList(
-        state.selectedMedia.map { MediaReviewSelectedItem.Model(it, state.focusedMedia == it) } + MediaReviewAddItem.Model
+        state.selectedMedia.map {
+          val trimStartTimeUs = (state.editorStateMap[it.uri] as? VideoTrimData)?.startTimeUs ?: 0L
+          MediaReviewSelectedItem.Model(it, state.focusedMedia == it, trimStartTimeUs)
+        } + MediaReviewAddItem.Model
       )
 
       presentSendButton(readyToSend, state.sendType, state.recipient)
@@ -418,8 +450,8 @@ class MediaReviewFragment : Fragment(R.layout.v2_media_review_fragment), Schedul
     }
 
     val icon = when (state.quality) {
-      SentMediaQuality.HIGH -> R.drawable.symbol_quality_high_24
-      else -> R.drawable.symbol_quality_high_slash_24
+      SentMediaQuality.HIGH -> CoreUiR.drawable.symbol_quality_high_24
+      else -> CoreUiR.drawable.symbol_quality_high_slash_24
     }
 
     MediaReviewToastPopupWindow.show(controls, icon, description)
@@ -448,7 +480,7 @@ class MediaReviewFragment : Fragment(R.layout.v2_media_review_fragment), Schedul
       .setInterpolator(MediaAnimations.interpolator)
       .alpha(1f)
 
-    disposables += sharedViewModel
+    sharedViewModel
       .send(selection.filterIsInstance<ContactSearchKey.RecipientSearchKey>(), scheduledSendTime)
       .subscribe(
         { result ->
@@ -493,8 +525,8 @@ class MediaReviewFragment : Fragment(R.layout.v2_media_review_fragment), Schedul
     }
     qualityButton.setImageResource(
       when (state.quality) {
-        SentMediaQuality.STANDARD -> R.drawable.symbol_quality_high_slash_24
-        SentMediaQuality.HIGH -> R.drawable.symbol_quality_high_24
+        SentMediaQuality.STANDARD -> CoreUiR.drawable.symbol_quality_high_slash_24
+        SentMediaQuality.HIGH -> CoreUiR.drawable.symbol_quality_high_24
       }
     )
   }
@@ -503,7 +535,7 @@ class MediaReviewFragment : Fragment(R.layout.v2_media_review_fragment), Schedul
     val sendButtonBackgroundTint = when {
       !enabled -> ContextCompat.getColor(requireContext(), R.color.core_grey_50)
       recipient != null -> recipient.chatColors.asSingleColor()
-      sendType.usesSignalTransport -> ContextCompat.getColor(requireContext(), R.color.signal_colorOnSecondaryContainer)
+      sendType.usesSignalTransport -> ContextCompat.getColor(requireContext(), CoreUiR.color.signal_colorOnSecondaryContainer)
       else -> ContextCompat.getColor(requireContext(), R.color.core_grey_50)
     }
 
@@ -513,9 +545,9 @@ class MediaReviewFragment : Fragment(R.layout.v2_media_review_fragment), Schedul
     }
 
     val sendButtonForegroundTint = when {
-      !enabled -> ContextCompat.getColor(requireContext(), R.color.signal_colorSecondaryContainer)
-      recipient != null -> ContextCompat.getColor(requireContext(), R.color.signal_colorOnCustom)
-      else -> ContextCompat.getColor(requireContext(), R.color.signal_colorSecondaryContainer)
+      !enabled -> ContextCompat.getColor(requireContext(), CoreUiR.color.signal_colorSecondaryContainer)
+      recipient != null -> ContextCompat.getColor(requireContext(), CoreUiR.color.signal_colorOnCustom)
+      else -> ContextCompat.getColor(requireContext(), CoreUiR.color.signal_colorSecondaryContainer)
     }
 
     sendButton.setImageDrawable(sendButtonForegroundDrawable)
@@ -545,12 +577,12 @@ class MediaReviewFragment : Fragment(R.layout.v2_media_review_fragment), Schedul
       return
     }
     val uri = mediaItem.uri
-    val updatedInputInTimeline = videoTimeLine.setInput(uri)
+    val updatedInputInTimeline = videoTimeLine.setInput(uri, DecryptableUriMediaInput)
     if (updatedInputInTimeline) {
       videoTimeLine.unregisterDragListener()
     }
     val size: Long = tryGetUriSize(requireContext(), uri, Long.MAX_VALUE)
-    val maxSend = sharedViewModel.getMediaConstraints().getVideoMaxSize()
+    val maxSend = sharedViewModel.getMediaConstraints().getEditorVideoMaxSize()
     if (size > maxSend) {
       videoTimeLine.setTimeLimit(state.transcodingPreset.calculateMaxVideoUploadDurationInSeconds(maxSend), TimeUnit.SECONDS)
     }
@@ -787,6 +819,18 @@ class MediaReviewFragment : Fragment(R.layout.v2_media_review_fragment), Schedul
   }
 
   override fun onScheduleSend(scheduledTime: Long) {
+    startScheduledSend(scheduledTime)
+  }
+
+  override fun onSchedulePermissionsGranted(metricId: String?, scheduledDate: Long) {
+    scheduledSendTime = scheduledDate
+    sendButton.performClick()
+  }
+
+  private fun startScheduledSend(scheduledTime: Long) {
+    if (ReenableScheduledMessagesDialogFragment.showIfNeeded(requireContext(), childFragmentManager, null, scheduledTime)) {
+      return
+    }
     scheduledSendTime = scheduledTime
     sendButton.performClick()
   }

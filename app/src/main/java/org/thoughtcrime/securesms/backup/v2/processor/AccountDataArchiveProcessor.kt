@@ -8,19 +8,24 @@ package org.thoughtcrime.securesms.backup.v2.processor
 import android.content.Context
 import okio.ByteString.Companion.EMPTY
 import okio.ByteString.Companion.toByteString
-import org.signal.core.util.isNotNullOrBlank
+import org.signal.archive.proto.AccountData
+import org.signal.archive.proto.ChatStyle
+import org.signal.archive.proto.Frame
+import org.signal.archive.stream.BackupFrameEmitter
+import org.signal.core.models.database.AttachmentId
+import org.signal.core.util.UuidUtil
 import org.signal.core.util.logging.Log
+import org.signal.core.util.toByteArray
 import org.signal.libsignal.zkgroup.backups.BackupLevel
-import org.thoughtcrime.securesms.attachments.AttachmentId
+import org.signal.mediasend.SentMediaQuality
+import org.thoughtcrime.securesms.backup.v2.ExportState
 import org.thoughtcrime.securesms.backup.v2.ImportState
 import org.thoughtcrime.securesms.backup.v2.MessageBackupTier
 import org.thoughtcrime.securesms.backup.v2.database.restoreSelfFromBackup
 import org.thoughtcrime.securesms.backup.v2.database.restoreWallpaperAttachment
-import org.thoughtcrime.securesms.backup.v2.proto.AccountData
-import org.thoughtcrime.securesms.backup.v2.proto.ChatStyle
-import org.thoughtcrime.securesms.backup.v2.proto.Frame
-import org.thoughtcrime.securesms.backup.v2.stream.BackupFrameEmitter
 import org.thoughtcrime.securesms.backup.v2.util.ChatStyleConverter
+import org.thoughtcrime.securesms.backup.v2.util.isValid
+import org.thoughtcrime.securesms.backup.v2.util.isValidUsername
 import org.thoughtcrime.securesms.backup.v2.util.parseChatWallpaper
 import org.thoughtcrime.securesms.backup.v2.util.toLocal
 import org.thoughtcrime.securesms.backup.v2.util.toLocalAttachment
@@ -34,18 +39,21 @@ import org.thoughtcrime.securesms.dependencies.AppDependencies
 import org.thoughtcrime.securesms.jobs.RetrieveProfileAvatarJob
 import org.thoughtcrime.securesms.keyvalue.PhoneNumberPrivacyValues
 import org.thoughtcrime.securesms.keyvalue.PhoneNumberPrivacyValues.PhoneNumberDiscoverabilityMode
+import org.thoughtcrime.securesms.keyvalue.SettingsValues
 import org.thoughtcrime.securesms.keyvalue.SignalStore
 import org.thoughtcrime.securesms.recipients.Recipient
 import org.thoughtcrime.securesms.recipients.RecipientId
+import org.thoughtcrime.securesms.util.Environment
 import org.thoughtcrime.securesms.util.ProfileUtil
 import org.thoughtcrime.securesms.util.TextSecurePreferences
+import org.thoughtcrime.securesms.webrtc.CallDataMode
 import org.whispersystems.signalservice.api.push.UsernameLinkComponents
 import org.whispersystems.signalservice.api.storage.IAPSubscriptionId.AppleIAPOriginalTransactionId
 import org.whispersystems.signalservice.api.storage.IAPSubscriptionId.GooglePlayBillingPurchaseToken
 import org.whispersystems.signalservice.api.subscriptions.SubscriberId
-import org.whispersystems.signalservice.api.util.UuidUtil
-import org.whispersystems.signalservice.api.util.toByteArray
 import java.util.Currency
+import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Duration.Companion.seconds
 
 /**
  * Handles importing/exporting [AccountData] frames for an archive.
@@ -54,7 +62,7 @@ object AccountDataArchiveProcessor {
 
   private val TAG = Log.tag(AccountDataArchiveProcessor::class)
 
-  fun export(db: SignalDatabase, signalStore: SignalStore, emitter: BackupFrameEmitter) {
+  fun export(db: SignalDatabase, signalStore: SignalStore, exportState: ExportState, emitter: BackupFrameEmitter) {
     val context = AppDependencies.application
 
     val selfId = db.recipientTable.getByAci(signalStore.accountValues.aci!!).get()
@@ -68,6 +76,18 @@ object AccountDataArchiveProcessor {
 
     val backupSubscriberRecord = db.inAppPaymentSubscriberTable.getBackupsSubscriber()
 
+    val screenLockTimeoutSeconds = signalStore.settingsValues.screenLockTimeout
+    val screenLockTimeoutMinutes = if (screenLockTimeoutSeconds > 0) {
+      screenLockTimeoutSeconds.seconds.inWholeMinutes.toInt()
+    } else {
+      null
+    }
+
+    val mobileAutoDownload = TextSecurePreferences.getMobileMediaDownloadAllowed(context)
+    val wifiAutoDownload = TextSecurePreferences.getWifiMediaDownloadAllowed(context)
+
+    val username = selfRecord.username?.takeIf { it.isValidUsername() }
+
     emitter.emit(
       Frame(
         account = AccountData(
@@ -76,8 +96,8 @@ object AccountDataArchiveProcessor {
           familyName = selfRecord.signalProfileName.familyName,
           avatarUrlPath = selfRecord.signalProfileAvatar ?: "",
           svrPin = SignalStore.svr.pin ?: "",
-          username = selfRecord.username?.takeIf { it.isNotBlank() },
-          usernameLink = if (selfRecord.username.isNotNullOrBlank() && signalStore.accountValues.usernameLink != null) {
+          username = username,
+          usernameLink = if (username != null && signalStore.accountValues.usernameLink != null) {
             AccountData.UsernameLink(
               entropy = signalStore.accountValues.usernameLink?.entropy?.toByteString() ?: EMPTY,
               serverId = signalStore.accountValues.usernameLink?.serverId?.toByteArray()?.toByteString() ?: EMPTY,
@@ -91,6 +111,7 @@ object AccountDataArchiveProcessor {
             typingIndicators = TextSecurePreferences.isTypingIndicatorsEnabled(context),
             readReceipts = TextSecurePreferences.isReadReceiptsEnabled(context),
             sealedSenderIndicators = TextSecurePreferences.isShowUnidentifiedDeliveryIndicatorsEnabled(context),
+            allowSealedSenderFromAnyone = TextSecurePreferences.isUniversalUnidentifiedAccess(context),
             linkPreviews = signalStore.settingsValues.isLinkPreviewsEnabled,
             notDiscoverableByPhoneNumber = signalStore.phoneNumberPrivacyValues.phoneNumberDiscoverabilityMode == PhoneNumberDiscoverabilityMode.NOT_DISCOVERABLE,
             phoneNumberSharingMode = signalStore.phoneNumberPrivacyValues.phoneNumberSharingMode.toRemotePhoneNumberSharingMode(),
@@ -104,18 +125,39 @@ object AccountDataArchiveProcessor {
             displayBadgesOnProfile = signalStore.inAppPaymentValues.getDisplayBadgesOnProfile(),
             hasSeenGroupStoryEducationSheet = signalStore.storyValues.userHasSeenGroupStoryEducationSheet,
             hasCompletedUsernameOnboarding = signalStore.uiHintValues.hasCompletedUsernameOnboarding(),
-            customChatColors = db.chatColorsTable.getSavedChatColors().toRemoteChatColors(),
-            optimizeOnDeviceStorage = signalStore.backupValues.optimizeStorage,
+            customChatColors = db.chatColorsTable.getSavedChatColors().toRemoteChatColors().also { colors -> exportState.customChatColorIds.addAll(colors.map { it.id }) },
+            optimizeOnDeviceStorage = signalStore.backupValues.optimizeStorage && signalStore.backupValues.backupTier == MessageBackupTier.PAID,
             backupTier = signalStore.backupValues.backupTier.toRemoteBackupTier(),
+            defaultSentMediaQuality = signalStore.settingsValues.sentMediaQuality.toRemoteSentMediaQuality(),
+            autoDownloadSettings = AccountData.AutoDownloadSettings(
+              images = getRemoteAutoDownloadOption("image", mobileAutoDownload, wifiAutoDownload),
+              audio = getRemoteAutoDownloadOption("audio", mobileAutoDownload, wifiAutoDownload),
+              video = getRemoteAutoDownloadOption("video", mobileAutoDownload, wifiAutoDownload),
+              documents = getRemoteAutoDownloadOption("documents", mobileAutoDownload, wifiAutoDownload)
+            ),
+            screenLockTimeoutMinutes = screenLockTimeoutMinutes,
+            pinReminders = signalStore.pinValues.arePinRemindersEnabled(),
+            appTheme = signalStore.settingsValues.theme.toRemoteAppTheme(),
+            callsUseLessDataSetting = signalStore.settingsValues.callDataMode.toRemoteCallsUseLessDataSetting(),
             defaultChatStyle = ChatStyleConverter.constructRemoteChatStyle(
               db = db,
               chatColors = chatColors,
-              chatColorId = chatColors?.id ?: ChatColors.Id.NotSet,
-              chatWallpaper = chatWallpaper
-            )
+              chatColorId = chatColors?.id?.takeIf { it.isValid(exportState) } ?: ChatColors.Id.NotSet,
+              chatWallpaper = chatWallpaper,
+              backupMode = exportState.backupMode
+            ),
+            allowAutomaticKeyVerification = signalStore.settingsValues.automaticVerificationEnabled,
+            hasSeenAdminDeleteEducationDialog = signalStore.uiHintValues.hasSeenAdminDeleteEducationDialog()
           ),
           donationSubscriberData = donationSubscriber?.toSubscriberData(signalStore.inAppPaymentValues.isDonationSubscriptionManuallyCancelled()),
-          backupsSubscriberData = backupSubscriberRecord?.toIAPSubscriberData()
+          backupsSubscriberData = backupSubscriberRecord?.toIAPSubscriberData(),
+          androidSpecificSettings = AccountData.AndroidSpecificSettings(
+            useSystemEmoji = signalStore.settingsValues.isPreferSystemEmoji,
+            screenshotSecurity = TextSecurePreferences.isScreenSecurityEnabled(context),
+            navigationBarSize = signalStore.settingsValues.useCompactNavigationBar.toRemoteNavigationBarSize()
+          ).takeUnless { Environment.IS_INSTRUMENTATION && SignalStore.backup.importedEmptyAndroidSettings },
+          bioText = selfRecord.about ?: "",
+          bioEmoji = selfRecord.aboutEmoji ?: ""
         )
       )
     )
@@ -136,16 +178,30 @@ object AccountDataArchiveProcessor {
       importSettings(context, settings, importState)
     }
 
-    if (accountData.donationSubscriberData != null) {
-      if (accountData.donationSubscriberData.subscriberId.size > 0) {
-        val remoteSubscriberId = SubscriberId.fromBytes(accountData.donationSubscriberData.subscriberId.toByteArray())
+    val androidSpecificSettings = accountData.androidSpecificSettings
+    if (androidSpecificSettings != null) {
+      SignalStore.settings.isPreferSystemEmoji = androidSpecificSettings.useSystemEmoji
+      TextSecurePreferences.setScreenSecurityEnabled(context, androidSpecificSettings.screenshotSecurity)
+      SignalStore.settings.useCompactNavigationBar = androidSpecificSettings.navigationBarSize.toLocalNavigationBarSize()
+    } else if (Environment.IS_INSTRUMENTATION) {
+      SignalStore.backup.importedEmptyAndroidSettings = true
+    }
+
+    if (accountData.bioText.isNotBlank() || accountData.bioEmoji.isNotBlank()) {
+      SignalDatabase.recipients.setAbout(selfId, accountData.bioText.takeIf { it.isNotBlank() }, accountData.bioEmoji.takeIf { it.isNotBlank() })
+    }
+
+    val donationSubscriberData = accountData.donationSubscriberData
+    if (donationSubscriberData != null) {
+      if (donationSubscriberData.subscriberId.size > 0) {
+        val remoteSubscriberId = SubscriberId.fromBytes(donationSubscriberData.subscriberId.toByteArray())
         val localSubscriber = InAppPaymentsRepository.getSubscriber(InAppPaymentSubscriberRecord.Type.DONATION)
 
         val subscriber = InAppPaymentSubscriberRecord(
           subscriberId = remoteSubscriberId,
-          currency = Currency.getInstance(accountData.donationSubscriberData.currencyCode),
+          currency = Currency.getInstance(donationSubscriberData.currencyCode),
           type = InAppPaymentSubscriberRecord.Type.DONATION,
-          requiresCancel = localSubscriber?.requiresCancel ?: accountData.donationSubscriberData.manuallyCancelled,
+          requiresCancel = localSubscriber?.requiresCancel ?: donationSubscriberData.manuallyCancelled,
           paymentMethodType = InAppPaymentsRepository.getLatestPaymentMethodType(InAppPaymentSubscriberRecord.Type.DONATION),
           iapSubscriptionId = null
         )
@@ -153,25 +209,27 @@ object AccountDataArchiveProcessor {
         InAppPaymentsRepository.setSubscriber(subscriber)
       }
 
-      if (accountData.donationSubscriberData.manuallyCancelled) {
+      if (donationSubscriberData.manuallyCancelled) {
         SignalStore.inAppPayments.updateLocalStateForManualCancellation(InAppPaymentSubscriberRecord.Type.DONATION)
       }
     }
 
-    if (accountData.backupsSubscriberData != null && accountData.backupsSubscriberData.subscriberId.size > 0 && (accountData.backupsSubscriberData.purchaseToken != null || accountData.backupsSubscriberData.originalTransactionId != null)) {
-      val remoteSubscriberId = SubscriberId.fromBytes(accountData.backupsSubscriberData.subscriberId.toByteArray())
+    val backupsSubscriberData = accountData.backupsSubscriberData
+    if (backupsSubscriberData != null && backupsSubscriberData.subscriberId.size > 0 && (backupsSubscriberData.purchaseToken != null || backupsSubscriberData.originalTransactionId != null)) {
+      val remoteSubscriberId = SubscriberId.fromBytes(backupsSubscriberData.subscriberId.toByteArray())
       val localSubscriber = InAppPaymentsRepository.getSubscriber(InAppPaymentSubscriberRecord.Type.BACKUP)
 
+      val purchaseToken = backupsSubscriberData.purchaseToken
       val subscriber = InAppPaymentSubscriberRecord(
         subscriberId = remoteSubscriberId,
         currency = localSubscriber?.currency,
         type = InAppPaymentSubscriberRecord.Type.BACKUP,
         requiresCancel = localSubscriber?.requiresCancel ?: false,
         paymentMethodType = InAppPaymentData.PaymentMethodType.UNKNOWN,
-        iapSubscriptionId = if (accountData.backupsSubscriberData.purchaseToken != null) {
-          GooglePlayBillingPurchaseToken(accountData.backupsSubscriberData.purchaseToken)
+        iapSubscriptionId = if (purchaseToken != null) {
+          GooglePlayBillingPurchaseToken(purchaseToken)
         } else {
-          AppleIAPOriginalTransactionId(accountData.backupsSubscriberData.originalTransactionId!!)
+          AppleIAPOriginalTransactionId(backupsSubscriberData.originalTransactionId!!)
         }
       )
 
@@ -182,15 +240,18 @@ object AccountDataArchiveProcessor {
       AppDependencies.jobManager.add(RetrieveProfileAvatarJob(Recipient.self().fresh(), accountData.avatarUrlPath))
     }
 
-    if (accountData.usernameLink != null) {
+    val usernameLink = accountData.usernameLink
+    if (usernameLink != null) {
       SignalStore.account.usernameLink = UsernameLinkComponents(
-        accountData.usernameLink.entropy.toByteArray(),
-        UuidUtil.parseOrThrow(accountData.usernameLink.serverId.toByteArray())
+        usernameLink.entropy.toByteArray(),
+        UuidUtil.parseOrThrow(usernameLink.serverId.toByteArray())
       )
-      SignalStore.misc.usernameQrCodeColorScheme = accountData.usernameLink.color.toLocalUsernameColor()
+      SignalStore.misc.usernameQrCodeColorScheme = usernameLink.color.toLocalUsernameColor()
     } else {
       SignalStore.account.usernameLink = null
     }
+
+    SignalDatabase.recipients.clearSelfKeyTransparencyData()
 
     SignalDatabase.runPostSuccessfulTransaction { ProfileUtil.handleSelfProfileKeyChange() }
 
@@ -201,6 +262,7 @@ object AccountDataArchiveProcessor {
     TextSecurePreferences.setReadReceiptsEnabled(context, settings.readReceipts)
     TextSecurePreferences.setTypingIndicatorsEnabled(context, settings.typingIndicators)
     TextSecurePreferences.setShowUnidentifiedDeliveryIndicatorsEnabled(context, settings.sealedSenderIndicators)
+    TextSecurePreferences.setIsUniversalUnidentifiedAccess(context, settings.allowSealedSenderFromAnyone)
     SignalStore.settings.isLinkPreviewsEnabled = settings.linkPreviews
     SignalStore.phoneNumberPrivacy.phoneNumberDiscoverabilityMode = if (settings.notDiscoverableByPhoneNumber) PhoneNumberDiscoverabilityMode.NOT_DISCOVERABLE else PhoneNumberDiscoverabilityMode.DISCOVERABLE
     SignalStore.phoneNumberPrivacy.phoneNumberSharingMode = settings.phoneNumberSharingMode.toLocalPhoneNumberMode()
@@ -216,21 +278,49 @@ object AccountDataArchiveProcessor {
     SignalStore.story.viewedReceiptsEnabled = settings.storyViewReceiptsEnabled ?: settings.readReceipts
     SignalStore.backup.optimizeStorage = settings.optimizeOnDeviceStorage
     SignalStore.backup.backupTier = settings.backupTier?.toLocalBackupTier()
+    SignalStore.settings.sentMediaQuality = settings.defaultSentMediaQuality.toLocalSentMediaQuality()
+    SignalStore.settings.setTheme(settings.appTheme.toLocalTheme())
+    SignalStore.settings.setCallDataMode(settings.callsUseLessDataSetting.toLocalCallDataMode())
+    SignalStore.settings.automaticVerificationEnabled = settings.allowAutomaticKeyVerification
+
+    val autoDownloadSettings = settings.autoDownloadSettings
+    if (autoDownloadSettings != null) {
+      val mobileAndWifiDownloadSet = autoDownloadSettings.toLocalAutoDownloadSet(AccountData.AutoDownloadSettings.AutoDownloadOption.WIFI_AND_CELLULAR)
+      val wifiDownloadSet = mobileAndWifiDownloadSet + autoDownloadSettings.toLocalAutoDownloadSet(AccountData.AutoDownloadSettings.AutoDownloadOption.WIFI)
+
+      TextSecurePreferences.getSharedPreferences(context).edit().apply {
+        putStringSet(TextSecurePreferences.MEDIA_DOWNLOAD_MOBILE_PREF, mobileAndWifiDownloadSet)
+        putStringSet(TextSecurePreferences.MEDIA_DOWNLOAD_WIFI_PREF, wifiDownloadSet)
+        apply()
+      }
+    }
+
+    val screenLockTimeoutMinutes = settings.screenLockTimeoutMinutes
+    if (screenLockTimeoutMinutes != null) {
+      SignalStore.settings.screenLockTimeout = screenLockTimeoutMinutes.minutes.inWholeSeconds
+    }
+
+    val pinReminders = settings.pinReminders
+    if (pinReminders != null) {
+      SignalStore.pin.setPinRemindersEnabled(pinReminders)
+    }
 
     settings.customChatColors
       .mapNotNull { chatColor ->
         val id = ChatColors.Id.forLongValue(chatColor.id)
+        val solidColor = chatColor.solid
+        val gradientColor = chatColor.gradient
         when {
-          chatColor.solid != null -> {
-            ChatColors.forColor(id, chatColor.solid)
+          solidColor != null -> {
+            ChatColors.forColor(id, solidColor)
           }
-          chatColor.gradient != null -> {
+          gradientColor != null -> {
             ChatColors.forGradient(
               id,
               ChatColors.LinearGradient(
-                degrees = chatColor.gradient.angle.toFloat(),
-                colors = chatColor.gradient.colors.toIntArray(),
-                positions = chatColor.gradient.positions.toFloatArray()
+                degrees = gradientColor.angle.toFloat(),
+                colors = gradientColor.colors.toIntArray(),
+                positions = gradientColor.positions.toFloatArray()
               )
             )
           }
@@ -243,17 +333,18 @@ object AccountDataArchiveProcessor {
         importState.remoteToLocalColorId[chatColor.id.longValue] = saved.id.longValue
       }
 
-    if (settings.defaultChatStyle != null) {
-      val chatColors = settings.defaultChatStyle.toLocal(importState)
+    val defaultChatStyle = settings.defaultChatStyle
+    if (defaultChatStyle != null) {
+      val chatColors = defaultChatStyle.toLocal(importState)
       SignalStore.chatColors.chatColors = chatColors
 
-      val wallpaperAttachmentId: AttachmentId? = settings.defaultChatStyle.wallpaperPhoto?.let { filePointer ->
+      val wallpaperAttachmentId: AttachmentId? = defaultChatStyle.wallpaperPhoto?.let { filePointer ->
         filePointer.toLocalAttachment()?.let {
           SignalDatabase.attachments.restoreWallpaperAttachment(it)
         }
       }
 
-      SignalStore.wallpaper.wallpaper = settings.defaultChatStyle.parseChatWallpaper(wallpaperAttachmentId)
+      SignalStore.wallpaper.wallpaper = defaultChatStyle.parseChatWallpaper(wallpaperAttachmentId)
     } else {
       SignalStore.chatColors.chatColors = null
       SignalStore.wallpaper.wallpaper = null
@@ -265,6 +356,10 @@ object AccountDataArchiveProcessor {
 
     if (settings.hasCompletedUsernameOnboarding) {
       SignalStore.uiHints.setHasCompletedUsernameOnboarding(true)
+    }
+
+    if (settings.hasSeenAdminDeleteEducationDialog) {
+      SignalStore.uiHints.setHasSeenAdminDeleteEducationDialog()
     }
   }
 
@@ -374,6 +469,97 @@ object AccountDataArchiveProcessor {
       BackupLevel.FREE.value.toLong() -> MessageBackupTier.FREE
       BackupLevel.PAID.value.toLong() -> MessageBackupTier.PAID
       else -> null
+    }
+  }
+
+  private fun SentMediaQuality.toRemoteSentMediaQuality(): AccountData.SentMediaQuality {
+    return when (this) {
+      SentMediaQuality.STANDARD -> AccountData.SentMediaQuality.STANDARD
+      SentMediaQuality.HIGH -> AccountData.SentMediaQuality.HIGH
+    }
+  }
+
+  private fun AccountData.SentMediaQuality?.toLocalSentMediaQuality(): SentMediaQuality {
+    return when (this) {
+      AccountData.SentMediaQuality.HIGH -> SentMediaQuality.HIGH
+      AccountData.SentMediaQuality.STANDARD -> SentMediaQuality.STANDARD
+      AccountData.SentMediaQuality.UNKNOWN_QUALITY -> SentMediaQuality.STANDARD
+      null -> SentMediaQuality.STANDARD
+    }
+  }
+
+  private fun getRemoteAutoDownloadOption(mediaType: String, mobileSet: Set<String>, wifiSet: Set<String>): AccountData.AutoDownloadSettings.AutoDownloadOption {
+    return when {
+      mobileSet.contains(mediaType) -> AccountData.AutoDownloadSettings.AutoDownloadOption.WIFI_AND_CELLULAR
+      wifiSet.contains(mediaType) -> AccountData.AutoDownloadSettings.AutoDownloadOption.WIFI
+      else -> AccountData.AutoDownloadSettings.AutoDownloadOption.NEVER
+    }
+  }
+
+  private fun AccountData.AutoDownloadSettings.toLocalAutoDownloadSet(option: AccountData.AutoDownloadSettings.AutoDownloadOption): Set<String> {
+    val out = mutableSetOf<String>()
+    if (this.images == option) {
+      out += "image"
+    }
+    if (this.audio == option) {
+      out += "audio"
+    }
+    if (this.video == option) {
+      out += "video"
+    }
+    if (this.documents == option) {
+      out += "documents"
+    }
+    return out
+  }
+
+  private fun Boolean.toRemoteNavigationBarSize(): AccountData.AndroidSpecificSettings.NavigationBarSize {
+    return if (this) {
+      AccountData.AndroidSpecificSettings.NavigationBarSize.COMPACT
+    } else {
+      AccountData.AndroidSpecificSettings.NavigationBarSize.NORMAL
+    }
+  }
+
+  private fun AccountData.AndroidSpecificSettings.NavigationBarSize.toLocalNavigationBarSize(): Boolean {
+    return when (this) {
+      AccountData.AndroidSpecificSettings.NavigationBarSize.COMPACT -> true
+      AccountData.AndroidSpecificSettings.NavigationBarSize.NORMAL -> false
+      AccountData.AndroidSpecificSettings.NavigationBarSize.UNKNOWN_BAR_SIZE -> false
+    }
+  }
+
+  private fun SettingsValues.Theme.toRemoteAppTheme(): AccountData.AppTheme {
+    return when (this) {
+      SettingsValues.Theme.SYSTEM -> AccountData.AppTheme.SYSTEM
+      SettingsValues.Theme.LIGHT -> AccountData.AppTheme.LIGHT
+      SettingsValues.Theme.DARK -> AccountData.AppTheme.DARK
+    }
+  }
+
+  private fun AccountData.AppTheme.toLocalTheme(): SettingsValues.Theme {
+    return when (this) {
+      AccountData.AppTheme.SYSTEM -> SettingsValues.Theme.SYSTEM
+      AccountData.AppTheme.LIGHT -> SettingsValues.Theme.LIGHT
+      AccountData.AppTheme.DARK -> SettingsValues.Theme.DARK
+      AccountData.AppTheme.UNKNOWN_APP_THEME -> SettingsValues.Theme.SYSTEM
+    }
+  }
+
+  private fun CallDataMode.toRemoteCallsUseLessDataSetting(): AccountData.CallsUseLessDataSetting {
+    return when (this) {
+      CallDataMode.LOW_ALWAYS -> AccountData.CallsUseLessDataSetting.WIFI_AND_MOBILE_DATA
+      CallDataMode.HIGH_ON_WIFI -> AccountData.CallsUseLessDataSetting.MOBILE_DATA_ONLY
+      CallDataMode.HIGH_ALWAYS -> AccountData.CallsUseLessDataSetting.NEVER
+    }
+  }
+
+  private fun AccountData.CallsUseLessDataSetting.toLocalCallDataMode(): CallDataMode {
+    return when (this) {
+      AccountData.CallsUseLessDataSetting.WIFI_AND_MOBILE_DATA -> CallDataMode.LOW_ALWAYS
+      AccountData.CallsUseLessDataSetting.MOBILE_DATA_ONLY -> CallDataMode.HIGH_ON_WIFI
+      AccountData.CallsUseLessDataSetting.NEVER -> CallDataMode.HIGH_ALWAYS
+      AccountData.CallsUseLessDataSetting.UNKNOWN_CALL_DATA_SETTING -> CallDataMode.HIGH_ALWAYS
     }
   }
 }

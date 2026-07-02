@@ -1,19 +1,27 @@
 package org.thoughtcrime.securesms.util
 
 import org.thoughtcrime.securesms.database.SignalDatabase
+import org.thoughtcrime.securesms.database.model.GroupRecord
 import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.recipients.Recipient
 import org.thoughtcrime.securesms.recipients.RecipientId
-import java.util.concurrent.TimeUnit
+import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 
 /**
  * Helpers for determining if a message send/receive is valid for those that
  * have strict time limits.
  */
 object MessageConstraintsUtil {
-  private val RECEIVE_THRESHOLD = TimeUnit.DAYS.toMillis(0)
-  private val SEND_THRESHOLD = TimeUnit.DAYS.toMillis(1)
+  private val SEND_THRESHOLD = RemoteConfig.regularDeleteThreshold.seconds.inWholeMilliseconds
+  private val ADMIN_SEND_THRESHOLD = RemoteConfig.adminDeleteThreshold.seconds.inWholeMilliseconds
+
+  // Signal-Enterprise: incoming remote deletes (from other users and group admins) are ignored so
+  // that messages remain available on-device. Outgoing send thresholds are kept intact so the local
+  // user can still delete/edit their own messages.
+  private val RECEIVE_THRESHOLD = 0L
+  private val ADMIN_RECEIVE_THRESHOLD = 0L
 
   const val MAX_EDIT_COUNT = 10
 
@@ -32,14 +40,27 @@ object MessageConstraintsUtil {
   }
 
   @JvmStatic
+  fun isValidAdminDeleteReceive(targetMessage: MessageRecord, deleteSender: Recipient, deleteServerTimestamp: Long, groupRecord: GroupRecord): Boolean {
+    val isValidSender = groupRecord.isAdmin(deleteSender)
+    val messageTimestamp = if (targetMessage.isOutgoing) targetMessage.dateSent else targetMessage.serverTimestamp
+
+    return isValidSender && (deleteServerTimestamp - messageTimestamp < ADMIN_RECEIVE_THRESHOLD)
+  }
+
+  @JvmStatic
   fun isValidEditMessageReceive(targetMessage: MessageRecord, editSender: Recipient, editServerTimestamp: Long): Boolean {
-    return isValidRemoteDeleteReceive(targetMessage, editSender.id, editServerTimestamp)
+    return !targetMessage.isRemoteDelete && isValidRemoteDeleteReceive(targetMessage, editSender.id, editServerTimestamp)
   }
 
   @JvmStatic
   fun isValidRemoteDeleteSend(targetMessages: Collection<MessageRecord>, currentTime: Long): Boolean {
     // TODO [greyson] [remote-delete] Update with server timestamp when available for outgoing messages
     return targetMessages.all { isValidRemoteDeleteSend(it, currentTime) }
+  }
+
+  @JvmStatic
+  fun isValidAdminDeleteSend(targetMessages: Collection<MessageRecord>, currentTime: Long, isAdmin: Boolean): Boolean {
+    return targetMessages.all { isValidAdminDeleteSend(message = it, currentTime = currentTime, isAdmin = isAdmin, isResend = false) }
   }
 
   @JvmStatic
@@ -70,7 +91,8 @@ object MessageConstraintsUtil {
       !targetMessage.isViewOnceMessage() &&
       !targetMessage.hasAudio() &&
       !targetMessage.hasSharedContact() &&
-      !targetMessage.hasSticker()
+      !targetMessage.hasSticker() &&
+      !targetMessage.hasPoll()
   }
 
   /**
@@ -81,7 +103,7 @@ object MessageConstraintsUtil {
     return isValidEditMessageSend(targetMessage, targetMessage.dateSent)
   }
 
-  private fun isValidRemoteDeleteSend(message: MessageRecord, currentTime: Long): Boolean {
+  fun isValidRemoteDeleteSend(message: MessageRecord, currentTime: Long): Boolean {
     return !message.isUpdate &&
       message.isOutgoing &&
       message.isPush &&
@@ -91,6 +113,19 @@ object MessageConstraintsUtil {
       !message.isPaymentNotification &&
       !message.isPaymentTombstone &&
       (currentTime - message.dateSent < SEND_THRESHOLD || message.toRecipient.isSelf)
+  }
+
+  fun isValidAdminDeleteSend(message: MessageRecord, currentTime: Long, isAdmin: Boolean, isResend: Boolean): Boolean {
+    return RemoteConfig.sendAdminDelete &&
+      isAdmin &&
+      !message.isUpdate &&
+      message.isPush &&
+      (!message.toRecipient.isGroup || message.toRecipient.isActiveGroup) &&
+      (!message.isRemoteDelete || isResend) &&
+      !message.hasGiftBadge() &&
+      !message.isPaymentNotification &&
+      !message.isPaymentTombstone &&
+      (currentTime - message.dateSent < ADMIN_SEND_THRESHOLD)
   }
 
   private fun isSelf(recipientId: RecipientId): Boolean {

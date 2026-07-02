@@ -7,10 +7,7 @@ import androidx.lifecycle.Transformations;
 import androidx.lifecycle.ViewModel;
 import androidx.lifecycle.ViewModelProvider;
 
-import com.annimon.stream.Stream;
-
 import org.signal.core.util.logging.Log;
-import org.signal.libsignal.protocol.util.Pair;
 import org.thoughtcrime.securesms.BuildConfig;
 import org.thoughtcrime.securesms.R;
 import org.thoughtcrime.securesms.components.settings.SettingHeader;
@@ -26,11 +23,15 @@ import org.signal.core.util.SetUtil;
 import org.thoughtcrime.securesms.util.adapter.mapping.MappingModelList;
 import org.thoughtcrime.securesms.util.livedata.Store;
 
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.stream.Collectors;
+import java.util.Comparator;
 import java.util.Currency;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
+import kotlin.Pair;
 
 import static java.util.Collections.emptyList;
 import static java.util.Collections.emptyMap;
@@ -86,21 +87,19 @@ public final class SetCurrencyViewModel extends ViewModel {
   }
 
   private @NonNull MappingModelList fromCurrencies(@NonNull Collection<Currency> currencies, @NonNull Currency currentCurrency) {
-    return Stream.of(currencies)
+    return currencies.stream()
                  .map(c -> new SingleSelectSetting.Item(c, c.getDisplayName(Locale.getDefault()), c.getCurrencyCode(), c.equals(currentCurrency)))
-                 .sortBy(SingleSelectSetting.Item::getText)
+                 .sorted(Comparator.comparing(SingleSelectSetting.Item::getText))
                  .collect(MappingModelList.toMappingModelList());
   }
 
   private int findSelectedIndex(MappingModelList items) {
-    return Stream.of(items)
-                 .mapIndexed(Pair::new)
-                 .filter(p -> p.second() instanceof SingleSelectSetting.Item)
-                 .map(p -> new Pair<>(p.first(), (SingleSelectSetting.Item) p.second()))
-                 .filter(pair -> pair.second().isSelected())
-                 .findFirst()
-                 .map(Pair::first)
-                 .orElse(-1);
+    for (int i=0; i<items.size(); i++) {
+      if (items.get(i) instanceof SingleSelectSetting.Item model && model.isSelected()) {
+        return i;
+      }
+    }
+    return -1;
   }
 
   public static class CurrencyListState {
@@ -128,10 +127,10 @@ public final class SetCurrencyViewModel extends ViewModel {
   }
 
   public static class SetCurrencyState {
-    private static final List<Currency> DEFAULT_CURRENCIES = Stream.of(BuildConfig.DEFAULT_CURRENCIES.split(","))
+    private static final List<Currency> DEFAULT_CURRENCIES = Arrays.stream(BuildConfig.DEFAULT_CURRENCIES.split(","))
                                                                    .map(CurrencyUtil::getCurrencyByCurrencyCode)
-                                                                   .withoutNulls()
-                                                                   .toList();
+                                                                   .filter(Objects::nonNull)
+                                                                   .collect(Collectors.toList());
 
     private final Currency             currentCurrency;
     private final CurrencyExchange     currencyExchange;

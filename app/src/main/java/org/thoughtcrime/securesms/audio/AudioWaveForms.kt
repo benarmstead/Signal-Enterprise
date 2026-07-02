@@ -4,13 +4,12 @@ import android.content.Context
 import android.net.Uri
 import android.util.LruCache
 import androidx.annotation.AnyThread
-import androidx.annotation.RequiresApi
 import io.reactivex.rxjava3.core.Single
 import io.reactivex.rxjava3.schedulers.Schedulers
 import io.reactivex.rxjava3.subjects.SingleSubject
+import org.signal.core.models.database.AttachmentId
 import org.signal.core.util.logging.Log
 import org.thoughtcrime.securesms.attachments.Attachment
-import org.thoughtcrime.securesms.attachments.AttachmentId
 import org.thoughtcrime.securesms.attachments.DatabaseAttachment
 import org.thoughtcrime.securesms.database.SignalDatabase
 import org.thoughtcrime.securesms.database.model.databaseprotos.AudioWaveFormData
@@ -24,7 +23,6 @@ import kotlin.concurrent.write
  *
  * Maintains an in-memory cache of recently requested wave forms.
  */
-@RequiresApi(23)
 object AudioWaveForms {
 
   private val TAG = Log.tag(AudioWaveForms::class.java)

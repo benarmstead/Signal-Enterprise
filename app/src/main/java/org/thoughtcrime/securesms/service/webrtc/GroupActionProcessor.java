@@ -4,15 +4,17 @@ import android.util.LongSparseArray;
 
 import androidx.annotation.NonNull;
 
-import com.annimon.stream.Stream;
+import java.util.stream.Collectors;
 
 import org.signal.core.util.logging.Log;
 import org.signal.ringrtc.CallException;
+import org.signal.ringrtc.CallManager;
 import org.signal.ringrtc.GroupCall;
 import org.thoughtcrime.securesms.components.webrtc.BroadcastVideoSink;
 import org.thoughtcrime.securesms.events.CallParticipant;
 import org.thoughtcrime.securesms.events.CallParticipantId;
 import org.thoughtcrime.securesms.events.WebRtcViewModel;
+import org.thoughtcrime.securesms.events.WebRtcViewModel.State;
 import org.thoughtcrime.securesms.groups.GroupManager;
 import org.thoughtcrime.securesms.recipients.Recipient;
 import org.thoughtcrime.securesms.recipients.RecipientId;
@@ -23,7 +25,7 @@ import org.thoughtcrime.securesms.service.webrtc.state.WebRtcServiceStateBuilder
 import org.webrtc.PeerConnection;
 import org.webrtc.VideoTrack;
 import org.whispersystems.signalservice.api.messages.calls.OfferMessage;
-import org.whispersystems.signalservice.api.push.ServiceId.ACI;
+import org.signal.core.models.ServiceId.ACI;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -49,12 +51,12 @@ public class GroupActionProcessor extends DeviceAwareActionProcessor {
     this.actionProcessorFactory = actionProcessorFactory;
   }
 
-  protected @NonNull WebRtcServiceState handleReceivedOffer(@NonNull WebRtcServiceState currentState,
-                                                            @NonNull WebRtcData.CallMetadata callMetadata,
-                                                            @NonNull WebRtcData.OfferMetadata offerMetadata,
-                                                            @NonNull WebRtcData.ReceivedOfferMetadata receivedOfferMetadata)
+  protected @NonNull WebRtcServiceState handleValidatedReceivedOffer(@NonNull WebRtcServiceState currentState,
+                                                                     @NonNull WebRtcData.CallMetadata callMetadata,
+                                                                     @NonNull WebRtcData.OfferMetadata offerMetadata,
+                                                                     @NonNull WebRtcData.ReceivedOfferMetadata receivedOfferMetadata)
   {
-    Log.i(tag, "handleReceivedOffer(): id: " + callMetadata.getCallId().format(callMetadata.getRemoteDevice()));
+    Log.i(tag, "handleValidatedReceivedOffer(): id: " + callMetadata.getCallId().format(callMetadata.getRemoteDevice()));
 
     Log.i(tag, "In a group call, send busy back to 1:1 call offer.");
     currentState.getActionProcessor().handleSendBusy(currentState, callMetadata, true);
@@ -131,7 +133,15 @@ public class GroupActionProcessor extends DeviceAwareActionProcessor {
 
     builder.remoteDevicesCount(remoteDevices.size());
 
-    return builder.build();
+    WebRtcServiceState updatedState = builder.build();
+
+    if (updatedState.getCallInfoState().getCallState() == State.CALL_CONNECTED) {
+      boolean localVideoEnabled  = updatedState.getLocalDeviceState().getCameraState().isEnabled();
+      boolean remoteVideoEnabled = updatedState.getCallInfoState().getRemoteCallParticipantsMap().values().stream().anyMatch(CallParticipant::isVideoEnabled);
+      webRtcInteractor.updatePhoneState(WebRtcUtil.getInCallPhoneState(context, localVideoEnabled, remoteVideoEnabled));
+    }
+
+    return updatedState;
   }
 
   @Override
@@ -182,9 +192,8 @@ public class GroupActionProcessor extends DeviceAwareActionProcessor {
     Recipient group     = currentState.getCallInfoState().getCallRecipient();
     GroupCall groupCall = currentState.getCallInfoState().requireGroupCall();
 
-    List<GroupCall.GroupMemberInfo> members = Stream.of(GroupManager.getUuidCipherTexts(context, group.requireGroupId().requireV2()))
-                                                    .map(entry -> new GroupCall.GroupMemberInfo(entry.getKey(), entry.getValue().serialize()))
-                                                    .toList();
+    List<GroupCall.GroupMemberInfo> members = GroupManager.getUuidCipherTexts(context, group.requireGroupId().requireV2()).entrySet().stream()
+                                                          .map(entry -> new GroupCall.GroupMemberInfo(entry.getKey(), entry.getValue().serialize())).collect(Collectors.toList());
 
     try {
       groupCall.setGroupMembers(new ArrayList<>(members));
@@ -204,7 +213,7 @@ public class GroupActionProcessor extends DeviceAwareActionProcessor {
       BroadcastVideoSink               videoSink = entry.getValue().getVideoSink();
       BroadcastVideoSink.RequestedSize maxSize   = videoSink.getMaxRequestingSize();
 
-      resolutionRequests.add(new GroupCall.VideoRequest(entry.getKey().getDemuxId(), maxSize.getWidth(), maxSize.getHeight(), null));
+      resolutionRequests.add(new GroupCall.VideoRequest(entry.getKey().demuxId, maxSize.getWidth(), maxSize.getHeight(), null));
       videoSink.setCurrentlyRequestedMaxSize(maxSize);
     }
 
@@ -284,7 +293,7 @@ public class GroupActionProcessor extends DeviceAwareActionProcessor {
   }
 
   @Override
-  protected @NonNull WebRtcServiceState handleGroupCallEnded(@NonNull WebRtcServiceState currentState, int groupCallHash, @NonNull GroupCall.GroupCallEndReason groupCallEndReason) {
+  protected @NonNull WebRtcServiceState handleGroupCallEnded(@NonNull WebRtcServiceState currentState, int groupCallHash, @NonNull CallManager.CallEndReason groupCallEndReason) {
     Log.i(tag, "handleGroupCallEnded(): reason: " + groupCallEndReason);
 
     GroupCall groupCall = currentState.getCallInfoState().getGroupCall();
@@ -299,7 +308,7 @@ public class GroupActionProcessor extends DeviceAwareActionProcessor {
       return groupCallFailure(currentState, "Unable to disconnect from group call", e);
     }
 
-    if (groupCallEndReason != GroupCall.GroupCallEndReason.DEVICE_EXPLICITLY_DISCONNECTED) {
+    if (groupCallEndReason != CallManager.CallEndReason.DEVICE_EXPLICITLY_DISCONNECTED) {
       Log.i(tag, "Group call ended unexpectedly, reinitializing and dropping back to lobby");
       Recipient  currentRecipient = currentState.getCallInfoState().getCallRecipient();
       VideoState videoState       = currentState.getVideoState();
@@ -308,7 +317,7 @@ public class GroupActionProcessor extends DeviceAwareActionProcessor {
                                                             .actionProcessor(actionProcessorFactory.createNetworkUnavailableActionProcessor(webRtcInteractor))
                                                             .changeVideoState()
                                                             .eglBase(videoState.getLockableEglBase())
-                                                            .camera(videoState.getCamera())
+                                                            .router(videoState.getRouter())
                                                             .localSink(videoState.getLocalSink())
                                                             .commit()
                                                             .changeCallInfoState()

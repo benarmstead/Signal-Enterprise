@@ -11,8 +11,8 @@ import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.RecyclerView.SmoothScroller
 import com.bumptech.glide.Glide
 import com.google.android.material.appbar.AppBarLayout
-import org.signal.libsignal.protocol.util.Pair
-import org.thoughtcrime.securesms.LoggingFragment
+import org.signal.core.ui.logging.LoggingFragment
+import org.signal.core.util.Throttler
 import org.thoughtcrime.securesms.R
 import org.thoughtcrime.securesms.database.DatabaseObserver
 import org.thoughtcrime.securesms.dependencies.AppDependencies
@@ -22,7 +22,6 @@ import org.thoughtcrime.securesms.stickers.StickerRolloverTouchListener
 import org.thoughtcrime.securesms.stickers.StickerRolloverTouchListener.RolloverStickerRetriever
 import org.thoughtcrime.securesms.util.DeviceProperties
 import org.thoughtcrime.securesms.util.InsetItemDecoration
-import org.thoughtcrime.securesms.util.Throttler
 import org.thoughtcrime.securesms.util.adapter.mapping.MappingModel
 import org.thoughtcrime.securesms.util.adapter.mapping.MappingModelList
 import org.thoughtcrime.securesms.util.fragments.findListener
@@ -204,11 +203,20 @@ open class StickerKeyboardPageFragment :
   }
 
   override fun onLayoutChange(v: View?, left: Int, top: Int, right: Int, bottom: Int, oldLeft: Int, oldTop: Int, oldRight: Int, oldBottom: Int) {
-    onScreenWidthChanged(view?.width ?: 0)
+    onScreenWidthChanged(right - left)
   }
 
   private fun onScreenWidthChanged(@Px newWidth: Int) {
-    layoutManager.spanCount = calculateColumnCount(newWidth)
+    if (newWidth <= 0) {
+      return
+    }
+
+    val newSpanCount = calculateColumnCount(newWidth)
+    if (layoutManager.spanCount != newSpanCount) {
+      stickerList.post {
+        layoutManager.spanCount = newSpanCount
+      }
+    }
   }
 
   private fun calculateColumnCount(@Px screenWidth: Int): Int {

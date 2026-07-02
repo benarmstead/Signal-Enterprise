@@ -8,8 +8,6 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.google.common.io.ByteStreams
-import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
-import io.reactivex.rxjava3.core.Flowable
 import io.reactivex.rxjava3.core.Maybe
 import io.reactivex.rxjava3.core.Observable
 import io.reactivex.rxjava3.core.Single
@@ -17,31 +15,30 @@ import io.reactivex.rxjava3.disposables.CompositeDisposable
 import io.reactivex.rxjava3.disposables.Disposable
 import io.reactivex.rxjava3.kotlin.plusAssign
 import io.reactivex.rxjava3.kotlin.subscribeBy
-import io.reactivex.rxjava3.processors.BehaviorProcessor
 import io.reactivex.rxjava3.schedulers.Schedulers
 import io.reactivex.rxjava3.subjects.BehaviorSubject
 import io.reactivex.rxjava3.subjects.PublishSubject
 import io.reactivex.rxjava3.subjects.Subject
-import org.signal.core.util.BreakIteratorCompat
+import org.signal.core.models.media.Media
+import org.signal.core.util.Util
+import org.signal.core.util.contentproviders.BlobProvider
 import org.signal.core.util.getParcelableArrayListCompat
 import org.signal.core.util.getParcelableCompat
 import org.signal.core.util.logging.Log
+import org.signal.mediasend.MediaConstraints
+import org.signal.mediasend.SentMediaQuality
+import org.signal.mediasend.edit.video.VideoTrimData
 import org.thoughtcrime.securesms.components.mention.MentionAnnotation
 import org.thoughtcrime.securesms.contacts.paged.ContactSearchKey
 import org.thoughtcrime.securesms.conversation.MessageSendType
 import org.thoughtcrime.securesms.conversation.MessageStyler
-import org.thoughtcrime.securesms.mediasend.Media
+import org.thoughtcrime.securesms.dependencies.AppDependencies
 import org.thoughtcrime.securesms.mediasend.MediaSendActivityResult
-import org.thoughtcrime.securesms.mediasend.v2.review.AddMessageCharacterCount
-import org.thoughtcrime.securesms.mediasend.v2.videos.VideoTrimData
-import org.thoughtcrime.securesms.mms.MediaConstraints
-import org.thoughtcrime.securesms.mms.SentMediaQuality
-import org.thoughtcrime.securesms.providers.BlobProvider
+import org.thoughtcrime.securesms.mms.PushMediaConstraints
 import org.thoughtcrime.securesms.recipients.Recipient
 import org.thoughtcrime.securesms.scribbles.ImageEditorFragment
 import org.thoughtcrime.securesms.stories.Stories
 import org.thoughtcrime.securesms.util.MediaUtil
-import org.thoughtcrime.securesms.util.Util
 import org.thoughtcrime.securesms.util.livedata.Store
 import java.util.Collections
 import kotlin.math.max
@@ -74,8 +71,6 @@ class MediaSelectionViewModel(
     )
   )
 
-  private val addAMessageUpdatePublisher = BehaviorProcessor.create<CharSequence>()
-
   val isContactSelectionRequired = destination == MediaSelectionDestination.ChooseAfterMediaSelection
 
   val state: LiveData<MediaSelectionState> = store.stateLiveData
@@ -86,22 +81,6 @@ class MediaSelectionViewModel(
   val hudCommands: Observable<HudCommand> = internalHudCommands
 
   private val disposables = CompositeDisposable()
-
-  fun watchAddAMessageCount(): Flowable<AddMessageCharacterCount> {
-    return addAMessageUpdatePublisher
-      .onBackpressureLatest()
-      .map {
-        val iterator = BreakIteratorCompat.getInstance()
-        iterator.setText(it)
-        AddMessageCharacterCount(iterator.countBreaks())
-      }
-      .subscribeOn(Schedulers.io())
-      .observeOn(AndroidSchedulers.mainThread())
-  }
-
-  fun updateAddAMessageCount(input: CharSequence?) {
-    addAMessageUpdatePublisher.onNext(input ?: "")
-  }
 
   private val isMeteredDisposable: Disposable = repository.isMetered.subscribe { metered ->
     store.update {
@@ -187,7 +166,7 @@ class MediaSelectionViewModel(
         .subscribe { filterResult ->
           if (filterResult.filteredMedia.isNotEmpty()) {
             store.update {
-              val maxDuration = it.calculateMaxVideoDurationUs(getMediaConstraints().getVideoMaxSize())
+              val maxDuration = it.calculateMaxVideoDurationUs(getMediaConstraints().getEditorVideoMaxSize())
               val initializedVideoEditorStates = filterResult.filteredMedia.filterNot { media -> it.editorStateMap.containsKey(media.uri) }
                 .filter { media -> MediaUtil.isNonGifVideo(media) }
                 .associate { video: Media ->
@@ -198,10 +177,18 @@ class MediaSelectionViewModel(
                     video.uri to VideoTrimData(true, duration, 0, maxDuration)
                   }
                 }
+
+              val updatedCameraFirstCapture = if (it.cameraFirstCapture != null) {
+                filterResult.filteredMedia.find { filtered -> filtered.uri == it.cameraFirstCapture.uri }
+              } else {
+                null
+              }
+
               it.copy(
                 selectedMedia = filterResult.filteredMedia,
                 focusedMedia = it.focusedMedia ?: filterResult.filteredMedia.first(),
-                editorStateMap = it.editorStateMap + initializedVideoEditorStates
+                editorStateMap = it.editorStateMap + initializedVideoEditorStates,
+                cameraFirstCapture = updatedCameraFirstCapture ?: it.cameraFirstCapture
               )
             }
 
@@ -275,10 +262,12 @@ class MediaSelectionViewModel(
   fun removeMedia(media: Set<Media>) {
     val snapshot = store.state
     val newMediaList = snapshot.selectedMedia - media
-    val oldFocusIndex = snapshot.selectedMedia.indexOf(media.first())
     val newFocus = when {
       newMediaList.isEmpty() -> null
-      media == snapshot.focusedMedia -> newMediaList[Util.clamp(oldFocusIndex, 0, newMediaList.size - 1)]
+      snapshot.focusedMedia in media -> {
+        val oldFocusIndex = snapshot.selectedMedia.indexOf(snapshot.focusedMedia)
+        newMediaList[Util.clamp(oldFocusIndex, 0, newMediaList.size - 1)]
+      }
       else -> snapshot.focusedMedia
     }
 
@@ -287,7 +276,7 @@ class MediaSelectionViewModel(
         selectedMedia = newMediaList,
         focusedMedia = newFocus,
         editorStateMap = it.editorStateMap - media.map { it.uri },
-        cameraFirstCapture = if (media == it.cameraFirstCapture) null else it.cameraFirstCapture
+        cameraFirstCapture = if (it.cameraFirstCapture in media) null else it.cameraFirstCapture
       )
     }
 
@@ -333,7 +322,7 @@ class MediaSelectionViewModel(
   }
 
   fun getMediaConstraints(): MediaConstraints {
-    return MediaConstraints.getPushMediaConstraints()
+    return PushMediaConstraints(null)
   }
 
   fun setSentMediaQuality(sentMediaQuality: SentMediaQuality) {
@@ -371,7 +360,7 @@ class MediaSelectionViewModel(
       val durationEdited = clampedStartTime > 0 || endTimeUs < totalDurationUs
       val isEntireDuration = startTimeUs == 0L && endTimeUs == totalDurationUs
       val endMoved = !isEntireDuration && data.endTimeUs != endTimeUs
-      val maxVideoDurationUs: Long = it.calculateMaxVideoDurationUs(getMediaConstraints().getVideoMaxSize())
+      val maxVideoDurationUs: Long = it.calculateMaxVideoDurationUs(getMediaConstraints().getEditorVideoMaxSize())
       val preserveStartTime = unedited || !endMoved
       val videoTrimData = VideoTrimData(durationEdited, totalDurationUs, clampedStartTime, endTimeUs)
       val updatedData = clampToMaxClipDuration(videoTrimData, maxVideoDurationUs, preserveStartTime)
@@ -462,7 +451,7 @@ class MediaSelectionViewModel(
   }
 
   private fun shouldPreUpload(metered: Boolean): Boolean {
-    return !metered
+    return !metered && !isContactSelectionRequired
   }
 
   fun onSaveState(outState: Bundle) {
@@ -484,7 +473,7 @@ class MediaSelectionViewModel(
       editorStates.forEach { it.writeToParcel(parcel, 0) }
       val serializedEditorState: ByteArray = parcel.marshall()
       parcel.recycle()
-      val blobUri = BlobProvider.getInstance().forData(serializedEditorState).createForSingleUseInMemory()
+      val blobUri = AppDependencies.blobs.forData(serializedEditorState).createForSingleUseInMemory()
       outState.putParcelable(STATE_EDITORS, blobUri)
     }
   }
@@ -508,7 +497,7 @@ class MediaSelectionViewModel(
     val cameraFirstCapture: Media? = savedInstanceState.getParcelableCompat(STATE_CAMERA_FIRST_CAPTURE, Media::class.java)
     val editorCount: Int = savedInstanceState.getInt(STATE_EDITOR_COUNT, 0)
     val blobUri: Uri? = savedInstanceState.getParcelableCompat(STATE_EDITORS, Uri::class.java)
-    val blobProvider: BlobProvider = BlobProvider.getInstance()
+    val blobProvider: BlobProvider = AppDependencies.blobs
     val editorStates: List<Bundle> = if (editorCount > 0 && blobUri != null && blobProvider.hasStream(context, blobUri)) {
       val accumulator: MutableList<Bundle> = mutableListOf()
       val blob: ByteArray = ByteStreams.toByteArray(blobProvider.getStream(context, blobUri))

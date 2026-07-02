@@ -4,10 +4,12 @@ import android.os.Bundle
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.setFragmentResult
 import androidx.fragment.app.viewModels
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
-import io.reactivex.rxjava3.kotlin.subscribeBy
-import org.signal.core.util.concurrent.LifecycleDisposable
+import kotlinx.coroutines.launch
 import org.thoughtcrime.securesms.R
 import org.thoughtcrime.securesms.components.ViewBinderDelegate
 import org.thoughtcrime.securesms.components.settings.DSLConfiguration
@@ -16,6 +18,7 @@ import org.thoughtcrime.securesms.components.settings.DSLSettingsText
 import org.thoughtcrime.securesms.components.settings.configure
 import org.thoughtcrime.securesms.databinding.WhoCanFindMeByPhoneNumberFragmentBinding
 import org.thoughtcrime.securesms.util.adapter.mapping.MappingAdapter
+import org.signal.core.ui.R as CoreUiR
 
 /**
  * Allows the user to select who can see their phone number during registration.
@@ -33,21 +36,25 @@ class WhoCanFindMeByPhoneNumberFragment : DSLSettingsFragment(
   }
 
   private val viewModel: WhoCanFindMeByPhoneNumberViewModel by viewModels()
-  private val lifecycleDisposable = LifecycleDisposable()
 
   private val binding by ViewBinderDelegate(WhoCanFindMeByPhoneNumberFragmentBinding::bind)
 
   override fun bindAdapter(adapter: MappingAdapter) {
-    lifecycleDisposable += viewModel.state.subscribe {
-      adapter.submitList(getConfiguration(it).toMappingModelList())
+    viewLifecycleOwner.lifecycleScope.launch {
+      viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+        viewModel.state.collect { state ->
+          adapter.submitList(getConfiguration(state).toMappingModelList())
+        }
+      }
     }
 
     binding.save.setOnClickListener {
       binding.save.isEnabled = false
-      lifecycleDisposable += viewModel.onSave().subscribeBy(onComplete = {
+      viewLifecycleOwner.lifecycleScope.launch {
+        viewModel.onSave()
         setFragmentResult(REQUEST_KEY, Bundle())
         findNavController().popBackStack()
-      })
+      }
     }
   }
 
@@ -71,8 +78,8 @@ class WhoCanFindMeByPhoneNumberFragment : DSLSettingsFragment(
             WhoCanFindMeByPhoneNumberState.EVERYONE -> R.string.WhoCanSeeMyPhoneNumberFragment__anyone_who_has_your
             WhoCanFindMeByPhoneNumberState.NOBODY -> R.string.WhoCanSeeMyPhoneNumberFragment__nobody_will_be_able
           },
-          DSLSettingsText.TextAppearanceModifier(R.style.Signal_Text_BodyMedium),
-          DSLSettingsText.ColorModifier(ContextCompat.getColor(requireContext(), R.color.signal_colorOnSurfaceVariant))
+          DSLSettingsText.TextAppearanceModifier(CoreUiR.style.Signal_Text_BodyMedium),
+          DSLSettingsText.ColorModifier(ContextCompat.getColor(requireContext(), CoreUiR.color.signal_colorOnSurfaceVariant))
         )
       )
     }

@@ -17,7 +17,7 @@ import org.thoughtcrime.securesms.recipients.Recipient;
 import org.whispersystems.signalservice.api.NetworkResultUtil;
 import org.whispersystems.signalservice.api.SignalServiceAccountDataStore;
 import org.whispersystems.signalservice.api.account.PreKeyUpload;
-import org.whispersystems.signalservice.api.push.ServiceId.PNI;
+import org.signal.core.models.ServiceId.PNI;
 import org.whispersystems.signalservice.api.push.ServiceIdType;
 
 import java.io.IOException;
@@ -84,7 +84,7 @@ public class PniAccountInitializationMigrationJob extends MigrationJob {
       SignedPreKeyRecord signedPreKey   = PreKeyUtil.generateAndStoreSignedPreKey(protocolStore, metadataStore);
       List<PreKeyRecord> oneTimePreKeys = PreKeyUtil.generateAndStoreOneTimeEcPreKeys(protocolStore, metadataStore);
 
-      NetworkResultUtil.toPreKeysLegacy(SignalNetwork.keys().setPreKeys(new PreKeyUpload(ServiceIdType.PNI, signedPreKey, oneTimePreKeys, null, null)));
+      NetworkResultUtil.toPreKeysLegacy(SignalNetwork.keys().setPreKeysSync(new PreKeyUpload(ServiceIdType.PNI, signedPreKey, oneTimePreKeys, null, null)));
       metadataStore.setActiveSignedPreKeyId(signedPreKey.getId());
       metadataStore.setSignedPreKeyRegistered(true);
     } else {

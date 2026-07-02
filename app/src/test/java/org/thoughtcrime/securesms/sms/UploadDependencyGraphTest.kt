@@ -9,8 +9,11 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
+import org.signal.core.models.database.AttachmentId
+import org.signal.core.models.media.TransformProperties
+import org.signal.core.util.JsonUtils
+import org.signal.mediasend.SentMediaQuality
 import org.thoughtcrime.securesms.attachments.Attachment
-import org.thoughtcrime.securesms.attachments.AttachmentId
 import org.thoughtcrime.securesms.attachments.DatabaseAttachment
 import org.thoughtcrime.securesms.database.AttachmentTable
 import org.thoughtcrime.securesms.jobmanager.Job
@@ -21,10 +24,8 @@ import org.thoughtcrime.securesms.jobs.AttachmentCopyJob
 import org.thoughtcrime.securesms.jobs.AttachmentUploadJob
 import org.thoughtcrime.securesms.jobs.protos.AttachmentUploadJobData
 import org.thoughtcrime.securesms.mms.OutgoingMessage
-import org.thoughtcrime.securesms.mms.SentMediaQuality
 import org.thoughtcrime.securesms.recipients.Recipient
 import org.thoughtcrime.securesms.testutil.UriAttachmentBuilder
-import org.thoughtcrime.securesms.util.JsonUtils
 import org.thoughtcrime.securesms.util.MediaUtil
 import java.util.concurrent.atomic.AtomicLong
 
@@ -80,7 +81,7 @@ class UploadDependencyGraphTest {
       UriAttachmentBuilder.build(
         id = 10,
         contentType = MediaUtil.IMAGE_JPEG,
-        transformProperties = AttachmentTable.TransformProperties(false, true, increment, increment + 1, SentMediaQuality.STANDARD.code, false)
+        transformProperties = TransformProperties(false, true, increment, increment + 1, SentMediaQuality.STANDARD.code, false)
       )
     }
 
@@ -122,7 +123,7 @@ class UploadDependencyGraphTest {
       UriAttachmentBuilder.build(
         id = 10,
         contentType = MediaUtil.IMAGE_JPEG,
-        transformProperties = if (it != 1) AttachmentTable.TransformProperties(false, true, 1, 2, SentMediaQuality.STANDARD.code, false) else null
+        transformProperties = if (it != 1) TransformProperties(false, true, 1, 2, SentMediaQuality.STANDARD.code, false) else null
       )
     }
 
@@ -182,7 +183,7 @@ class UploadDependencyGraphTest {
       UriAttachmentBuilder.build(
         1L,
         contentType = MediaUtil.IMAGE_JPEG,
-        transformProperties = AttachmentTable.TransformProperties.forVideoTrim(it.toLong(), it.toLong() + 1)
+        transformProperties = TransformProperties.forVideoTrim(it.toLong(), it.toLong() + 1)
       )
     }
 
@@ -256,7 +257,8 @@ class UploadDependencyGraphTest {
       thumbnailRestoreState = AttachmentTable.ThumbnailRestoreState.NONE,
       archiveTransferState = AttachmentTable.ArchiveTransferState.NONE,
       uuid = null,
-      quoteTargetContentType = null
+      quoteTargetContentType = null,
+      metadata = null
     )
   }
 

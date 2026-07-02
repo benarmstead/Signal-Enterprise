@@ -6,14 +6,13 @@ import androidx.annotation.NonNull;
 import androidx.annotation.WorkerThread;
 import androidx.core.util.Consumer;
 
-import com.annimon.stream.Stream;
 
 import org.signal.core.util.concurrent.SignalExecutors;
 import org.signal.core.util.logging.Log;
 import org.signal.libsignal.zkgroup.InvalidInputException;
 import org.signal.libsignal.zkgroup.groups.UuidCiphertext;
-import org.signal.storageservice.protos.groups.local.DecryptedGroup;
-import org.signal.storageservice.protos.groups.local.DecryptedPendingMember;
+import org.signal.storageservice.storage.protos.groups.local.DecryptedGroup;
+import org.signal.storageservice.storage.protos.groups.local.DecryptedPendingMember;
 import org.thoughtcrime.securesms.database.GroupTable;
 import org.thoughtcrime.securesms.database.SignalDatabase;
 import org.thoughtcrime.securesms.groups.GroupChangeException;
@@ -28,6 +27,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.Executor;
+import java.util.stream.Collectors;
 
 import okio.ByteString;
 
@@ -59,8 +59,9 @@ final class PendingMemberInvitesRepository {
       ByteString                                   self               = SignalStore.account().requireAci().toByteString();
       boolean                                      selfIsAdmin        = v2GroupProperties.isAdmin(Recipient.self());
 
-      Stream.of(pendingMembersList)
-            .groupBy(m -> m.addedByAci)
+      pendingMembersList.stream()
+          .collect(Collectors.groupingBy(m -> m.addedByAci))
+          .entrySet()
             .forEach(g ->
               {
                 ByteString                   inviterAci     = g.getKey();

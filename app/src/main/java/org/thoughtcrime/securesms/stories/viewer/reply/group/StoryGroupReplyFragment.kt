@@ -18,6 +18,7 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
 import io.reactivex.rxjava3.kotlin.subscribeBy
 import kotlinx.coroutines.launch
+import org.signal.core.util.ServiceUtil
 import org.signal.core.util.concurrent.LifecycleDisposable
 import org.signal.core.util.concurrent.SignalExecutors
 import org.signal.core.util.getParcelableCompat
@@ -29,7 +30,7 @@ import org.thoughtcrime.securesms.components.settings.DSLConfiguration
 import org.thoughtcrime.securesms.components.settings.configure
 import org.thoughtcrime.securesms.contacts.paged.ContactSearchKey
 import org.thoughtcrime.securesms.conversation.MarkReadHelper
-import org.thoughtcrime.securesms.conversation.colors.Colorizer
+import org.thoughtcrime.securesms.conversation.colors.ColorizerV1
 import org.thoughtcrime.securesms.conversation.ui.inlinequery.InlineQuery
 import org.thoughtcrime.securesms.conversation.ui.inlinequery.InlineQueryChangedListener
 import org.thoughtcrime.securesms.conversation.ui.inlinequery.InlineQueryResultsController
@@ -57,7 +58,6 @@ import org.thoughtcrime.securesms.stories.viewer.reply.StoryViewsAndRepliesPager
 import org.thoughtcrime.securesms.stories.viewer.reply.StoryViewsAndRepliesPagerParent
 import org.thoughtcrime.securesms.stories.viewer.reply.composer.StoryReplyComposer
 import org.thoughtcrime.securesms.util.DeleteDialog
-import org.thoughtcrime.securesms.util.ServiceUtil
 import org.thoughtcrime.securesms.util.ViewUtil
 import org.thoughtcrime.securesms.util.adapter.mapping.PagingMappingAdapter
 import org.thoughtcrime.securesms.util.fragments.findListener
@@ -114,7 +114,8 @@ class StoryGroupReplyFragment :
     ownerProducer = { requireActivity() }
   )
 
-  private val colorizer = Colorizer()
+  @Suppress("DEPRECATION")
+  private val colorizer = ColorizerV1()
   private val lifecycleDisposable = LifecycleDisposable()
 
   private val storyId: Long
@@ -247,9 +248,9 @@ class StoryGroupReplyFragment :
     markReadHelper?.onViewsRevealed(adapterItem.replyBody.sentAtMillis)
   }
 
-  private fun getConfiguration(pageData: List<ReplyBody>): DSLConfiguration {
+  private fun getConfiguration(pageData: List<ReplyBody?>): DSLConfiguration {
     return configure {
-      pageData.forEach {
+      pageData.filterNotNull().forEach {
         when (it) {
           is ReplyBody.Text -> {
             customPref(
@@ -314,7 +315,7 @@ class StoryGroupReplyFragment :
 
     if (messageRecord.isIdentityMismatchFailure) {
       SafetyNumberBottomSheet
-        .forMessageRecord(requireContext(), messageRecord)
+        .forOutgoingMessageRecord(requireContext(), messageRecord)
         .show(childFragmentManager)
     } else if (messageRecord.hasFailedWithNetworkFailures()) {
       MaterialAlertDialogBuilder(requireContext())

@@ -31,14 +31,11 @@ import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.os.bundleOf
 import androidx.fragment.app.setFragmentResult
@@ -50,9 +47,12 @@ import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import androidx.navigation.navGraphViewModels
 import org.signal.core.ui.compose.Buttons
+import org.signal.core.ui.compose.ComposeFragment
+import org.signal.core.ui.compose.DayNightPreviews
+import org.signal.core.ui.compose.Previews
 import org.signal.core.ui.compose.Scaffolds
+import org.signal.core.ui.compose.SignalIcons
 import org.signal.core.ui.compose.Texts
-import org.signal.core.ui.compose.theme.SignalTheme
 import org.signal.core.util.getParcelableCompat
 import org.thoughtcrime.securesms.R
 import org.thoughtcrime.securesms.components.TemporaryScreenshotSecurity
@@ -64,7 +64,6 @@ import org.thoughtcrime.securesms.components.settings.app.subscription.donate.st
 import org.thoughtcrime.securesms.components.settings.app.subscription.donate.stripe.StripePaymentInProgressViewModel
 import org.thoughtcrime.securesms.components.settings.app.subscription.donate.transfer.BankTransferRequestKeys
 import org.thoughtcrime.securesms.components.settings.app.subscription.donate.transfer.details.BankTransferDetailsViewModel.Field
-import org.thoughtcrime.securesms.compose.ComposeFragment
 import org.thoughtcrime.securesms.database.InAppPaymentTable
 import org.thoughtcrime.securesms.payments.FiatMoneyUtil
 import org.thoughtcrime.securesms.util.SpanUtil
@@ -184,10 +183,10 @@ class BankTransferDetailsFragment : ComposeFragment(), InAppPaymentCheckoutDeleg
   }
 }
 
-@Preview
+@DayNightPreviews
 @Composable
-private fun BankTransferDetailsContentPreview() {
-  SignalTheme {
+fun BankTransferDetailsContentPreview() {
+  Previews.Preview {
     BankTransferDetailsContent(
       state = BankTransferDetailsState(
         name = "Miles Morales",
@@ -207,7 +206,7 @@ private fun BankTransferDetailsContentPreview() {
 }
 
 @Composable
-private fun BankTransferDetailsContent(
+fun BankTransferDetailsContent(
   state: BankTransferDetailsState,
   onNavigationClick: () -> Unit,
   onNameChanged: (String) -> Unit,
@@ -222,7 +221,7 @@ private fun BankTransferDetailsContent(
   Scaffolds.Settings(
     title = "Bank transfer",
     onNavigationClick = onNavigationClick,
-    navigationIcon = ImageVector.vectorResource(id = R.drawable.symbol_arrow_start_24)
+    navigationIcon = SignalIcons.ArrowStart.imageVector
   ) {
     Column(
       horizontalAlignment = CenterHorizontally,
@@ -313,7 +312,7 @@ private fun BankTransferDetailsContent(
             isError = state.showNameError(),
             supportingText = {
               if (state.showNameError()) {
-                Text(text = stringResource(id = R.string.BankTransferDetailsFragment__minimum_2_characters))
+                Text(text = stringResource(id = R.string.BankTransferDetailsFragment__minimum_3_characters))
               }
             },
             modifier = Modifier

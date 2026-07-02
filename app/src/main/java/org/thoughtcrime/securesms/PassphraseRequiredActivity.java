@@ -30,11 +30,11 @@ import org.thoughtcrime.securesms.profiles.edit.CreateProfileActivity;
 import org.thoughtcrime.securesms.push.SignalServiceNetworkAccess;
 import org.thoughtcrime.securesms.recipients.Recipient;
 import org.thoughtcrime.securesms.registration.ui.RegistrationActivity;
+import org.thoughtcrime.securesms.util.Environment;
 import org.thoughtcrime.securesms.restore.RestoreActivity;
 import org.thoughtcrime.securesms.service.KeyCachingService;
-import org.thoughtcrime.securesms.util.AppForegroundObserver;
+import org.signal.core.util.AppForegroundObserver;
 import org.thoughtcrime.securesms.util.AppStartup;
-import org.thoughtcrime.securesms.util.RemoteConfig;
 import org.thoughtcrime.securesms.util.TextSecurePreferences;
 
 import java.util.Locale;
@@ -135,8 +135,8 @@ public abstract class PassphraseRequiredActivity extends BaseActivity implements
     Intent    intent           = getIntentForState(applicationState);
     if (intent != null) {
       Log.d(TAG, "routeApplicationState(), intent: " + intent.getComponent());
-      startActivity(intent);
-      finish();
+        startActivity(intent);
+        finish();
     }
   }
 
@@ -174,7 +174,7 @@ public abstract class PassphraseRequiredActivity extends BaseActivity implements
       return STATE_ENTER_SIGNAL_PIN;
     } else if (userMustSetProfileName()) {
       return STATE_CREATE_PROFILE_NAME;
-    } else if (userMustCreateSignalPin()) {
+    } else if (userMustCreateSignalPin() && getClass() != CreateSvrPinActivity.class) {
       return STATE_CREATE_SIGNAL_PIN;
     } else if (EventBus.getDefault().getStickyEvent(TransferStatus.class) != null && getClass() != OldDeviceTransferActivity.class) {
       return STATE_TRANSFER_ONGOING;
@@ -189,7 +189,6 @@ public abstract class PassphraseRequiredActivity extends BaseActivity implements
 
   private boolean userCanTransferOrRestore() {
     return !SignalStore.registration().isRegistrationComplete() &&
-           RemoteConfig.restoreAfterRegistration() &&
            RestoreDecisionStateUtil.isDecisionPending(SignalStore.registration().getRestoreDecisionState());
   }
 
@@ -197,7 +196,8 @@ public abstract class PassphraseRequiredActivity extends BaseActivity implements
     return !SignalStore.registration().isRegistrationComplete() &&
            !SignalStore.svr().hasPin() &&
            !SignalStore.svr().lastPinCreateFailed() &&
-           !SignalStore.svr().hasOptedOut();
+           !SignalStore.svr().hasOptedOut() &&
+           SignalStore.account().isPrimaryDevice();
   }
 
   private boolean userMustSetProfileName() {

@@ -21,8 +21,8 @@ import org.thoughtcrime.securesms.dependencies.AppDependencies
 import org.thoughtcrime.securesms.jobs.ReclaimUsernameAndLinkJob
 import org.thoughtcrime.securesms.keyvalue.Completed
 import org.thoughtcrime.securesms.keyvalue.SignalStore
+import org.thoughtcrime.securesms.registration.data.RegistrationRepository
 import org.thoughtcrime.securesms.registration.util.RegistrationUtil
-import org.thoughtcrime.securesms.registrationv3.data.RegistrationRepository
 import org.thoughtcrime.securesms.restore.RestoreRepository
 
 /**
@@ -97,6 +97,7 @@ class RestoreLocalBackupViewModel(fileBackupUri: Uri) : ViewModel() {
           SignalStore.registration.localRegistrationMetadata = null
           RegistrationUtil.maybeMarkRegistrationComplete()
 
+          SignalStore.misc.needsUsernameRestore = true
           AppDependencies.jobManager.add(ReclaimUsernameAndLinkJob())
         }
 

@@ -13,11 +13,12 @@ import androidx.appcompat.widget.Toolbar
 import androidx.fragment.app.activityViewModels
 import androidx.navigation.fragment.findNavController
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import org.signal.core.ui.logging.LoggingFragment
 import org.signal.core.util.isNotNullOrBlank
 import org.signal.core.util.logging.Log
-import org.thoughtcrime.securesms.LoggingFragment
 import org.thoughtcrime.securesms.R
 import org.thoughtcrime.securesms.components.settings.app.changenumber.ChangeNumberUtil.changeNumberSuccess
+import org.thoughtcrime.securesms.keyvalue.SignalStore
 import org.thoughtcrime.securesms.registration.data.RegistrationRepository
 import org.thoughtcrime.securesms.registration.data.network.Challenge
 import org.thoughtcrime.securesms.registration.data.network.VerificationCodeRequestResult
@@ -39,7 +40,7 @@ class ChangeNumberVerifyFragment : LoggingFragment(R.layout.fragment_change_phon
     val toolbar: Toolbar = view.findViewById(R.id.toolbar)
     toolbar.setTitle(R.string.ChangeNumberVerifyFragment__change_number)
     toolbar.setNavigationOnClickListener {
-      findNavController().navigateUp()
+      navigateUp()
       viewModel.resetLocalSessionState()
     }
 
@@ -49,6 +50,16 @@ class ChangeNumberVerifyFragment : LoggingFragment(R.layout.fragment_change_phon
     viewModel.uiState.observe(viewLifecycleOwner, ::onStateUpdate)
 
     requestCode()
+  }
+
+  private fun navigateUp() {
+    if (SignalStore.misc.isChangeNumberLocked) {
+      Log.d(TAG, "Change number locked, navigateUp")
+      startActivity(ChangeNumberLockActivity.createIntent(requireContext()))
+    } else {
+      Log.d(TAG, "navigateUp")
+      findNavController().navigateUp()
+    }
   }
 
   private fun onStateUpdate(state: ChangeNumberState) {
@@ -78,8 +89,8 @@ class ChangeNumberVerifyFragment : LoggingFragment(R.layout.fragment_change_phon
   private fun handleRequestCodeResult(changeNumberOutcome: ChangeNumberOutcome) {
     Log.d(TAG, "Handling request code result: ${changeNumberOutcome.javaClass.name}")
     when (changeNumberOutcome) {
-      is ChangeNumberOutcome.RecoveryPasswordWorked -> {
-        Log.i(TAG, "Successfully changed number with recovery password.")
+      is ChangeNumberOutcome.Succeeded -> {
+        Log.i(TAG, "Successfully changed number.")
         changeNumberSuccess()
       }
 
@@ -92,11 +103,31 @@ class ChangeNumberVerifyFragment : LoggingFragment(R.layout.fragment_change_phon
 
           is VerificationCodeRequestResult.ChallengeRequired -> {
             Log.i(TAG, "Unable to request sms code due to challenges required: ${castResult.challenges.joinToString { it.key }}")
+            if (castResult.challenges.isEmpty()) {
+              Log.w(TAG, "Challenge required but no challenges listed, showing error.")
+              showErrorDialog(R.string.RegistrationActivity_sms_provider_error)
+            }
           }
 
-          is VerificationCodeRequestResult.RateLimited -> {
+          is VerificationCodeRequestResult.RequestVerificationCodeRateLimited -> {
+            if (castResult.willBeAbleToRequestAgain) {
+              Log.i(TAG, "Verification code request rate limited; proceeding to code entry screen so the user can wait/resend rather than bailing.")
+              findNavController().safeNavigate(ChangeNumberVerifyFragmentDirections.actionChangePhoneNumberVerifyFragmentToChangeNumberEnterCodeFragment())
+            } else {
+              Log.i(TAG, "Verification code request rate limited with no pending resend; showing rate limit error.")
+              showErrorDialog(R.string.RegistrationActivity_rate_limited_to_service)
+            }
+          }
+
+          is VerificationCodeRequestResult.RateLimited,
+          is VerificationCodeRequestResult.SubmitVerificationCodeRateLimited -> {
             Log.i(TAG, "Unable to request sms code due to rate limit")
             showErrorDialog(R.string.RegistrationActivity_rate_limited_to_service)
+          }
+
+          is VerificationCodeRequestResult.RegistrationLocked -> {
+            Log.i(TAG, "Destination number is registration locked; navigating to PIN entry.")
+            findNavController().safeNavigate(ChangeNumberVerifyFragmentDirections.actionChangePhoneNumberVerifyFragmentToChangeNumberRegistrationLock(castResult.timeRemaining))
           }
 
           is VerificationCodeRequestResult.TokenNotAccepted -> {
@@ -109,11 +140,6 @@ class ChangeNumberVerifyFragment : LoggingFragment(R.layout.fragment_change_phon
             showErrorDialog(R.string.RegistrationActivity_unable_to_request_verification_code)
           }
         }
-      }
-
-      is ChangeNumberOutcome.VerificationCodeWorked -> {
-        Log.i(TAG, "Successfully changed number with verification code.")
-        changeNumberSuccess()
       }
     }
   }
@@ -140,7 +166,7 @@ class ChangeNumberVerifyFragment : LoggingFragment(R.layout.fragment_change_phon
     MaterialAlertDialogBuilder(requireContext()).apply {
       setMessage(message)
       setPositiveButton(android.R.string.ok) { _, _ ->
-        findNavController().navigateUp()
+        navigateUp()
         viewModel.resetLocalSessionState()
       }
       show()

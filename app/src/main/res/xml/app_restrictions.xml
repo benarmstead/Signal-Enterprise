@@ -5,71 +5,71 @@
   These restrictions are surfaced to administrators by an EMM/MDM console (Intune,
   Workspace ONE, Android Enterprise, etc.). Values pushed here are read at app start by
   EnterpriseManagedConfig and overlaid onto EnterpriseConfig. Keys MUST match the constants
-  in EnterpriseConfig.kt. Titles/descriptions are intentionally literal (not @string
-  resources) so they are not subject to the app's translation pipeline.
+  in EnterpriseConfig.kt. Titles/descriptions are @string references (required by AAPT) and
+  live in res/values/enterprise_strings.xml.
 -->
 <restrictions xmlns:android="http://schemas.android.com/apk/res/android">
 
     <restriction
         android:key="send_read_receipts"
-        android:title="Send read receipts"
-        android:description="Allow outgoing read receipts. When disabled, read receipts are never sent regardless of the in-app setting."
+        android:title="@string/enterprise_restriction_send_read_receipts_title"
+        android:description="@string/enterprise_restriction_send_read_receipts_summary"
         android:restrictionType="bool"
         android:defaultValue="false" />
 
     <restriction
         android:key="send_typing_indicators"
-        android:title="Send typing indicators"
-        android:description="Allow outgoing typing indicators. When disabled, typing indicators are never sent regardless of the in-app setting."
+        android:title="@string/enterprise_restriction_send_typing_indicators_title"
+        android:description="@string/enterprise_restriction_send_typing_indicators_summary"
         android:restrictionType="bool"
         android:defaultValue="false" />
 
     <restriction
         android:key="honor_incoming_remote_deletes"
-        android:title="Honor incoming remote deletes"
-        android:description="When disabled, messages remotely deleted by other users or group admins are kept on this device."
+        android:title="@string/enterprise_restriction_honor_incoming_remote_deletes_title"
+        android:description="@string/enterprise_restriction_honor_incoming_remote_deletes_summary"
         android:restrictionType="bool"
         android:defaultValue="false" />
 
     <restriction
         android:key="default_high_quality_media"
-        android:title="Default to high-quality media"
-        android:description="Send photos and videos at high quality by default."
+        android:title="@string/enterprise_restriction_default_high_quality_media_title"
+        android:description="@string/enterprise_restriction_default_high_quality_media_summary"
         android:restrictionType="bool"
         android:defaultValue="true" />
 
     <restriction
         android:key="incognito_keyboard"
-        android:title="Incognito keyboard by default"
-        android:description="Request that keyboards disable personalized learning while typing in the app."
+        android:title="@string/enterprise_restriction_incognito_keyboard_title"
+        android:description="@string/enterprise_restriction_incognito_keyboard_summary"
         android:restrictionType="bool"
         android:defaultValue="true" />
 
     <restriction
         android:key="screen_security"
-        android:title="Screen security by default"
-        android:description="Block screenshots and hide app contents in the recent-apps preview (FLAG_SECURE) by default."
+        android:title="@string/enterprise_restriction_screen_security_title"
+        android:description="@string/enterprise_restriction_screen_security_summary"
         android:restrictionType="bool"
         android:defaultValue="true" />
 
     <restriction
         android:key="disable_pin_reminders"
-        android:title="Disable PIN reminders"
-        android:description="Suppress periodic Signal PIN reminder prompts."
+        android:title="@string/enterprise_restriction_disable_pin_reminders_title"
+        android:description="@string/enterprise_restriction_disable_pin_reminders_summary"
         android:restrictionType="bool"
         android:defaultValue="true" />
 
     <restriction
         android:key="hide_store_rating_prompt"
-        android:title="Hide store rating prompt"
-        android:description="Never show the app store rating prompt."
+        android:title="@string/enterprise_restriction_hide_store_rating_prompt_title"
+        android:description="@string/enterprise_restriction_hide_store_rating_prompt_summary"
         android:restrictionType="bool"
         android:defaultValue="true" />
 
     <restriction
         android:key="max_media_batch"
-        android:title="Maximum media items per send"
-        android:description="Maximum number of photos/videos that can be attached to a single message."
+        android:title="@string/enterprise_restriction_max_media_batch_title"
+        android:description="@string/enterprise_restriction_max_media_batch_summary"
         android:restrictionType="integer"
         android:defaultValue="100" />
 

@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Signal-Enterprise managed-configuration strings.
+
+  Kept in a dedicated file (separate from the app's translated strings.xml) so upstream merges
+  never conflict here. Marked translatable="false": these are administrator-facing labels for the
+  EMM/MDM console, not end-user UI, so they are excluded from the translation pipeline.
+-->
+<resources xmlns:tools="http://schemas.android.com/tools" tools:ignore="MissingTranslation">
+
+    <string name="enterprise_restriction_send_read_receipts_title" translatable="false">Send read receipts</string>
+    <string name="enterprise_restriction_send_read_receipts_summary" translatable="false">Allow outgoing read receipts. When disabled, read receipts are never sent regardless of the in-app setting.</string>
+
+    <string name="enterprise_restriction_send_typing_indicators_title" translatable="false">Send typing indicators</string>
+    <string name="enterprise_restriction_send_typing_indicators_summary" translatable="false">Allow outgoing typing indicators. When disabled, typing indicators are never sent regardless of the in-app setting.</string>
+
+    <string name="enterprise_restriction_honor_incoming_remote_deletes_title" translatable="false">Honor incoming remote deletes</string>
+    <string name="enterprise_restriction_honor_incoming_remote_deletes_summary" translatable="false">When disabled, messages remotely deleted by other users or group admins are kept on this device.</string>
+
+    <string name="enterprise_restriction_default_high_quality_media_title" translatable="false">Default to high-quality media</string>
+    <string name="enterprise_restriction_default_high_quality_media_summary" translatable="false">Send photos and videos at high quality by default.</string>
+
+    <string name="enterprise_restriction_incognito_keyboard_title" translatable="false">Incognito keyboard by default</string>
+    <string name="enterprise_restriction_incognito_keyboard_summary" translatable="false">Request that keyboards disable personalized learning while typing in the app.</string>
+
+    <string name="enterprise_restriction_screen_security_title" translatable="false">Screen security by default</string>
+    <string name="enterprise_restriction_screen_security_summary" translatable="false">Block screenshots and hide app contents in the recent-apps preview (FLAG_SECURE) by default.</string>
+
+    <string name="enterprise_restriction_disable_pin_reminders_title" translatable="false">Disable PIN reminders</string>
+    <string name="enterprise_restriction_disable_pin_reminders_summary" translatable="false">Suppress periodic Signal PIN reminder prompts.</string>
+
+    <string name="enterprise_restriction_hide_store_rating_prompt_title" translatable="false">Hide store rating prompt</string>
+    <string name="enterprise_restriction_hide_store_rating_prompt_summary" translatable="false">Never show the app store rating prompt.</string>
+
+    <string name="enterprise_restriction_max_media_batch_title" translatable="false">Maximum media items per send</string>
+    <string name="enterprise_restriction_max_media_batch_summary" translatable="false">Maximum number of photos/videos that can be attached to a single message.</string>
+
+</resources>

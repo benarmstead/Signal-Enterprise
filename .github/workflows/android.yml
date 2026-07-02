@@ -35,6 +35,21 @@ jobs:
         distribution: temurin
         java-version: 21
 
+    # The committed gradle.properties targets upstream's 8-core/32GB CI runners with a private
+    # Gradle remote build cache (-Xmx12g daemon + 4g Kotlin daemon). This fork builds from scratch
+    # on free 16GB ubuntu-latest runners, where that sum OOM-kills the runner during the test phase.
+    # Override the daemon memory in the Gradle user home (higher precedence than the project file,
+    # so upstream merges never conflict here) to fit a hosted runner.
+    - name: Constrain Gradle memory for hosted runner
+      run: |
+        mkdir -p ~/.gradle
+        cat >> ~/.gradle/gradle.properties <<'EOF'
+        org.gradle.jvmargs=-Xmx4g -XX:MaxMetaspaceSize=1g -Dcom.android.tools.r8.threadCount=1
+        kotlin.daemon.jvmargs=-Xmx2g -XX:MaxMetaspaceSize=512m
+        org.gradle.parallel=false
+        org.gradle.workers.max=2
+        EOF
+
     - name: Validate Gradle Wrapper
       uses: gradle/actions/wrapper-validation@3f131e8634966bd73d06cc69884922b02e6faf92 # v6
       # gh api repos/gradle/actions/commits/v6 --jq '.sha'
@@ -48,15 +63,16 @@ jobs:
         # Required to persist the Gradle configuration cache across runs.
         cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
 
-    # Pull requests run the fast custom linter (ci); pushes to main / 8.x branches run the full
-    # Android lint (qa).
+    # Use the lighter `ci` task (fast-lint instead of full Android lint) everywhere. Without
+    # upstream's private remote build cache, the full-lint `qa` task is too heavy for a free
+    # hosted runner; `ci` still compiles all modules, runs unit tests, and compiles the
+    # instrumentation sources.
     - name: Build with Gradle
       env:
         SIGNAL_BUILD_CACHE_URL: ${{ secrets.SIGNAL_BUILD_CACHE_URL }}
         SIGNAL_BUILD_CACHE_USER: ${{ secrets.SIGNAL_BUILD_CACHE_USER }}
         SIGNAL_BUILD_CACHE_PASSWORD: ${{ secrets.SIGNAL_BUILD_CACHE_PASSWORD }}
-        SIGNAL_BUILD_CACHE_PUSH: ${{ startsWith(github.ref, 'refs/heads/8.') }}
-      run: ./gradlew ${{ github.event_name == 'pull_request' && 'ci' || 'qa' }}
+      run: ./gradlew ci
 
     - name: Archive reports for failed build
       if: ${{ failure() }}

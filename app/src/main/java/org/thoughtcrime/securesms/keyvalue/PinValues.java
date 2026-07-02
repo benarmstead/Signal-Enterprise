@@ -4,6 +4,7 @@ import androidx.annotation.NonNull;
 
 import org.signal.core.util.logging.Log;
 import org.thoughtcrime.securesms.dependencies.AppDependencies;
+import org.thoughtcrime.securesms.enterprise.EnterpriseConfig;
 import org.thoughtcrime.securesms.lock.SignalPinReminders;
 import org.thoughtcrime.securesms.lock.v2.PinKeyboardType;
 import org.thoughtcrime.securesms.util.TextSecurePreferences;
@@ -122,7 +123,8 @@ public final class PinValues extends SignalStoreValues {
   }
 
   public boolean arePinRemindersEnabled() {
-    return getBoolean(PIN_REMINDERS_ENABLED, false);
+    // Signal-Enterprise policy: PIN reminders are centrally controlled (default: disabled).
+    return getBoolean(PIN_REMINDERS_ENABLED, !EnterpriseConfig.getDisablePinReminders());
   }
 
   public @NonNull PinKeyboardType getKeyboardType() {

@@ -13,6 +13,7 @@ import org.signal.core.util.logging.Log;
 import org.thoughtcrime.securesms.R;
 import org.thoughtcrime.securesms.dependencies.AppDependencies;
 import org.signal.mediasend.SentMediaQuality;
+import org.thoughtcrime.securesms.enterprise.EnterpriseConfig;
 import org.thoughtcrime.securesms.preferences.widgets.NotificationPrivacyPreference;
 import org.thoughtcrime.securesms.util.Environment;
 import org.thoughtcrime.securesms.util.SingleLiveEvent;
@@ -494,8 +495,9 @@ public final class SettingsValues extends SignalStoreValues {
   }
 
   public @NonNull SentMediaQuality getSentMediaQuality() {
-    // Signal-Enterprise: default to high-quality media sends.
-    return SentMediaQuality.fromCode(getInteger(SENT_MEDIA_QUALITY, SentMediaQuality.HIGH.code));
+    // Signal-Enterprise policy: media quality default is centrally controlled (default: high).
+    SentMediaQuality defaultQuality = EnterpriseConfig.getDefaultHighQualityMedia() ? SentMediaQuality.HIGH : SentMediaQuality.STANDARD;
+    return SentMediaQuality.fromCode(getInteger(SENT_MEDIA_QUALITY, defaultQuality.code));
   }
 
   public @NonNull CensorshipCircumventionEnabled getCensorshipCircumventionEnabled() {

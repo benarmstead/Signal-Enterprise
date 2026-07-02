@@ -3,6 +3,7 @@ package org.thoughtcrime.securesms.util
 import org.thoughtcrime.securesms.database.SignalDatabase
 import org.thoughtcrime.securesms.database.model.GroupRecord
 import org.thoughtcrime.securesms.database.model.MessageRecord
+import org.thoughtcrime.securesms.enterprise.EnterpriseConfig
 import org.thoughtcrime.securesms.recipients.Recipient
 import org.thoughtcrime.securesms.recipients.RecipientId
 import kotlin.time.Duration.Companion.days
@@ -17,11 +18,12 @@ object MessageConstraintsUtil {
   private val SEND_THRESHOLD = RemoteConfig.regularDeleteThreshold.seconds.inWholeMilliseconds
   private val ADMIN_SEND_THRESHOLD = RemoteConfig.adminDeleteThreshold.seconds.inWholeMilliseconds
 
-  // Signal-Enterprise: incoming remote deletes (from other users and group admins) are ignored so
-  // that messages remain available on-device. Outgoing send thresholds are kept intact so the local
-  // user can still delete/edit their own messages.
-  private val RECEIVE_THRESHOLD = 0L
-  private val ADMIN_RECEIVE_THRESHOLD = 0L
+  // Signal-Enterprise policy: incoming remote deletes (from other users and group admins) are
+  // ignored by default (RECEIVE threshold 0 => never valid), so messages remain available on this
+  // device. An MDM can restore upstream behaviour via EnterpriseConfig.honorIncomingRemoteDeletes.
+  // Outgoing SEND thresholds are left intact so the local user can still delete/edit their own messages.
+  private val RECEIVE_THRESHOLD = if (EnterpriseConfig.honorIncomingRemoteDeletes) SEND_THRESHOLD + 1.days.inWholeMilliseconds else 0L
+  private val ADMIN_RECEIVE_THRESHOLD = if (EnterpriseConfig.honorIncomingRemoteDeletes) ADMIN_SEND_THRESHOLD + 1.days.inWholeMilliseconds else 0L
 
   const val MAX_EDIT_COUNT = 10
 

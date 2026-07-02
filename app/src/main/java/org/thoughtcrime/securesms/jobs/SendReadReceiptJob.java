@@ -14,6 +14,7 @@ import org.thoughtcrime.securesms.database.SignalDatabase;
 import org.thoughtcrime.securesms.database.model.MessageId;
 import org.thoughtcrime.securesms.database.model.RecipientRecord;
 import org.thoughtcrime.securesms.dependencies.AppDependencies;
+import org.thoughtcrime.securesms.enterprise.EnterpriseConfig;
 import org.thoughtcrime.securesms.jobmanager.Job;
 import org.thoughtcrime.securesms.jobmanager.JobManager;
 import org.thoughtcrime.securesms.jobmanager.JsonJobData;
@@ -147,7 +148,8 @@ public class SendReadReceiptJob extends BaseJob {
 
   @Override
   public void onRun() throws IOException, UntrustedIdentityException, UndeliverableMessageException {
-    if (true){
+    // Signal-Enterprise policy: read receipts are gated centrally (default: never sent).
+    if (!EnterpriseConfig.getSendReadReceipts()) {
       return;
     }
     if (!Recipient.self().isRegistered()) {

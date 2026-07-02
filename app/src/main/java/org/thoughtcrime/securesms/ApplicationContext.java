@@ -63,6 +63,7 @@ import org.thoughtcrime.securesms.dependencies.AppDependencies;
 import org.thoughtcrime.securesms.dependencies.ApplicationDependencyProvider;
 import org.thoughtcrime.securesms.emoji.EmojiSource;
 import org.thoughtcrime.securesms.emoji.JumboEmoji;
+import org.thoughtcrime.securesms.enterprise.EnterpriseManagedConfig;
 import org.thoughtcrime.securesms.gcm.FcmFetchManager;
 import org.thoughtcrime.securesms.glide.SignalGlideComponents;
 import org.thoughtcrime.securesms.jobmanager.impl.SealedSenderConstraint;
@@ -182,6 +183,7 @@ public class ApplicationContext extends Application implements AppForegroundObse
                 Logger.setTarget(SqlCipherLogTarget.INSTANCE);
               })
               .addBlocking("signal-store", () -> SignalStore.init(this))
+              .addBlocking("enterprise-managed-config", () -> EnterpriseManagedConfig.refresh(this))
               .addBlocking("logging", () -> {
                 initializeLogging();
                 Log.i(TAG, "onCreate()");

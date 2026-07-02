@@ -26,6 +26,7 @@ import org.thoughtcrime.securesms.backup.proto.SharedPreference;
 import org.thoughtcrime.securesms.crypto.ProfileKeyUtil;
 import org.thoughtcrime.securesms.database.SignalDatabase;
 import org.thoughtcrime.securesms.dependencies.AppDependencies;
+import org.thoughtcrime.securesms.enterprise.EnterpriseConfig;
 import org.thoughtcrime.securesms.keyvalue.SettingsValues;
 import org.thoughtcrime.securesms.keyvalue.SignalStore;
 import org.thoughtcrime.securesms.lock.RegistrationLockReminders;
@@ -393,8 +394,8 @@ public class TextSecurePreferences {
   }
 
   public static boolean isIncognitoKeyboardEnabled(Context context) {
-    // Signal-Enterprise: enable the incognito keyboard flag by default.
-    return getBooleanPreference(context, INCOGNITO_KEYBOARD_PREF, true);
+    // Signal-Enterprise policy: incognito keyboard default is centrally controlled (default: on).
+    return getBooleanPreference(context, INCOGNITO_KEYBOARD_PREF, EnterpriseConfig.getIncognitoKeyboard());
   }
 
   public static boolean isReadReceiptsEnabled(Context context) {
@@ -540,7 +541,8 @@ public class TextSecurePreferences {
   }
 
   public static boolean isScreenSecurityEnabled(Context context) {
-    return getBooleanPreference(context, SCREEN_SECURITY_PREF, false);
+    // Signal-Enterprise policy: screen security (FLAG_SECURE) defaults on for data-loss prevention.
+    return getBooleanPreference(context, SCREEN_SECURITY_PREF, EnterpriseConfig.getScreenSecurity());
   }
 
   public static boolean isLegacyUseLocalApnsEnabled(Context context) {

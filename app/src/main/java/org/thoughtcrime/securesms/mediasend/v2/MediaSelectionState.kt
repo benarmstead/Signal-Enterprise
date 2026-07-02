@@ -6,6 +6,7 @@ import org.signal.mediasend.MediaConstraints
 import org.signal.mediasend.SentMediaQuality
 import org.signal.mediasend.edit.video.VideoTrimData
 import org.thoughtcrime.securesms.conversation.MessageSendType
+import org.thoughtcrime.securesms.enterprise.EnterpriseConfig
 import org.thoughtcrime.securesms.keyvalue.SignalStore
 import org.thoughtcrime.securesms.mms.PushMediaConstraints
 import org.thoughtcrime.securesms.recipients.Recipient
@@ -38,7 +39,10 @@ data class MediaSelectionState(
 
   val transcodingPreset: TranscodingPreset = PushMediaConstraints(SentMediaQuality.fromCode(quality.code)).videoTranscodingSettings
 
-  val maxSelection = RemoteConfig.maxAttachmentCount
+  // Signal-Enterprise policy: allow larger media batches (default 100) while never dropping below
+  // upstream's remote-configured maximum. The legacy MediaSendConstants.MAX_PUSH was orphaned by
+  // upstream's media-send v2 refactor; this is the live cap.
+  val maxSelection = maxOf(RemoteConfig.maxAttachmentCount, EnterpriseConfig.maxMediaBatch)
 
   val canSend = !isSent && selectedMedia.isNotEmpty()
 

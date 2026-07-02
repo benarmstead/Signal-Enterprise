@@ -8,6 +8,7 @@ import java.util.stream.Collectors;
 import org.signal.core.util.logging.Log;
 import org.thoughtcrime.securesms.database.GroupTable;
 import org.thoughtcrime.securesms.database.SignalDatabase;
+import org.thoughtcrime.securesms.enterprise.EnterpriseConfig;
 import org.thoughtcrime.securesms.groups.GroupId;
 import org.thoughtcrime.securesms.jobmanager.JsonJobData;
 import org.thoughtcrime.securesms.jobmanager.Job;
@@ -77,7 +78,8 @@ public class TypingSendJob extends BaseJob {
 
   @Override
   public void onRun() throws Exception {
-    if (true){
+    // Signal-Enterprise policy: typing indicators are gated centrally (default: never sent).
+    if (!EnterpriseConfig.getSendTypingIndicators()) {
       return;
     }
     if (!Recipient.self().isRegistered()) {

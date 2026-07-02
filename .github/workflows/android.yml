@@ -4,11 +4,17 @@ on:
   pull_request:
   push:
     branches:
+    - 'master'
     - 'main'
     - '8.**'
+  workflow_dispatch:
 
 permissions:
   contents: read # to fetch code (actions/checkout)
+
+concurrency:
+  group: android-ci-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build:

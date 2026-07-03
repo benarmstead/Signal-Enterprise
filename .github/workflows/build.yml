@@ -36,6 +36,19 @@ jobs:
       - name: Validate Gradle Wrapper
         uses: gradle/actions/wrapper-validation@v4
 
+      # The committed gradle.properties targets upstream's 32GB CI runners (-Xmx12g daemon). On a
+      # free 16GB runner the release build (with R8 minification) OOM-kills the runner. Override the
+      # daemon heap in the Gradle user home (higher precedence than the project file, so upstream
+      # merges never conflict here) to fit a hosted runner.
+      - name: Constrain Gradle memory for hosted runner
+        run: |
+          mkdir -p ~/.gradle
+          cat >> ~/.gradle/gradle.properties <<'EOF'
+          org.gradle.jvmargs=-Xmx6g -XX:MaxMetaspaceSize=1g -Dcom.android.tools.r8.threadCount=1
+          kotlin.daemon.jvmargs=-Xmx4g -XX:MaxMetaspaceSize=512m
+          org.gradle.workers.max=3
+          EOF
+
       - name: Resolve release tag
         id: get-version
         run: |

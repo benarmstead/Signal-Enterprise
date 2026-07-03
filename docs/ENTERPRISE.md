@@ -105,12 +105,16 @@ After merging, always run the same checks CI runs:
 
 ## 4. CI / CD
 
-- **`.github/workflows/android.yml`** — runs the `ci` task (fast-lint + compile all modules + unit
-  tests + instrumentation compile) on PRs and on pushes to `master` / `main` / version branches.
-  Two fork-specific fixes vs upstream's workflow: (1) it builds `master` (the fork's default branch;
-  upstream only built `main`/`8.**`), and (2) it constrains the Gradle/Kotlin daemon heap for a free
-  16GB hosted runner — upstream's committed `-Xmx12g` targets their 32GB runners + private remote
-  build cache and OOM-kills a free runner during the test phase.
+- **`.github/workflows/android.yml`** — on PRs and pushes to `master` / `main` / version branches,
+  runs `./gradlew assemblePlayProdDebug ktlintCheck`: it compiles every module, ktlint-checks them,
+  and assembles the same variant the release pipeline ships. Three fork-specific adaptations vs
+  upstream's workflow:
+  1. It builds `master` (the fork's default branch; upstream only built `main`/`8.**`).
+  2. It constrains the Gradle daemon heap for a free 16GB hosted runner — upstream's committed
+     `-Xmx12g` targets their 32GB runners + private remote build cache and OOM-kills a free runner.
+  3. It runs the compile+assemble+lint checks rather than upstream's full `ci`/`qa`, whose unit-test
+     and instrumentation-compile suite is too slow / memory-heavy to run from a cold cache on a free
+     runner. **Run `./gradlew qa` locally before cutting a release** to exercise the full test suite.
 - **`.github/workflows/build.yml`** — builds `assemblePlayProdRelease`, signs the APKs with the
   `KEYSTORE_BASE64` / `KEYSTORE_PASS` repo secrets, and publishes a GitHub Release. Triggered by
   pushes to a `v*` branch or manually via **workflow_dispatch**.

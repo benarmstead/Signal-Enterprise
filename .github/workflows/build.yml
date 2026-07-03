@@ -14,6 +14,12 @@ on:
 permissions:
   contents: write # to create a GitHub Release and upload assets
 
+# Keep in sync with `ndk` in gradle/libs.versions.toml. Without this NDK installed, AGP cannot
+# strip debug symbols from the prebuilt native libraries (libsignal_jni.so, libringrtc_rffi.so),
+# which then ship unstripped and roughly double the release APK size.
+env:
+  NDK_VERSION: '28.0.13004108'
+
 concurrency:
   group: release-${{ github.ref }}
   cancel-in-progress: false
@@ -32,6 +38,10 @@ jobs:
           distribution: temurin
           java-version: 21
           cache: gradle
+
+      # Required so AGP strips debug symbols from the prebuilt native libs during the release build.
+      - name: Install NDK
+        run: echo "y" | ${ANDROID_SDK_ROOT}/cmdline-tools/latest/bin/sdkmanager --install "ndk;${NDK_VERSION}"
 
       - name: Validate Gradle Wrapper
         uses: gradle/actions/wrapper-validation@v4
